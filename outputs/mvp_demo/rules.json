@@ -1,0 +1,474 @@
+{
+  "input": "我是广东物理类，排位32000，想学计算机，最好在广州深圳，学校稳一点，不想去太贵的中外合作。",
+  "extracted_slots": {
+    "input": "我是广东物理类，排位32000，想学计算机，最好在广州深圳，学校稳一点，不想去太贵的中外合作。",
+    "user_context": {
+      "source_province": "广东",
+      "subject_type": "物理",
+      "user_rank": 32000
+    },
+    "preferences": {
+      "major_keyword": "计算机",
+      "preferred_cities": [
+        "广州",
+        "深圳"
+      ],
+      "risk_preference_raw": "稳一点",
+      "tuition_preference_raw": "太贵",
+      "major_expansion_raw": "计算机相关扩展",
+      "cooperation_preference_raw": "不想去太贵的中外合作"
+    },
+    "raw_phrases": [
+      "广东物理类",
+      "排位32000",
+      "想学计算机",
+      "最好在广州深圳",
+      "学校稳一点",
+      "不想去太贵的中外合作"
+    ]
+  },
+  "schema_registry": {
+    "source_province": {
+      "source_column": "生源地",
+      "type": "string",
+      "aliases": [
+        "广东",
+        "生源地",
+        "考生省份"
+      ],
+      "allowed_ops": [
+        "eq"
+      ],
+      "nullable": false,
+      "notes": "User source province. For this demo, 广东 is grounded in 生源地."
+    },
+    "subject_type": {
+      "source_column": "科类",
+      "type": "enum",
+      "aliases": [
+        "物理类",
+        "历史类",
+        "科类"
+      ],
+      "allowed_ops": [
+        "eq"
+      ],
+      "nullable": false,
+      "notes": "The demo normalizes 物理类 to 物理."
+    },
+    "major_name": {
+      "source_column": "专业名称",
+      "type": "string",
+      "aliases": [
+        "专业",
+        "想学",
+        "计算机"
+      ],
+      "allowed_ops": [
+        "contains",
+        "eq"
+      ],
+      "nullable": false,
+      "notes": "Only exact keyword matching is deterministic in this MVP."
+    },
+    "city": {
+      "source_column": "城市",
+      "type": "string",
+      "aliases": [
+        "城市",
+        "广州",
+        "深圳"
+      ],
+      "allowed_ops": [
+        "contains",
+        "in_contains"
+      ],
+      "nullable": true,
+      "notes": "The demo uses contains matching for 广州 and 深圳."
+    },
+    "group_min_rank_2024": {
+      "source_column": "专业组最低位次1",
+      "type": "number",
+      "aliases": [
+        "专业组最低位次",
+        "2024最低排位",
+        "稳一点"
+      ],
+      "allowed_ops": [
+        ">=",
+        "<=",
+        "between",
+        "sort"
+      ],
+      "nullable": true,
+      "notes": "Used as the confirmed safety-margin field in this MVP."
+    },
+    "tuition_yuan_per_year": {
+      "source_column": "学费",
+      "type": "number_from_string",
+      "aliases": [
+        "学费",
+        "太贵",
+        "费用"
+      ],
+      "allowed_ops": [
+        "<=",
+        ">=",
+        "between"
+      ],
+      "nullable": true,
+      "notes": "Parsed as a number from the Excel cell value."
+    }
+  },
+  "deterministic_rules": [
+    {
+      "rule_id": "d_source_province",
+      "source_text": "广东",
+      "category": "deterministic",
+      "field_id": "source_province",
+      "field": "生源地",
+      "operator": "eq",
+      "value": "广东",
+      "confidence": 1.0,
+      "requires_human_confirmation": false,
+      "trace_reason": "The user explicitly states 广东 and the Excel field 生源地 exists.",
+      "status": "verified",
+      "verification": {
+        "field_exists": true,
+        "operator_allowed": true,
+        "ambiguity_detected": false,
+        "requires_human_confirmation": false,
+        "executable": true
+      }
+    },
+    {
+      "rule_id": "d_subject_type",
+      "source_text": "物理类",
+      "category": "deterministic",
+      "field_id": "subject_type",
+      "field": "科类",
+      "operator": "eq",
+      "value": "物理",
+      "confidence": 1.0,
+      "requires_human_confirmation": false,
+      "trace_reason": "The user explicitly states 物理类 and the Excel field 科类 exists.",
+      "status": "verified",
+      "verification": {
+        "field_exists": true,
+        "operator_allowed": true,
+        "ambiguity_detected": false,
+        "requires_human_confirmation": false,
+        "executable": true
+      }
+    },
+    {
+      "rule_id": "d_major_keyword",
+      "source_text": "想学计算机",
+      "category": "deterministic",
+      "field_id": "major_name",
+      "field": "专业名称",
+      "operator": "contains",
+      "value": "计算机",
+      "confidence": 1.0,
+      "requires_human_confirmation": false,
+      "trace_reason": "Exact keyword matching is allowed in the MVP.",
+      "status": "verified",
+      "verification": {
+        "field_exists": true,
+        "operator_allowed": true,
+        "ambiguity_detected": false,
+        "requires_human_confirmation": false,
+        "executable": true
+      }
+    },
+    {
+      "rule_id": "d_city",
+      "source_text": "最好在广州深圳",
+      "category": "deterministic",
+      "field_id": "city",
+      "field": "城市",
+      "operator": "in_contains",
+      "value": [
+        "广州",
+        "深圳"
+      ],
+      "confidence": 1.0,
+      "requires_human_confirmation": false,
+      "trace_reason": "The Excel field 城市 exists and contains relevant values.",
+      "status": "verified",
+      "verification": {
+        "field_exists": true,
+        "operator_allowed": true,
+        "ambiguity_detected": false,
+        "requires_human_confirmation": false,
+        "executable": true
+      }
+    }
+  ],
+  "context_rules": [
+    {
+      "rule_id": "ctx_user_rank",
+      "source_text": "排位32000",
+      "category": "context",
+      "field_id": "user_rank",
+      "field": "user_rank",
+      "operator": "set_context",
+      "value": 32000,
+      "confidence": 1.0,
+      "requires_human_confirmation": false,
+      "verification": {
+        "field_exists": true,
+        "operator_allowed": true,
+        "ambiguity_detected": false,
+        "requires_human_confirmation": false,
+        "executable": false
+      },
+      "trace_reason": "User rank is context for confirmed candidate rules, not an Excel filter."
+    }
+  ],
+  "candidate_rules": [
+    {
+      "rule_id": "c_safety_margin",
+      "source_text": "学校稳一点",
+      "category": "candidate",
+      "status": "pending_confirmation",
+      "field_id": "group_min_rank_2024",
+      "field": "专业组最低位次1",
+      "operator": ">=",
+      "value_expression_options": [
+        "32000 * 1.05",
+        "32000 * 1.10",
+        "32000 * 1.15"
+      ],
+      "confidence": 0.8,
+      "requires_human_confirmation": true,
+      "trace_reason": "稳一点 is vague and must not execute without a confirmed safety margin.",
+      "verification": {
+        "field_exists": true,
+        "operator_allowed": true,
+        "ambiguity_detected": true,
+        "requires_human_confirmation": true,
+        "executable": false
+      }
+    },
+    {
+      "rule_id": "c_tuition_cap",
+      "source_text": "太贵",
+      "category": "candidate",
+      "status": "pending_confirmation",
+      "field_id": "tuition_yuan_per_year",
+      "field": "学费",
+      "operator": "<=",
+      "value_options": [
+        10000,
+        20000,
+        40000
+      ],
+      "confidence": 0.8,
+      "requires_human_confirmation": true,
+      "trace_reason": "太贵 is vague and requires a user-selected tuition cap.",
+      "verification": {
+        "field_exists": true,
+        "operator_allowed": true,
+        "ambiguity_detected": true,
+        "requires_human_confirmation": true,
+        "executable": false
+      }
+    },
+    {
+      "rule_id": "c_major_expansion",
+      "source_text": "计算机相关扩展",
+      "category": "candidate",
+      "status": "pending_confirmation",
+      "field_id": "major_name",
+      "field": "专业名称",
+      "operator": "contains_any",
+      "value_options": [
+        "软件工程",
+        "人工智能",
+        "数据科学",
+        "网络空间安全"
+      ],
+      "confidence": 0.7,
+      "requires_human_confirmation": true,
+      "trace_reason": "Semantic expansion beyond exact 计算机 matching requires confirmation.",
+      "verification": {
+        "field_exists": true,
+        "operator_allowed": false,
+        "ambiguity_detected": true,
+        "requires_human_confirmation": true,
+        "executable": false
+      }
+    }
+  ],
+  "llm_needed_parts": [
+    {
+      "part_id": "l_cooperation_type",
+      "source_text": "不想去太贵的中外合作",
+      "category": "llm_needed",
+      "status": "not_executable_in_mvp",
+      "field_id": "cooperation_type",
+      "field": "cooperation_type",
+      "reason": "The schema registry has no dedicated cooperation_type field.",
+      "allowed_behavior": "Do not infer cooperation_type from text fields in this MVP.",
+      "verification": {
+        "field_exists": false,
+        "schema_grounded": false,
+        "executable": false
+      },
+      "trace_reason": "No dedicated cooperation_type field, so the preference is preserved but not executed."
+    }
+  ],
+  "confirmation_questions": [
+    {
+      "question_id": "q_safety_margin",
+      "source_text": "学校稳一点",
+      "options": [
+        {
+          "label": "轻微稳妥",
+          "value": 33600,
+          "expression": "32000 * 1.05"
+        },
+        {
+          "label": "适中稳妥",
+          "value": 35200,
+          "expression": "32000 * 1.10"
+        },
+        {
+          "label": "保守稳妥",
+          "value": 36800,
+          "expression": "32000 * 1.15"
+        },
+        {
+          "label": "不使用这个规则",
+          "value": null
+        }
+      ]
+    },
+    {
+      "question_id": "q_tuition_cap",
+      "source_text": "太贵",
+      "options": [
+        {
+          "label": "<= 10000 元/年",
+          "value": 10000
+        },
+        {
+          "label": "<= 20000 元/年",
+          "value": 20000
+        },
+        {
+          "label": "<= 40000 元/年",
+          "value": 40000
+        },
+        {
+          "label": "不使用学费规则",
+          "value": null
+        }
+      ]
+    },
+    {
+      "question_id": "q_major_expansion",
+      "source_text": "想学计算机",
+      "options": [
+        {
+          "label": "不扩展，只匹配“计算机”",
+          "value": []
+        },
+        {
+          "label": "扩展到相关专业",
+          "value": [
+            "软件工程",
+            "人工智能",
+            "数据科学",
+            "网络空间安全"
+          ]
+        }
+      ]
+    }
+  ],
+  "simulated_confirmations": {
+    "safety_margin": {
+      "selected_option": "B",
+      "label": "适中稳妥",
+      "field": "专业组最低位次1",
+      "operator": ">=",
+      "value": 35200,
+      "source_expression": "32000 * 1.10"
+    },
+    "tuition_threshold": {
+      "selected_option": "B",
+      "label": "<= 20000 元/年",
+      "field": "学费",
+      "operator": "<=",
+      "value": 20000
+    },
+    "major_expansion": {
+      "selected_option": "A",
+      "label": "不扩展，只匹配“计算机”",
+      "expanded_terms": []
+    },
+    "cooperation_type": {
+      "selected_option": null,
+      "status": "not_executable",
+      "reason": "Missing dedicated cooperation_type field."
+    }
+  },
+  "final_executable_rules": [
+    {
+      "rule_id": "e_source_province",
+      "derived_from": "d_source_province",
+      "field": "生源地",
+      "operator": "eq",
+      "value": "广东"
+    },
+    {
+      "rule_id": "e_subject_type",
+      "derived_from": "d_subject_type",
+      "field": "科类",
+      "operator": "eq",
+      "value": "物理"
+    },
+    {
+      "rule_id": "e_major_keyword",
+      "derived_from": "d_major_keyword",
+      "field": "专业名称",
+      "operator": "contains",
+      "value": "计算机"
+    },
+    {
+      "rule_id": "e_city",
+      "derived_from": "d_city",
+      "field": "城市",
+      "operator": "in_contains",
+      "value": [
+        "广州",
+        "深圳"
+      ]
+    },
+    {
+      "rule_id": "e_safety_margin",
+      "derived_from": "c_safety_margin",
+      "field": "专业组最低位次1",
+      "operator": ">=",
+      "value": 35200,
+      "confirmation": "safety margin = 10%"
+    },
+    {
+      "rule_id": "e_tuition_cap",
+      "derived_from": "c_tuition_cap",
+      "field": "学费",
+      "operator": "<=",
+      "value": 20000,
+      "normalization": "parse numeric value from cell text",
+      "confirmation": "tuition cap = 20000"
+    }
+  ],
+  "non_executable_preferences": [
+    {
+      "source_text": "不想去太贵的中外合作",
+      "status": "not_executed",
+      "reason": "Missing dedicated cooperation_type field. No text-field inference is used in this MVP."
+    }
+  ]
+}
