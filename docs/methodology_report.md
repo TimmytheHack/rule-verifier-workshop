@@ -1,40 +1,86 @@
-# Methodology Report: Current MVP
+# Methodology Report: Preference-to-Rule Verification
 
-## 1. What The MVP Proves
+## 1. Project Positioning
 
-The current MVP proves that a natural-language college application preference can be converted into a small, auditable rule pipeline without pretending that every preference is executable.
+This project is a research-engineering methodology project, not a normal college recommendation bot.
 
-For one fixed input, the system demonstrates:
-
-- Excel schema inspection and real header-row detection.
-- Schema registry construction from actual fields only.
-- Separation of deterministic rules, candidate rules, and LLM-needed parts.
-- Verification before execution.
-- Confirmation-gated promotion of vague preferences.
-- Query execution using only verified and confirmed rules.
-- Row-level traces explaining why each result was returned.
-
-The key proof is conservative behavior: the system can say "this preference is not executable" when the dataset does not support it.
-
-## 2. Why This Is Not A Normal Recommendation Bot
-
-A normal recommendation bot tries to produce useful recommendations directly. This MVP studies a narrower and more safety-critical question:
+The case study is Guangdong college application planning using a structured Excel dataset. The research question is:
 
 ```text
-Which parts of a natural-language preference can be safely compiled into executable rules?
+When a user expresses preferences in natural language, which parts can be safely compiled into deterministic executable rules, which parts require human confirmation, and which parts should remain semantic or LLM-handled?
 ```
 
-The system does not rank schools by overall fit, predict admission probability, evaluate reputation, infer employment quality, or generate a complete志愿表.
+The main contribution is preventing unsafe promotion of vague natural-language preferences into deterministic executable rules.
 
-Instead, it treats recommendation as downstream of rule verification. The output is not just a list of rows; it is a list of rows plus the rules that produced them and the preferences that were not executed.
+The system should not directly answer with a final recommendation list unless it can explain:
 
-This distinction matters because high-stakes planning can be harmed by false precision. A rule that looks objective but was derived from a vague phrase can mislead users more than an explicit uncertainty warning.
+- which user preferences became executable rules;
+- which preferences required confirmation;
+- which preferences could not be executed because the schema does not support them;
+- why each returned row satisfies the verified rules.
 
-## 3. The Three Rule Classes
+## 2. Why This Is Not A Recommendation Bot
+
+A normal recommendation bot tries to produce useful suggestions directly. This project studies the step before recommendation:
+
+```text
+natural-language preference -> verified executable rule set
+```
+
+The current system does not generate a full志愿表, rank schools by reputation, predict employment outcomes, or make broad admission judgments. It focuses on whether a preference can be grounded in actual data fields and executed safely.
+
+This distinction matters because a vague phrase can become misleading when it is silently turned into a precise filter. For example:
+
+```text
+学校稳一点
+```
+
+should not automatically become:
+
+```text
+录取概率 = 高
+```
+
+or:
+
+```text
+safety_level = 稳妥
+```
+
+unless the system has a schema-grounded rule and the user confirms the interpretation.
+
+## 3. Methodology Pipeline
+
+The current methodology is:
+
+```text
+Natural-language input
+-> preference decomposition
+-> rule class assignment
+-> schema grounding
+-> rule verification
+-> human confirmation
+-> candidate promotion or rejection
+-> executable rule set
+-> backend-specific query execution
+-> result trace
+-> evaluation
+```
+
+Core principles:
+
+```text
+No schema grounding, no deterministic execution.
+No human confirmation, no candidate rule promotion.
+No trace, no verified result.
+Neural proposes; symbolic verifies and executes.
+```
+
+## 4. Rule Classes
 
 ### Deterministic Rules
 
-Deterministic rules are explicit, schema-grounded, and directly executable.
+Deterministic rules are explicit, schema-grounded, type-safe, and directly executable.
 
 Examples from the MVP:
 
@@ -45,54 +91,46 @@ Examples from the MVP:
 城市 contains 广州 or 深圳
 ```
 
-These rules are allowed because the required fields exist in the Excel schema and the user phrases are explicit enough.
+Exact keyword match can be deterministic when the field exists and the operation is allowed.
 
 ### Candidate Rules
 
-Candidate rules are plausible interpretations of vague preferences. They must not execute until confirmed.
+Candidate rules are plausible operational interpretations of vague preferences. They must not execute until the user confirms the interpretation.
 
-Examples from the MVP:
-
-```text
-稳一点 -> possible safety margin
-太贵 -> possible tuition threshold
-计算机相关扩展 -> possible semantic expansion
-```
-
-The MVP simulates confirmation for two of them:
+Examples:
 
 ```text
-稳一点 -> 10% safety margin
-太贵 -> 学费 <= 20000
+稳一点 -> choose safety margin: 5%, 10%, or 15%
+太贵 -> choose tuition cap
+计算机相关 -> choose whether to include 软件工程, 人工智能, 数据科学, 网络安全
+学校好一点 -> choose an explicit ranking/tag source, or do not execute
 ```
 
-It rejects major expansion for the first demo:
-
-```text
-计算机相关扩展 -> false
-```
+Candidate rules are intentionally blocked until promotion.
 
 ### LLM-Needed Or Non-Executable Parts
 
-LLM-needed parts are preferences that cannot be grounded in the current schema.
+LLM-needed or non-executable parts are preferences that cannot be safely grounded in the current schema.
 
-In the MVP:
+Example:
 
 ```text
-不想去太贵的中外合作
+不要中外合作
 ```
 
-The tuition part becomes a candidate rule because `学费` exists. The 中外合作 part remains non-executable because no reliable `cooperation_type` field exists.
+In the current Excel schema, there is no dedicated `cooperation_type` field. Therefore the system preserves this preference but does not execute it.
 
-## 4. First Demo Input
+The system also avoids deriving `cooperation_type` from free-text fields in the MVP. That inference may be possible later, but only after creating and verifying a derived structured field.
 
-The first demo input is:
+## 5. Current Demo
+
+Input:
 
 ```text
 我是广东物理类，排位32000，想学计算机，最好在广州深圳，学校稳一点，不想去太贵的中外合作。
 ```
 
-Hardcoded extracted slots:
+Extracted preferences:
 
 ```json
 {
@@ -107,11 +145,15 @@ Hardcoded extracted slots:
 }
 ```
 
-The hardcoding is intentional for this stage. The MVP tests the verifier and trace behavior before expanding into general extraction.
+Simulated confirmations:
 
-## 5. Final Executable Rules
+```text
+稳一点 -> safety margin = 10%
+太贵 -> tuition cap = 20000
+计算机相关扩展 -> false
+```
 
-After simulated confirmation, the final executable rules are:
+Final executable rules:
 
 ```text
 生源地 == 广东
@@ -122,141 +164,186 @@ After simulated confirmation, the final executable rules are:
 学费 <= 20000
 ```
 
-The threshold `35200` comes from:
+The threshold `35200` is derived from:
 
 ```text
-user_rank * 1.10 = 32000 * 1.10 = 35200
+32000 * 1.10 = 35200
 ```
 
-The query uses AND logic. A row must satisfy all six executable rules to appear in `filtered_results.csv`.
+The current workbook run produces 93 filtered rows.
 
-In the current workbook run, this produced 93 filtered rows.
+## 6. Schema Registry As System Boundary
 
-## 6. Why 中外合作 Was Not Executed
+The schema registry defines what the system may execute. A rule cannot become deterministic unless its field is present in the registry and passes verification.
 
-The Excel schema has no dedicated `cooperation_type` field.
-
-The system could try to infer 中外合作 from text fields such as:
-
-- `专业全称`
-- `专业备注`
-- `专业组名称`
-- `组内专业`
-
-The MVP deliberately does not do this. Text-pattern inference could confuse international classes, exchange programs, joint training, high tuition, and formal 中外合作办学. That would create an unverified derived field and violate the schema boundary.
-
-The rule is therefore blocked:
+The current MVP uses real Excel fields such as:
 
 ```text
-No schema grounding, no deterministic execution.
+生源地
+科类
+专业名称
+城市
+专业组最低位次1
+学费
 ```
 
-The result trace explicitly states:
+Missing but desired fields include:
 
 ```text
-Missing dedicated cooperation_type field; no text inference applied.
+cooperation_type
+school_reputation
+employment_outlook
+distance_from_home
+major_family
 ```
 
-## 7. Why This Matters For Rule Verification
+These missing fields may be useful, but they are not executable until they are represented as structured, verified schema fields.
 
-The most important risk in preference-to-rule systems is not that the system returns too few results. The greater risk is that it returns results after silently applying rules the user never confirmed or the data cannot support.
+## 7. Backend Abstraction
 
-This MVP shows three safety behaviors:
+Excel is only the first case study. The methodology separates rule verification from data execution.
 
-1. Vague preferences are not automatically promoted.
-2. Missing fields block execution.
-3. Every returned row carries a trace.
+The backend abstraction is:
 
-These behaviors make the system auditable. A user or researcher can inspect what was executed, what was confirmed, and what remained non-executable.
+| Component | Responsibility |
+|---|---|
+| Data Adapter | Load source data and expose real fields. |
+| Schema Registry | Define fields, types, aliases, allowed operators, nullability, and notes. |
+| Backend-specific Query Compiler | Convert verified rules into pandas, SQL, MongoDB, or API-specific query form. |
+| Executor | Execute compiled rules against the backend. |
+| Result Trace | Explain which rules produced each result. |
 
-This is the central research contribution of the MVP: recommendation outputs should be downstream of verifiable rule construction.
+Current executor:
 
-## 8. Current Limitations
+```text
+pandas executor for Excel/CSV
+```
 
-The current MVP is intentionally narrow.
+Future executors can include:
+
+```text
+SQL / DuckDB compiler
+MongoDB compiler
+API executor for tool-backed data
+```
+
+Non-structured text and PDF cannot be deterministically executed until structured schema has been extracted and verified.
+
+## 8. LLM Boundary
+
+The optional DeepSeek extractor is used only for preference extraction and source spans.
+
+Allowed LLM roles:
+
+- extract user context;
+- extract preference slots;
+- preserve source spans;
+- propose candidate interpretations.
+
+Disallowed LLM roles:
+
+- promote candidate rules;
+- verify schema existence;
+- decide final executability;
+- compile queries;
+- execute deterministic filters;
+- claim that missing fields exist.
+
+All DeepSeek output goes through the same rule classifier and symbolic verifier as regex output.
+
+## 9. Rule Verification Protocol
+
+Each executable rule must pass:
+
+- field existence check;
+- source column existence check;
+- type check;
+- operator check;
+- value normalization check;
+- ambiguity check;
+- data coverage check;
+- conflict check;
+- dry-run check;
+- traceability check.
+
+Verification output must explain why a rule is executable, blocked, or waiting for confirmation.
+
+## 10. Evaluation Summary
+
+The current evaluation compares task success under token budget.
+
+Single MVP input:
+
+| Method | Result rows | Task success | Total tokens |
+|---|---:|---:|---:|
+| `regex_extractor_symbolic_verifier` | 93 | 5/5 | 0 |
+| `deepseek_extractor_symbolic_verifier` | 93 | 5/5 | 762 |
+| `llm_only_baseline` | n/a | 1/5 | 810 |
+
+Fuzzy 10-input evaluation:
+
+| Method | Score | Success rate | Total tokens |
+|---|---:|---:|---:|
+| `rule_regex_extractor_symbolic_verifier` | 70/70 | 1.00 | 0 |
+| `deepseek_extractor_symbolic_verifier` | 70/70 | 1.00 | 5075 |
+| `llm_only_baseline` | 31/50 | 0.62 | 5329 |
+
+Pipeline token budget comparison:
+
+| Approach | Estimated/input tokens | Result |
+|---|---:|---|
+| Direct LLM with full Excel | 23,040,523 | Not executed; exceeds practical context budgets. |
+| Direct LLM with MVP columns only | 483,922 | Still large and lacks deterministic verification. |
+| DeepSeek extractor + symbolic verifier | 762 | 93 rows, 5/5. |
+| Regex extractor + symbolic verifier | 0 | 93 rows, 5/5. |
+
+The strongest evidence so far is not that LLMs are useless. It is that LLM extraction becomes safer when symbolic verification controls execution.
+
+## 11. Current Limitations
+
+The current system is still narrow.
 
 Limitations:
 
-- It supports only one input.
-- Slot extraction is hardcoded.
-- User confirmation is simulated.
-- It does not implement a UI.
-- It does not use an LLM.
-- It does not perform external web search.
+- The evaluation set is small.
+- Regex extraction is curated for current examples.
+- DeepSeek extraction has not been stress-tested at scale.
+- Human confirmation is simulated.
+- The system uses one Excel dataset and a pandas executor.
 - It does not generate a full志愿表.
-- It does not estimate admission probability.
 - It does not evaluate school reputation.
 - It does not predict employment outcomes.
-- It does not infer `cooperation_type` from text.
-- It does not expand `计算机` to related majors.
-- It uses `专业组最低位次1` as the safety field, which is a pragmatic MVP choice and should be evaluated against domain expectations.
+- It does not infer `cooperation_type` from text fields.
+- Token estimates for direct Excel prompting are approximate.
 
-These limits are acceptable because the current objective is to validate rule verification mechanics, not build a complete advising product.
+These limitations are acceptable for the current research stage because the goal is rule verification methodology, not a complete advising product.
 
-## 9. Next Evaluation Plan With 10 Test Inputs
+## 12. Next Methodology Work
 
-The next evaluation should test whether the system avoids deterministic over-promotion.
+Next steps should focus on evaluation and safety:
 
-Proposed test inputs:
+- Expand `eval_inputs.jsonl` to 30-50 inputs.
+- Add paraphrases for safety, cost, major family, location, school quality, and employment.
+- Track deterministic over-promotion rate as the main safety metric.
+- Track schema hallucination rate separately.
+- Add per-rule trace completeness scoring.
+- Add adversarial inputs for unsupported but tempting fields.
+- Test whether DeepSeek extraction remains stable under incomplete or contradictory inputs.
+- Keep recommendation quality evaluation separate from rule verification evaluation.
 
-| ID | Input | Main expected behavior |
-|---|---|---|
-| T01 | 我是广东物理类，排位32000，想学计算机，最好在广州深圳，学校稳一点，不想去太贵的中外合作。 | Same as current demo. 中外合作 not executable. |
-| T02 | 广东物理，排位50000，只看广州，计算机。 | Deterministic rules only, no vague risk rule. |
-| T03 | 广东历史类，排位20000，想读法学，学校好一点。 | 学校好一点 must be candidate or LLM-needed, not automatic ranking filter. |
-| T04 | 物理类，排位45000，计算机相关都可以。 | 计算机相关 must require confirmation for expansion. |
-| T05 | 广东物理，排位60000，不想太贵。 | Tuition threshold must be requested; no invented cap. |
-| T06 | 广东物理，排位35000，想冲一冲计算机。 | 冲一冲 must be candidate with explicit risk interpretation. |
-| T07 | 广东物理，排位32000，不要中外合作。 | Must be non-executable unless `cooperation_type` is available. |
-| T08 | 广东物理，排位40000，想要就业前景好。 | 就业前景好 must be LLM-needed or external-evidence-needed. |
-| T09 | 广东物理，排位30000，深圳，软件工程。 | 软件工程 exact keyword can be deterministic if no semantic expansion is needed. |
-| T10 | 广东物理，排位32000，想去一线城市，费用别太高。 | 一线城市 depends on schema field; 费用别太高 requires confirmation. |
+## 13. Generalization
 
-Evaluation metrics:
+The methodology can generalize to other structured decision systems where users express natural-language preferences over structured data:
 
-- Slot extraction precision and recall.
-- Field mapping accuracy.
-- Candidate recall.
-- Schema violation rate.
-- Invalid rule rejection rate.
-- Trace completeness.
-- Execution success rate.
-- Deterministic over-promotion rate.
+- course selection;
+- rental filtering;
+- job filtering;
+- product recommendation;
+- investment screening;
+- scholarship or program matching.
 
-The most important metric is:
+The reusable idea is not the Guangdong-specific rules. The reusable idea is the boundary:
 
 ```text
-deterministic over-promotion rate
-```
-
-The target should be near zero, even if that means fewer rules execute automatically.
-
-## 10. Generalization To Other Structured Decision Systems
-
-The same methodology can generalize beyond college applications wherever users express preferences over structured data.
-
-Examples:
-
-- Course selection: schedule, prerequisites, difficulty, instructor, graduation requirements.
-- Rental recommendation: budget, commute, district, room type, vague safety preferences.
-- Job filtering: location, salary, role title, industry, culture, growth potential.
-- Product recommendation: price, brand, specifications, subjective quality, reliability.
-- Investment screening: sector, market cap, valuation, liquidity, risk tolerance.
-
-The transferable pattern is:
-
-```text
-natural-language preference
--> rule class assignment
--> schema grounding
--> verification
--> confirmation
--> execution
--> trace
-```
-
-The domain-specific part is the schema registry and candidate-rule policy. The safety principle remains the same:
-
-```text
-Only execute what is grounded, verified, confirmed when needed, and traceable.
+Natural language may propose structure, but only verified schema-grounded rules may execute.
 ```
