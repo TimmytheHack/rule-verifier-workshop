@@ -1,0 +1,61 @@
+{
+  "fields": {
+    "source_province": {
+      "source_column": "生源地",
+      "type": "string",
+      "aliases": ["广东", "生源地", "考生省份"],
+      "allowed_ops": ["eq"],
+      "nullable": false,
+      "notes": "User source province. For this demo, 广东 is grounded in 生源地."
+    },
+    "subject_type": {
+      "source_column": "科类",
+      "type": "enum",
+      "aliases": ["物理类", "历史类", "科类"],
+      "allowed_ops": ["eq"],
+      "nullable": false,
+      "notes": "The demo normalizes 物理类 to 物理."
+    },
+    "major_name": {
+      "source_column": "专业名称",
+      "type": "string",
+      "aliases": ["专业", "想学", "计算机"],
+      "allowed_ops": ["contains", "eq"],
+      "nullable": false,
+      "notes": "Only exact keyword matching is deterministic in this MVP."
+    },
+    "city": {
+      "source_column": "城市",
+      "type": "string",
+      "aliases": ["城市", "广州", "深圳"],
+      "allowed_ops": ["contains", "in_contains"],
+      "nullable": true,
+      "notes": "The demo uses contains matching for 广州 and 深圳."
+    },
+    "group_min_rank_2024": {
+      "source_column": "专业组最低位次1",
+      "type": "number",
+      "aliases": ["专业组最低位次", "2024最低排位", "稳一点"],
+      "allowed_ops": [">=", "<=", "between", "sort"],
+      "nullable": true,
+      "notes": "Used as the confirmed safety-margin field in this MVP."
+    },
+    "tuition_yuan_per_year": {
+      "source_column": "学费",
+      "type": "number_from_string",
+      "aliases": ["学费", "太贵", "费用"],
+      "allowed_ops": ["<=", ">=", "between"],
+      "nullable": true,
+      "notes": "Parsed as a number from the Excel cell value."
+    },
+    "cooperation_type": {
+      "source_column": null,
+      "status": "missing",
+      "type": "enum",
+      "aliases": ["中外合作", "合作办学", "国际合作"],
+      "allowed_ops": ["eq", "neq", "in", "not_in"],
+      "nullable": true,
+      "notes": "Missing in the current Excel schema. Do not execute 中外合作 exclusion."
+    }
+  }
+}

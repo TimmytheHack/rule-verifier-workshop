@@ -1,0 +1,32 @@
+[
+  {
+    "term": "稳一点",
+    "class": "risk_vague",
+    "candidate_action": "ask_safety_margin",
+    "requires_human_confirmation": true
+  },
+  {
+    "term": "太贵",
+    "class": "threshold_vague",
+    "candidate_action": "ask_tuition_cap",
+    "requires_human_confirmation": true
+  },
+  {
+    "term": "相关",
+    "class": "semantic_expansion",
+    "candidate_action": "ask_expansion_terms",
+    "requires_human_confirmation": true
+  },
+  {
+    "term": "好一点",
+    "class": "quality_vague",
+    "candidate_action": "ask_quality_proxy",
+    "requires_human_confirmation": true
+  },
+  {
+    "term": "就业前景好",
+    "class": "external_semantic",
+    "candidate_action": "llm_needed",
+    "requires_human_confirmation": false
+  }
+]
