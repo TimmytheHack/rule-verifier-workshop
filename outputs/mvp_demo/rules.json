@@ -128,18 +128,19 @@
       "field_id": "source_province",
       "field": "生源地",
       "operator": "eq",
-      "value": "广东",
       "confidence": 1.0,
       "requires_human_confirmation": false,
       "trace_reason": "The user explicitly states 广东 and the Excel field 生源地 exists.",
-      "status": "verified",
+      "value": "广东",
       "verification": {
         "field_exists": true,
         "operator_allowed": true,
+        "value_present": true,
         "ambiguity_detected": false,
         "requires_human_confirmation": false,
         "executable": true
-      }
+      },
+      "status": "verified"
     },
     {
       "rule_id": "d_subject_type",
@@ -148,18 +149,19 @@
       "field_id": "subject_type",
       "field": "科类",
       "operator": "eq",
-      "value": "物理",
       "confidence": 1.0,
       "requires_human_confirmation": false,
       "trace_reason": "The user explicitly states 物理类 and the Excel field 科类 exists.",
-      "status": "verified",
+      "value": "物理",
       "verification": {
         "field_exists": true,
         "operator_allowed": true,
+        "value_present": true,
         "ambiguity_detected": false,
         "requires_human_confirmation": false,
         "executable": true
-      }
+      },
+      "status": "verified"
     },
     {
       "rule_id": "d_major_keyword",
@@ -168,18 +170,19 @@
       "field_id": "major_name",
       "field": "专业名称",
       "operator": "contains",
-      "value": "计算机",
       "confidence": 1.0,
       "requires_human_confirmation": false,
       "trace_reason": "Exact keyword matching is allowed in the MVP.",
-      "status": "verified",
+      "value": "计算机",
       "verification": {
         "field_exists": true,
         "operator_allowed": true,
+        "value_present": true,
         "ambiguity_detected": false,
         "requires_human_confirmation": false,
         "executable": true
-      }
+      },
+      "status": "verified"
     },
     {
       "rule_id": "d_city",
@@ -188,21 +191,22 @@
       "field_id": "city",
       "field": "城市",
       "operator": "in_contains",
+      "confidence": 1.0,
+      "requires_human_confirmation": false,
+      "trace_reason": "The Excel field 城市 exists and contains relevant values.",
       "value": [
         "广州",
         "深圳"
       ],
-      "confidence": 1.0,
-      "requires_human_confirmation": false,
-      "trace_reason": "The Excel field 城市 exists and contains relevant values.",
-      "status": "verified",
       "verification": {
         "field_exists": true,
         "operator_allowed": true,
+        "value_present": true,
         "ambiguity_detected": false,
         "requires_human_confirmation": false,
         "executable": true
-      }
+      },
+      "status": "verified"
     }
   ],
   "context_rules": [
@@ -213,17 +217,17 @@
       "field_id": "user_rank",
       "field": "user_rank",
       "operator": "set_context",
-      "value": 32000,
       "confidence": 1.0,
       "requires_human_confirmation": false,
+      "trace_reason": "User rank is context for confirmed candidate rules, not an Excel filter.",
+      "value": 32000,
       "verification": {
         "field_exists": true,
         "operator_allowed": true,
         "ambiguity_detected": false,
         "requires_human_confirmation": false,
         "executable": false
-      },
-      "trace_reason": "User rank is context for confirmed candidate rules, not an Excel filter."
+      }
     }
   ],
   "candidate_rules": [
@@ -246,6 +250,7 @@
       "verification": {
         "field_exists": true,
         "operator_allowed": true,
+        "value_present": false,
         "ambiguity_detected": true,
         "requires_human_confirmation": true,
         "executable": false
@@ -270,6 +275,7 @@
       "verification": {
         "field_exists": true,
         "operator_allowed": true,
+        "value_present": false,
         "ambiguity_detected": true,
         "requires_human_confirmation": true,
         "executable": false
@@ -295,6 +301,7 @@
       "verification": {
         "field_exists": true,
         "operator_allowed": false,
+        "value_present": false,
         "ambiguity_detected": true,
         "requires_human_confirmation": true,
         "executable": false
@@ -311,12 +318,12 @@
       "field": "cooperation_type",
       "reason": "The schema registry has no dedicated cooperation_type field.",
       "allowed_behavior": "Do not infer cooperation_type from text fields in this MVP.",
+      "trace_reason": "No dedicated cooperation_type field, so the preference is preserved but not executed.",
       "verification": {
         "field_exists": false,
         "schema_grounded": false,
         "executable": false
-      },
-      "trace_reason": "No dedicated cooperation_type field, so the preference is preserved but not executed."
+      }
     }
   ],
   "confirmation_questions": [

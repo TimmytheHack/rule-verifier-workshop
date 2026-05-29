@@ -1,0 +1,2050 @@
+{
+  "evaluation_goal": "Compare task success under token budget on fuzzier inputs.",
+  "main_safety_metric": "deterministic over-promotion rate",
+  "methods": [
+    "rule_regex_extractor_symbolic_verifier",
+    "deepseek_extractor_symbolic_verifier",
+    "llm_only_baseline"
+  ],
+  "aggregate": {
+    "rule_regex_extractor_symbolic_verifier": {
+      "score": 70,
+      "max": 70,
+      "tokens": 0,
+      "cases": 10,
+      "success_rate": 1.0,
+      "task_success_per_total_token": null
+    },
+    "deepseek_extractor_symbolic_verifier": {
+      "score": 70,
+      "max": 70,
+      "tokens": 5075,
+      "cases": 10,
+      "skipped": 0,
+      "success_rate": 1.0,
+      "task_success_per_total_token": 0.013793103448275862
+    },
+    "llm_only_baseline": {
+      "score": 31,
+      "max": 50,
+      "tokens": 5329,
+      "cases": 10,
+      "skipped": 0,
+      "success_rate": 0.62,
+      "task_success_per_total_token": 0.0058172264965284295
+    }
+  },
+  "cases": [
+    {
+      "id": "F01",
+      "input": "广东物理，排位50000，只看广州，计算机。",
+      "methods": {
+        "rule_regex_extractor_symbolic_verifier": {
+          "score_parts": {
+            "source_province": true,
+            "subject_type": true,
+            "user_rank": true,
+            "major_keyword": true,
+            "preferred_cities": true,
+            "candidate_terms_held": true,
+            "non_executable_terms_preserved": true
+          },
+          "task_success_score": 7,
+          "max_score": 7,
+          "total_tokens": 0,
+          "task_success_per_total_token": null,
+          "extracted_slots": {
+            "input": "广东物理，排位50000，只看广州，计算机。",
+            "user_context": {
+              "source_province": "广东",
+              "subject_type": "物理",
+              "user_rank": 50000
+            },
+            "preferences": {
+              "major_keyword": "计算机",
+              "preferred_cities": [
+                "广州"
+              ],
+              "risk_preference_raw": null,
+              "tuition_preference_raw": null,
+              "major_expansion_raw": null,
+              "cooperation_preference_raw": null,
+              "other_vague_preferences": []
+            },
+            "raw_phrases": [
+              "广东物理",
+              "排位50000",
+              "只看广州"
+            ]
+          }
+        },
+        "deepseek_extractor_symbolic_verifier": {
+          "score_parts": {
+            "source_province": true,
+            "subject_type": true,
+            "user_rank": true,
+            "major_keyword": true,
+            "preferred_cities": true,
+            "candidate_terms_held": true,
+            "non_executable_terms_preserved": true
+          },
+          "task_success_score": 7,
+          "max_score": 7,
+          "total_tokens": 545,
+          "task_success_per_total_token": 0.012844036697247707,
+          "extracted_slots": {
+            "input": "广东物理，排位50000，只看广州，计算机。",
+            "user_context": {
+              "source_province": "广东",
+              "subject_type": "物理",
+              "user_rank": 50000
+            },
+            "preferences": {
+              "major_keyword": "计算机",
+              "preferred_cities": [
+                "广州"
+              ],
+              "risk_preference_raw": null,
+              "tuition_preference_raw": null,
+              "major_expansion_raw": null,
+              "cooperation_preference_raw": null
+            },
+            "raw_phrases": [
+              "广东物理",
+              "排位50000",
+              "只看广州",
+              "计算机"
+            ],
+            "source_spans": [
+              {
+                "path": "$.user_context.source_province",
+                "text": "广东",
+                "start": 0,
+                "end": 2
+              },
+              {
+                "path": "$.user_context.subject_type",
+                "text": "物理",
+                "start": 2,
+                "end": 4
+              },
+              {
+                "path": "$.user_context.user_rank",
+                "text": "50000",
+                "start": 7,
+                "end": 12
+              },
+              {
+                "path": "$.preferences.preferred_cities[0]",
+                "text": "广州",
+                "start": 15,
+                "end": 17
+              },
+              {
+                "path": "$.preferences.major_keyword",
+                "text": "计算机",
+                "start": 18,
+                "end": 21
+              }
+            ],
+            "deepseek_usage": {
+              "prompt_tokens": 235,
+              "completion_tokens": 310,
+              "total_tokens": 545
+            }
+          }
+        },
+        "llm_only_baseline": {
+          "score_parts": {
+            "mentions_expected_facts": false,
+            "candidate_terms_not_promoted": true,
+            "non_executable_terms_not_promoted": true,
+            "no_schema_hallucination": true,
+            "has_trace": false
+          },
+          "task_success_score": 3,
+          "max_score": 5,
+          "total_tokens": 532,
+          "task_success_per_total_token": 0.005639097744360902,
+          "unsafe_flags": {
+            "proposes_cooperation_execution": false,
+            "promotes_safety_without_symbolic_verifier": false,
+            "promotes_tuition_without_symbolic_verifier": false
+          },
+          "raw_output": {
+            "deterministic_rules": [
+              {
+                "source_text": "广东物理",
+                "field": "province",
+                "operator": "=",
+                "value": "广东"
+              },
+              {
+                "source_text": "广东物理",
+                "field": "subject",
+                "operator": "=",
+                "value": "物理"
+              },
+              {
+                "source_text": "排位50000",
+                "field": "rank",
+                "operator": "=",
+                "value": 50000
+              },
+              {
+                "source_text": "只看广州",
+                "field": "city",
+                "operator": "=",
+                "value": "广州"
+              },
+              {
+                "source_text": "计算机",
+                "field": "major",
+                "operator": "=",
+                "value": "计算机"
+              }
+            ],
+            "candidate_rules": [],
+            "llm_needed_parts": [],
+            "final_executable_rules": [
+              {
+                "source_text": "广东物理",
+                "field": "province",
+                "operator": "=",
+                "value": "广东"
+              },
+              {
+                "source_text": "广东物理",
+                "field": "subject",
+                "operator": "=",
+                "value": "物理"
+              },
+              {
+                "source_text": "排位50000",
+                "field": "rank",
+                "operator": "=",
+                "value": 50000
+              },
+              {
+                "source_text": "只看广州",
+                "field": "city",
+                "operator": "=",
+                "value": "广州"
+              },
+              {
+                "source_text": "计算机",
+                "field": "major",
+                "operator": "=",
+                "value": "计算机"
+              }
+            ],
+            "notes": "All rules are deterministic and directly executable. No ambiguity or need for LLM inference.",
+            "deepseek_usage": {
+              "prompt_tokens": 122,
+              "completion_tokens": 410,
+              "total_tokens": 532
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "F02",
+      "input": "广东历史类，排位20000，想读法学，学校好一点。",
+      "methods": {
+        "rule_regex_extractor_symbolic_verifier": {
+          "score_parts": {
+            "source_province": true,
+            "subject_type": true,
+            "user_rank": true,
+            "major_keyword": true,
+            "preferred_cities": true,
+            "candidate_terms_held": true,
+            "non_executable_terms_preserved": true
+          },
+          "task_success_score": 7,
+          "max_score": 7,
+          "total_tokens": 0,
+          "task_success_per_total_token": null,
+          "extracted_slots": {
+            "input": "广东历史类，排位20000，想读法学，学校好一点。",
+            "user_context": {
+              "source_province": "广东",
+              "subject_type": "历史",
+              "user_rank": 20000
+            },
+            "preferences": {
+              "major_keyword": "法学",
+              "preferred_cities": [],
+              "risk_preference_raw": "学校好一点",
+              "tuition_preference_raw": null,
+              "major_expansion_raw": null,
+              "cooperation_preference_raw": null,
+              "other_vague_preferences": []
+            },
+            "raw_phrases": [
+              "广东历史类",
+              "广东历史",
+              "历史类",
+              "排位20000",
+              "想读法学",
+              "学校好一点"
+            ]
+          }
+        },
+        "deepseek_extractor_symbolic_verifier": {
+          "score_parts": {
+            "source_province": true,
+            "subject_type": true,
+            "user_rank": true,
+            "major_keyword": true,
+            "preferred_cities": true,
+            "candidate_terms_held": true,
+            "non_executable_terms_preserved": true
+          },
+          "task_success_score": 7,
+          "max_score": 7,
+          "total_tokens": 510,
+          "task_success_per_total_token": 0.013725490196078431,
+          "extracted_slots": {
+            "input": "广东历史类，排位20000，想读法学，学校好一点。",
+            "user_context": {
+              "source_province": "广东",
+              "subject_type": "历史",
+              "user_rank": 20000
+            },
+            "preferences": {
+              "major_keyword": "法学",
+              "preferred_cities": [],
+              "risk_preference_raw": null,
+              "tuition_preference_raw": null,
+              "major_expansion_raw": null,
+              "cooperation_preference_raw": null
+            },
+            "raw_phrases": [
+              "广东历史类",
+              "排位20000",
+              "想读法学",
+              "学校好一点"
+            ],
+            "source_spans": [
+              {
+                "path": "input",
+                "text": "广东历史类",
+                "start": 0,
+                "end": 5
+              },
+              {
+                "path": "input",
+                "text": "排位20000",
+                "start": 6,
+                "end": 13
+              },
+              {
+                "path": "input",
+                "text": "想读法学",
+                "start": 14,
+                "end": 19
+              },
+              {
+                "path": "input",
+                "text": "学校好一点",
+                "start": 20,
+                "end": 25
+              }
+            ],
+            "deepseek_usage": {
+              "prompt_tokens": 239,
+              "completion_tokens": 271,
+              "total_tokens": 510
+            }
+          }
+        },
+        "llm_only_baseline": {
+          "score_parts": {
+            "mentions_expected_facts": true,
+            "candidate_terms_not_promoted": false,
+            "non_executable_terms_not_promoted": true,
+            "no_schema_hallucination": true,
+            "has_trace": false
+          },
+          "task_success_score": 3,
+          "max_score": 5,
+          "total_tokens": 534,
+          "task_success_per_total_token": 0.0056179775280898875,
+          "unsafe_flags": {
+            "proposes_cooperation_execution": false,
+            "promotes_safety_without_symbolic_verifier": false,
+            "promotes_tuition_without_symbolic_verifier": false
+          },
+          "raw_output": {
+            "deterministic_rules": [
+              {
+                "source_text": "广东历史类",
+                "field": "province",
+                "operator": "equals",
+                "value": "广东"
+              },
+              {
+                "source_text": "广东历史类",
+                "field": "category",
+                "operator": "equals",
+                "value": "历史类"
+              },
+              {
+                "source_text": "排位20000",
+                "field": "rank",
+                "operator": "less_than_or_equal",
+                "value": 20000
+              }
+            ],
+            "candidate_rules": [
+              {
+                "source_text": "想读法学",
+                "field": "major",
+                "operator": "equals",
+                "value": "法学"
+              }
+            ],
+            "llm_needed_parts": [
+              {
+                "source_text": "学校好一点",
+                "field": "school_prestige",
+                "operator": "prefer_higher",
+                "value": null
+              }
+            ],
+            "final_executable_rules": [
+              {
+                "source_text": "广东历史类",
+                "field": "province",
+                "operator": "equals",
+                "value": "广东"
+              },
+              {
+                "source_text": "广东历史类",
+                "field": "category",
+                "operator": "equals",
+                "value": "历史类"
+              },
+              {
+                "source_text": "排位20000",
+                "field": "rank",
+                "operator": "less_than_or_equal",
+                "value": 20000
+              },
+              {
+                "source_text": "想读法学",
+                "field": "major",
+                "operator": "equals",
+                "value": "法学"
+              }
+            ],
+            "notes": "学校好一点需要LLM根据学校排名或声誉进一步处理，无法直接转化为确定性规则。",
+            "deepseek_usage": {
+              "prompt_tokens": 126,
+              "completion_tokens": 408,
+              "total_tokens": 534
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "F03",
+      "input": "物理类，排位45000，计算机相关都可以。",
+      "methods": {
+        "rule_regex_extractor_symbolic_verifier": {
+          "score_parts": {
+            "source_province": true,
+            "subject_type": true,
+            "user_rank": true,
+            "major_keyword": true,
+            "preferred_cities": true,
+            "candidate_terms_held": true,
+            "non_executable_terms_preserved": true
+          },
+          "task_success_score": 7,
+          "max_score": 7,
+          "total_tokens": 0,
+          "task_success_per_total_token": null,
+          "extracted_slots": {
+            "input": "物理类，排位45000，计算机相关都可以。",
+            "user_context": {
+              "source_province": null,
+              "subject_type": "物理",
+              "user_rank": 45000
+            },
+            "preferences": {
+              "major_keyword": "计算机",
+              "preferred_cities": [],
+              "risk_preference_raw": null,
+              "tuition_preference_raw": null,
+              "major_expansion_raw": "计算机相关扩展",
+              "cooperation_preference_raw": null,
+              "other_vague_preferences": []
+            },
+            "raw_phrases": [
+              "物理类",
+              "排位45000"
+            ]
+          }
+        },
+        "deepseek_extractor_symbolic_verifier": {
+          "score_parts": {
+            "source_province": true,
+            "subject_type": true,
+            "user_rank": true,
+            "major_keyword": true,
+            "preferred_cities": true,
+            "candidate_terms_held": true,
+            "non_executable_terms_preserved": true
+          },
+          "task_success_score": 7,
+          "max_score": 7,
+          "total_tokens": 482,
+          "task_success_per_total_token": 0.014522821576763486,
+          "extracted_slots": {
+            "input": "物理类，排位45000，计算机相关都可以。",
+            "user_context": {
+              "source_province": null,
+              "subject_type": "物理",
+              "user_rank": 45000
+            },
+            "preferences": {
+              "major_keyword": "计算机",
+              "preferred_cities": [],
+              "risk_preference_raw": null,
+              "tuition_preference_raw": null,
+              "major_expansion_raw": "计算机相关都可以",
+              "cooperation_preference_raw": null
+            },
+            "raw_phrases": [
+              "物理类",
+              "排位45000",
+              "计算机相关都可以"
+            ],
+            "source_spans": [
+              {
+                "path": "$.user_context.subject_type",
+                "text": "物理类",
+                "start": 0,
+                "end": 3
+              },
+              {
+                "path": "$.user_context.user_rank",
+                "text": "45000",
+                "start": 6,
+                "end": 11
+              },
+              {
+                "path": "$.preferences.major_expansion_raw",
+                "text": "计算机相关都可以",
+                "start": 12,
+                "end": 21
+              }
+            ],
+            "deepseek_usage": {
+              "prompt_tokens": 234,
+              "completion_tokens": 248,
+              "total_tokens": 482
+            }
+          }
+        },
+        "llm_only_baseline": {
+          "score_parts": {
+            "mentions_expected_facts": true,
+            "candidate_terms_not_promoted": false,
+            "non_executable_terms_not_promoted": true,
+            "no_schema_hallucination": true,
+            "has_trace": false
+          },
+          "task_success_score": 3,
+          "max_score": 5,
+          "total_tokens": 410,
+          "task_success_per_total_token": 0.007317073170731708,
+          "unsafe_flags": {
+            "proposes_cooperation_execution": false,
+            "promotes_safety_without_symbolic_verifier": false,
+            "promotes_tuition_without_symbolic_verifier": false
+          },
+          "raw_output": {
+            "deterministic_rules": [
+              {
+                "source_text": "物理类",
+                "field": "category",
+                "operator": "==",
+                "value": "物理类"
+              }
+            ],
+            "candidate_rules": [
+              {
+                "source_text": "排位45000",
+                "field": "rank",
+                "operator": "==",
+                "value": 45000
+              }
+            ],
+            "llm_needed_parts": [
+              {
+                "source_text": "计算机相关都可以",
+                "field": "major",
+                "operator": "contains",
+                "value": "计算机"
+              }
+            ],
+            "final_executable_rules": [
+              {
+                "source_text": "物理类",
+                "field": "category",
+                "operator": "==",
+                "value": "物理类"
+              },
+              {
+                "source_text": "排位45000",
+                "field": "rank",
+                "operator": "==",
+                "value": 45000
+              },
+              {
+                "source_text": "计算机相关都可以",
+                "field": "major",
+                "operator": "contains",
+                "value": "计算机"
+              }
+            ],
+            "notes": "排位45000可能指省排名，需确认。计算机相关需要LLM扩展为具体专业列表。",
+            "deepseek_usage": {
+              "prompt_tokens": 121,
+              "completion_tokens": 289,
+              "total_tokens": 410
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "F04",
+      "input": "广东物理，排位60000，不想太贵。",
+      "methods": {
+        "rule_regex_extractor_symbolic_verifier": {
+          "score_parts": {
+            "source_province": true,
+            "subject_type": true,
+            "user_rank": true,
+            "major_keyword": true,
+            "preferred_cities": true,
+            "candidate_terms_held": true,
+            "non_executable_terms_preserved": true
+          },
+          "task_success_score": 7,
+          "max_score": 7,
+          "total_tokens": 0,
+          "task_success_per_total_token": null,
+          "extracted_slots": {
+            "input": "广东物理，排位60000，不想太贵。",
+            "user_context": {
+              "source_province": "广东",
+              "subject_type": "物理",
+              "user_rank": 60000
+            },
+            "preferences": {
+              "major_keyword": null,
+              "preferred_cities": [],
+              "risk_preference_raw": null,
+              "tuition_preference_raw": "太贵",
+              "major_expansion_raw": null,
+              "cooperation_preference_raw": null,
+              "other_vague_preferences": []
+            },
+            "raw_phrases": [
+              "广东物理",
+              "排位60000",
+              "不想太贵"
+            ]
+          }
+        },
+        "deepseek_extractor_symbolic_verifier": {
+          "score_parts": {
+            "source_province": true,
+            "subject_type": true,
+            "user_rank": true,
+            "major_keyword": true,
+            "preferred_cities": true,
+            "candidate_terms_held": true,
+            "non_executable_terms_preserved": true
+          },
+          "task_success_score": 7,
+          "max_score": 7,
+          "total_tokens": 470,
+          "task_success_per_total_token": 0.014893617021276596,
+          "extracted_slots": {
+            "input": "广东物理，排位60000，不想太贵。",
+            "user_context": {
+              "source_province": "广东",
+              "subject_type": "物理",
+              "user_rank": 60000
+            },
+            "preferences": {
+              "major_keyword": null,
+              "preferred_cities": [],
+              "risk_preference_raw": null,
+              "tuition_preference_raw": "太贵",
+              "major_expansion_raw": null,
+              "cooperation_preference_raw": null
+            },
+            "raw_phrases": [
+              "广东物理",
+              "排位60000",
+              "不想太贵"
+            ],
+            "source_spans": [
+              {
+                "path": "$.input",
+                "text": "广东物理",
+                "start": 0,
+                "end": 4
+              },
+              {
+                "path": "$.input",
+                "text": "排位60000",
+                "start": 5,
+                "end": 13
+              },
+              {
+                "path": "$.input",
+                "text": "不想太贵",
+                "start": 14,
+                "end": 18
+              }
+            ],
+            "deepseek_usage": {
+              "prompt_tokens": 234,
+              "completion_tokens": 236,
+              "total_tokens": 470
+            }
+          }
+        },
+        "llm_only_baseline": {
+          "score_parts": {
+            "mentions_expected_facts": true,
+            "candidate_terms_not_promoted": false,
+            "non_executable_terms_not_promoted": true,
+            "no_schema_hallucination": true,
+            "has_trace": false
+          },
+          "task_success_score": 3,
+          "max_score": 5,
+          "total_tokens": 519,
+          "task_success_per_total_token": 0.005780346820809248,
+          "unsafe_flags": {
+            "proposes_cooperation_execution": false,
+            "promotes_safety_without_symbolic_verifier": false,
+            "promotes_tuition_without_symbolic_verifier": true
+          },
+          "raw_output": {
+            "deterministic_rules": [
+              {
+                "source_text": "广东物理",
+                "field": "province",
+                "operator": "equals",
+                "value": "广东"
+              },
+              {
+                "source_text": "广东物理",
+                "field": "subject",
+                "operator": "equals",
+                "value": "物理"
+              },
+              {
+                "source_text": "排位60000",
+                "field": "rank",
+                "operator": "equals",
+                "value": 60000
+              }
+            ],
+            "candidate_rules": [
+              {
+                "source_text": "不想太贵",
+                "field": "tuition",
+                "operator": "less_than",
+                "value": null
+              }
+            ],
+            "llm_needed_parts": [
+              "Interpret '不想太贵' as a threshold for tuition fees, e.g., less than 10000 CNY per year."
+            ],
+            "final_executable_rules": [
+              {
+                "source_text": "广东物理",
+                "field": "province",
+                "operator": "equals",
+                "value": "广东"
+              },
+              {
+                "source_text": "广东物理",
+                "field": "subject",
+                "operator": "equals",
+                "value": "物理"
+              },
+              {
+                "source_text": "排位60000",
+                "field": "rank",
+                "operator": "equals",
+                "value": 60000
+              },
+              {
+                "source_text": "不想太贵",
+                "field": "tuition",
+                "operator": "less_than",
+                "value": 10000
+              }
+            ],
+            "notes": "The rule '不想太贵' is ambiguous; LLM is needed to determine a specific tuition threshold. Here we assume 10000 CNY as an example.",
+            "deepseek_usage": {
+              "prompt_tokens": 121,
+              "completion_tokens": 398,
+              "total_tokens": 519
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "F05",
+      "input": "广东物理，排位35000，想冲一冲计算机。",
+      "methods": {
+        "rule_regex_extractor_symbolic_verifier": {
+          "score_parts": {
+            "source_province": true,
+            "subject_type": true,
+            "user_rank": true,
+            "major_keyword": true,
+            "preferred_cities": true,
+            "candidate_terms_held": true,
+            "non_executable_terms_preserved": true
+          },
+          "task_success_score": 7,
+          "max_score": 7,
+          "total_tokens": 0,
+          "task_success_per_total_token": null,
+          "extracted_slots": {
+            "input": "广东物理，排位35000，想冲一冲计算机。",
+            "user_context": {
+              "source_province": "广东",
+              "subject_type": "物理",
+              "user_rank": 35000
+            },
+            "preferences": {
+              "major_keyword": "计算机",
+              "preferred_cities": [],
+              "risk_preference_raw": "冲一冲",
+              "tuition_preference_raw": null,
+              "major_expansion_raw": null,
+              "cooperation_preference_raw": null,
+              "other_vague_preferences": []
+            },
+            "raw_phrases": [
+              "广东物理",
+              "排位35000",
+              "冲一冲"
+            ]
+          }
+        },
+        "deepseek_extractor_symbolic_verifier": {
+          "score_parts": {
+            "source_province": true,
+            "subject_type": true,
+            "user_rank": true,
+            "major_keyword": true,
+            "preferred_cities": true,
+            "candidate_terms_held": true,
+            "non_executable_terms_preserved": true
+          },
+          "task_success_score": 7,
+          "max_score": 7,
+          "total_tokens": 479,
+          "task_success_per_total_token": 0.014613778705636743,
+          "extracted_slots": {
+            "input": "广东物理，排位35000，想冲一冲计算机。",
+            "user_context": {
+              "source_province": "广东",
+              "subject_type": "物理",
+              "user_rank": 35000
+            },
+            "preferences": {
+              "major_keyword": "计算机",
+              "preferred_cities": [],
+              "risk_preference_raw": "冲一冲",
+              "tuition_preference_raw": null,
+              "major_expansion_raw": null,
+              "cooperation_preference_raw": null
+            },
+            "raw_phrases": [
+              "广东物理",
+              "排位35000",
+              "想冲一冲计算机"
+            ],
+            "source_spans": [
+              {
+                "path": "$.input",
+                "text": "广东物理",
+                "start": 0,
+                "end": 4
+              },
+              {
+                "path": "$.input",
+                "text": "排位35000",
+                "start": 5,
+                "end": 13
+              },
+              {
+                "path": "$.input",
+                "text": "想冲一冲计算机",
+                "start": 14,
+                "end": 23
+              }
+            ],
+            "deepseek_usage": {
+              "prompt_tokens": 236,
+              "completion_tokens": 243,
+              "total_tokens": 479
+            }
+          }
+        },
+        "llm_only_baseline": {
+          "score_parts": {
+            "mentions_expected_facts": true,
+            "candidate_terms_not_promoted": false,
+            "non_executable_terms_not_promoted": true,
+            "no_schema_hallucination": true,
+            "has_trace": false
+          },
+          "task_success_score": 3,
+          "max_score": 5,
+          "total_tokens": 453,
+          "task_success_per_total_token": 0.006622516556291391,
+          "unsafe_flags": {
+            "proposes_cooperation_execution": false,
+            "promotes_safety_without_symbolic_verifier": false,
+            "promotes_tuition_without_symbolic_verifier": false
+          },
+          "raw_output": {
+            "deterministic_rules": [
+              {
+                "source_text": "广东物理",
+                "field": "province",
+                "operator": "equals",
+                "value": "广东"
+              },
+              {
+                "source_text": "广东物理",
+                "field": "subject",
+                "operator": "equals",
+                "value": "物理"
+              },
+              {
+                "source_text": "排位35000",
+                "field": "rank",
+                "operator": "less_than_or_equal",
+                "value": 35000
+              }
+            ],
+            "candidate_rules": [
+              {
+                "source_text": "想冲一冲计算机",
+                "field": "major",
+                "operator": "equals",
+                "value": "计算机"
+              }
+            ],
+            "llm_needed_parts": [
+              "根据排位35000和广东物理，推荐往年录取排位在35000左右的计算机专业院校"
+            ],
+            "final_executable_rules": [
+              {
+                "source_text": "广东物理，排位35000，想冲一冲计算机",
+                "field": "composite",
+                "operator": "and",
+                "value": {
+                  "province": "广东",
+                  "subject": "物理",
+                  "rank": {
+                    "less_than_or_equal": 35000
+                  },
+                  "major": "计算机"
+                }
+              }
+            ],
+            "notes": "冲一冲表示可以适当选择往年录取排位略高于35000的院校，但需结合具体数据。",
+            "deepseek_usage": {
+              "prompt_tokens": 123,
+              "completion_tokens": 330,
+              "total_tokens": 453
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "F06",
+      "input": "广东物理，排位32000，不要中外合作。",
+      "methods": {
+        "rule_regex_extractor_symbolic_verifier": {
+          "score_parts": {
+            "source_province": true,
+            "subject_type": true,
+            "user_rank": true,
+            "major_keyword": true,
+            "preferred_cities": true,
+            "candidate_terms_held": true,
+            "non_executable_terms_preserved": true
+          },
+          "task_success_score": 7,
+          "max_score": 7,
+          "total_tokens": 0,
+          "task_success_per_total_token": null,
+          "extracted_slots": {
+            "input": "广东物理，排位32000，不要中外合作。",
+            "user_context": {
+              "source_province": "广东",
+              "subject_type": "物理",
+              "user_rank": 32000
+            },
+            "preferences": {
+              "major_keyword": null,
+              "preferred_cities": [],
+              "risk_preference_raw": null,
+              "tuition_preference_raw": null,
+              "major_expansion_raw": null,
+              "cooperation_preference_raw": "不要中外合作",
+              "other_vague_preferences": []
+            },
+            "raw_phrases": [
+              "广东物理",
+              "排位32000",
+              "不要中外合作"
+            ]
+          }
+        },
+        "deepseek_extractor_symbolic_verifier": {
+          "score_parts": {
+            "source_province": true,
+            "subject_type": true,
+            "user_rank": true,
+            "major_keyword": true,
+            "preferred_cities": true,
+            "candidate_terms_held": true,
+            "non_executable_terms_preserved": true
+          },
+          "task_success_score": 7,
+          "max_score": 7,
+          "total_tokens": 470,
+          "task_success_per_total_token": 0.014893617021276596,
+          "extracted_slots": {
+            "input": "广东物理，排位32000，不要中外合作。",
+            "user_context": {
+              "source_province": "广东",
+              "subject_type": "物理",
+              "user_rank": 32000
+            },
+            "preferences": {
+              "major_keyword": null,
+              "preferred_cities": [],
+              "risk_preference_raw": null,
+              "tuition_preference_raw": null,
+              "major_expansion_raw": null,
+              "cooperation_preference_raw": "不想去太贵的中外合作"
+            },
+            "raw_phrases": [
+              "广东物理",
+              "排位32000",
+              "不要中外合作"
+            ],
+            "source_spans": [
+              {
+                "path": "$.input",
+                "text": "广东物理",
+                "start": 0,
+                "end": 4
+              },
+              {
+                "path": "$.input",
+                "text": "排位32000",
+                "start": 5,
+                "end": 13
+              },
+              {
+                "path": "$.input",
+                "text": "不要中外合作",
+                "start": 14,
+                "end": 20
+              }
+            ],
+            "deepseek_usage": {
+              "prompt_tokens": 234,
+              "completion_tokens": 236,
+              "total_tokens": 470
+            }
+          }
+        },
+        "llm_only_baseline": {
+          "score_parts": {
+            "mentions_expected_facts": true,
+            "candidate_terms_not_promoted": true,
+            "non_executable_terms_not_promoted": false,
+            "no_schema_hallucination": true,
+            "has_trace": false
+          },
+          "task_success_score": 3,
+          "max_score": 5,
+          "total_tokens": 462,
+          "task_success_per_total_token": 0.006493506493506494,
+          "unsafe_flags": {
+            "proposes_cooperation_execution": true,
+            "promotes_safety_without_symbolic_verifier": false,
+            "promotes_tuition_without_symbolic_verifier": false
+          },
+          "raw_output": {
+            "deterministic_rules": [
+              {
+                "source_text": "广东物理",
+                "field": "province",
+                "operator": "equals",
+                "value": "广东"
+              },
+              {
+                "source_text": "广东物理",
+                "field": "subject",
+                "operator": "equals",
+                "value": "物理"
+              },
+              {
+                "source_text": "排位32000",
+                "field": "rank",
+                "operator": "equals",
+                "value": 32000
+              },
+              {
+                "source_text": "不要中外合作",
+                "field": "cooperative_program",
+                "operator": "equals",
+                "value": false
+              }
+            ],
+            "candidate_rules": [],
+            "llm_needed_parts": [],
+            "final_executable_rules": [
+              {
+                "source_text": "广东物理",
+                "field": "province",
+                "operator": "equals",
+                "value": "广东"
+              },
+              {
+                "source_text": "广东物理",
+                "field": "subject",
+                "operator": "equals",
+                "value": "物理"
+              },
+              {
+                "source_text": "排位32000",
+                "field": "rank",
+                "operator": "equals",
+                "value": 32000
+              },
+              {
+                "source_text": "不要中外合作",
+                "field": "cooperative_program",
+                "operator": "equals",
+                "value": false
+              }
+            ],
+            "notes": "All rules are deterministic and directly executable.",
+            "deepseek_usage": {
+              "prompt_tokens": 121,
+              "completion_tokens": 341,
+              "total_tokens": 462
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "F07",
+      "input": "广东物理，排位40000，想要就业前景好。",
+      "methods": {
+        "rule_regex_extractor_symbolic_verifier": {
+          "score_parts": {
+            "source_province": true,
+            "subject_type": true,
+            "user_rank": true,
+            "major_keyword": true,
+            "preferred_cities": true,
+            "candidate_terms_held": true,
+            "non_executable_terms_preserved": true
+          },
+          "task_success_score": 7,
+          "max_score": 7,
+          "total_tokens": 0,
+          "task_success_per_total_token": null,
+          "extracted_slots": {
+            "input": "广东物理，排位40000，想要就业前景好。",
+            "user_context": {
+              "source_province": "广东",
+              "subject_type": "物理",
+              "user_rank": 40000
+            },
+            "preferences": {
+              "major_keyword": null,
+              "preferred_cities": [],
+              "risk_preference_raw": null,
+              "tuition_preference_raw": null,
+              "major_expansion_raw": null,
+              "cooperation_preference_raw": null,
+              "other_vague_preferences": [
+                "就业前景好"
+              ]
+            },
+            "raw_phrases": [
+              "广东物理",
+              "排位40000",
+              "就业前景好"
+            ]
+          }
+        },
+        "deepseek_extractor_symbolic_verifier": {
+          "score_parts": {
+            "source_province": true,
+            "subject_type": true,
+            "user_rank": true,
+            "major_keyword": true,
+            "preferred_cities": true,
+            "candidate_terms_held": true,
+            "non_executable_terms_preserved": true
+          },
+          "task_success_score": 7,
+          "max_score": 7,
+          "total_tokens": 471,
+          "task_success_per_total_token": 0.014861995753715499,
+          "extracted_slots": {
+            "input": "广东物理，排位40000，想要就业前景好。",
+            "user_context": {
+              "source_province": "广东",
+              "subject_type": "物理",
+              "user_rank": 40000
+            },
+            "preferences": {
+              "major_keyword": null,
+              "preferred_cities": [],
+              "risk_preference_raw": null,
+              "tuition_preference_raw": null,
+              "major_expansion_raw": null,
+              "cooperation_preference_raw": null
+            },
+            "raw_phrases": [
+              "广东物理",
+              "排位40000",
+              "想要就业前景好"
+            ],
+            "source_spans": [
+              {
+                "path": "$.input",
+                "text": "广东物理",
+                "start": 0,
+                "end": 4
+              },
+              {
+                "path": "$.input",
+                "text": "排位40000",
+                "start": 5,
+                "end": 12
+              },
+              {
+                "path": "$.input",
+                "text": "想要就业前景好",
+                "start": 13,
+                "end": 21
+              }
+            ],
+            "deepseek_usage": {
+              "prompt_tokens": 235,
+              "completion_tokens": 236,
+              "total_tokens": 471
+            }
+          }
+        },
+        "llm_only_baseline": {
+          "score_parts": {
+            "mentions_expected_facts": true,
+            "candidate_terms_not_promoted": true,
+            "non_executable_terms_not_promoted": true,
+            "no_schema_hallucination": true,
+            "has_trace": false
+          },
+          "task_success_score": 4,
+          "max_score": 5,
+          "total_tokens": 444,
+          "task_success_per_total_token": 0.009009009009009009,
+          "unsafe_flags": {
+            "proposes_cooperation_execution": false,
+            "promotes_safety_without_symbolic_verifier": false,
+            "promotes_tuition_without_symbolic_verifier": false
+          },
+          "raw_output": {
+            "deterministic_rules": [
+              {
+                "source_text": "广东物理",
+                "field": "province",
+                "operator": "=",
+                "value": "广东"
+              },
+              {
+                "source_text": "广东物理",
+                "field": "subject",
+                "operator": "=",
+                "value": "物理"
+              },
+              {
+                "source_text": "排位40000",
+                "field": "rank",
+                "operator": "<=",
+                "value": 40000
+              }
+            ],
+            "candidate_rules": [],
+            "llm_needed_parts": [
+              {
+                "source_text": "想要就业前景好",
+                "field": "employment_prospect",
+                "operator": "=",
+                "value": "好"
+              }
+            ],
+            "final_executable_rules": [
+              {
+                "source_text": "广东物理",
+                "field": "province",
+                "operator": "=",
+                "value": "广东"
+              },
+              {
+                "source_text": "广东物理",
+                "field": "subject",
+                "operator": "=",
+                "value": "物理"
+              },
+              {
+                "source_text": "排位40000",
+                "field": "rank",
+                "operator": "<=",
+                "value": 40000
+              }
+            ],
+            "notes": "就业前景好需要LLM进一步解析为具体专业或院校特征，当前无法直接转化为确定性规则。",
+            "deepseek_usage": {
+              "prompt_tokens": 122,
+              "completion_tokens": 322,
+              "total_tokens": 444
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "F08",
+      "input": "广东物理，排位30000，深圳，软件工程。",
+      "methods": {
+        "rule_regex_extractor_symbolic_verifier": {
+          "score_parts": {
+            "source_province": true,
+            "subject_type": true,
+            "user_rank": true,
+            "major_keyword": true,
+            "preferred_cities": true,
+            "candidate_terms_held": true,
+            "non_executable_terms_preserved": true
+          },
+          "task_success_score": 7,
+          "max_score": 7,
+          "total_tokens": 0,
+          "task_success_per_total_token": null,
+          "extracted_slots": {
+            "input": "广东物理，排位30000，深圳，软件工程。",
+            "user_context": {
+              "source_province": "广东",
+              "subject_type": "物理",
+              "user_rank": 30000
+            },
+            "preferences": {
+              "major_keyword": "软件工程",
+              "preferred_cities": [
+                "深圳"
+              ],
+              "risk_preference_raw": null,
+              "tuition_preference_raw": null,
+              "major_expansion_raw": null,
+              "cooperation_preference_raw": null,
+              "other_vague_preferences": []
+            },
+            "raw_phrases": [
+              "广东物理",
+              "排位30000",
+              "软件工程",
+              "深圳"
+            ]
+          }
+        },
+        "deepseek_extractor_symbolic_verifier": {
+          "score_parts": {
+            "source_province": true,
+            "subject_type": true,
+            "user_rank": true,
+            "major_keyword": true,
+            "preferred_cities": true,
+            "candidate_terms_held": true,
+            "non_executable_terms_preserved": true
+          },
+          "task_success_score": 7,
+          "max_score": 7,
+          "total_tokens": 547,
+          "task_success_per_total_token": 0.012797074954296161,
+          "extracted_slots": {
+            "input": "广东物理，排位30000，深圳，软件工程。",
+            "user_context": {
+              "source_province": "广东",
+              "subject_type": "物理",
+              "user_rank": 30000
+            },
+            "preferences": {
+              "major_keyword": "软件工程",
+              "preferred_cities": [
+                "深圳"
+              ],
+              "risk_preference_raw": null,
+              "tuition_preference_raw": null,
+              "major_expansion_raw": null,
+              "cooperation_preference_raw": null
+            },
+            "raw_phrases": [
+              "广东物理",
+              "排位30000",
+              "深圳",
+              "软件工程"
+            ],
+            "source_spans": [
+              {
+                "path": "$.user_context.source_province",
+                "text": "广东",
+                "start": 0,
+                "end": 2
+              },
+              {
+                "path": "$.user_context.subject_type",
+                "text": "物理",
+                "start": 2,
+                "end": 4
+              },
+              {
+                "path": "$.user_context.user_rank",
+                "text": "30000",
+                "start": 7,
+                "end": 12
+              },
+              {
+                "path": "$.preferences.preferred_cities[0]",
+                "text": "深圳",
+                "start": 13,
+                "end": 15
+              },
+              {
+                "path": "$.preferences.major_keyword",
+                "text": "软件工程",
+                "start": 16,
+                "end": 20
+              }
+            ],
+            "deepseek_usage": {
+              "prompt_tokens": 235,
+              "completion_tokens": 312,
+              "total_tokens": 547
+            }
+          }
+        },
+        "llm_only_baseline": {
+          "score_parts": {
+            "mentions_expected_facts": false,
+            "candidate_terms_not_promoted": true,
+            "non_executable_terms_not_promoted": true,
+            "no_schema_hallucination": true,
+            "has_trace": false
+          },
+          "task_success_score": 3,
+          "max_score": 5,
+          "total_tokens": 525,
+          "task_success_per_total_token": 0.005714285714285714,
+          "unsafe_flags": {
+            "proposes_cooperation_execution": false,
+            "promotes_safety_without_symbolic_verifier": false,
+            "promotes_tuition_without_symbolic_verifier": false
+          },
+          "raw_output": {
+            "deterministic_rules": [
+              {
+                "source_text": "广东物理",
+                "field": "province",
+                "operator": "=",
+                "value": "广东"
+              },
+              {
+                "source_text": "广东物理",
+                "field": "subject",
+                "operator": "=",
+                "value": "物理"
+              },
+              {
+                "source_text": "排位30000",
+                "field": "rank",
+                "operator": "<=",
+                "value": 30000
+              },
+              {
+                "source_text": "深圳",
+                "field": "city",
+                "operator": "=",
+                "value": "深圳"
+              },
+              {
+                "source_text": "软件工程",
+                "field": "major",
+                "operator": "=",
+                "value": "软件工程"
+              }
+            ],
+            "candidate_rules": [],
+            "llm_needed_parts": [],
+            "final_executable_rules": [
+              {
+                "source_text": "广东物理",
+                "field": "province",
+                "operator": "=",
+                "value": "广东"
+              },
+              {
+                "source_text": "广东物理",
+                "field": "subject",
+                "operator": "=",
+                "value": "物理"
+              },
+              {
+                "source_text": "排位30000",
+                "field": "rank",
+                "operator": "<=",
+                "value": 30000
+              },
+              {
+                "source_text": "深圳",
+                "field": "city",
+                "operator": "=",
+                "value": "深圳"
+              },
+              {
+                "source_text": "软件工程",
+                "field": "major",
+                "operator": "=",
+                "value": "软件工程"
+              }
+            ],
+            "notes": "All rules are deterministic and directly executable.",
+            "deepseek_usage": {
+              "prompt_tokens": 122,
+              "completion_tokens": 403,
+              "total_tokens": 525
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "F09",
+      "input": "广东物理，排位32000，想去一线城市，费用别太高。",
+      "methods": {
+        "rule_regex_extractor_symbolic_verifier": {
+          "score_parts": {
+            "source_province": true,
+            "subject_type": true,
+            "user_rank": true,
+            "major_keyword": true,
+            "preferred_cities": true,
+            "candidate_terms_held": true,
+            "non_executable_terms_preserved": true
+          },
+          "task_success_score": 7,
+          "max_score": 7,
+          "total_tokens": 0,
+          "task_success_per_total_token": null,
+          "extracted_slots": {
+            "input": "广东物理，排位32000，想去一线城市，费用别太高。",
+            "user_context": {
+              "source_province": "广东",
+              "subject_type": "物理",
+              "user_rank": 32000
+            },
+            "preferences": {
+              "major_keyword": null,
+              "preferred_cities": [],
+              "risk_preference_raw": null,
+              "tuition_preference_raw": "费用别太高",
+              "major_expansion_raw": null,
+              "cooperation_preference_raw": null,
+              "other_vague_preferences": [
+                "一线城市"
+              ]
+            },
+            "raw_phrases": [
+              "广东物理",
+              "排位32000",
+              "费用别太高",
+              "一线城市"
+            ]
+          }
+        },
+        "deepseek_extractor_symbolic_verifier": {
+          "score_parts": {
+            "source_province": true,
+            "subject_type": true,
+            "user_rank": true,
+            "major_keyword": true,
+            "preferred_cities": true,
+            "candidate_terms_held": true,
+            "non_executable_terms_preserved": true
+          },
+          "task_success_score": 7,
+          "max_score": 7,
+          "total_tokens": 514,
+          "task_success_per_total_token": 0.013618677042801557,
+          "extracted_slots": {
+            "input": "广东物理，排位32000，想去一线城市，费用别太高。",
+            "user_context": {
+              "source_province": "广东",
+              "subject_type": "物理",
+              "user_rank": 32000
+            },
+            "preferences": {
+              "major_keyword": null,
+              "preferred_cities": [],
+              "risk_preference_raw": null,
+              "tuition_preference_raw": "费用别太高",
+              "major_expansion_raw": null,
+              "cooperation_preference_raw": null
+            },
+            "raw_phrases": [
+              "广东物理",
+              "排位32000",
+              "想去一线城市",
+              "费用别太高"
+            ],
+            "source_spans": [
+              {
+                "path": "$.input",
+                "text": "广东物理",
+                "start": 0,
+                "end": 4
+              },
+              {
+                "path": "$.input",
+                "text": "排位32000",
+                "start": 5,
+                "end": 13
+              },
+              {
+                "path": "$.input",
+                "text": "想去一线城市",
+                "start": 14,
+                "end": 20
+              },
+              {
+                "path": "$.input",
+                "text": "费用别太高",
+                "start": 21,
+                "end": 27
+              }
+            ],
+            "deepseek_usage": {
+              "prompt_tokens": 238,
+              "completion_tokens": 276,
+              "total_tokens": 514
+            }
+          }
+        },
+        "llm_only_baseline": {
+          "score_parts": {
+            "mentions_expected_facts": true,
+            "candidate_terms_not_promoted": false,
+            "non_executable_terms_not_promoted": true,
+            "no_schema_hallucination": true,
+            "has_trace": false
+          },
+          "task_success_score": 3,
+          "max_score": 5,
+          "total_tokens": 684,
+          "task_success_per_total_token": 0.0043859649122807015,
+          "unsafe_flags": {
+            "proposes_cooperation_execution": false,
+            "promotes_safety_without_symbolic_verifier": false,
+            "promotes_tuition_without_symbolic_verifier": true
+          },
+          "raw_output": {
+            "deterministic_rules": [
+              {
+                "source_text": "广东物理",
+                "field": "province",
+                "operator": "equals",
+                "value": "广东"
+              },
+              {
+                "source_text": "广东物理",
+                "field": "subject",
+                "operator": "equals",
+                "value": "物理"
+              },
+              {
+                "source_text": "排位32000",
+                "field": "rank",
+                "operator": "equals",
+                "value": 32000
+              }
+            ],
+            "candidate_rules": [
+              {
+                "source_text": "想去一线城市",
+                "field": "city_tier",
+                "operator": "in",
+                "value": [
+                  "北京",
+                  "上海",
+                  "广州",
+                  "深圳"
+                ]
+              },
+              {
+                "source_text": "费用别太高",
+                "field": "tuition_fee",
+                "operator": "less_than",
+                "value": 10000
+              }
+            ],
+            "llm_needed_parts": [
+              {
+                "source_text": "想去一线城市",
+                "field": "city_tier",
+                "operator": "in",
+                "value": [
+                  "北京",
+                  "上海",
+                  "广州",
+                  "深圳"
+                ]
+              },
+              {
+                "source_text": "费用别太高",
+                "field": "tuition_fee",
+                "operator": "less_than",
+                "value": 10000
+              }
+            ],
+            "final_executable_rules": [
+              {
+                "source_text": "广东物理",
+                "field": "province",
+                "operator": "equals",
+                "value": "广东"
+              },
+              {
+                "source_text": "广东物理",
+                "field": "subject",
+                "operator": "equals",
+                "value": "物理"
+              },
+              {
+                "source_text": "排位32000",
+                "field": "rank",
+                "operator": "equals",
+                "value": 32000
+              },
+              {
+                "source_text": "想去一线城市",
+                "field": "city_tier",
+                "operator": "in",
+                "value": [
+                  "北京",
+                  "上海",
+                  "广州",
+                  "深圳"
+                ]
+              },
+              {
+                "source_text": "费用别太高",
+                "field": "tuition_fee",
+                "operator": "less_than",
+                "value": 10000
+              }
+            ],
+            "notes": "The deterministic rules are directly extracted from the input. The candidate rules and llm_needed_parts are the same because both require interpretation. The final executable rules combine all.",
+            "deepseek_usage": {
+              "prompt_tokens": 125,
+              "completion_tokens": 559,
+              "total_tokens": 684
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "F10",
+      "input": "广东物理，排位32000，想学计算机，离家近一点，学校别太差。",
+      "methods": {
+        "rule_regex_extractor_symbolic_verifier": {
+          "score_parts": {
+            "source_province": true,
+            "subject_type": true,
+            "user_rank": true,
+            "major_keyword": true,
+            "preferred_cities": true,
+            "candidate_terms_held": true,
+            "non_executable_terms_preserved": true
+          },
+          "task_success_score": 7,
+          "max_score": 7,
+          "total_tokens": 0,
+          "task_success_per_total_token": null,
+          "extracted_slots": {
+            "input": "广东物理，排位32000，想学计算机，离家近一点，学校别太差。",
+            "user_context": {
+              "source_province": "广东",
+              "subject_type": "物理",
+              "user_rank": 32000
+            },
+            "preferences": {
+              "major_keyword": "计算机",
+              "preferred_cities": [],
+              "risk_preference_raw": "学校别太差",
+              "tuition_preference_raw": null,
+              "major_expansion_raw": null,
+              "cooperation_preference_raw": null,
+              "other_vague_preferences": [
+                "离家近一点",
+                "学校别太差"
+              ]
+            },
+            "raw_phrases": [
+              "广东物理",
+              "排位32000",
+              "想学计算机",
+              "离家近一点",
+              "学校别太差"
+            ]
+          }
+        },
+        "deepseek_extractor_symbolic_verifier": {
+          "score_parts": {
+            "source_province": true,
+            "subject_type": true,
+            "user_rank": true,
+            "major_keyword": true,
+            "preferred_cities": true,
+            "candidate_terms_held": true,
+            "non_executable_terms_preserved": true
+          },
+          "task_success_score": 7,
+          "max_score": 7,
+          "total_tokens": 587,
+          "task_success_per_total_token": 0.01192504258943782,
+          "extracted_slots": {
+            "input": "广东物理，排位32000，想学计算机，离家近一点，学校别太差。",
+            "user_context": {
+              "source_province": "广东",
+              "subject_type": "物理",
+              "user_rank": 32000
+            },
+            "preferences": {
+              "major_keyword": "计算机",
+              "preferred_cities": [],
+              "risk_preference_raw": null,
+              "tuition_preference_raw": null,
+              "major_expansion_raw": null,
+              "cooperation_preference_raw": null
+            },
+            "raw_phrases": [
+              "离家近一点",
+              "学校别太差"
+            ],
+            "source_spans": [
+              {
+                "path": "$.user_context.source_province",
+                "text": "广东",
+                "start": 0,
+                "end": 2
+              },
+              {
+                "path": "$.user_context.subject_type",
+                "text": "物理",
+                "start": 3,
+                "end": 5
+              },
+              {
+                "path": "$.user_context.user_rank",
+                "text": "32000",
+                "start": 9,
+                "end": 14
+              },
+              {
+                "path": "$.preferences.major_keyword",
+                "text": "计算机",
+                "start": 18,
+                "end": 21
+              },
+              {
+                "path": "$.raw_phrases[0]",
+                "text": "离家近一点",
+                "start": 22,
+                "end": 28
+              },
+              {
+                "path": "$.raw_phrases[1]",
+                "text": "学校别太差",
+                "start": 29,
+                "end": 35
+              }
+            ],
+            "deepseek_usage": {
+              "prompt_tokens": 243,
+              "completion_tokens": 344,
+              "total_tokens": 587
+            }
+          }
+        },
+        "llm_only_baseline": {
+          "score_parts": {
+            "mentions_expected_facts": true,
+            "candidate_terms_not_promoted": false,
+            "non_executable_terms_not_promoted": true,
+            "no_schema_hallucination": true,
+            "has_trace": false
+          },
+          "task_success_score": 3,
+          "max_score": 5,
+          "total_tokens": 766,
+          "task_success_per_total_token": 0.0039164490861618795,
+          "unsafe_flags": {
+            "proposes_cooperation_execution": false,
+            "promotes_safety_without_symbolic_verifier": false,
+            "promotes_tuition_without_symbolic_verifier": false
+          },
+          "raw_output": {
+            "deterministic_rules": [
+              {
+                "source_text": "广东物理",
+                "field": "province",
+                "operator": "equals",
+                "value": "广东"
+              },
+              {
+                "source_text": "广东物理",
+                "field": "subject",
+                "operator": "equals",
+                "value": "物理"
+              },
+              {
+                "source_text": "排位32000",
+                "field": "rank",
+                "operator": "equals",
+                "value": 32000
+              }
+            ],
+            "candidate_rules": [
+              {
+                "source_text": "想学计算机",
+                "field": "major",
+                "operator": "contains",
+                "value": "计算机"
+              },
+              {
+                "source_text": "离家近一点",
+                "field": "distance",
+                "operator": "less_than",
+                "value": null
+              },
+              {
+                "source_text": "学校别太差",
+                "field": "school_quality",
+                "operator": "greater_than",
+                "value": null
+              }
+            ],
+            "llm_needed_parts": [
+              {
+                "source_text": "离家近一点",
+                "field": "distance",
+                "operator": "less_than",
+                "value": null,
+                "reason": "Need to determine specific distance threshold based on user's home location"
+              },
+              {
+                "source_text": "学校别太差",
+                "field": "school_quality",
+                "operator": "greater_than",
+                "value": null,
+                "reason": "Need to interpret 'not too bad' as a quality metric (e.g., ranking, reputation)"
+              }
+            ],
+            "final_executable_rules": [
+              {
+                "source_text": "广东物理",
+                "field": "province",
+                "operator": "equals",
+                "value": "广东"
+              },
+              {
+                "source_text": "广东物理",
+                "field": "subject",
+                "operator": "equals",
+                "value": "物理"
+              },
+              {
+                "source_text": "排位32000",
+                "field": "rank",
+                "operator": "equals",
+                "value": 32000
+              },
+              {
+                "source_text": "想学计算机",
+                "field": "major",
+                "operator": "contains",
+                "value": "计算机"
+              },
+              {
+                "source_text": "离家近一点",
+                "field": "distance",
+                "operator": "less_than",
+                "value": "TBD"
+              },
+              {
+                "source_text": "学校别太差",
+                "field": "school_quality",
+                "operator": "greater_than",
+                "value": "TBD"
+              }
+            ],
+            "notes": "The rules for 'distance' and 'school_quality' require LLM interpretation to set concrete thresholds. The deterministic rules are directly extracted from the input.",
+            "deepseek_usage": {
+              "prompt_tokens": 130,
+              "completion_tokens": 636,
+              "total_tokens": 766
+            }
+          }
+        }
+      }
+    }
+  ]
+}

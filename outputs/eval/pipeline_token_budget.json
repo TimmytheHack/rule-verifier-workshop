@@ -1,0 +1,101 @@
+{
+  "input": "我是广东物理类，排位32000，想学计算机，最好在广州深圳，学校稳一点，不想去太贵的中外合作。",
+  "token_estimation_note": "Approximate tokenizer-free estimate. Chinese chars count close to one token; non-CJK chars are estimated at four chars per token.",
+  "comparison_goal": "Compare direct Excel+NL-to-LLM prompting against the methodology pipeline on token budget and verifiable success.",
+  "naive_direct_llm_full_excel": {
+    "description": "Send natural-language input plus full serialized Excel sheet to an LLM and ask for answer.",
+    "estimated_input_tokens": 23040523,
+    "fits_32000_token_budget": false,
+    "fits_128000_token_budget": false,
+    "fits_1000000_token_budget": false,
+    "task_success": "not_executed",
+    "reason_not_executed": "Naive full-Excel prompting is evaluated by token budget estimate, not API call.",
+    "expected_weaknesses": [
+      "Very high context cost.",
+      "No deterministic schema verification.",
+      "High risk of unsupported field inference.",
+      "Trace completeness not guaranteed."
+    ],
+    "workbook_serialization": {
+      "sheet": "Sheet1",
+      "header_row": 3,
+      "columns": 57,
+      "data_rows": 30855,
+      "estimated_serialized_chars": 38087165,
+      "estimated_serialized_tokens": 23040451
+    }
+  },
+  "naive_direct_llm_required_columns": {
+    "description": "Send natural-language input plus all rows for only the MVP-required columns.",
+    "estimated_input_tokens": 483922,
+    "fits_32000_token_budget": false,
+    "fits_128000_token_budget": false,
+    "fits_1000000_token_budget": true,
+    "task_success": "not_executed",
+    "reason_not_executed": "Still lacks deterministic verifier; included only as a lower-bound direct-prompt estimate.",
+    "workbook_serialization": {
+      "sheet": "Sheet1",
+      "header_row": 3,
+      "columns": 6,
+      "data_rows": 30855,
+      "estimated_serialized_chars": 836272,
+      "estimated_serialized_tokens": 483850
+    }
+  },
+  "methodology_pipeline": {
+    "regex_extractor_symbolic_verifier": {
+      "result_count": 93,
+      "task_success": {
+        "score_parts": {
+          "correct_deterministic_rule_extraction": true,
+          "correct_candidate_rule_holding": true,
+          "correct_non_executable_rejection": true,
+          "no_schema_hallucination": true,
+          "complete_trace": true
+        },
+        "task_success_score": 5,
+        "max_score": 5
+      },
+      "total_tokens": 0,
+      "trace_complete": true
+    },
+    "deepseek_extractor_symbolic_verifier": {
+      "status": "ok",
+      "result_count": 93,
+      "task_success": {
+        "score_parts": {
+          "correct_deterministic_rule_extraction": true,
+          "correct_candidate_rule_holding": true,
+          "correct_non_executable_rejection": true,
+          "no_schema_hallucination": true,
+          "complete_trace": true
+        },
+        "task_success_score": 5,
+        "max_score": 5
+      },
+      "total_tokens": 762,
+      "trace_complete": true
+    },
+    "llm_only_baseline": {
+      "status": "ok",
+      "task_success": {
+        "score_parts": {
+          "correct_deterministic_rule_extraction": false,
+          "correct_candidate_rule_holding": false,
+          "correct_non_executable_rejection": false,
+          "no_schema_hallucination": true,
+          "complete_trace": false
+        },
+        "task_success_score": 1,
+        "max_score": 5
+      },
+      "total_tokens": 810,
+      "unsafe_flags": {
+        "proposes_cooperation_execution": true,
+        "promotes_safety_without_symbolic_verifier": true,
+        "promotes_tuition_without_symbolic_verifier": true
+      }
+    }
+  },
+  "main_claim": "For clear requirements, the symbolic pipeline spends zero or few LLM tokens on extraction, then executes exact deterministic filters with trace. Direct Excel+prompt LLM spends orders of magnitude more tokens and still cannot guarantee schema grounding or non-executable rejection."
+}

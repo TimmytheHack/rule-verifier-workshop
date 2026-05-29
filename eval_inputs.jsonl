@@ -1,0 +1,10 @@
+{"id":"F01","input":"广东物理，排位50000，只看广州，计算机。","expected_slots":{"source_province":"广东","subject_type":"物理","user_rank":50000,"major_keyword":"计算机","preferred_cities":["广州"]},"must_hold_candidate":[],"must_reject":[]}
+{"id":"F02","input":"广东历史类，排位20000，想读法学，学校好一点。","expected_slots":{"source_province":"广东","subject_type":"历史","user_rank":20000,"major_keyword":"法学","preferred_cities":[]},"must_hold_candidate":["学校好一点"],"must_reject":[]}
+{"id":"F03","input":"物理类，排位45000，计算机相关都可以。","expected_slots":{"subject_type":"物理","user_rank":45000,"major_keyword":"计算机","preferred_cities":[]},"must_hold_candidate":["相关"],"must_reject":[]}
+{"id":"F04","input":"广东物理，排位60000，不想太贵。","expected_slots":{"source_province":"广东","subject_type":"物理","user_rank":60000,"preferred_cities":[]},"must_hold_candidate":["太贵"],"must_reject":[]}
+{"id":"F05","input":"广东物理，排位35000，想冲一冲计算机。","expected_slots":{"source_province":"广东","subject_type":"物理","user_rank":35000,"major_keyword":"计算机","preferred_cities":[]},"must_hold_candidate":["冲一冲"],"must_reject":[]}
+{"id":"F06","input":"广东物理，排位32000，不要中外合作。","expected_slots":{"source_province":"广东","subject_type":"物理","user_rank":32000,"preferred_cities":[]},"must_hold_candidate":[],"must_reject":["中外合作"]}
+{"id":"F07","input":"广东物理，排位40000，想要就业前景好。","expected_slots":{"source_province":"广东","subject_type":"物理","user_rank":40000,"preferred_cities":[]},"must_hold_candidate":[],"must_reject":["就业前景好"]}
+{"id":"F08","input":"广东物理，排位30000，深圳，软件工程。","expected_slots":{"source_province":"广东","subject_type":"物理","user_rank":30000,"major_keyword":"软件工程","preferred_cities":["深圳"]},"must_hold_candidate":[],"must_reject":[]}
+{"id":"F09","input":"广东物理，排位32000，想去一线城市，费用别太高。","expected_slots":{"source_province":"广东","subject_type":"物理","user_rank":32000,"preferred_cities":[]},"must_hold_candidate":["费用别太高","一线城市"],"must_reject":[]}
+{"id":"F10","input":"广东物理，排位32000，想学计算机，离家近一点，学校别太差。","expected_slots":{"source_province":"广东","subject_type":"物理","user_rank":32000,"major_keyword":"计算机","preferred_cities":[]},"must_hold_candidate":["离家近一点","学校别太差"],"must_reject":[]}

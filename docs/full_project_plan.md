@@ -648,6 +648,24 @@ Exit criteria:
 
 ## 7. Evaluation Metrics
 
+Evaluation should compare task success under a token budget, not token usage alone. Token usage is only meaningful when paired with whether the method actually completed the rule-verification task safely.
+
+Compare three methods:
+
+1. `llm_only_baseline`
+   - LLM directly proposes rule-like outputs.
+   - Used only as a baseline.
+   - Expected to expose risks such as schema hallucination or unsafe promotion.
+
+2. `llm_extractor_symbolic_verifier`
+   - LLM extracts preferences and source spans.
+   - Symbolic classifier, schema registry, verifier, promoter, compiler, executor, and trace generator remain authoritative.
+
+3. `rule_or_regex_extractor_symbolic_verifier`
+   - Rule/regex extractor produces preferences.
+   - Same symbolic verifier pipeline as method 2.
+   - Serves as the low-token deterministic baseline.
+
 Primary metric:
 
 ```text
@@ -662,6 +680,33 @@ Number of vague or unsupported preferences incorrectly classified as determinist
 ```
 
 This should be near zero.
+
+Task success should be scored from concrete verification outcomes:
+
+- Correct deterministic rule extraction.
+- Correct candidate rule holding.
+- Correct non-executable rejection.
+- No schema hallucination.
+- Complete trace.
+
+Example task success score:
+
+```text
+task_success_score =
+  deterministic_rule_extraction_score
+  + candidate_holding_score
+  + non_executable_rejection_score
+  + no_schema_hallucination_score
+  + trace_completeness_score
+```
+
+Efficiency metric:
+
+```text
+task_success_score / total_tokens
+```
+
+This metric should be reported only for token-consuming methods. For rule/regex-only methods, report task success separately and mark token efficiency as not applicable or zero-token baseline.
 
 Supporting metrics:
 
@@ -682,10 +727,44 @@ Recommended reporting:
 | Metric | Why it matters |
 |---|---|
 | Deterministic over-promotion rate | Main safety metric. |
+| Task success score | Measures whether the method actually solved the verification task. |
+| Task success / total tokens | Measures token-budget efficiency for LLM-based methods. |
 | Candidate recall | Ensures vague terms are caught. |
 | Schema violation rate | Detects invented or unsupported fields. |
 | Trace completeness | Ensures outputs are auditable. |
 | Invalid rule rejection rate | Measures verifier strictness. |
+
+### Pipeline-Level Token Budget Comparison
+
+The evaluation should also compare the full methodology against a naive direct-LLM approach:
+
+```text
+Naive approach:
+  Excel content + natural-language user input -> LLM -> answer
+
+Methodology approach:
+  natural-language user input -> extractor -> symbolic verifier -> backend executor -> trace
+```
+
+For clear requirements, the methodology should save tokens because the LLM does not need to read the full Excel table. The backend executor reads the data locally and applies verified rules.
+
+Current MVP estimate on the real workbook:
+
+| Approach | Estimated / measured tokens | Result | Verification quality |
+|---|---:|---|---|
+| Direct LLM with full serialized Excel | ~23,040,523 input tokens | Not executed; impractical context size | No deterministic verifier |
+| Direct LLM with only required columns | ~483,922 input tokens | Lower-bound estimate only | Still no deterministic verifier |
+| Regex extractor + symbolic verifier | 0 LLM tokens | 93 rows, 5/5 task success | Full trace, schema-grounded |
+| DeepSeek extractor + symbolic verifier | 773 tokens | 93 rows, 5/5 task success | Full trace, schema-grounded |
+| LLM-only baseline | 873 tokens | 1/5 task success | Unsafe promotion and invented fields |
+
+This comparison is important because token cost alone is not the result. The correct comparison is:
+
+```text
+task success under token budget
+```
+
+The direct-LLM approach may spend orders of magnitude more tokens while still failing to guarantee schema grounding, candidate holding, non-executable rejection, and trace completeness.
 
 ## 8. Expected Final Outputs
 
