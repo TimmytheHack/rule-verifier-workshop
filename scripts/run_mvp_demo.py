@@ -1,3 +1,11 @@
+"""第一个 MVP demo 的最小可执行流水线。
+
+本脚本刻意只服务一个固定输入，不做通用志愿推荐：
+1. 只从真实 Excel 表头构建 schema registry。
+2. 只执行 deterministic rules 和模拟确认后的 candidate rules。
+3. 对缺少字段支撑的“中外合作”偏好明确标记为不执行。
+"""
+
 from __future__ import annotations
 
 import csv
@@ -15,6 +23,8 @@ OUTPUT_DIR = Path("outputs/mvp_demo")
 
 DEMO_INPUT = "我是广东物理类，排位32000，想学计算机，最好在广州深圳，学校稳一点，不想去太贵的中外合作。"
 
+# MVP 只需要这些列。schema registry 只能由真实存在的列构建，
+# 不能因为用户提到了某个概念就发明字段。
 REQUIRED_COLUMNS = [
     "生源地",
     "科类",
@@ -42,6 +52,8 @@ DISPLAY_COLUMNS = [
 
 @dataclass(frozen=True)
 class WorkbookContext:
+    """保存工作簿中真实表头的位置和列名索引。"""
+
     sheet_name: str
     header_row: int
     headers: list[str]
@@ -49,6 +61,8 @@ class WorkbookContext:
 
 
 def parse_number(value: Any) -> float | None:
+    """把 Excel 中可能是字符串的数字字段解析成 float。"""
+
     if value is None:
         return None
     if isinstance(value, (int, float)):
@@ -64,6 +78,8 @@ def cell_text(value: Any) -> str:
 
 
 def detect_header_row(ws: Any, required_columns: list[str]) -> WorkbookContext:
+    """自动查找包含 MVP 必需列的真实表头行。"""
+
     required = set(required_columns)
     for row_number, row in enumerate(ws.iter_rows(values_only=True, min_row=1, max_row=25), start=1):
         headers = [cell_text(value) for value in row]
@@ -78,6 +94,11 @@ def detect_header_row(ws: Any, required_columns: list[str]) -> WorkbookContext:
 
 
 def build_schema_registry(context: WorkbookContext) -> dict[str, dict[str, Any]]:
+    """只把真实存在的字段加入 schema registry。
+
+    这是整个 demo 的安全边界：不在 registry 中的字段不能执行。
+    """
+
     candidates = {
         "source_province": {
             "source_column": "生源地",
@@ -136,6 +157,11 @@ def build_schema_registry(context: WorkbookContext) -> dict[str, dict[str, Any]]
 
 
 def hardcoded_slots() -> dict[str, Any]:
+    """第一个 demo 暂时硬编码抽取结果。
+
+    当前研究重点是 rule verification，不是通用中文信息抽取。
+    """
+
     return {
         "input": DEMO_INPUT,
         "user_context": {
@@ -163,6 +189,11 @@ def hardcoded_slots() -> dict[str, Any]:
 
 
 def verify_rule(rule: dict[str, Any], schema_registry: dict[str, dict[str, Any]]) -> dict[str, Any]:
+    """验证一条规则是否可以执行。
+
+    Candidate rule 即使字段存在，也因为存在歧义和确认要求而不可直接执行。
+    """
+
     field_id = rule.get("field_id")
     field_exists = field_id in schema_registry
     operator_allowed = field_exists and rule["operator"] in schema_registry[field_id]["allowed_ops"]
@@ -179,6 +210,9 @@ def verify_rule(rule: dict[str, Any], schema_registry: dict[str, dict[str, Any]]
 
 
 def build_rules(schema_registry: dict[str, dict[str, Any]]) -> dict[str, Any]:
+    """构建 demo 的三类规则和最终可执行规则。"""
+
+    # Deterministic rules：用户表达明确，字段真实存在，操作符被允许。
     deterministic_rules = [
         {
             "rule_id": "d_source_province",
@@ -230,6 +264,7 @@ def build_rules(schema_registry: dict[str, dict[str, Any]]) -> dict[str, Any]:
         },
     ]
 
+    # 用户排位是上下文，不是 Excel 过滤字段；它只用于确认后的安全边际计算。
     context_rules = [
         {
             "rule_id": "ctx_user_rank",
@@ -252,6 +287,7 @@ def build_rules(schema_registry: dict[str, dict[str, Any]]) -> dict[str, Any]:
         }
     ]
 
+    # Candidate rules：可以提出候选解释，但在用户确认前绝不能执行。
     candidate_rules = [
         {
             "rule_id": "c_safety_margin",
@@ -294,6 +330,8 @@ def build_rules(schema_registry: dict[str, dict[str, Any]]) -> dict[str, Any]:
         },
     ]
 
+    # 中外合作在当前 Excel 中没有专门字段。MVP 不从文本字段里猜测，
+    # 因为这会把未验证的语义判断伪装成 deterministic rule。
     llm_needed_parts = [
         {
             "part_id": "l_cooperation_type",
@@ -313,12 +351,14 @@ def build_rules(schema_registry: dict[str, dict[str, Any]]) -> dict[str, Any]:
         }
     ]
 
+    # 对 deterministic 和 candidate 统一记录 verification 结果，方便报告审计。
     for rule in deterministic_rules:
         rule["status"] = "verified" if verify_rule(rule, schema_registry)["executable"] else "blocked"
         rule["verification"] = verify_rule(rule, schema_registry)
     for rule in candidate_rules:
         rule["verification"] = verify_rule(rule, schema_registry)
 
+    # 第一个 demo 使用固定的“模拟确认”，避免先做交互 UI。
     simulated_confirmation = {
         "safety_margin": {
             "selected_option": "B",
@@ -347,6 +387,7 @@ def build_rules(schema_registry: dict[str, dict[str, Any]]) -> dict[str, Any]:
         },
     }
 
+    # 最终执行集合 = verified deterministic rules + confirmed candidate rules。
     executable_rules = [
         {
             "rule_id": "e_source_province",
@@ -446,11 +487,19 @@ def build_rules(schema_registry: dict[str, dict[str, Any]]) -> dict[str, Any]:
 
 
 def row_value(row: tuple[Any, ...], context: WorkbookContext, column: str) -> Any:
+    """按真实表头索引读取单元格值。"""
+
     idx = context.header_index[column]
     return row[idx] if idx < len(row) else None
 
 
 def execute_query(ws: Any, context: WorkbookContext) -> list[dict[str, Any]]:
+    """执行最终规则并生成逐行 trace。
+
+    这里使用 AND 逻辑。注意：不包含任何 cooperation_type 过滤，
+    因为该字段没有通过 schema grounding。
+    """
+
     results: list[dict[str, Any]] = []
     for excel_row_number, row in enumerate(
         ws.iter_rows(values_only=True, min_row=context.header_row + 1), start=context.header_row + 1
@@ -465,6 +514,8 @@ def execute_query(ws: Any, context: WorkbookContext) -> list[dict[str, Any]]:
         group_rank = parse_number(row_value(row, context, "专业组最低位次1"))
         tuition = parse_number(row_value(row, context, "学费"))
 
+        # 六条最终可执行规则。前四条来自 deterministic rules，
+        # 后两条来自模拟确认后的 candidate rules。
         checks = [
             source_province == "广东",
             subject_type == "物理",
@@ -476,6 +527,7 @@ def execute_query(ws: Any, context: WorkbookContext) -> list[dict[str, Any]]:
         if not all(checks):
             continue
 
+        # 输出行保留 ranking_key 和安全边际，便于审计排序逻辑。
         output_row = {
             "excel_row_number": excel_row_number,
             "ID": row_value(row, context, "ID") if "ID" in context.header_index else None,
@@ -498,6 +550,7 @@ def execute_query(ws: Any, context: WorkbookContext) -> list[dict[str, Any]]:
             "safety_margin_pct": round((group_rank - 32000) / 32000, 4),
             "cooperation_filter_status": "not_executed_missing_cooperation_type_field",
         }
+        # trace 必须同时说明“通过了哪些规则”和“哪些用户偏好没有执行”。
         output_row["trace"] = [
             {"rule_id": "e_source_province", "status": "pass", "reason": "生源地 == 广东"},
             {"rule_id": "e_subject_type", "status": "pass", "reason": "科类 == 物理"},
@@ -518,6 +571,7 @@ def execute_query(ws: Any, context: WorkbookContext) -> list[dict[str, Any]]:
         results.append(output_row)
 
     def school_rank_sort(value: Any) -> float:
+        # 院校排名有时是 "/" 等非数字值，排序时放到后面。
         parsed = parse_number(value)
         return parsed if parsed is not None else 999999.0
 
@@ -532,6 +586,8 @@ def execute_query(ws: Any, context: WorkbookContext) -> list[dict[str, Any]]:
 
 
 def data_coverage(ws: Any, context: WorkbookContext, columns: list[str]) -> dict[str, Any]:
+    """统计 MVP 必需字段的数据覆盖率，用于验证报告。"""
+
     total = 0
     non_null = {column: 0 for column in columns}
     for row in ws.iter_rows(values_only=True, min_row=context.header_row + 1):
@@ -552,6 +608,8 @@ def data_coverage(ws: Any, context: WorkbookContext, columns: list[str]) -> dict
 
 
 def write_rules_json(rules_payload: dict[str, Any]) -> None:
+    """输出规则、schema registry、确认结果和最终执行规则。"""
+
     (OUTPUT_DIR / "rules.json").write_text(
         json.dumps(rules_payload, ensure_ascii=False, indent=2),
         encoding="utf-8",
@@ -559,6 +617,8 @@ def write_rules_json(rules_payload: dict[str, Any]) -> None:
 
 
 def write_filtered_results_csv(results: list[dict[str, Any]]) -> None:
+    """输出筛选结果表，供人工检查和后续评估使用。"""
+
     columns = [
         "rank",
         "excel_row_number",
@@ -597,6 +657,8 @@ def write_verification_report(
     coverage: dict[str, Any],
     result_count: int,
 ) -> None:
+    """输出可读验证报告，说明哪些规则执行、哪些规则被阻止。"""
+
     deterministic_lines = []
     for rule in rules_payload["deterministic_rules"]:
         verification = rule["verification"]
@@ -694,6 +756,8 @@ The query does not infer or filter 中外合作 from text fields.
 
 
 def write_result_trace(results: list[dict[str, Any]]) -> None:
+    """输出逐行 trace，保证每条结果都能追溯到规则。"""
+
     lines = [
         "# MVP Demo Result Trace",
         "",
@@ -730,6 +794,8 @@ def write_result_trace(results: list[dict[str, Any]]) -> None:
 
 
 def main() -> None:
+    """运行第一个 MVP demo。"""
+
     workbook_path = Path(WORKBOOK_NAME)
     if not workbook_path.exists():
         raise FileNotFoundError(f"Workbook not found: {workbook_path}")
@@ -740,6 +806,8 @@ def main() -> None:
     ws = wb[wb.sheetnames[0]]
     context = detect_header_row(ws, REQUIRED_COLUMNS)
     schema_registry = build_schema_registry(context)
+
+    # 必需列缺失时直接失败，而不是降级为猜测或 LLM 判断。
     missing_required = [column for column in REQUIRED_COLUMNS if column not in context.header_index]
     if missing_required:
         raise RuntimeError(f"Missing required columns: {', '.join(missing_required)}")

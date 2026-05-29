@@ -1,5 +1,7 @@
 # Preference-to-Rule Verification MVP
 
+Chinese version: [README.zh.md](/Users/tz/Desktop/Projects/SZU/README.zh.md)
+
 This repository contains a narrow research-engineering MVP for:
 
 ```text
