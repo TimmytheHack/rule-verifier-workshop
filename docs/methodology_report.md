@@ -76,6 +76,43 @@ No trace, no verified result.
 Neural proposes; symbolic verifies and executes.
 ```
 
+The upgraded implementation also records a rule lifecycle boundary in
+`rules/rule_lifecycle_schema.json`:
+
+```text
+extracted_preference
+-> proposed_rule
+-> schema_grounded_rule
+-> verified_rule
+-> confirmed_rule
+-> executable_rule
+-> executed_rule
+-> traced_result
+```
+
+This lifecycle is important because it separates what an extractor proposes from what the verifier allows to execute.
+
+The implementation also adds an attribute-level grounding audit before rule construction:
+
+```text
+extracted attributes
+-> attribute grounding audit
+-> rule construction
+-> rule verification
+```
+
+This means extracted attributes do not need to be executable by default. They must first be labeled as one of:
+
+| Attribute status | Meaning |
+|---|---|
+| `schema_grounded` | Maps to an active Excel schema field, but still needs rule verification. |
+| `confirmable` | Maps to an active field but is vague or semantic, so user confirmation is required. |
+| `context_only` | Useful for formulas or context, but not an Excel filter. |
+| `missing_schema` | No active Excel field exists; cannot execute. |
+| `ignored_not_schema_mapped` | Extractor emitted an unknown attribute; rule construction ignores it. |
+
+This closes an important gap: an extractor may mention attributes such as `公办`, `学校名气`, or `偏远城市`, but those attributes cannot become executable rules unless they are grounded in the Excel schema.
+
 ## 4. Rule Classes
 
 ### Deterministic Rules
@@ -176,6 +213,8 @@ The current workbook run produces 93 filtered rows.
 
 The schema registry defines what the system may execute. A rule cannot become deterministic unless its field is present in the registry and passes verification.
 
+Attribute extraction is allowed to be broader than the executable schema, but execution is not. Every extracted slot must be audited against the schema boundary before rule construction.
+
 The current MVP uses real Excel fields such as:
 
 ```text
@@ -187,17 +226,27 @@ The current MVP uses real Excel fields such as:
 学费
 ```
 
-Missing but desired fields include:
+Fields not yet active in the MVP schema registry include:
 
 ```text
 cooperation_type
+school_ownership
 school_reputation
 employment_outlook
 distance_from_home
 major_family
+major_popularity
+city_remoteness
 ```
 
-These missing fields may be useful, but they are not executable until they are represented as structured, verified schema fields.
+Some of these concepts now have candidate Excel columns discovered by the schema profile:
+
+- `school_ownership` may map to `公私性质`.
+- `school_reputation` may partially map to `院校水平`, `院校标签`, `院校排名`, or `软科排名`.
+- `city_remoteness` or city quality may partially map to `城市水平标签`.
+- `major_popularity` may require a policy decision; current Excel fields such as `专业类` or `专业水平` are not the same as popularity.
+
+These fields are not automatically executable. They need human schema review, allowed operators, semantic notes, and tests before promotion into the active schema registry.
 
 ## 7. Backend Abstraction
 
@@ -268,25 +317,66 @@ Each executable rule must pass:
 
 Verification output must explain why a rule is executable, blocked, or waiting for confirmation.
 
+The verifier now produces a verification profile rather than only a pass/fail result:
+
+```json
+{
+  "schema_grounded": true,
+  "field_exists": true,
+  "source_column_exists": true,
+  "operator_allowed": true,
+  "type_valid": true,
+  "value_present": true,
+  "value_normalized": true,
+  "ambiguity_level": "none",
+  "requires_human_confirmation": false,
+  "execution_level": "executable",
+  "executable": true
+}
+```
+
+The key execution levels are:
+
+| Execution level | Meaning |
+|---|---|
+| `executable` | Deterministic, schema-grounded, and ready to execute. |
+| `confirmable` | Schema-grounded but vague or confirmation-gated. |
+| `context_only` | Useful context, not a dataset filter. |
+| `blocked` | Grounded but not currently executable. |
+| `rejected` | Not schema-grounded. |
+
 ## 10. Evaluation Summary
 
 The current evaluation compares task success under token budget.
 
 Single MVP input:
 
-| Method | Result rows | Task success | Total tokens |
-|---|---:|---:|---:|
-| `regex_extractor_symbolic_verifier` | 93 | 5/5 | 0 |
-| `deepseek_extractor_symbolic_verifier` | 93 | 5/5 | 762 |
-| `llm_only_baseline` | n/a | 1/5 | 810 |
+| Method | Result rows | Task success | Total tokens | Over-promotion |
+|---|---:|---:|---:|---:|
+| `regex_extractor_symbolic_verifier` | 93 | 5/5 | 0 | 0 |
+| `deepseek_extractor_symbolic_verifier` | 93 | 5/5 | 689 | 0 |
+| `llm_only_baseline` | n/a | 1/5 | 824 | unsafe |
+| `schema_aware_llm_only_baseline` | n/a | 2/5 | 1212 | unsafe |
 
-Fuzzy 10-input evaluation:
+40-case fuzzy evaluation:
 
-| Method | Score | Success rate | Total tokens |
-|---|---:|---:|---:|
-| `rule_regex_extractor_symbolic_verifier` | 70/70 | 1.00 | 0 |
-| `deepseek_extractor_symbolic_verifier` | 70/70 | 1.00 | 5075 |
-| `llm_only_baseline` | 31/50 | 0.62 | 5329 |
+| Method | Score | Success rate | Total tokens | Over-promotion rate |
+|---|---:|---:|---:|---:|
+| `rule_regex_extractor_symbolic_verifier` | 320/320 | 1.000 | 0 | 0.000 |
+| `deepseek_extractor_symbolic_verifier` | 320/320 | 1.000 | 23528 | 0.000 |
+| `llm_only_baseline` | 107/200 | 0.535 | 23955 | 0.450 |
+| `schema_aware_llm_only_baseline` | 157/200 | 0.785 | 43069 | 0.300 |
+
+The benchmark now contains 40 layered inputs covering clear, vague, unsupported, mixed, adversarial, contradictory, and end-to-end demo cases. The DeepSeek extractor previously scored `314/320`; after representation normalization for multi-major terms, broader city normalization, and school-ownership preference preservation, it reached `320/320`. This improvement came from better slot representation, not from relaxing the verifier.
+
+The baseline comparison includes:
+
+| Method | Purpose |
+|---|---|
+| `llm_only_baseline` | Naive LLM-only rule proposal. |
+| `schema_aware_llm_only_baseline` | Stronger LLM-only baseline that receives schema context but still has no symbolic verifier. |
+| `deepseek_extractor_symbolic_verifier` | LLM extraction with symbolic verification. |
+| `regex_extractor_symbolic_verifier` | Conservative symbolic extraction baseline. |
 
 Pipeline token budget comparison:
 
@@ -294,8 +384,9 @@ Pipeline token budget comparison:
 |---|---:|---|
 | Direct LLM with full Excel | 23,040,523 | Not executed; exceeds practical context budgets. |
 | Direct LLM with MVP columns only | 483,922 | Still large and lacks deterministic verification. |
-| DeepSeek extractor + symbolic verifier | 762 | 93 rows, 5/5. |
+| DeepSeek extractor + symbolic verifier | 689 | 93 rows, 5/5. |
 | Regex extractor + symbolic verifier | 0 | 93 rows, 5/5. |
+| Schema-aware LLM-only baseline | 1212 | 2/5; still unsafe. |
 
 The strongest evidence so far is not that LLMs are useless. It is that LLM extraction becomes safer when symbolic verification controls execution.
 
@@ -322,13 +413,15 @@ These limitations are acceptable for the current research stage because the goal
 
 Next steps should focus on evaluation and safety:
 
-- Expand `eval_inputs.jsonl` to 30-50 inputs.
+- Expand `eval_inputs.jsonl` beyond the current 40 inputs if additional user phrasings are collected.
 - Add paraphrases for safety, cost, major family, location, school quality, and employment.
 - Track deterministic over-promotion rate as the main safety metric.
 - Track schema hallucination rate separately.
 - Add per-rule trace completeness scoring.
 - Add adversarial inputs for unsupported but tempting fields.
 - Test whether DeepSeek extraction remains stable under incomplete or contradictory inputs.
+- Expand the 40-case benchmark toward 50-100 cases with more real paraphrases.
+- Stress-test whether the `320/320` DeepSeek result holds when inputs become longer, noisier, or contradictory.
 - Keep recommendation quality evaluation separate from rule verification evaluation.
 
 ## 13. Generalization

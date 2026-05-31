@@ -5,7 +5,8 @@ import unittest
 from unittest.mock import patch
 
 from scripts.eval_modes import run_eval
-from src.extractors.deepseek_extractor import DeepSeekExtractor, DeepSeekJSONResponse
+from src.baselines.llm_only_baseline import SchemaAwareLLMOnlyBaseline
+from src.extractors.deepseek_extractor import DeepSeekExtractor, DeepSeekJSONResponse, normalize_slots
 from src.rules.rule_classifier import RuleClassifier
 from src.rules.rule_verifier import RuleVerifier
 from src.schema.schema_registry import SchemaRegistry
@@ -17,7 +18,13 @@ AVAILABLE_COLUMNS = ["生源地", "科类", "专业名称", "城市", "专业组
 
 
 class FakeDeepSeekClient:
+    def __init__(self) -> None:
+        self.last_system_prompt = ""
+        self.last_user_prompt = ""
+
     def chat_json(self, system_prompt: str, user_prompt: str) -> DeepSeekJSONResponse:
+        self.last_system_prompt = system_prompt
+        self.last_user_prompt = user_prompt
         return DeepSeekJSONResponse(
             payload={
                 "input": "我是广东物理类，排位32000，想学计算机，最好在广州深圳，学校稳一点，不想去太贵的中外合作。",
@@ -56,6 +63,7 @@ class DeepSeekEvalModesTest(unittest.TestCase):
         self.assertEqual(slots["deepseek_usage"]["total_tokens"], 33)
         self.assertIn("source_spans", slots)
         self.assertEqual(slots["user_context"]["subject_type"], "物理")
+        self.assertEqual(slots["preferences"]["major_exact_terms"], ["计算机"])
         self.assertEqual(slots["preferences"]["preferred_cities"], ["广州", "深圳"])
 
         registry = SchemaRegistry.from_file(SCHEMA_PATH, AVAILABLE_COLUMNS)
@@ -78,9 +86,47 @@ class DeepSeekEvalModesTest(unittest.TestCase):
         self.assertIsNone(result["modes"]["regex_extractor_symbolic_verifier"]["task_success_per_total_token"])
         self.assertEqual(result["modes"]["deepseek_extractor_symbolic_verifier"]["status"], "skipped")
         self.assertEqual(result["modes"]["llm_only_baseline"]["status"], "skipped")
+        self.assertEqual(result["modes"]["schema_aware_llm_only_baseline"]["status"], "skipped")
         self.assertEqual(result["evaluation_goal"], "Compare task success under token budget, not token usage alone.")
         self.assertEqual(result["efficiency_metric"], "task_success_score / total_tokens")
         self.assertEqual(result["main_safety_metric"], "deterministic over-promotion rate")
+
+    def test_schema_aware_baseline_receives_schema_but_still_has_no_verifier(self) -> None:
+        fake_client = FakeDeepSeekClient()
+        schema_fields = SchemaRegistry.from_file(SCHEMA_PATH, AVAILABLE_COLUMNS).configured_fields
+        payload = SchemaAwareLLMOnlyBaseline(schema_fields, client=fake_client).propose("广东物理，排位32000，不要中外合作。")
+        self.assertEqual(payload["deepseek_usage"]["total_tokens"], 33)
+        self.assertIn("cooperation_type", fake_client.last_user_prompt)
+        self.assertIn("no symbolic verifier", fake_client.last_system_prompt)
+
+    def test_deepseek_normalization_preserves_multi_city_and_ownership_slots(self) -> None:
+        text = "我是广东物理类，排位40000，想看深圳、广州、佛山的学校，学费两万以内，优先公办。"
+        slots = normalize_slots(
+            {
+                "user_context": {
+                    "source_province": "广东",
+                    "subject_type": "物理类",
+                    "user_rank": "40000",
+                },
+                "preferences": {
+                    "major_keyword": None,
+                    "major_exact_terms": [],
+                    "preferred_cities": ["深圳、广州、佛山"],
+                    "risk_preference_raw": None,
+                    "tuition_preference_raw": "两万以内",
+                    "major_expansion_raw": None,
+                    "cooperation_preference_raw": "优先公办",
+                    "school_ownership_preference_raw": None,
+                },
+            },
+            text,
+        )
+
+        self.assertEqual(slots["user_context"]["subject_type"], "物理")
+        self.assertEqual(slots["user_context"]["user_rank"], 40000)
+        self.assertEqual(slots["preferences"]["preferred_cities"], ["广州", "深圳", "佛山"])
+        self.assertIsNone(slots["preferences"]["cooperation_preference_raw"])
+        self.assertEqual(slots["preferences"]["school_ownership_preference_raw"], "优先公办")
 
 
 if __name__ == "__main__":

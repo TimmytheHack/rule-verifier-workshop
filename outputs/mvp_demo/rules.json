@@ -9,20 +9,28 @@
     },
     "preferences": {
       "major_keyword": "计算机",
+      "major_exact_terms": [
+        "计算机"
+      ],
       "preferred_cities": [
         "广州",
         "深圳"
       ],
       "risk_preference_raw": "稳一点",
       "tuition_preference_raw": "太贵",
-      "major_expansion_raw": "计算机相关扩展",
-      "cooperation_preference_raw": "不想去太贵的中外合作"
+      "major_expansion_raw": null,
+      "cooperation_preference_raw": "不想去太贵的中外合作",
+      "school_ownership_preference_raw": null,
+      "other_vague_preferences": []
     },
     "raw_phrases": [
-      "广东物理类",
       "排位32000",
+      "广东物理类",
+      "广东物理",
+      "物理类",
       "想学计算机",
       "最好在广州深圳",
+      "深圳",
       "学校稳一点",
       "不想去太贵的中外合作"
     ]
@@ -133,11 +141,17 @@
       "trace_reason": "The user explicitly states 广东 and the Excel field 生源地 exists.",
       "value": "广东",
       "verification": {
+        "schema_grounded": true,
         "field_exists": true,
+        "source_column_exists": true,
         "operator_allowed": true,
+        "type_valid": true,
         "value_present": true,
+        "value_normalized": true,
         "ambiguity_detected": false,
+        "ambiguity_level": "none",
         "requires_human_confirmation": false,
+        "execution_level": "executable",
         "executable": true
       },
       "status": "verified"
@@ -154,11 +168,17 @@
       "trace_reason": "The user explicitly states 物理类 and the Excel field 科类 exists.",
       "value": "物理",
       "verification": {
+        "schema_grounded": true,
         "field_exists": true,
+        "source_column_exists": true,
         "operator_allowed": true,
+        "type_valid": true,
         "value_present": true,
+        "value_normalized": true,
         "ambiguity_detected": false,
+        "ambiguity_level": "none",
         "requires_human_confirmation": false,
+        "execution_level": "executable",
         "executable": true
       },
       "status": "verified"
@@ -175,11 +195,17 @@
       "trace_reason": "Exact keyword matching is allowed in the MVP.",
       "value": "计算机",
       "verification": {
+        "schema_grounded": true,
         "field_exists": true,
+        "source_column_exists": true,
         "operator_allowed": true,
+        "type_valid": true,
         "value_present": true,
+        "value_normalized": true,
         "ambiguity_detected": false,
+        "ambiguity_level": "none",
         "requires_human_confirmation": false,
+        "execution_level": "executable",
         "executable": true
       },
       "status": "verified"
@@ -199,11 +225,17 @@
         "深圳"
       ],
       "verification": {
+        "schema_grounded": true,
         "field_exists": true,
+        "source_column_exists": true,
         "operator_allowed": true,
+        "type_valid": true,
         "value_present": true,
+        "value_normalized": true,
         "ambiguity_detected": false,
+        "ambiguity_level": "none",
         "requires_human_confirmation": false,
+        "execution_level": "executable",
         "executable": true
       },
       "status": "verified"
@@ -222,10 +254,17 @@
       "trace_reason": "User rank is context for confirmed candidate rules, not an Excel filter.",
       "value": 32000,
       "verification": {
+        "schema_grounded": true,
         "field_exists": true,
+        "source_column_exists": true,
         "operator_allowed": true,
+        "type_valid": true,
+        "value_present": true,
+        "value_normalized": true,
         "ambiguity_detected": false,
+        "ambiguity_level": "none",
         "requires_human_confirmation": false,
+        "execution_level": "context_only",
         "executable": false
       }
     }
@@ -248,11 +287,17 @@
       "requires_human_confirmation": true,
       "trace_reason": "稳一点 is vague and must not execute without a confirmed safety margin.",
       "verification": {
+        "schema_grounded": true,
         "field_exists": true,
+        "source_column_exists": true,
         "operator_allowed": true,
+        "type_valid": true,
         "value_present": false,
+        "value_normalized": false,
         "ambiguity_detected": true,
+        "ambiguity_level": "medium",
         "requires_human_confirmation": true,
+        "execution_level": "confirmable",
         "executable": false
       }
     },
@@ -273,11 +318,17 @@
       "requires_human_confirmation": true,
       "trace_reason": "太贵 is vague and requires a user-selected tuition cap.",
       "verification": {
+        "schema_grounded": true,
         "field_exists": true,
+        "source_column_exists": true,
         "operator_allowed": true,
+        "type_valid": true,
         "value_present": false,
+        "value_normalized": false,
         "ambiguity_detected": true,
+        "ambiguity_level": "medium",
         "requires_human_confirmation": true,
+        "execution_level": "confirmable",
         "executable": false
       }
     },
@@ -299,11 +350,17 @@
       "requires_human_confirmation": true,
       "trace_reason": "Semantic expansion beyond exact 计算机 matching requires confirmation.",
       "verification": {
+        "schema_grounded": true,
         "field_exists": true,
+        "source_column_exists": true,
         "operator_allowed": false,
+        "type_valid": true,
         "value_present": false,
+        "value_normalized": false,
         "ambiguity_detected": true,
+        "ambiguity_level": "medium",
         "requires_human_confirmation": true,
+        "execution_level": "confirmable",
         "executable": false
       }
     }

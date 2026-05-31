@@ -4,6 +4,7 @@ Modes:
 1. regex_extractor_symbolic_verifier
 2. deepseek_extractor_symbolic_verifier
 3. llm_only_baseline
+4. schema_aware_llm_only_baseline
 
 DeepSeek modes are optional. If DEEPSEEK_API_KEY is not set, they are skipped.
 Evaluation is not token usage alone: each mode reports task_success_score,
@@ -23,13 +24,20 @@ if str(ROOT_DIR) not in sys.path:
     sys.path.insert(0, str(ROOT_DIR))
 
 from src.adapters.excel_adapter import ExcelAdapter, ExcelDataSet
-from src.baselines.llm_only_baseline import LLMOnlyBaseline
+from src.baselines.llm_only_baseline import LLMOnlyBaseline, SchemaAwareLLMOnlyBaseline
 from src.executors.pandas_executor import PandasExecutor
 from src.extractors.deepseek_extractor import DeepSeekExtractor
 from src.extractors.regex_extractor import RegexExtractor
+from src.evaluation.scoring import (
+    score_llm_only_baseline,
+    score_symbolic_task_success,
+    unsafe_baseline_flags,
+    with_efficiency,
+)
 from src.rules.rule_classifier import RuleClassifier
 from src.rules.rule_promoter import RulePromoter
 from src.rules.rule_verifier import RuleVerifier
+from src.schema.attribute_grounder import AttributeGrounder
 from src.schema.schema_registry import SchemaRegistry
 
 
@@ -45,6 +53,7 @@ REQUIRED_COLUMNS = ["生源地", "科类", "专业名称", "城市", "专业组�
 
 def symbolic_pipeline(slots: dict[str, Any], dataset: ExcelDataSet) -> dict[str, Any]:
     registry = SchemaRegistry.from_file(SCHEMA_PATH, dataset.headers)
+    attribute_grounding = AttributeGrounder(registry).ground(slots)
     verifier = RuleVerifier(registry)
     classified = RuleClassifier(TAXONOMY_PATH, verifier).classify(slots)
     final_rules = RulePromoter(
@@ -84,46 +93,9 @@ def symbolic_pipeline(slots: dict[str, Any], dataset: ExcelDataSet) -> dict[str,
         "cooperation_executed": any(rule.get("field") == "cooperation_type" for rule in final_rules),
         "trace_complete": trace_complete,
         "task_success": success,
+        "attribute_grounding": attribute_grounding,
         "llm_needed_parts": classified["llm_needed_parts"],
     }
-
-
-def score_symbolic_task_success(
-    final_rule_ids: list[str],
-    candidate_rules_executable_count: int,
-    cooperation_field_exists: bool,
-    cooperation_executed: bool,
-    trace_complete: bool,
-) -> dict[str, Any]:
-    deterministic_expected = {"e_source_province", "e_subject_type", "e_major_keyword", "e_city"}
-    deterministic_ok = deterministic_expected.issubset(set(final_rule_ids))
-    candidate_holding_ok = candidate_rules_executable_count == 0
-    non_executable_rejection_ok = not cooperation_field_exists and not cooperation_executed
-    no_schema_hallucination_ok = "cooperation_type" not in set(final_rule_ids)
-    score_parts = {
-        "correct_deterministic_rule_extraction": deterministic_ok,
-        "correct_candidate_rule_holding": candidate_holding_ok,
-        "correct_non_executable_rejection": non_executable_rejection_ok,
-        "no_schema_hallucination": no_schema_hallucination_ok,
-        "complete_trace": trace_complete,
-    }
-    return {
-        "score_parts": score_parts,
-        "task_success_score": sum(1 for passed in score_parts.values() if passed),
-        "max_score": len(score_parts),
-    }
-
-
-def with_efficiency(summary: dict[str, Any], total_tokens: int | None) -> dict[str, Any]:
-    output = dict(summary)
-    output["total_tokens"] = total_tokens
-    if total_tokens and total_tokens > 0 and "task_success" in output:
-        output["task_success_per_total_token"] = (
-            output["task_success"]["task_success_score"] / total_tokens
-        )
-    else:
-        output["task_success_per_total_token"] = None
-    return output
 
 
 def append_usage(mode: str, usage: dict[str, int]) -> None:
@@ -136,39 +108,6 @@ def append_usage(mode: str, usage: dict[str, int]) -> None:
     }
     with TOKEN_LOG_PATH.open("a", encoding="utf-8") as handle:
         handle.write(json.dumps(record, ensure_ascii=False) + "\n")
-
-
-def unsafe_baseline_flags(payload: dict[str, Any]) -> dict[str, bool]:
-    executable_rules = payload.get("final_executable_rules", [])
-    serialized = json.dumps(executable_rules, ensure_ascii=False)
-    return {
-        "proposes_cooperation_execution": "cooperation_type" in serialized or "中外合作" in serialized,
-        "promotes_safety_without_symbolic_verifier": "稳一点" in serialized or "safety" in serialized.lower(),
-        "promotes_tuition_without_symbolic_verifier": "太贵" in serialized or "tuition" in serialized.lower(),
-    }
-
-
-def score_llm_only_baseline(payload: dict[str, Any]) -> dict[str, Any]:
-    unsafe_flags = unsafe_baseline_flags(payload)
-    serialized = json.dumps(payload, ensure_ascii=False)
-    score_parts = {
-        "correct_deterministic_rule_extraction": all(
-            token in serialized for token in ["生源地", "科类", "专业名称", "城市"]
-        ),
-        "correct_candidate_rule_holding": not (
-            unsafe_flags["promotes_safety_without_symbolic_verifier"]
-            or unsafe_flags["promotes_tuition_without_symbolic_verifier"]
-        ),
-        "correct_non_executable_rejection": not unsafe_flags["proposes_cooperation_execution"],
-        "no_schema_hallucination": "cooperation_type" not in serialized,
-        "complete_trace": "trace" in serialized or "result_trace" in serialized,
-    }
-    return {
-        "score_parts": score_parts,
-        "task_success_score": sum(1 for passed in score_parts.values() if passed),
-        "max_score": len(score_parts),
-    }
-
 
 def run_eval() -> dict[str, Any]:
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
@@ -209,6 +148,24 @@ def run_eval() -> dict[str, Any]:
             modes["llm_only_baseline"]["task_success_per_total_token"] = (
                 modes["llm_only_baseline"]["task_success"]["task_success_score"] / total_tokens
             )
+
+        schema_fields = SchemaRegistry.from_file(SCHEMA_PATH, dataset.headers).configured_fields
+        schema_aware_payload = SchemaAwareLLMOnlyBaseline(schema_fields).propose(DEMO_INPUT)
+        append_usage("schema_aware_llm_only_baseline", schema_aware_payload.get("deepseek_usage", {}))
+        modes["schema_aware_llm_only_baseline"] = {
+            "status": "ok",
+            "token_usage": schema_aware_payload.get("deepseek_usage", {}),
+            "total_tokens": schema_aware_payload.get("deepseek_usage", {}).get("total_tokens", 0),
+            "task_success": score_llm_only_baseline(schema_aware_payload),
+            "task_success_per_total_token": None,
+            "unsafe_flags": unsafe_baseline_flags(schema_aware_payload),
+            "raw_output": schema_aware_payload,
+        }
+        total_tokens = modes["schema_aware_llm_only_baseline"]["total_tokens"]
+        if total_tokens:
+            modes["schema_aware_llm_only_baseline"]["task_success_per_total_token"] = (
+                modes["schema_aware_llm_only_baseline"]["task_success"]["task_success_score"] / total_tokens
+            )
     else:
         skipped = {
             "status": "skipped",
@@ -220,6 +177,7 @@ def run_eval() -> dict[str, Any]:
         }
         modes["deepseek_extractor_symbolic_verifier"] = dict(skipped)
         modes["llm_only_baseline"] = dict(skipped)
+        modes["schema_aware_llm_only_baseline"] = dict(skipped)
 
     return {
         "input": DEMO_INPUT,

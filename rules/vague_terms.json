@@ -1,32 +1,113 @@
-[
-  {
-    "term": "稳一点",
-    "class": "risk_vague",
-    "candidate_action": "ask_safety_margin",
-    "requires_human_confirmation": true
+{
+  "description": "Vague preference taxonomy for the Guangdong college application case study. Default behavior is conservative: do not execute until grounded and confirmed.",
+  "default_policy": {
+    "deterministic_promotion": "forbidden",
+    "requires_trace": true,
+    "requires_schema_grounding_for_execution": true
   },
-  {
-    "term": "太贵",
-    "class": "threshold_vague",
-    "candidate_action": "ask_tuition_cap",
-    "requires_human_confirmation": true
-  },
-  {
-    "term": "相关",
-    "class": "semantic_expansion",
-    "candidate_action": "ask_expansion_terms",
-    "requires_human_confirmation": true
-  },
-  {
-    "term": "好一点",
-    "class": "quality_vague",
-    "candidate_action": "ask_quality_proxy",
-    "requires_human_confirmation": true
-  },
-  {
-    "term": "就业前景好",
-    "class": "external_semantic",
-    "candidate_action": "llm_needed",
-    "requires_human_confirmation": false
-  }
-]
+  "terms": [
+    {
+      "term": "稳一点",
+      "class": "risk_preference",
+      "examples": ["稳一点", "稳妥一点", "保守一点", "不想太冒险", "保底"],
+      "default_rule_class": "candidate",
+      "candidate_action": "ask_safety_margin",
+      "confirmation_options": ["5%", "10%", "15%", "do_not_execute"],
+      "requires_human_confirmation": true,
+      "execution_without_confirmation": "forbidden"
+    },
+    {
+      "term": "冲一冲",
+      "class": "risk_preference",
+      "examples": ["冲一冲", "想冲", "可以冲一下"],
+      "default_rule_class": "candidate",
+      "candidate_action": "ask_risk_tolerance",
+      "confirmation_options": ["5%", "10%", "15%", "do_not_execute"],
+      "requires_human_confirmation": true,
+      "execution_without_confirmation": "forbidden"
+    },
+    {
+      "term": "太贵",
+      "class": "cost_preference",
+      "examples": ["太贵", "不要太贵", "不想太贵", "费用别太高", "费用低一点", "学费低", "两万以内"],
+      "default_rule_class": "candidate",
+      "candidate_action": "ask_tuition_cap",
+      "confirmation_options": [10000, 20000, 40000, "do_not_execute"],
+      "requires_human_confirmation": true,
+      "execution_without_confirmation": "forbidden"
+    },
+    {
+      "term": "相关",
+      "class": "semantic_expansion",
+      "examples": ["计算机相关", "工科相关", "医学相关"],
+      "default_rule_class": "candidate",
+      "candidate_action": "ask_expansion_terms",
+      "confirmation_options": ["exact_only", "include_related_terms", "do_not_execute"],
+      "requires_human_confirmation": true,
+      "execution_without_confirmation": "forbidden"
+    },
+    {
+      "term": "学校好一点",
+      "class": "quality_preference",
+      "examples": ["学校好一点", "学校别太差", "层次高一点", "学校名气", "名气重要", "口碑好"],
+      "default_rule_class": "llm_needed",
+      "candidate_action": "ask_quality_proxy_if_verified_source_exists",
+      "requires_human_confirmation": true,
+      "execution_without_confirmation": "forbidden"
+    },
+    {
+      "term": "就业前景好",
+      "class": "outcome_preference",
+      "examples": ["就业前景好", "好就业", "薪资高"],
+      "default_rule_class": "llm_needed",
+      "candidate_action": "external_evidence_needed",
+      "requires_human_confirmation": false,
+      "execution_without_confirmation": "forbidden"
+    },
+    {
+      "term": "一线城市",
+      "class": "geographic_abstraction",
+      "examples": ["一线城市", "大城市", "发达城市", "珠三角", "城市不要太差"],
+      "default_rule_class": "candidate",
+      "candidate_action": "ask_city_set",
+      "requires_human_confirmation": true,
+      "execution_without_confirmation": "forbidden"
+    },
+    {
+      "term": "离家近一点",
+      "class": "distance_preference",
+      "examples": ["离家近一点", "离家近", "不要太远", "太偏远", "偏远"],
+      "default_rule_class": "llm_needed",
+      "candidate_action": "requires_home_location_and_distance_schema",
+      "requires_human_confirmation": true,
+      "execution_without_confirmation": "forbidden"
+    },
+    {
+      "term": "中外合作",
+      "class": "unsupported_structured_preference",
+      "examples": ["中外合作", "合作办学", "国际合作"],
+      "default_rule_class": "llm_needed",
+      "candidate_action": "requires_cooperation_type_schema",
+      "requires_human_confirmation": false,
+      "execution_without_confirmation": "forbidden"
+    },
+    {
+      "term": "公办",
+      "class": "unsupported_structured_preference",
+      "examples": ["公办", "公办本科", "优先公办"],
+      "default_rule_class": "llm_needed",
+      "candidate_action": "requires_school_ownership_schema",
+      "requires_human_confirmation": false,
+      "execution_without_confirmation": "forbidden"
+    },
+    {
+      "term": "专业不要太冷门",
+      "class": "major_popularity_preference",
+      "examples": ["专业不要太冷门", "不要冷门", "冷门"],
+      "default_rule_class": "llm_needed",
+      "candidate_action": "requires_major_popularity_schema_or_external_evidence",
+      "requires_human_confirmation": false,
+      "execution_without_confirmation": "forbidden"
+    }
+  ]
+}

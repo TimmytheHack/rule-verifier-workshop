@@ -106,12 +106,14 @@ class DeepSeekExtractor:
                 "Return exactly this JSON shape: "
                 '{"input": string, "user_context": {"source_province": string|null, '
                 '"subject_type": string|null, "user_rank": number|null}, '
-                '"preferences": {"major_keyword": string|null, "preferred_cities": [string], '
+                '"preferences": {"major_keyword": string|null, "major_exact_terms": [string], '
+                '"preferred_cities": [string], '
                 '"risk_preference_raw": string|null, "tuition_preference_raw": string|null, '
-                '"major_expansion_raw": string|null, "cooperation_preference_raw": string|null}, '
+                '"major_expansion_raw": string|null, "cooperation_preference_raw": string|null, '
+                '"school_ownership_preference_raw": string|null}, '
                 '"raw_phrases": [string], '
                 '"source_spans": [{"path": string, "text": string, "start": number|null, "end": number|null}]}. '
-                "For this task, exact major keyword is only the explicit keyword. "
+                "For this task, exact major terms are explicit major names only. "
                 f"Input: {text}"
             ),
         )
@@ -130,6 +132,23 @@ def normalize_slots(slots: dict[str, Any], original_text: str) -> dict[str, Any]
     output = dict(slots)
     user_context = dict(output.get("user_context") or {})
     preferences = dict(output.get("preferences") or {})
+    known_cities = ["广州", "深圳", "佛山", "东莞", "珠海", "惠州", "汕头", "中山"]
+    known_majors = [
+        "计算机",
+        "软件工程",
+        "人工智能",
+        "网络安全",
+        "自动化",
+        "新闻传播",
+        "数据科学",
+        "网络空间安全",
+        "电子信息",
+        "法学",
+        "会计",
+        "金融",
+        "临床医学",
+        "汉语言文学",
+    ]
 
     source_province = user_context.get("source_province")
     if source_province and "广东" in str(source_province):
@@ -146,19 +165,31 @@ def normalize_slots(slots: dict[str, Any], original_text: str) -> dict[str, Any]
         digits = "".join(char for char in user_rank if char.isdigit())
         user_context["user_rank"] = int(digits) if digits else None
 
+    major_texts: list[str] = [original_text]
     major_keyword = preferences.get("major_keyword")
-    if major_keyword and "计算机" in str(major_keyword):
-        preferences["major_keyword"] = "计算机"
+    if major_keyword:
+        major_texts.append(str(major_keyword))
+    major_terms = preferences.get("major_exact_terms") or []
+    if isinstance(major_terms, str):
+        major_texts.append(major_terms)
+    else:
+        major_texts.extend(str(term) for term in major_terms)
+    major_expansion = preferences.get("major_expansion_raw")
+    if major_expansion:
+        major_texts.append(str(major_expansion))
+    normalized_major_terms = _terms_in_text_order(known_majors, major_texts)
+    preferences["major_exact_terms"] = normalized_major_terms
+    preferences["major_keyword"] = normalized_major_terms[0] if normalized_major_terms else None
 
     cities = preferences.get("preferred_cities") or []
     if isinstance(cities, str):
         cities_text = cities
-        cities = [city for city in ["广州", "深圳"] if city in cities_text]
+        cities = [city for city in known_cities if city in cities_text]
     else:
         city_texts = [str(city) for city in cities]
-        cities = [city for city in ["广州", "深圳"] if any(city in text for text in city_texts)]
+        cities = [city for city in known_cities if any(city in text for text in city_texts)]
     if not cities:
-        cities = [city for city in ["广州", "深圳"] if city in original_text]
+        cities = [city for city in known_cities if city in original_text]
     preferences["preferred_cities"] = cities
 
     risk = preferences.get("risk_preference_raw")
@@ -172,9 +203,30 @@ def normalize_slots(slots: dict[str, Any], original_text: str) -> dict[str, Any]
     cooperation = preferences.get("cooperation_preference_raw")
     if cooperation and "中外合作" in str(cooperation):
         preferences["cooperation_preference_raw"] = "不想去太贵的中外合作"
+    elif cooperation and "公办" in str(cooperation):
+        preferences["school_ownership_preference_raw"] = str(cooperation)
+        preferences["cooperation_preference_raw"] = None
+
+    ownership = preferences.get("school_ownership_preference_raw")
+    if not ownership:
+        for term in ["公办本科", "优先公办", "公办", "民办"]:
+            if term in original_text:
+                preferences["school_ownership_preference_raw"] = term
+                break
 
     output["input"] = output.get("input") or original_text
     output["user_context"] = user_context
     output["preferences"] = preferences
     output["raw_phrases"] = output.get("raw_phrases") or []
     return output
+
+
+def _terms_in_text_order(terms: list[str], texts: list[str]) -> list[str]:
+    positions: dict[str, tuple[int, int]] = {}
+    for term in terms:
+        for text_index, text in enumerate(texts):
+            char_index = text.find(term)
+            if char_index >= 0:
+                positions[term] = (text_index, char_index)
+                break
+    return sorted(positions, key=positions.get)

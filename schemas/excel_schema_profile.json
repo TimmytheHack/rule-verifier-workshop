@@ -1,0 +1,1525 @@
+{
+  "workbook": "广东省2025年志愿填报大数据（24-25）0523.xlsx",
+  "sheet": "Sheet1",
+  "header_row": 3,
+  "row_count": 30855,
+  "column_count": 57,
+  "columns": [
+    {
+      "column_index": 1,
+      "source_column": "ID",
+      "suggested_field_id": "row_id",
+      "type_guess": "number",
+      "non_empty_count": 30855,
+      "coverage_pct": 1.0,
+      "unique_count": 30855,
+      "sample_values": [
+        "1",
+        "2",
+        "3",
+        "4",
+        "5",
+        "6",
+        "7",
+        "8"
+      ],
+      "semantic_hints": [],
+      "allowed_ops_suggestion": [
+        "eq",
+        "<=",
+        ">=",
+        "between",
+        "sort"
+      ],
+      "registry_action_suggestion": "candidate_for_schema_registry"
+    },
+    {
+      "column_index": 2,
+      "source_column": "年份",
+      "suggested_field_id": "year",
+      "type_guess": "number",
+      "non_empty_count": 30855,
+      "coverage_pct": 1.0,
+      "unique_count": 1,
+      "sample_values": [
+        "2024"
+      ],
+      "semantic_hints": [],
+      "allowed_ops_suggestion": [
+        "eq",
+        "<=",
+        ">=",
+        "between",
+        "sort"
+      ],
+      "registry_action_suggestion": "candidate_for_schema_registry"
+    },
+    {
+      "column_index": 3,
+      "source_column": "生源地",
+      "suggested_field_id": "source_province",
+      "type_guess": "enum_or_category",
+      "non_empty_count": 30855,
+      "coverage_pct": 1.0,
+      "unique_count": 1,
+      "sample_values": [
+        "广东"
+      ],
+      "semantic_hints": [
+        "广东",
+        "生源地"
+      ],
+      "allowed_ops_suggestion": [
+        "eq",
+        "in",
+        "not_in"
+      ],
+      "registry_action_suggestion": "candidate_for_schema_registry"
+    },
+    {
+      "column_index": 4,
+      "source_column": "批次",
+      "suggested_field_id": "batch",
+      "type_guess": "enum_or_category",
+      "non_empty_count": 30855,
+      "coverage_pct": 1.0,
+      "unique_count": 4,
+      "sample_values": [
+        "本科提前批",
+        "本科批",
+        "专科高职批",
+        "专科提前批"
+      ],
+      "semantic_hints": [],
+      "allowed_ops_suggestion": [
+        "eq",
+        "in",
+        "not_in"
+      ],
+      "registry_action_suggestion": "candidate_for_schema_registry"
+    },
+    {
+      "column_index": 5,
+      "source_column": "科类",
+      "suggested_field_id": "subject_type",
+      "type_guess": "enum_or_category",
+      "non_empty_count": 30855,
+      "coverage_pct": 1.0,
+      "unique_count": 2,
+      "sample_values": [
+        "历史",
+        "物理"
+      ],
+      "semantic_hints": [
+        "物理类",
+        "历史类",
+        "科类"
+      ],
+      "allowed_ops_suggestion": [
+        "eq",
+        "in",
+        "not_in"
+      ],
+      "registry_action_suggestion": "candidate_for_schema_registry"
+    },
+    {
+      "column_index": 6,
+      "source_column": "院校代码",
+      "suggested_field_id": "school_code",
+      "type_guess": "number_from_string",
+      "non_empty_count": 30855,
+      "coverage_pct": 1.0,
+      "unique_count": 1623,
+      "sample_values": [
+        "10001",
+        "10002",
+        "10003",
+        "10004",
+        "10005",
+        "10006",
+        "10007",
+        "10008"
+      ],
+      "semantic_hints": [],
+      "allowed_ops_suggestion": [
+        "eq",
+        "<=",
+        ">=",
+        "between",
+        "sort"
+      ],
+      "registry_action_suggestion": "candidate_for_schema_registry"
+    },
+    {
+      "column_index": 7,
+      "source_column": "院校名称",
+      "suggested_field_id": "school_name",
+      "type_guess": "enum_or_category",
+      "non_empty_count": 30855,
+      "coverage_pct": 1.0,
+      "unique_count": 1624,
+      "sample_values": [
+        "北京大学",
+        "中国人民大学",
+        "清华大学",
+        "北京交通大学",
+        "北京工业大学",
+        "北京航空航天大学",
+        "北京理工大学",
+        "北京科技大学"
+      ],
+      "semantic_hints": [
+        "学校",
+        "院校"
+      ],
+      "allowed_ops_suggestion": [
+        "eq",
+        "in",
+        "not_in"
+      ],
+      "registry_action_suggestion": "candidate_for_schema_registry"
+    },
+    {
+      "column_index": 8,
+      "source_column": "院校专业组代码",
+      "suggested_field_id": "school_major_group_code",
+      "type_guess": "number_from_string",
+      "non_empty_count": 30855,
+      "coverage_pct": 1.0,
+      "unique_count": 7731,
+      "sample_values": [
+        "10001101",
+        "10001102",
+        "10001201",
+        "10001203",
+        "10002101",
+        "10002102",
+        "10002201",
+        "10002202"
+      ],
+      "semantic_hints": [],
+      "allowed_ops_suggestion": [
+        "eq",
+        "<=",
+        ">=",
+        "between",
+        "sort"
+      ],
+      "registry_action_suggestion": "candidate_for_schema_registry"
+    },
+    {
+      "column_index": 9,
+      "source_column": "专业组名称",
+      "suggested_field_id": "major_group_name",
+      "type_guess": "number_from_string",
+      "non_empty_count": 30855,
+      "coverage_pct": 1.0,
+      "unique_count": 617,
+      "sample_values": [
+        "101组",
+        "102组",
+        "201组",
+        "203组",
+        "202组",
+        "205组",
+        "204组",
+        "205组(中外合作)"
+      ],
+      "semantic_hints": [],
+      "allowed_ops_suggestion": [
+        "eq",
+        "<=",
+        ">=",
+        "between",
+        "sort"
+      ],
+      "registry_action_suggestion": "candidate_for_schema_registry"
+    },
+    {
+      "column_index": 10,
+      "source_column": "专业组代码",
+      "suggested_field_id": "major_group_code",
+      "type_guess": "number_from_string",
+      "non_empty_count": 30855,
+      "coverage_pct": 1.0,
+      "unique_count": 211,
+      "sample_values": [
+        "101",
+        "102",
+        "201",
+        "203",
+        "202",
+        "205",
+        "204",
+        "206"
+      ],
+      "semantic_hints": [],
+      "allowed_ops_suggestion": [
+        "eq",
+        "<=",
+        ">=",
+        "between",
+        "sort"
+      ],
+      "registry_action_suggestion": "candidate_for_schema_registry"
+    },
+    {
+      "column_index": 11,
+      "source_column": "专业代码",
+      "suggested_field_id": "major_code",
+      "type_guess": "number_from_string",
+      "non_empty_count": 30855,
+      "coverage_pct": 1.0,
+      "unique_count": 484,
+      "sample_values": [
+        "001",
+        "002",
+        "003",
+        "004",
+        "005",
+        "006",
+        "007",
+        "008"
+      ],
+      "semantic_hints": [],
+      "allowed_ops_suggestion": [
+        "eq",
+        "<=",
+        ">=",
+        "between",
+        "sort"
+      ],
+      "registry_action_suggestion": "candidate_for_schema_registry"
+    },
+    {
+      "column_index": 12,
+      "source_column": "专业全称",
+      "suggested_field_id": "major_full_name",
+      "type_guess": "enum_or_category",
+      "non_empty_count": 30855,
+      "coverage_pct": 1.0,
+      "unique_count": 16669,
+      "sample_values": [
+        "法语(校本部)(语种：英语)",
+        "德语(校本部)(语种：英语)",
+        "西班牙语(校本部)(语种：英语)",
+        "日语(校本部)(语种：英语)",
+        "俄语(校本部)(语种：英语)",
+        "阿拉伯语(校本部)(语种：英语)",
+        "朝鲜语(校本部)(语种：英语)",
+        "葡萄牙语(校本部)(语种：英语)"
+      ],
+      "semantic_hints": [],
+      "allowed_ops_suggestion": [
+        "eq",
+        "in",
+        "not_in"
+      ],
+      "registry_action_suggestion": "candidate_for_schema_registry"
+    },
+    {
+      "column_index": 13,
+      "source_column": "专业名称",
+      "suggested_field_id": "major_name",
+      "type_guess": "enum_or_category",
+      "non_empty_count": 30855,
+      "coverage_pct": 1.0,
+      "unique_count": 1219,
+      "sample_values": [
+        "法语",
+        "德语",
+        "西班牙语",
+        "日语",
+        "俄语",
+        "阿拉伯语",
+        "朝鲜语",
+        "葡萄牙语"
+      ],
+      "semantic_hints": [
+        "专业",
+        "计算机",
+        "法学"
+      ],
+      "allowed_ops_suggestion": [
+        "eq",
+        "in",
+        "not_in"
+      ],
+      "registry_action_suggestion": "candidate_for_schema_registry"
+    },
+    {
+      "column_index": 14,
+      "source_column": "专业备注",
+      "suggested_field_id": "major_notes",
+      "type_guess": "long_text",
+      "non_empty_count": 30855,
+      "coverage_pct": 1.0,
+      "unique_count": 6130,
+      "sample_values": [
+        "(校本部)(语种：英语)",
+        "(元培，含：语言文学类、考古学、历史学类、哲学类、社会学类、法学、新闻传播学类、经济学类、工商管理类、公共管理类，校本部)",
+        "(含：汉语言文学、汉语言、古典文献学、应用语言学，校本部)",
+        "(校本部)",
+        "(含：历史学(中国史)、世界史、外国语言与外国历史，校本部)",
+        "(含：哲学、宗教学、哲学(科技哲学与逻辑学方向)，校本部)",
+        "(含：社会学、社会工作，校本部)",
+        "(含：新闻学、广播电视学、广告学，校本部)"
+      ],
+      "semantic_hints": [],
+      "allowed_ops_suggestion": [
+        "contains",
+        "eq"
+      ],
+      "registry_action_suggestion": "candidate_for_schema_registry"
+    },
+    {
+      "column_index": 15,
+      "source_column": "专业层次",
+      "suggested_field_id": "degree_level",
+      "type_guess": "enum_or_category",
+      "non_empty_count": 30855,
+      "coverage_pct": 1.0,
+      "unique_count": 3,
+      "sample_values": [
+        "本科",
+        "专科",
+        "职教本科"
+      ],
+      "semantic_hints": [],
+      "allowed_ops_suggestion": [
+        "eq",
+        "in",
+        "not_in"
+      ],
+      "registry_action_suggestion": "candidate_for_schema_registry"
+    },
+    {
+      "column_index": 16,
+      "source_column": "选科要求",
+      "suggested_field_id": "subject_requirement",
+      "type_guess": "enum_or_category",
+      "non_empty_count": 30855,
+      "coverage_pct": 1.0,
+      "unique_count": 12,
+      "sample_values": [
+        "不限",
+        "化学",
+        "政治",
+        "地理",
+        "生物",
+        "化学和生物",
+        "政治和地理",
+        "地理和化学"
+      ],
+      "semantic_hints": [],
+      "allowed_ops_suggestion": [
+        "eq",
+        "in",
+        "not_in"
+      ],
+      "registry_action_suggestion": "candidate_for_schema_registry"
+    },
+    {
+      "column_index": 17,
+      "source_column": "计划人数",
+      "suggested_field_id": "plan_count",
+      "type_guess": "number",
+      "non_empty_count": 30855,
+      "coverage_pct": 1.0,
+      "unique_count": 275,
+      "sample_values": [
+        "1",
+        "2",
+        "5",
+        "6",
+        "3",
+        "8",
+        "4",
+        "10"
+      ],
+      "semantic_hints": [],
+      "allowed_ops_suggestion": [
+        "eq",
+        "<=",
+        ">=",
+        "between",
+        "sort"
+      ],
+      "registry_action_suggestion": "candidate_for_schema_registry"
+    },
+    {
+      "column_index": 18,
+      "source_column": "学制",
+      "suggested_field_id": "program_duration",
+      "type_guess": "number",
+      "non_empty_count": 30855,
+      "coverage_pct": 1.0,
+      "unique_count": 8,
+      "sample_values": [
+        "4",
+        "5",
+        "8",
+        "9",
+        "3",
+        "7",
+        "1",
+        "6"
+      ],
+      "semantic_hints": [],
+      "allowed_ops_suggestion": [
+        "eq",
+        "<=",
+        ">=",
+        "between",
+        "sort"
+      ],
+      "registry_action_suggestion": "candidate_for_schema_registry"
+    },
+    {
+      "column_index": 19,
+      "source_column": "学费",
+      "suggested_field_id": "tuition_yuan_per_year",
+      "type_guess": "number_from_string",
+      "non_empty_count": 30855,
+      "coverage_pct": 1.0,
+      "unique_count": 534,
+      "sample_values": [
+        "5000",
+        "5300",
+        "6000",
+        "5500",
+        "60000",
+        "40000",
+        "78000",
+        "50000"
+      ],
+      "semantic_hints": [
+        "学费",
+        "费用",
+        "太贵"
+      ],
+      "allowed_ops_suggestion": [
+        "eq",
+        "<=",
+        ">=",
+        "between",
+        "sort"
+      ],
+      "registry_action_suggestion": "candidate_for_schema_registry"
+    },
+    {
+      "column_index": 20,
+      "source_column": "组内专业",
+      "suggested_field_id": "majors_in_group",
+      "type_guess": "number_from_string",
+      "non_empty_count": 30855,
+      "coverage_pct": 1.0,
+      "unique_count": 7730,
+      "sample_values": [
+        "001 法语 (校本部)(语种：英语) 【4年，5000元，1人】 【录取人数: ，最低分: ，最低位次: 】\n002 德语 (校本部)(语种：英语) 【4年，5000元，1人】 【录取人数: ，最低分: ，最低位次: 】\n003 西班牙语",
+        "009 法语 (校本部)(语种：英语) 【4年，5000元，1人】 【录取人数: ，最低分: ，最低位次: 】\n010 德语 (校本部)(语种：英语) 【4年，5000元，1人】 【录取人数: ，最低分: ，最低位次: 】\n011 日语 (",
+        "090 文科试验班类 (元培，含：语言文学类、考古学、历史学类、哲学类、社会学类、法学、新闻传播学类、经济学类、工商管理类、公共管理类，校本部) 【4年，5300元，1人】 【录取人数: ，最低分: ，最低位次: 】\n091 中国语言文学类",
+        "106 数学类 (含：数学与应用数学(数学)、数学与应用数学(概率统计)、数学与应用数学(科学与工程计算)、数学与应用数学(信息科学)、数学与应用数学(金融)，校本部) 【4年，5000元，1人】 【录取人数: ，最低分: ，最低位次: 】",
+        "001 外国语言文学类 (含：日语、俄语、德语、法语、西班牙语，含：国际新闻全英文实验班、涉外法治双主学位项目，校本部)(语种：英语) 【4年，6000元，5人】 【录取人数: ，最低分: ，最低位次: 】",
+        "002 中国共产党历史 (入校后可参与选拔跨校辅修21世纪马克思主义国际传播人才培养项目，校本部) 【4年，5000元，2人】 【录取人数: ，最低分: ，最低位次: 】\n003 马克思主义理论 (入校后可参与选拔跨校辅修21世纪马克思主义",
+        "010 人文科学试验班 (含：哲学、宗教学、伦理学、汉语言文学、汉语言、历史学、世界史、考古学、中国古典学、艺术管理，含：古典学实验班，国学-古典学双主学位项目，含：日本东京大学互访研学项目、牛津大学赫特福德学院学生交换项目、比利时根特大学",
+        "025 财政学类 (含：财政学、税收学，含：剑桥大学、康奈尔大学暑期学校，伊利诺伊大学香槟分校、明尼苏达双城大学、威斯康辛大学麦迪逊分校、杜伦大学、玛丽女王大学、歌德大学(法兰克福)、新加坡管理大学双硕士学位联合培养，北京市) 【4年，50"
+      ],
+      "semantic_hints": [],
+      "allowed_ops_suggestion": [
+        "eq",
+        "<=",
+        ">=",
+        "between",
+        "sort"
+      ],
+      "registry_action_suggestion": "candidate_for_schema_registry"
+    },
+    {
+      "column_index": 21,
+      "source_column": "门类",
+      "suggested_field_id": "discipline_category",
+      "type_guess": "enum_or_category",
+      "non_empty_count": 30855,
+      "coverage_pct": 1.0,
+      "unique_count": 36,
+      "sample_values": [
+        "文学",
+        "试验班",
+        "历史学",
+        "哲学",
+        "法学",
+        "经济学",
+        "管理学",
+        "工学"
+      ],
+      "semantic_hints": [],
+      "allowed_ops_suggestion": [
+        "eq",
+        "in",
+        "not_in"
+      ],
+      "registry_action_suggestion": "candidate_for_schema_registry"
+    },
+    {
+      "column_index": 22,
+      "source_column": "专业类",
+      "suggested_field_id": "major_category",
+      "type_guess": "enum_or_category",
+      "non_empty_count": 30855,
+      "coverage_pct": 1.0,
+      "unique_count": 182,
+      "sample_values": [
+        "外国语言文学类",
+        "文科试验班类",
+        "中国语言文学类",
+        "历史学类",
+        "哲学类",
+        "社会学类",
+        "法学类",
+        "新闻传播学类"
+      ],
+      "semantic_hints": [
+        "专业相关",
+        "专业类",
+        "冷门"
+      ],
+      "allowed_ops_suggestion": [
+        "eq",
+        "in",
+        "not_in"
+      ],
+      "registry_action_suggestion": "candidate_for_schema_registry"
+    },
+    {
+      "column_index": 23,
+      "source_column": "专业组计划人数",
+      "suggested_field_id": "major_group_plan_count",
+      "type_guess": "number",
+      "non_empty_count": 30855,
+      "coverage_pct": 1.0,
+      "unique_count": 551,
+      "sample_values": [
+        "8",
+        "4",
+        "24",
+        "5",
+        "49",
+        "28",
+        "21",
+        "1"
+      ],
+      "semantic_hints": [],
+      "allowed_ops_suggestion": [
+        "eq",
+        "<=",
+        ">=",
+        "between",
+        "sort"
+      ],
+      "registry_action_suggestion": "candidate_for_schema_registry"
+    },
+    {
+      "column_index": 24,
+      "source_column": "25年预估位次",
+      "suggested_field_id": "estimated_rank_2025",
+      "type_guess": "mostly_empty",
+      "non_empty_count": 0,
+      "coverage_pct": 0.0,
+      "unique_count": 0,
+      "sample_values": [],
+      "semantic_hints": [],
+      "allowed_ops_suggestion": [],
+      "registry_action_suggestion": "review_before_use"
+    },
+    {
+      "column_index": 25,
+      "source_column": "是否新增",
+      "suggested_field_id": "is_new",
+      "type_guess": "mostly_empty",
+      "non_empty_count": 0,
+      "coverage_pct": 0.0,
+      "unique_count": 0,
+      "sample_values": [],
+      "semantic_hints": [],
+      "allowed_ops_suggestion": [],
+      "registry_action_suggestion": "review_before_use"
+    },
+    {
+      "column_index": 26,
+      "source_column": "专业组录取人数1",
+      "suggested_field_id": "major_group_admit_count_2024",
+      "type_guess": "number",
+      "non_empty_count": 30490,
+      "coverage_pct": 0.9882,
+      "unique_count": 582,
+      "sample_values": [
+        "8",
+        "4",
+        "24",
+        "5",
+        "49",
+        "28",
+        "21",
+        "1"
+      ],
+      "semantic_hints": [],
+      "allowed_ops_suggestion": [
+        "eq",
+        "<=",
+        ">=",
+        "between",
+        "sort"
+      ],
+      "registry_action_suggestion": "candidate_for_schema_registry"
+    },
+    {
+      "column_index": 27,
+      "source_column": "专业组最低分1",
+      "suggested_field_id": "major_group_min_score_2024",
+      "type_guess": "number",
+      "non_empty_count": 30490,
+      "coverage_pct": 0.9882,
+      "unique_count": 430,
+      "sample_values": [
+        "659",
+        "674",
+        "662",
+        "689",
+        "641",
+        "651",
+        "648",
+        "663"
+      ],
+      "semantic_hints": [],
+      "allowed_ops_suggestion": [
+        "eq",
+        "<=",
+        ">=",
+        "between",
+        "sort"
+      ],
+      "registry_action_suggestion": "candidate_for_schema_registry"
+    },
+    {
+      "column_index": 28,
+      "source_column": "专业组最低位次1",
+      "suggested_field_id": "major_group_min_rank_2024",
+      "type_guess": "number",
+      "non_empty_count": 30490,
+      "coverage_pct": 0.9882,
+      "unique_count": 7328,
+      "sample_values": [
+        "49",
+        "466",
+        "32",
+        "85",
+        "245",
+        "123",
+        "150",
+        "1215"
+      ],
+      "semantic_hints": [
+        "最低位次",
+        "稳一点",
+        "保底",
+        "冲一冲"
+      ],
+      "allowed_ops_suggestion": [
+        "eq",
+        "<=",
+        ">=",
+        "between",
+        "sort"
+      ],
+      "registry_action_suggestion": "candidate_for_schema_registry"
+    },
+    {
+      "column_index": 29,
+      "source_column": "录取人数1",
+      "suggested_field_id": "admit_count_2024",
+      "type_guess": "number",
+      "non_empty_count": 10423,
+      "coverage_pct": 0.3378,
+      "unique_count": 226,
+      "sample_values": [
+        "2",
+        "3",
+        "4",
+        "11",
+        "1",
+        "6",
+        "13",
+        "14"
+      ],
+      "semantic_hints": [],
+      "allowed_ops_suggestion": [
+        "eq",
+        "<=",
+        ">=",
+        "between",
+        "sort"
+      ],
+      "registry_action_suggestion": "candidate_for_schema_registry"
+    },
+    {
+      "column_index": 30,
+      "source_column": "最低分1",
+      "suggested_field_id": "min_score_2024",
+      "type_guess": "number",
+      "non_empty_count": 10423,
+      "coverage_pct": 0.3378,
+      "unique_count": 349,
+      "sample_values": [
+        "594",
+        "596",
+        "595",
+        "605",
+        "616",
+        "619",
+        "620",
+        "615"
+      ],
+      "semantic_hints": [],
+      "allowed_ops_suggestion": [
+        "eq",
+        "<=",
+        ">=",
+        "between",
+        "sort"
+      ],
+      "registry_action_suggestion": "candidate_for_schema_registry"
+    },
+    {
+      "column_index": 31,
+      "source_column": "最低位次1",
+      "suggested_field_id": "min_rank_2024",
+      "type_guess": "number",
+      "non_empty_count": 10423,
+      "coverage_pct": 0.3378,
+      "unique_count": 637,
+      "sample_values": [
+        "3872",
+        "24887",
+        "25601",
+        "26329",
+        "19056",
+        "13157",
+        "11807",
+        "11351"
+      ],
+      "semantic_hints": [
+        "最低位次",
+        "录取位次"
+      ],
+      "allowed_ops_suggestion": [
+        "eq",
+        "<=",
+        ">=",
+        "between",
+        "sort"
+      ],
+      "registry_action_suggestion": "candidate_for_schema_registry"
+    },
+    {
+      "column_index": 32,
+      "source_column": "最高分1",
+      "suggested_field_id": "max_score_2024",
+      "type_guess": "number",
+      "non_empty_count": 9205,
+      "coverage_pct": 0.2983,
+      "unique_count": 336,
+      "sample_values": [
+        "594",
+        "595",
+        "601",
+        "596",
+        "604",
+        "605",
+        "622",
+        "624"
+      ],
+      "semantic_hints": [],
+      "allowed_ops_suggestion": [
+        "eq",
+        "<=",
+        ">=",
+        "between",
+        "sort"
+      ],
+      "registry_action_suggestion": "candidate_for_schema_registry"
+    },
+    {
+      "column_index": 33,
+      "source_column": "最高位次1",
+      "suggested_field_id": "max_rank_2024",
+      "type_guess": "number",
+      "non_empty_count": 9205,
+      "coverage_pct": 0.2983,
+      "unique_count": 609,
+      "sample_values": [
+        "3872",
+        "3709",
+        "2945",
+        "24887",
+        "19663",
+        "19056",
+        "10531",
+        "9763"
+      ],
+      "semantic_hints": [],
+      "allowed_ops_suggestion": [
+        "eq",
+        "<=",
+        ">=",
+        "between",
+        "sort"
+      ],
+      "registry_action_suggestion": "candidate_for_schema_registry"
+    },
+    {
+      "column_index": 34,
+      "source_column": "所在省",
+      "suggested_field_id": "school_province",
+      "type_guess": "enum_or_category",
+      "non_empty_count": 30848,
+      "coverage_pct": 0.9998,
+      "unique_count": 33,
+      "sample_values": [
+        "北京",
+        "天津",
+        "河北",
+        "河南",
+        "山西",
+        "内蒙古",
+        "辽宁",
+        "吉林"
+      ],
+      "semantic_hints": [],
+      "allowed_ops_suggestion": [
+        "eq",
+        "in",
+        "not_in"
+      ],
+      "registry_action_suggestion": "candidate_for_schema_registry"
+    },
+    {
+      "column_index": 35,
+      "source_column": "城市",
+      "suggested_field_id": "city",
+      "type_guess": "enum_or_category",
+      "non_empty_count": 30848,
+      "coverage_pct": 0.9998,
+      "unique_count": 313,
+      "sample_values": [
+        "海淀区",
+        "朝阳区",
+        "大兴区",
+        "丰台区",
+        "通州区",
+        "昌平区",
+        "西城区",
+        "东城区"
+      ],
+      "semantic_hints": [
+        "城市",
+        "广州",
+        "深圳"
+      ],
+      "allowed_ops_suggestion": [
+        "eq",
+        "in",
+        "not_in"
+      ],
+      "registry_action_suggestion": "candidate_for_schema_registry"
+    },
+    {
+      "column_index": 36,
+      "source_column": "院校标签",
+      "suggested_field_id": "school_tags",
+      "type_guess": "enum_or_category",
+      "non_empty_count": 14027,
+      "coverage_pct": 0.4546,
+      "unique_count": 51,
+      "sample_values": [
+        "985/211/双一流/国重点/保研资格",
+        "211/双一流/国重点/保研资格",
+        "省重点/保研资格",
+        "保研资格",
+        "双一流/省重点/保研资格",
+        "省重点",
+        "国重点/保研资格",
+        "211/双一流/保研资格"
+      ],
+      "semantic_hints": [
+        "院校标签",
+        "985",
+        "211",
+        "双一流"
+      ],
+      "allowed_ops_suggestion": [
+        "eq",
+        "in",
+        "not_in"
+      ],
+      "registry_action_suggestion": "candidate_for_schema_registry"
+    },
+    {
+      "column_index": 37,
+      "source_column": "院校水平",
+      "suggested_field_id": "school_level",
+      "type_guess": "string",
+      "non_empty_count": 13279,
+      "coverage_pct": 0.4304,
+      "unique_count": 253,
+      "sample_values": [
+        "原卫生部直属/基础学科拔尖/卓越医生/卓越法律/五院四系/C9联盟/部委直属",
+        "基础学科拔尖/卓越法律/卓越农林/五院四系/部委直属",
+        "原轻工业部直属/基础学科拔尖/卓越工程师/卓越医生/卓越法律/建筑老八校/电气四虎/C9联盟/部委直属",
+        "原电力部直属/原铁道部直属/卓越工程师/部委直属",
+        "卓越工程师",
+        "原航空航天部直属/基础学科拔尖/卓越工程师/卓越法律/国防七子/部委直属",
+        "原兵器部直属/基础学科拔尖/卓越工程师/国防七子/兵工七子/中坚九校/E9联盟/部委直属",
+        "原冶金部直属/卓越工程师/部委直属"
+      ],
+      "semantic_hints": [
+        "学校好",
+        "院校水平",
+        "名气"
+      ],
+      "allowed_ops_suggestion": [
+        "contains",
+        "eq"
+      ],
+      "registry_action_suggestion": "candidate_for_schema_registry"
+    },
+    {
+      "column_index": 38,
+      "source_column": "更名合并转设",
+      "suggested_field_id": "school_change_history",
+      "type_guess": "enum_or_category",
+      "non_empty_count": 11744,
+      "coverage_pct": 0.3806,
+      "unique_count": 561,
+      "sample_values": [
+        "2000年，北京医科大学并入",
+        "1999年，中央工艺美术学院并入",
+        "原北方交通大学",
+        "原北京钢铁学院，1998年更名",
+        "北京轻工业学院、北京商学院合并成立",
+        "原国家出版总署直属",
+        "原北京建筑工程学院更名",
+        "原北京针灸骨伤学院并入"
+      ],
+      "semantic_hints": [],
+      "allowed_ops_suggestion": [
+        "eq",
+        "in",
+        "not_in"
+      ],
+      "registry_action_suggestion": "candidate_for_schema_registry"
+    },
+    {
+      "column_index": 39,
+      "source_column": "转专业情况",
+      "suggested_field_id": "major_transfer_policy",
+      "type_guess": "long_text",
+      "non_empty_count": 13501,
+      "coverage_pct": 0.4376,
+      "unique_count": 563,
+      "sample_values": [
+        "在第二、四学期，凡符合学校和各学院规定的转专业条件的学生，均可提出转专业申请，经考核，成绩合格者可以转入新专业学习。",
+        "大一结束后。4.10左右，各个学院会公布报名条件和考核办法\n4.13～4.17各个学院组织报名，交申请表\n4.23转专业初试（只有数学）\n4.29前，教务处将数学考试成绩公布给各学院\n4.29～5.6",
+        "大一学期末，成绩专业前15%可以全校选择，前20%可以院内选择。\n一．转专业的条件\n（一）一年级第一学期所修课程的加权平均分超过70分（含）；\n（二）入学以来未受过任何纪律处分；\n（三）转专业只限一次",
+        "一方面，现在本科的招生主要是大专业类招生，在大专业类内，前两年的基础课基本相同，1-2年后学生可根据自己的兴趣和特长自主选择专业。另一方面，如果想跨学院、跨大专业类转专业，在入学一年或第二学年末，可以",
+        "转专业基本条件：\n（一）全日制在校非定向本科生；\n（二）在校期间从未转过专业的学生；\n（三）在第三学期初申请转专业的学生，须完成本专业第一学年培养方案规定的全部课程，并且学习成绩名列专业年级排名前 1",
+        "转专业政策宽松（1）选择机会多：除招生时有特别约定（外语保送生、提前批录取类别）的学生外，其他在校本科生均可在大一或大二年级末提出转专业申请；（2）零门槛不限制：各专业对转专业人数不做限制，只要所有必",
+        "可以转专业，1.开学会有个优秀生考试，达到一定成绩就可以申请转专业（班级前三名）；2.学院内部比较容易；3、热门专业转冷门专业容易，反之竞争压力大。",
+        "绩点排在专业前10％。大类招生在系内选。如果不是有一个学校的实验班选拔考试，根据你所在的专业来确定你能参加文科还是理科的实验班考试，进入实验班后，在大二文科可以选文科的所有专业，理科可以选理科的所有专"
+      ],
+      "semantic_hints": [],
+      "allowed_ops_suggestion": [
+        "contains",
+        "eq"
+      ],
+      "registry_action_suggestion": "candidate_for_schema_registry"
+    },
+    {
+      "column_index": 40,
+      "source_column": "城市水平标签",
+      "suggested_field_id": "city_level_tag",
+      "type_guess": "enum_or_category",
+      "non_empty_count": 30804,
+      "coverage_pct": 0.9983,
+      "unique_count": 11,
+      "sample_values": [
+        "一线城市",
+        "新一线城市",
+        "三线城市",
+        "二线城市/省会城市",
+        "新一线城市/省会城市",
+        "二线城市",
+        "四线城市",
+        "五线城市"
+      ],
+      "semantic_hints": [
+        "城市水平",
+        "偏远",
+        "城市不要太差"
+      ],
+      "allowed_ops_suggestion": [
+        "eq",
+        "in",
+        "not_in"
+      ],
+      "registry_action_suggestion": "candidate_for_schema_registry"
+    },
+    {
+      "column_index": 41,
+      "source_column": "本科/专科",
+      "suggested_field_id": "undergraduate_or_junior",
+      "type_guess": "enum_or_category",
+      "non_empty_count": 30848,
+      "coverage_pct": 0.9998,
+      "unique_count": 3,
+      "sample_values": [
+        "本科",
+        "专科",
+        "职业本科"
+      ],
+      "semantic_hints": [],
+      "allowed_ops_suggestion": [
+        "eq",
+        "in",
+        "not_in"
+      ],
+      "registry_action_suggestion": "candidate_for_schema_registry"
+    },
+    {
+      "column_index": 42,
+      "source_column": "隶属单位",
+      "suggested_field_id": "supervising_department",
+      "type_guess": "enum_or_category",
+      "non_empty_count": 30741,
+      "coverage_pct": 0.9963,
+      "unique_count": 37,
+      "sample_values": [
+        "教育部",
+        "北京市政府",
+        "工信部",
+        "中央办公厅",
+        "应急管理部",
+        "外交部",
+        "公安部",
+        "国家体育总局"
+      ],
+      "semantic_hints": [],
+      "allowed_ops_suggestion": [
+        "eq",
+        "in",
+        "not_in"
+      ],
+      "registry_action_suggestion": "candidate_for_schema_registry"
+    },
+    {
+      "column_index": 43,
+      "source_column": "类型",
+      "suggested_field_id": "school_type",
+      "type_guess": "enum_or_category",
+      "non_empty_count": 30779,
+      "coverage_pct": 0.9975,
+      "unique_count": 36,
+      "sample_values": [
+        "综合",
+        "理工",
+        "综合 农林",
+        "农林",
+        "医药",
+        "师范",
+        "综合 师范",
+        "体育"
+      ],
+      "semantic_hints": [],
+      "allowed_ops_suggestion": [
+        "eq",
+        "in",
+        "not_in"
+      ],
+      "registry_action_suggestion": "candidate_for_schema_registry"
+    },
+    {
+      "column_index": 44,
+      "source_column": "公私性质",
+      "suggested_field_id": "school_ownership",
+      "type_guess": "enum_or_category",
+      "non_empty_count": 30848,
+      "coverage_pct": 0.9998,
+      "unique_count": 5,
+      "sample_values": [
+        "公办",
+        "民办",
+        "中外合作办学",
+        "境外高校独立办学",
+        "内地与港澳台合作办学"
+      ],
+      "semantic_hints": [
+        "公办",
+        "民办",
+        "公私性质"
+      ],
+      "allowed_ops_suggestion": [
+        "eq",
+        "in",
+        "not_in"
+      ],
+      "registry_action_suggestion": "candidate_for_schema_registry"
+    },
+    {
+      "column_index": 45,
+      "source_column": "保研率",
+      "suggested_field_id": "postgraduate_recommendation_rate",
+      "type_guess": "enum_or_category",
+      "non_empty_count": 30855,
+      "coverage_pct": 1.0,
+      "unique_count": 182,
+      "sample_values": [
+        "58.6%",
+        "35.9%",
+        "59.0%",
+        "25.4%",
+        "8.1%",
+        "39.6%",
+        "32.0%",
+        "27.1%"
+      ],
+      "semantic_hints": [],
+      "allowed_ops_suggestion": [
+        "eq",
+        "in",
+        "not_in"
+      ],
+      "registry_action_suggestion": "candidate_for_schema_registry"
+    },
+    {
+      "column_index": 46,
+      "source_column": "院校排名",
+      "suggested_field_id": "school_ranking",
+      "type_guess": "number",
+      "non_empty_count": 30848,
+      "coverage_pct": 0.9998,
+      "unique_count": 470,
+      "sample_values": [
+        "2",
+        "18",
+        "1",
+        "41",
+        "66",
+        "12",
+        "14",
+        "35"
+      ],
+      "semantic_hints": [
+        "排名",
+        "名气",
+        "学校好"
+      ],
+      "allowed_ops_suggestion": [
+        "eq",
+        "<=",
+        ">=",
+        "between",
+        "sort"
+      ],
+      "registry_action_suggestion": "candidate_for_schema_registry"
+    },
+    {
+      "column_index": 47,
+      "source_column": "全校硕士专业数",
+      "suggested_field_id": "school_master_program_count",
+      "type_guess": "number",
+      "non_empty_count": 14249,
+      "coverage_pct": 0.4618,
+      "unique_count": 90,
+      "sample_values": [
+        "78",
+        "71",
+        "74",
+        "55",
+        "53",
+        "52",
+        "34",
+        "43"
+      ],
+      "semantic_hints": [],
+      "allowed_ops_suggestion": [
+        "eq",
+        "<=",
+        ">=",
+        "between",
+        "sort"
+      ],
+      "registry_action_suggestion": "candidate_for_schema_registry"
+    },
+    {
+      "column_index": 48,
+      "source_column": "全校硕士专业",
+      "suggested_field_id": "school_master_programs",
+      "type_guess": "long_text",
+      "non_empty_count": 14249,
+      "coverage_pct": 0.4618,
+      "unique_count": 607,
+      "sample_values": [
+        "保险(专)；博物馆(专)；材料科学与工程；材料与化工(专)；测绘科学与技术；大气科学；地理学；地球物理学；地质学；电子科学与技术；电子信息(专)；法律(专)；法学；翻译(专)；风景园林(专)；工程管理(专)；工商管理(专)；工商管理学；公共",
+        "安全科学与工程；保险(专)；博物馆(专)；党务管理(专)；地理学；电子信息(专)；法律(专)；法学；翻译(专)；工商管理(专)；工商管理学；公共管理(专)；公共管理学；公共卫生与预防医学；管理科学与工程；国际商务(专)；国际事务(专)；国际",
+        "安全科学与工程；材料科学与工程；材料与化工(专)；城乡规划(专)；城乡规划学；电气工程(专)；电子科学与技术；电子信息(专)；动力工程及工程热物理；法律(专)；法学；风景园林(专)；工程管理(专)；工商管理(专)；工商管理学；公共管理(专)",
+        "安全科学与工程；材料科学与工程；材料与化工(专)；城乡规划(专)；城乡规划学；电气工程；电气工程(专)；电子科学与技术；电子信息(专)；动力工程及工程热物理；法律(专)；法学；翻译(专)；工程管理(专)；工商管理(专)；工商管理学；公共管理",
+        "材料科学与工程；材料与化工(专)；城乡规划(专)；城乡规划学；电气工程(专)；电子科学与技术；电子信息(专)；动力工程及工程热物理；法律(专)；工商管理(专)；工商管理学；公共管理(专)；管理科学与工程；光学工程；化学；化学工程与技术；环境",
+        "安全科学与工程；材料科学与工程；材料与化工(专)；地球物理学；电气工程；电气工程(专)；电子科学与技术；电子信息(专)；动力工程及工程热物理；法律(专)；法学；翻译(专)；工程管理(专)；工商管理(专)；工商管理学；公共管理(专)；公共管理",
+        "安全科学与工程；兵器科学与技术；材料科学与工程；材料与化工(专)；党务管理(专)；电气工程(专)；电子科学与技术；电子信息(专)；动力工程及工程热物理；法律(专)；法学；翻译(专)；工程管理(专)；工商管理(专)；工商管理学；公共管理(专)",
+        "安全科学与工程；博物馆(专)；材料科学与工程；材料与化工(专)；地质学；电气工程(专)；电子信息(专)；动力工程及工程热物理；法律(专)；法学；翻译(专)；工程管理(专)；工商管理(专)；工商管理学；公共管理(专)；公共管理学；管理科学与工"
+      ],
+      "semantic_hints": [],
+      "allowed_ops_suggestion": [
+        "contains",
+        "eq"
+      ],
+      "registry_action_suggestion": "candidate_for_schema_registry"
+    },
+    {
+      "column_index": 49,
+      "source_column": "全校博士专业数",
+      "suggested_field_id": "school_phd_program_count",
+      "type_guess": "number",
+      "non_empty_count": 10818,
+      "coverage_pct": 0.3506,
+      "unique_count": 56,
+      "sample_values": [
+        "68",
+        "30",
+        "69",
+        "28",
+        "27",
+        "38",
+        "36",
+        "10"
+      ],
+      "semantic_hints": [],
+      "allowed_ops_suggestion": [
+        "eq",
+        "<=",
+        ">=",
+        "between",
+        "sort"
+      ],
+      "registry_action_suggestion": "candidate_for_schema_registry"
+    },
+    {
+      "column_index": 50,
+      "source_column": "全校博士专业",
+      "suggested_field_id": "school_phd_programs",
+      "type_guess": "long_text",
+      "non_empty_count": 10818,
+      "coverage_pct": 0.3506,
+      "unique_count": 387,
+      "sample_values": [
+        "材料科学与工程；材料与化工(专)；测绘科学与技术；大气科学；地理学；地球物理学；地质学；电子科学与技术；电子信息(专)；法学；工商管理学；公共管理学；公共卫生(专)；公共卫生与预防医学；国家安全学；核科学与技术；护理学；化学；环境科学与工程",
+        "电子信息(专)；法律(专)；法学；工商管理学；公共管理学；管理科学与工程；管理科学与工程；国家安全学；化学；计算机科学与技术；纪检监察学；考古学；理论经济学；马克思主义理论；农林经济管理；社会学；世界史；数学；统计学；外国语言文学；物理学",
+        "安全科学与工程；材料科学与工程；材料与化工(专)；城乡规划学；大气科学；电气工程；电子科学与技术；电子信息(专)；动力工程及工程；法律(专)；法学；风景园林学；工商管理学；工业工程；公共管理学；管理科学与工程；光学工程；航空宇航科学与技术；",
+        "安全科学与工程；材料与化工(专)；电气工程；电子科学与技术；电子信息(专)；工商管理学；管理科学与工程；光学工程；机械(专)；机械工程；计算机科学与技术；交通运输(专)；交通运输工程；控制科学与工程；力学；马克思主义理论；能源动力(专)；软",
+        "材料科学与工程；材料与化工(专)；城乡规划学；电子科学与技术；电子信息(专)；动力工程及工程热物理；管理科学与工程；光学工程；化学；化学工程与技术；环境科学与工程；机械(专)；机械工程；计算机科学与技术；交通运输工程；控制科学与工程；力学；",
+        "安全科学与工程；材料科学与工程；材料与化工(专)；地球物理学；电气工程；电子科学与技术；电子信息(专)；动力工程及工程热物理；法学；工商管理学；公共管理学；管理科学与工程；光学工程；航空宇航科学与技术；化学；机械(专)；机械工程；基础医学；",
+        "安全科学与工程；兵器科学与技术；材料科学与工程；材料与化工(专)；电子科学与技术；电子信息(专)；动力工程及工程热物理；法律(专)；法学；公共管理学；管理科学与工程；光学工程；航空宇航科学与技术；化学；化学工程与技术；机械(专)；机械工程；",
+        "安全科学与工程；材料科学与工程；材料与化工(专)；电子信息(专)；动力工程及工程热物理；工商管理学；管理科学与工程；管理科学与工程；化学；环境科学与工程；机械(专)；机械工程；计算机科学与技术；科学技术史；控制科学与工程；矿业工程；力学；"
+      ],
+      "semantic_hints": [],
+      "allowed_ops_suggestion": [
+        "contains",
+        "eq"
+      ],
+      "registry_action_suggestion": "candidate_for_schema_registry"
+    },
+    {
+      "column_index": 51,
+      "source_column": "2024招生章程",
+      "suggested_field_id": "admission_brochure_2024",
+      "type_guess": "long_text",
+      "non_empty_count": 30848,
+      "coverage_pct": 0.9998,
+      "unique_count": 1553,
+      "sample_values": [
+        "https://gaokao.chsi.com.cn/wap/zszc/viewZszc?schId=1&infoId=5482677367",
+        "https://gaokao.chsi.com.cn/wap/zszc/viewZszc?schId=2&infoId=5480559068",
+        "https://gaokao.chsi.com.cn/wap/zszc/viewZszc?schId=3&infoId=5482330956",
+        "https://gaokao.chsi.com.cn/wap/zszc/viewZszc?schId=4&infoId=5466010607",
+        "https://gaokao.chsi.com.cn/wap/zszc/viewZszc?schId=5&infoId=5474966654",
+        "https://gaokao.chsi.com.cn/wap/zszc/viewZszc?schId=6&infoId=5480861941",
+        "https://gaokao.chsi.com.cn/wap/zszc/viewZszc?schId=7&infoId=5480550251",
+        "https://gaokao.chsi.com.cn/wap/zszc/viewZszc?schId=8&infoId=5435656584"
+      ],
+      "semantic_hints": [],
+      "allowed_ops_suggestion": [
+        "contains",
+        "eq"
+      ],
+      "registry_action_suggestion": "candidate_for_schema_registry"
+    },
+    {
+      "column_index": 52,
+      "source_column": "软科评级",
+      "suggested_field_id": "soft_science_rating",
+      "type_guess": "enum_or_category",
+      "non_empty_count": 11764,
+      "coverage_pct": 0.3813,
+      "unique_count": 4,
+      "sample_values": [
+        "A",
+        "A+",
+        "B+",
+        "B"
+      ],
+      "semantic_hints": [],
+      "allowed_ops_suggestion": [
+        "eq",
+        "in",
+        "not_in"
+      ],
+      "registry_action_suggestion": "candidate_for_schema_registry"
+    },
+    {
+      "column_index": 53,
+      "source_column": "软科排名",
+      "suggested_field_id": "soft_science_ranking",
+      "type_guess": "number",
+      "non_empty_count": 11764,
+      "coverage_pct": 0.3813,
+      "unique_count": 404,
+      "sample_values": [
+        "4",
+        "1",
+        "3",
+        "2",
+        "11",
+        "37",
+        "65",
+        "13"
+      ],
+      "semantic_hints": [],
+      "allowed_ops_suggestion": [
+        "eq",
+        "<=",
+        ">=",
+        "between",
+        "sort"
+      ],
+      "registry_action_suggestion": "candidate_for_schema_registry"
+    },
+    {
+      "column_index": 54,
+      "source_column": "学科评估",
+      "suggested_field_id": "discipline_evaluation",
+      "type_guess": "enum_or_category",
+      "non_empty_count": 5613,
+      "coverage_pct": 0.1819,
+      "unique_count": 33,
+      "sample_values": [
+        "四轮：A+；五轮：A+",
+        "四轮：A；五轮：A+",
+        "四轮：B+；五轮：A-",
+        "四轮：A",
+        "四轮：B-；五轮：A",
+        "四轮：B+",
+        "四轮：B；五轮：A",
+        "四轮：B-"
+      ],
+      "semantic_hints": [],
+      "allowed_ops_suggestion": [
+        "eq",
+        "in",
+        "not_in"
+      ],
+      "registry_action_suggestion": "candidate_for_schema_registry"
+    },
+    {
+      "column_index": 55,
+      "source_column": "专业水平",
+      "suggested_field_id": "major_level",
+      "type_guess": "enum_or_category",
+      "non_empty_count": 9508,
+      "coverage_pct": 0.3082,
+      "unique_count": 185,
+      "sample_values": [
+        "国一",
+        "国一/未名学者中国语言文学拔尖学生培养基地",
+        "国一/未名学者历史学拔尖学生培养基地",
+        "未名学者哲学拔尖学生培养基地",
+        "未名学者经济学拔尖学生培养基地",
+        "未名学者数学拔尖学生培养基地",
+        "省一/未名学者物理学拔尖学生培养基地",
+        "国一/未名学者天文学拔尖学生培养基地"
+      ],
+      "semantic_hints": [
+        "专业水平",
+        "专业不要太冷门"
+      ],
+      "allowed_ops_suggestion": [
+        "eq",
+        "in",
+        "not_in"
+      ],
+      "registry_action_suggestion": "candidate_for_schema_registry"
+    },
+    {
+      "column_index": 56,
+      "source_column": "本专业硕士点",
+      "suggested_field_id": "major_master_program",
+      "type_guess": "enum_or_category",
+      "non_empty_count": 9898,
+      "coverage_pct": 0.3208,
+      "unique_count": 269,
+      "sample_values": [
+        "外国语言文学； 教育（专硕）； 翻译（专硕）",
+        "外国语言文学； 翻译（专硕）",
+        "博物馆（专硕）",
+        "法学； 法律（专硕）",
+        "信息资源管理",
+        "环境科学与工程",
+        "中国史； 世界史； 博物馆（专硕）",
+        "马克思主义理论； 中共党史党建学"
+      ],
+      "semantic_hints": [],
+      "allowed_ops_suggestion": [
+        "eq",
+        "in",
+        "not_in"
+      ],
+      "registry_action_suggestion": "candidate_for_schema_registry"
+    },
+    {
+      "column_index": 57,
+      "source_column": "本专业博士点",
+      "suggested_field_id": "major_phd_program",
+      "type_guess": "enum_or_category",
+      "non_empty_count": 4325,
+      "coverage_pct": 0.1402,
+      "unique_count": 193,
+      "sample_values": [
+        "外国语言文学； 教育（专博）",
+        "外国语言文学",
+        "考古学",
+        "法学",
+        "信息资源管理",
+        "天文学",
+        "环境科学与工程； 资源与环境（专博）",
+        "中国史； 世界史； 考古学"
+      ],
+      "semantic_hints": [],
+      "allowed_ops_suggestion": [
+        "eq",
+        "in",
+        "not_in"
+      ],
+      "registry_action_suggestion": "candidate_for_schema_registry"
+    }
+  ],
+  "methodology_note": "This profile is a field catalog for human review. A column is not executable until it is promoted into schema_registry.json with allowed operators and notes."
+}

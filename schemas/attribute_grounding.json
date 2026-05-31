@@ -1,0 +1,85 @@
+{
+  "description": "Attribute-level grounding policies. This file keeps extractor output mapping out of Python code.",
+  "slot_policies": {
+    "user_context.source_province": {
+      "field_id": "source_province",
+      "attribute_class": "deterministic_candidate"
+    },
+    "user_context.subject_type": {
+      "field_id": "subject_type",
+      "attribute_class": "deterministic_candidate"
+    },
+    "user_context.user_rank": {
+      "field_id": null,
+      "attribute_class": "context_only",
+      "status": "context_only",
+      "reason": "User rank is context for candidate formulas, not an Excel source column."
+    },
+    "preferences.major_keyword": {
+      "field_id": "major_name",
+      "attribute_class": "deterministic_candidate"
+    },
+    "preferences.major_exact_terms": {
+      "field_id": "major_name",
+      "attribute_class": "deterministic_candidate",
+      "reason": "Explicit major names extracted as a list; execution still requires rule construction and verification."
+    },
+    "preferences.preferred_cities": {
+      "field_id": "city",
+      "attribute_class": "deterministic_candidate"
+    },
+    "preferences.risk_preference_raw": {
+      "field_id": "group_min_rank_2024",
+      "attribute_class": "candidate",
+      "requires_human_confirmation": true
+    },
+    "preferences.tuition_preference_raw": {
+      "field_id": "tuition_yuan_per_year",
+      "attribute_class": "candidate",
+      "requires_human_confirmation": true
+    },
+    "preferences.major_expansion_raw": {
+      "field_id": "major_name",
+      "attribute_class": "candidate",
+      "requires_human_confirmation": true
+    },
+    "preferences.cooperation_preference_raw": {
+      "field_id": "cooperation_type",
+      "attribute_class": "unsupported_structured_preference"
+    },
+    "preferences.school_ownership_preference_raw": {
+      "field_id": "school_ownership",
+      "attribute_class": "unsupported_structured_preference",
+      "status": "missing_schema",
+      "reason": "A candidate Excel column exists in the schema profile, but school ownership has not been promoted into the active MVP schema registry."
+    }
+  },
+  "other_vague_policies": {
+    "一线城市": {"field_id": "city", "status": "confirmable", "reason": "Needs confirmed city set."},
+    "大城市": {"field_id": "city", "status": "confirmable", "reason": "Needs confirmed city set."},
+    "发达城市": {"field_id": "city", "status": "confirmable", "reason": "Needs confirmed city set."},
+    "珠三角": {"field_id": "city", "status": "confirmable", "reason": "Needs confirmed Pearl River Delta city set."},
+    "城市不要太差": {"field_id": "city", "status": "confirmable", "reason": "Needs confirmed city quality proxy or city set."},
+    "城市不限": {"field_id": "city", "status": "confirmable", "reason": "Conflicts with city preference and needs confirmation."},
+    "公办": {"field_id": "school_ownership", "status": "missing_schema", "reason": "No reviewed active school ownership field in MVP schema."},
+    "公办本科": {"field_id": "school_ownership", "status": "missing_schema", "reason": "No reviewed active school ownership field in MVP schema."},
+    "优先公办": {"field_id": "school_ownership", "status": "missing_schema", "reason": "No reviewed active school ownership field in MVP schema."},
+    "学校好一点": {"field_id": "school_reputation", "status": "missing_schema", "reason": "No reviewed active school reputation field."},
+    "学校别太差": {"field_id": "school_reputation", "status": "missing_schema", "reason": "No reviewed active school reputation field."},
+    "学校尽量好一点": {"field_id": "school_reputation", "status": "missing_schema", "reason": "No reviewed active school reputation field."},
+    "学校名气": {"field_id": "school_reputation", "status": "missing_schema", "reason": "No reviewed active school reputation field."},
+    "名气重要": {"field_id": "school_reputation", "status": "missing_schema", "reason": "No reviewed active school reputation field."},
+    "口碑好": {"field_id": "school_reputation", "status": "missing_schema", "reason": "No reviewed active school reputation field."},
+    "排名靠前": {"field_id": "school_reputation", "status": "missing_schema", "reason": "No reviewed active school ranking field."},
+    "好学校": {"field_id": "school_reputation", "status": "missing_schema", "reason": "No reviewed active school quality field."},
+    "就业前景好": {"field_id": "employment_outlook", "status": "missing_schema", "reason": "No employment outcome field."},
+    "好就业": {"field_id": "employment_outlook", "status": "missing_schema", "reason": "No employment outcome field."},
+    "离家近一点": {"field_id": "distance_from_home", "status": "missing_schema", "reason": "No home location or distance field."},
+    "离家近": {"field_id": "distance_from_home", "status": "missing_schema", "reason": "No home location or distance field."},
+    "偏远": {"field_id": "city_remoteness", "status": "missing_schema", "reason": "No reviewed active remoteness field."},
+    "太偏远": {"field_id": "city_remoteness", "status": "missing_schema", "reason": "No reviewed active remoteness field."},
+    "专业不要太冷门": {"field_id": "major_popularity", "status": "missing_schema", "reason": "No major popularity field."},
+    "冷门": {"field_id": "major_popularity", "status": "missing_schema", "reason": "No major popularity field."},
+    "录取概率高": {"field_id": "admission_probability", "status": "missing_schema", "reason": "No admission probability field."}
+  }
+}

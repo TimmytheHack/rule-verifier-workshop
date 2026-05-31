@@ -1,0 +1,82 @@
+{
+  "description": "Lifecycle states for preference-to-rule verification. This is a methodology schema, not a runtime validator.",
+  "principles": [
+    "No schema grounding, no deterministic execution.",
+    "No human confirmation, no candidate rule promotion.",
+    "No trace, no verified result.",
+    "Neural proposes; symbolic verifies and executes."
+  ],
+  "states": [
+    {
+      "state": "extracted_preference",
+      "owner": "extractor",
+      "description": "A raw user preference or fact extracted from natural language with source text preserved.",
+      "may_use_llm": true,
+      "may_execute": false,
+      "required_fields": ["source_text", "slot_path", "value"]
+    },
+    {
+      "state": "proposed_rule",
+      "owner": "rule_classifier",
+      "description": "A rule-shaped object proposed from extracted slots and taxonomy.",
+      "may_use_llm": false,
+      "may_execute": false,
+      "required_fields": ["rule_id", "category", "field_id", "operator"]
+    },
+    {
+      "state": "schema_grounded_rule",
+      "owner": "rule_verifier",
+      "description": "A proposed rule whose field_id maps to a real executable source column.",
+      "may_use_llm": false,
+      "may_execute": false,
+      "required_checks": ["field_exists", "source_column_exists", "operator_allowed"]
+    },
+    {
+      "state": "verified_rule",
+      "owner": "rule_verifier",
+      "description": "A deterministic rule that has passed schema, operator, value, ambiguity, and confirmation checks.",
+      "may_use_llm": false,
+      "may_execute": true,
+      "required_checks": ["schema_grounded", "value_present", "value_normalized", "ambiguity_level"]
+    },
+    {
+      "state": "confirmed_rule",
+      "owner": "human_confirmation",
+      "description": "A candidate rule promoted only after explicit user or simulated confirmation.",
+      "may_use_llm": false,
+      "may_execute": true,
+      "required_fields": ["derived_from", "confirmation", "value"]
+    },
+    {
+      "state": "executable_rule",
+      "owner": "rule_promoter",
+      "description": "A verified deterministic rule or confirmed candidate rule ready for backend compilation.",
+      "may_use_llm": false,
+      "may_execute": true,
+      "required_fields": ["rule_id", "field", "operator", "value"]
+    },
+    {
+      "state": "executed_rule",
+      "owner": "executor",
+      "description": "An executable rule applied to a structured backend.",
+      "may_use_llm": false,
+      "may_execute": true,
+      "required_fields": ["rule_id", "backend", "row_count_effect"]
+    },
+    {
+      "state": "traced_result",
+      "owner": "trace_generator",
+      "description": "A returned result row with rule-level evidence and non-executed preference notes.",
+      "may_use_llm": false,
+      "may_execute": false,
+      "required_fields": ["result_id", "passed_rules", "not_executed_preferences"]
+    }
+  ],
+  "terminal_statuses": [
+    "executed",
+    "held_for_confirmation",
+    "rejected_missing_schema",
+    "rejected_ambiguous",
+    "explain_only"
+  ]
+}

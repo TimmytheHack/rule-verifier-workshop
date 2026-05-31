@@ -128,6 +128,12 @@ def load_methodology_results() -> dict[str, Any]:
             "total_tokens": modes["llm_only_baseline"].get("total_tokens"),
             "unsafe_flags": modes["llm_only_baseline"].get("unsafe_flags"),
         },
+        "schema_aware_llm_only_baseline": {
+            "status": modes["schema_aware_llm_only_baseline"].get("status"),
+            "task_success": modes["schema_aware_llm_only_baseline"].get("task_success"),
+            "total_tokens": modes["schema_aware_llm_only_baseline"].get("total_tokens"),
+            "unsafe_flags": modes["schema_aware_llm_only_baseline"].get("unsafe_flags"),
+        },
     }
 
 

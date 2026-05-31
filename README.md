@@ -1,60 +1,56 @@
-# Preference-to-Rule Verification MVP
+# Preference-to-Rule Verification
 
 Chinese version: [README.zh.md](/Users/tz/Desktop/Projects/SZU/README.zh.md)
 
-This repository contains a narrow research-engineering MVP for:
+This repository is a research-engineering project for:
 
 ```text
-Preference-to-Rule Verification Methodology for Guangdong College Application Planning
+Preference-to-Rule Verification for Guangdong College Application Planning
 ```
 
-The project is not a normal college recommendation bot. It demonstrates how one natural-language college application preference can be decomposed into deterministic rules, candidate rules requiring confirmation, and semantic parts that should not be executed.
+It is not a normal recommendation bot. The project studies how natural-language preferences become:
 
-## Current MVP
+- deterministic executable rules;
+- candidate rules requiring confirmation;
+- non-executable or LLM-needed semantic parts.
 
-The MVP supports exactly one demo input:
+The key safety goal is preventing vague or unsupported preferences from being silently promoted into deterministic filters.
+
+## Runtime Core
+
+The runtime path is intentionally small:
 
 ```text
-我是广东物理类，排位32000，想学计算机，最好在广州深圳，学校稳一点，不想去太贵的中外合作。
+Extractor
+-> AttributeGrounder
+-> RuleClassifier
+-> RuleVerifier
+-> RulePromoter
+-> Executor
+-> TraceGenerator
 ```
 
-The pipeline:
+Important boundaries:
 
-1. Loads the Excel workbook.
-2. Detects the real header row.
-3. Builds a schema registry from real Excel fields only.
-4. Uses hardcoded extracted slots for the demo input.
-5. Verifies deterministic rules.
-6. Keeps vague preferences as candidate rules.
-7. Simulates confirmation for safety margin and tuition cap.
-8. Executes only verified and confirmed rules.
-9. Writes result artifacts with rule traces.
+- `RegexExtractor` is a benchmark baseline, not the final extraction strategy.
+- `DeepSeekExtractor` may extract preferences and source spans only.
+- `AttributeGrounder` audits extracted attributes before rule construction.
+- `RuleVerifier` controls schema grounding and executability.
+- `PandasExecutor` is only the MVP executor for Excel/CSV.
+- `SchemaProfiler` is an offline schema-review tool, not runtime.
 
-## Files
+## Main Documents
 
-Planning docs:
-
-- [docs/methodology_engineering_plan.md](/Users/tz/Desktop/Projects/SZU/docs/methodology_engineering_plan.md)
-- [docs/mvp_demo_spec.md](/Users/tz/Desktop/Projects/SZU/docs/mvp_demo_spec.md)
 - [docs/methodology_report.md](/Users/tz/Desktop/Projects/SZU/docs/methodology_report.md)
+- [docs/evaluation_report.md](/Users/tz/Desktop/Projects/SZU/docs/evaluation_report.md)
+- [docs/excel_schema_profile.md](/Users/tz/Desktop/Projects/SZU/docs/excel_schema_profile.md)
+- [docs/end_to_end_demo_cases.md](/Users/tz/Desktop/Projects/SZU/docs/end_to_end_demo_cases.md)
+- [docs/full_project_plan.md](/Users/tz/Desktop/Projects/SZU/docs/full_project_plan.md)
 
-Demo script:
-
-- [scripts/run_mvp_demo.py](/Users/tz/Desktop/Projects/SZU/scripts/run_mvp_demo.py)
-
-Generated outputs:
-
-- [outputs/mvp_demo/rules.json](/Users/tz/Desktop/Projects/SZU/outputs/mvp_demo/rules.json)
-- [outputs/mvp_demo/verification_report.md](/Users/tz/Desktop/Projects/SZU/outputs/mvp_demo/verification_report.md)
-- [outputs/mvp_demo/filtered_results.csv](/Users/tz/Desktop/Projects/SZU/outputs/mvp_demo/filtered_results.csv)
-- [outputs/mvp_demo/result_trace.md](/Users/tz/Desktop/Projects/SZU/outputs/mvp_demo/result_trace.md)
-
-## Run
-
-From the project root:
+## Run MVP Demo
 
 ```bash
-/Users/tz/.cache/codex-runtimes/codex-primary-runtime/dependencies/python/bin/python3 scripts/run_mvp_demo.py
+python3 scripts/run_mvp_demo.py
 ```
 
 Expected current output:
@@ -67,39 +63,48 @@ Wrote outputs/mvp_demo/result_trace.md
 Filtered rows: 93
 ```
 
-## Final Executable Rules
+## Offline Schema Profile
 
-The demo executes six rules:
-
-```text
-生源地 == 广东
-科类 == 物理
-专业名称 contains 计算机
-城市 contains 广州 or 深圳
-专业组最低位次1 >= 35200
-学费 <= 20000
+```bash
+python3 scripts/profile_excel_schema.py
 ```
 
-The last two rules come from simulated confirmation:
+This scans all Excel columns and writes:
 
-- `稳一点` -> 10% safety margin for rank 32000.
-- `太贵` -> tuition cap 20000 元/年.
+- [schemas/excel_schema_profile.json](/Users/tz/Desktop/Projects/SZU/schemas/excel_schema_profile.json)
+- [docs/excel_schema_profile.md](/Users/tz/Desktop/Projects/SZU/docs/excel_schema_profile.md)
 
-## Safety Boundary
+The profile is a review artifact. Columns are not executable until promoted into `schemas/schema_registry.json`.
 
-The preference `中外合作` is not executed because the Excel schema has no dedicated `cooperation_type` field. The MVP does not infer this from text fields such as专业全称, 专业备注, or专业组名称.
+## Evaluation
 
-This is intentional. The core research question is not how to recommend more aggressively, but how to avoid silently turning vague or unsupported preferences into executable rules.
+Offline regex baseline:
 
-## Current Limitations
+```bash
+python3 scripts/eval_fuzzy_inputs.py
+```
 
-- Only one input is supported.
-- Slot extraction is hardcoded.
-- Confirmation is simulated.
-- No LLM is used in code.
-- No external web search is used.
-- No full志愿表 is generated.
-- No school reputation or employment prediction is attempted.
-- No semantic expansion is applied for related majors.
+Current 40-case evaluation summary:
 
-See [docs/methodology_report.md](/Users/tz/Desktop/Projects/SZU/docs/methodology_report.md) for the research interpretation and next evaluation plan.
+| Method | Score | Over-promotion |
+|---|---:|---:|
+| `rule_regex_extractor_symbolic_verifier` | 320/320 | 0.000 |
+| `deepseek_extractor_symbolic_verifier` | 320/320 | 0.000 |
+| `llm_only_baseline` | 107/200 | 0.450 |
+| `schema_aware_llm_only_baseline` | 157/200 | 0.300 |
+
+DeepSeek comparison requires `.env`:
+
+```bash
+set -a
+source .env
+set +a
+python3 scripts/eval_modes.py
+python3 scripts/eval_fuzzy_inputs.py
+```
+
+## Tests
+
+```bash
+python3 -m unittest discover -s tests
+```
