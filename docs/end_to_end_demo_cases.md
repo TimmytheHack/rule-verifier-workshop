@@ -38,7 +38,7 @@ The generated Excel profile shows that some concepts have candidate columns, for
 | E2E04 | 广东物理 28000，冲好学校，不去偏远城市 | 生源地、科类、排位 context | 冲一冲 | 好学校、太偏远城市缺 verified schema |
 | E2E05 | 广东历史 30000，公办本科，专业不冷门，费用低 | 生源地、科类、排位 context | 费用低一点 | 公办本科、专业冷门度 |
 | E2E06 | 广东物理 70000，保底，计算机/电子/自动化相关 | 生源地、科类、exact major keyword if selected | 保底、相关专业扩展 | major family requires confirmed expansion |
-| E2E07 | 广东物理 40000，深圳广州佛山，学费两万以内，优先公办 | 生源地、科类、城市 contains 深圳/广州/佛山 | 学费两万以内 | 公办 |
+| E2E07 | 广东物理 40000，深圳广州佛山，学费两万以内，优先公办 | 生源地、科类、城市 contains 深圳/广州/佛山、学费 <= 20000 | none | 公办 |
 | E2E08 | 广东历史 18000，新闻传播或法学，学校名气重要 | 生源地、科类、exact major keyword if selected | 新闻传播/法学 choice or expansion | 学校名气 |
 | E2E09 | 广东物理 35000，人工智能/软件工程/网络安全，稳一点 | 生源地、科类、exact major keyword if selected | 多专业选择/扩展、稳一点 | none beyond current candidate handling |
 | E2E10 | 广东物理 60000，不冒险，学费低，城市不要太差 | 生源地、科类、排位 context | 不想太冒险、学费低、城市集合确认 | 城市质量 tier missing unless confirmed to explicit cities |
@@ -57,7 +57,7 @@ These 10 cases are included in the current 40-case evaluation set. The latest AP
 
 - `rule_regex_extractor_symbolic_verifier`: `320/320`, over-promotion `0.000`;
 - `deepseek_extractor_symbolic_verifier`: `320/320`, over-promotion `0.000`;
-- `llm_only_baseline`: `107/200`, over-promotion `0.450`;
-- `schema_aware_llm_only_baseline`: `157/200`, over-promotion `0.300`.
+- `llm_only_baseline`: `107/200`, over-promotion `0.475`;
+- `schema_aware_llm_only_baseline`: `156/200`, over-promotion `0.275`.
 
 The result supports the intended boundary: LLM extraction can improve coverage, but symbolic verification must control executability.

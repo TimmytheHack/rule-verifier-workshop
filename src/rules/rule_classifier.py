@@ -13,6 +13,8 @@ from src.rules.rule_verifier import RuleVerifier
 def _slot_value(slots: dict[str, Any], path: list[str]) -> Any:
     value: Any = slots
     for key in path:
+        if not isinstance(value, dict) or key not in value:
+            return None
         value = value[key]
     return value
 
@@ -29,6 +31,8 @@ class RuleClassifier:
         for template in self.taxonomy["deterministic_rules"]:
             rule = copy.deepcopy(template)
             rule["value"] = _slot_value(slots, rule.pop("slot_path"))
+            if rule.pop("skip_if_missing", False) and not _value_present(rule["value"]):
+                continue
             deterministic_rules.append(self.verifier.attach_verification(rule))
 
         context_rules = []
@@ -37,10 +41,15 @@ class RuleClassifier:
             rule["value"] = _slot_value(slots, rule.pop("slot_path"))
             context_rules.append(self.verifier.attach_verification(rule))
 
-        candidate_rules = [
-            self.verifier.attach_verification(copy.deepcopy(rule))
-            for rule in self.taxonomy["candidate_rules"]
-        ]
+        candidate_rules = []
+        for template in self.taxonomy["candidate_rules"]:
+            rule = copy.deepcopy(template)
+            slot_path = rule.pop("slot_path", None)
+            if slot_path:
+                rule["value"] = _slot_value(slots, slot_path)
+                if rule.pop("skip_if_missing", False) and not _value_present(rule["value"]):
+                    continue
+            candidate_rules.append(self.verifier.attach_verification(rule))
 
         llm_needed_parts = []
         for part in self.taxonomy["llm_needed_parts"]:
@@ -61,3 +70,13 @@ class RuleClassifier:
             "simulated_confirmations": copy.deepcopy(self.taxonomy["simulated_confirmations"]),
             "non_executable_preferences": copy.deepcopy(self.taxonomy["non_executable_preferences"]),
         }
+
+
+def _value_present(value: Any) -> bool:
+    if value is None:
+        return False
+    if isinstance(value, str) and not value.strip():
+        return False
+    if isinstance(value, list) and not value:
+        return False
+    return True

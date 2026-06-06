@@ -43,7 +43,7 @@ class RegexExtractor:
         "想冲",
         "保底",
     ]
-    TUITION_TERMS = ["太贵", "不要太贵", "不想太贵", "费用别太高", "费用低一点", "学费低", "学费低一点", "两万以内", "便宜点", "预算有限"]
+    TUITION_TERMS = ["太贵", "不要太贵", "不想太贵", "费用别太高", "费用低一点", "学费低", "学费低一点", "便宜点", "预算有限"]
     COOPERATION_TERMS = ["不想去太贵的中外合作", "不要中外合作", "不考虑中外合作", "中外合作"]
     OWNERSHIP_TERMS = ["公办本科", "优先公办", "公办", "民办"]
     OTHER_VAGUE_TERMS = [
@@ -99,6 +99,7 @@ class RegexExtractor:
                 "preferred_cities": preferred_cities,
                 "risk_preference_raw": self._first_present(text, self.RISK_TERMS),
                 "tuition_preference_raw": self._first_present(text, self.TUITION_TERMS),
+                "tuition_cap_yuan": self._tuition_cap_yuan(text),
                 "major_expansion_raw": self._major_expansion(text),
                 "cooperation_preference_raw": self._first_present(text, self.COOPERATION_TERMS),
                 "school_ownership_preference_raw": self._first_present(text, self.OWNERSHIP_TERMS),
@@ -127,6 +128,35 @@ class RegexExtractor:
             if candidate in text:
                 return candidate
         return None
+
+    def _tuition_cap_yuan(self, text: str) -> int | None:
+        ten_thousand_match = re.search(r"(?:学费|费用|预算)?\s*([一二两三四五六七八九十\d.]+)\s*万\s*以内", text)
+        if ten_thousand_match:
+            value = self._parse_small_number(ten_thousand_match.group(1))
+            return int(value * 10000) if value is not None else None
+
+        yuan_match = re.search(r"(?:学费|费用|预算)\D{0,4}(\d{4,6})\s*(?:元)?\s*以内", text)
+        if yuan_match:
+            return int(yuan_match.group(1))
+        return None
+
+    def _parse_small_number(self, value: str) -> float | None:
+        if re.fullmatch(r"\d+(?:\.\d+)?", value):
+            return float(value)
+        mapping = {
+            "一": 1,
+            "二": 2,
+            "两": 2,
+            "三": 3,
+            "四": 4,
+            "五": 5,
+            "六": 6,
+            "七": 7,
+            "八": 8,
+            "九": 9,
+            "十": 10,
+        }
+        return float(mapping[value]) if value in mapping else None
 
     def _raw_phrases(self, text: str) -> list[str]:
         phrases = []

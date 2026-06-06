@@ -46,9 +46,9 @@ Input:
 | Method | Status | Result rows | Task success | Total tokens | Efficiency | Over-promotion |
 |---|---:|---:|---:|---:|---:|---:|
 | `regex_extractor_symbolic_verifier` | ok | 93 | 5/5 | 0 | n/a | 0 |
-| `deepseek_extractor_symbolic_verifier` | ok | 93 | 5/5 | 689 | 0.00726 | 0 |
-| `llm_only_baseline` | ok | n/a | 1/5 | 824 | 0.00121 | unsafe |
-| `schema_aware_llm_only_baseline` | ok | n/a | 2/5 | 1212 | 0.00165 | unsafe |
+| `deepseek_extractor_symbolic_verifier` | ok | 93 | 5/5 | 834 | 0.00600 | 0 |
+| `llm_only_baseline` | ok | n/a | 1/5 | 818 | 0.00122 | unsafe |
+| `schema_aware_llm_only_baseline` | ok | n/a | 1/5 | 1282 | 0.00078 | unsafe |
 
 The two verifier-based methods produced the same 93 filtered rows and preserved the expected safety behavior:
 
@@ -59,16 +59,16 @@ The two verifier-based methods produced the same 93 filtered rows and preserved 
 
 The LLM-only baseline failed the main safety checks. It promoted unsupported or vague constraints into final executable rules, including fields such as `tuition_type` and `admission_probability`.
 
-The schema-aware LLM-only baseline improved non-executable rejection for `cooperation_type`, but still promoted `稳一点` into executable logic without the symbolic confirmation protocol. This shows that schema awareness helps but does not replace verification.
+The schema-aware LLM-only baseline can see schema context, but still promoted vague or unsupported preferences into executable logic without the symbolic confirmation protocol. This shows that schema awareness helps but does not replace verification.
 
 ## 5. Results: 40-Case Fuzzy Evaluation
 
 | Method | Score | Max score | Success rate | Total tokens | Efficiency | Over-promotion rate |
 |---|---:|---:|---:|---:|---:|---:|
 | `rule_regex_extractor_symbolic_verifier` | 320 | 320 | 1.000 | 0 | n/a | 0.000 |
-| `deepseek_extractor_symbolic_verifier` | 320 | 320 | 1.000 | 23528 | 0.01360 | 0.000 |
-| `llm_only_baseline` | 107 | 200 | 0.535 | 23955 | 0.00447 | 0.450 |
-| `schema_aware_llm_only_baseline` | 157 | 200 | 0.785 | 43069 | 0.00365 | 0.300 |
+| `deepseek_extractor_symbolic_verifier` | 320 | 320 | 1.000 | 25334 | 0.01263 | 0.000 |
+| `llm_only_baseline` | 107 | 200 | 0.535 | 24388 | 0.00439 | 0.475 |
+| `schema_aware_llm_only_baseline` | 156 | 200 | 0.780 | 42916 | 0.00364 | 0.275 |
 
 The fuzzy set includes clearer inputs and more ambiguous preferences such as:
 
@@ -100,9 +100,9 @@ The regex extractor also scored `320/320`, but it is curated for this benchmark 
 | Naive direct LLM with full Excel | 23,040,523 | no | no | no | not executed |
 | Naive direct LLM with MVP-required columns only | 483,922 | no | no | yes | not executed |
 | `regex_extractor_symbolic_verifier` | 0 | yes | yes | yes | 93 rows, 5/5 |
-| `deepseek_extractor_symbolic_verifier` | 689 | yes | yes | yes | 93 rows, 5/5 |
-| `llm_only_baseline` | 824 | yes | yes | yes | 1/5 |
-| `schema_aware_llm_only_baseline` | 1212 | yes | yes | yes | 2/5 |
+| `deepseek_extractor_symbolic_verifier` | 834 | yes | yes | yes | 93 rows, 5/5 |
+| `llm_only_baseline` | 818 | yes | yes | yes | 1/5 |
+| `schema_aware_llm_only_baseline` | 1282 | yes | yes | yes | 1/5 |
 
 The full-Excel direct prompting estimate is intentionally treated as a token-budget comparison, not an API call. It serializes the workbook context and estimates the cost of sending it with the user input.
 
@@ -124,9 +124,9 @@ Second, it invents or relies on non-registry fields. Example fields in the singl
 
 These are not the verified executable field IDs used by the MVP schema registry.
 
-Third, it does not produce a complete verification trace. In the 40-case fuzzy evaluation, the plain LLM-only baseline failed or produced unsafe behavior in all 40 cases. Its deterministic over-promotion rate was `0.450`.
+Third, it does not produce a complete verification trace. In the 40-case fuzzy evaluation, the plain LLM-only baseline failed or produced unsafe behavior in all 40 cases. Its deterministic over-promotion rate was `0.475`.
 
-The schema-aware LLM-only baseline reduced some schema hallucination and non-executable-field errors, but still had a deterministic over-promotion rate of `0.300`. It often kept a trace, but still promoted vague preferences such as tuition, safety, or school-quality terms without the candidate-rule confirmation protocol.
+The schema-aware LLM-only baseline reduced some schema hallucination and non-executable-field errors, but still had a deterministic over-promotion rate of `0.275`. It often kept a trace, but still promoted vague preferences such as tuition, safety, or school-quality terms without the candidate-rule confirmation protocol.
 
 Representative failure patterns:
 

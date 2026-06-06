@@ -1,0 +1,137 @@
+{
+  "description": "Minimum information boundary for the Guangdong college application rule-verification case study.",
+  "principle": "志愿填报系统的第一步不是推荐，而是检查是否具备最低可执行信息：考生位次、科类、批次、目标数据字段和用户偏好边界。缺少这些信息时，系统应该追问或标记不可执行，而不是让 LLM 直接生成建议。",
+  "required_user_inputs": [
+    {
+      "field_id": "source_province",
+      "label": "生源地/省份",
+      "guangdong_minimum": "广东",
+      "missing_behavior": "ask_user"
+    },
+    {
+      "field_id": "subject_type",
+      "label": "科类/选科",
+      "guangdong_minimum": "物理/历史",
+      "missing_behavior": "ask_user"
+    },
+    {
+      "field_id": "user_rank",
+      "label": "省排名/位次",
+      "importance": "rank_is_more_stable_than_score",
+      "missing_behavior": "ask_user_for_rank",
+      "missing_prompt": "请提供你的省排名/位次。仅凭分数无法稳定判断风险。"
+    },
+    {
+      "field_id": "batch",
+      "label": "批次",
+      "examples": ["本科", "专科", "提前批"],
+      "missing_behavior": "ask_user"
+    }
+  ],
+  "required_data_fields": [
+    "院校名称",
+    "院校代码",
+    "院校专业组代码",
+    "专业名称",
+    "专业代码",
+    "科类",
+    "批次",
+    "城市",
+    "计划人数",
+    "学费",
+    "专业组最低位次",
+    "专业最低位次",
+    "选科要求",
+    "本科/专科",
+    "公私性质",
+    "院校标签",
+    "院校水平"
+  ],
+  "mvp_required_data_fields": [
+    "生源地",
+    "科类",
+    "专业名称",
+    "城市",
+    "学费",
+    "专业组最低位次1"
+  ],
+  "guangdong_priority_fields": [
+    "院校专业组代码",
+    "专业组最低位次",
+    "专业名称",
+    "科类",
+    "选科要求"
+  ],
+  "risk_required_inputs": [
+    "user_rank",
+    "专业组最低位次",
+    "专业最低位次",
+    "招生计划人数",
+    "是否新增专业/新增专业组",
+    "近两年/三年录取趋势"
+  ],
+  "mvp_risk_policy": {
+    "active_rank_field": "专业组最低位次1",
+    "limitation": "只用一年位次不够稳；更完整系统应该使用 2-3 年最低位次、计划人数变化、是否新增等信息。",
+    "thresholds_require_confirmation": true,
+    "candidate_threshold_examples": {
+      "冲": "往年最低位次 < 用户位次",
+      "稳": "往年最低位次 >= 用户位次 * 1.05 或 1.10",
+      "保": "往年最低位次 >= 用户位次 * 1.15 或更多"
+    }
+  },
+  "optional_preference_fields": [
+    "公私性质",
+    "院校标签",
+    "院校水平",
+    "院校排名",
+    "保研率",
+    "学科评估",
+    "专业水平"
+  ],
+  "candidate_preferences": [
+    "稳一点",
+    "冲一冲",
+    "保底",
+    "太贵",
+    "学校好一点",
+    "计算机相关",
+    "离家近"
+  ],
+  "deterministic_preference_examples": [
+    {
+      "preference": "学费两万以内",
+      "required_schema_field": "学费",
+      "rule": "学费 <= 20000"
+    },
+    {
+      "preference": "城市在广州/深圳",
+      "required_schema_field": "城市",
+      "rule": "城市 contains 广州 or 深圳"
+    },
+    {
+      "preference": "专业名称包含计算机",
+      "required_schema_field": "专业名称",
+      "rule": "专业名称 contains 计算机"
+    }
+  ],
+  "llm_needed_or_external_info": [
+    "就业前景",
+    "学校氛围",
+    "宿舍条件",
+    "专业未来趋势",
+    "城市发展潜力",
+    "专业会不会被 AI 替代",
+    "适合我"
+  ],
+  "final_answer_requirements": [
+    "执行了哪些规则",
+    "哪些规则需要确认",
+    "哪些偏好没有执行",
+    "筛选出多少结果",
+    "推荐/展示前若干结果",
+    "每个结果为什么保留",
+    "风险提醒",
+    "下一步需要用户补充什么"
+  ]
+}

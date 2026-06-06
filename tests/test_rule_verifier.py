@@ -16,6 +16,7 @@ ROOT = Path(__file__).resolve().parents[1]
 SCHEMA_PATH = ROOT / "schemas/schema_registry.json"
 TAXONOMY_PATH = ROOT / "rules/rule_taxonomy.json"
 VAGUE_TERMS_PATH = ROOT / "rules/vague_terms.json"
+INFORMATION_REQUIREMENTS_PATH = ROOT / "rules/information_requirements.json"
 DEMO_INPUT = "我是广东物理类，排位32000，想学计算机，最好在广州深圳，学校稳一点，不想去太贵的中外合作。"
 AVAILABLE_COLUMNS = ["生源地", "科类", "专业名称", "城市", "专业组最低位次1", "学费"]
 
@@ -79,6 +80,36 @@ class RuleVerifierTest(unittest.TestCase):
         self.assertTrue(terms["太贵"]["requires_human_confirmation"])
         self.assertTrue(terms["相关"]["requires_human_confirmation"])
         self.assertEqual(terms["中外合作"]["default_rule_class"], "llm_needed")
+        self.assertEqual(
+            terms["学费两万以内"]["default_rule_class"],
+            "deterministic_if_schema_grounded",
+        )
+
+    def test_information_requirements_define_minimum_executability_gate(self) -> None:
+        requirements = json.loads(INFORMATION_REQUIREMENTS_PATH.read_text(encoding="utf-8"))
+        required_user_inputs = {item["field_id"]: item for item in requirements["required_user_inputs"]}
+        self.assertEqual(
+            set(required_user_inputs),
+            {"source_province", "subject_type", "user_rank", "batch"},
+        )
+        self.assertEqual(
+            required_user_inputs["user_rank"]["missing_prompt"],
+            "请提供你的省排名/位次。仅凭分数无法稳定判断风险。",
+        )
+        self.assertIn("专业组最低位次1", requirements["mvp_required_data_fields"])
+        self.assertIn("就业前景", requirements["llm_needed_or_external_info"])
+        self.assertTrue(requirements["mvp_risk_policy"]["thresholds_require_confirmation"])
+
+    def test_explicit_tuition_cap_can_be_deterministic_when_schema_grounded(self) -> None:
+        slots = RegexExtractor().extract("我是广东物理类，排位40000，想看深圳、广州、佛山的学校，学费两万以内。")
+        self.assertIsNone(slots["preferences"]["tuition_preference_raw"])
+        self.assertEqual(slots["preferences"]["tuition_cap_yuan"], 20000)
+
+        classified = RuleClassifier(TAXONOMY_PATH, self.verifier).classify(slots)
+        deterministic = {rule["rule_id"]: rule for rule in classified["deterministic_rules"]}
+        self.assertTrue(deterministic["d_tuition_cap_explicit"]["verification"]["executable"])
+        self.assertEqual(deterministic["d_tuition_cap_explicit"]["value"], 20000)
+        self.assertNotIn("c_tuition_cap", {rule["rule_id"] for rule in classified["candidate_rules"]})
 
     def test_rule_lifecycle_schema_records_non_llm_execution_boundary(self) -> None:
         lifecycle = json.loads((ROOT / "rules/rule_lifecycle_schema.json").read_text(encoding="utf-8"))

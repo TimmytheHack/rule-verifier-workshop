@@ -47,6 +47,19 @@
       "confidence": 1.0,
       "requires_human_confirmation": false,
       "trace_reason": "The Excel field 城市 exists and contains relevant values."
+    },
+    {
+      "rule_id": "d_tuition_cap_explicit",
+      "source_text": "明确学费上限",
+      "category": "deterministic",
+      "field_id": "tuition_yuan_per_year",
+      "field": "学费",
+      "operator": "<=",
+      "slot_path": ["preferences", "tuition_cap_yuan"],
+      "skip_if_missing": true,
+      "confidence": 1.0,
+      "requires_human_confirmation": false,
+      "trace_reason": "Explicit numeric tuition caps, such as 学费两万以内, can execute when the 学费 field exists and the value is normalized."
     }
   ],
   "context_rules": [
@@ -72,6 +85,8 @@
       "field_id": "group_min_rank_2024",
       "field": "专业组最低位次1",
       "operator": ">=",
+      "slot_path": ["preferences", "risk_preference_raw"],
+      "skip_if_missing": true,
       "value_expression_options": ["32000 * 1.05", "32000 * 1.10", "32000 * 1.15"],
       "confidence": 0.8,
       "requires_human_confirmation": true,
@@ -85,6 +100,8 @@
       "field_id": "tuition_yuan_per_year",
       "field": "学费",
       "operator": "<=",
+      "slot_path": ["preferences", "tuition_preference_raw"],
+      "skip_if_missing": true,
       "value_options": [10000, 20000, 40000],
       "confidence": 0.8,
       "requires_human_confirmation": true,
@@ -98,6 +115,8 @@
       "field_id": "major_name",
       "field": "专业名称",
       "operator": "contains_any",
+      "slot_path": ["preferences", "major_expansion_raw"],
+      "skip_if_missing": true,
       "value_options": ["软件工程", "人工智能", "数据科学", "网络空间安全"],
       "confidence": 0.7,
       "requires_human_confirmation": true,

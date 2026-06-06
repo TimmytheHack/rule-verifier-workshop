@@ -12,14 +12,17 @@ from __future__ import annotations
 
 import json
 import os
+import time
 import urllib.error
 import urllib.request
 from dataclasses import dataclass
+from pathlib import Path
 from typing import Any
 
 
 DEEPSEEK_API_URL = "https://api.deepseek.com/chat/completions"
 DEFAULT_MODEL = "deepseek-chat"
+RETRYABLE_HTTP_STATUS_CODES = {408, 429, 500, 502, 503, 504}
 
 
 @dataclass(frozen=True)
@@ -36,12 +39,28 @@ class DeepSeekClient:
         api_key: str | None = None,
         model: str | None = None,
         api_url: str = DEEPSEEK_API_URL,
-        timeout_seconds: int = 60,
+        timeout_seconds: int | None = None,
+        max_retries: int | None = None,
+        retry_backoff_seconds: float | None = None,
     ) -> None:
-        self.api_key = api_key or os.getenv("DEEPSEEK_API_KEY")
-        self.model = model or os.getenv("DEEPSEEK_MODEL", DEFAULT_MODEL)
+        self.api_key = api_key or env_value("DEEPSEEK_API_KEY")
+        self.model = model or env_value("DEEPSEEK_MODEL") or DEFAULT_MODEL
         self.api_url = api_url
-        self.timeout_seconds = timeout_seconds
+        self.timeout_seconds = (
+            timeout_seconds
+            if timeout_seconds is not None
+            else _int_env("DEEPSEEK_TIMEOUT_SECONDS", default=60)
+        )
+        self.max_retries = (
+            max_retries
+            if max_retries is not None
+            else _int_env("DEEPSEEK_MAX_RETRIES", default=3)
+        )
+        self.retry_backoff_seconds = (
+            retry_backoff_seconds
+            if retry_backoff_seconds is not None
+            else _float_env("DEEPSEEK_RETRY_BACKOFF_SECONDS", default=2.0)
+        )
 
     def chat_json(self, system_prompt: str, user_prompt: str) -> DeepSeekJSONResponse:
         if not self.api_key:
@@ -65,12 +84,7 @@ class DeepSeekClient:
             },
             method="POST",
         )
-        try:
-            with urllib.request.urlopen(request, timeout=self.timeout_seconds) as response:
-                raw = response.read().decode("utf-8")
-        except urllib.error.HTTPError as exc:
-            error_body = exc.read().decode("utf-8", errors="replace")
-            raise RuntimeError(f"DeepSeek API error {exc.code}: {error_body}") from exc
+        raw = self._urlopen_with_retries(request)
 
         api_payload = json.loads(raw)
         content = api_payload["choices"][0]["message"]["content"]
@@ -83,6 +97,36 @@ class DeepSeekClient:
                 "total_tokens": int(usage.get("total_tokens", 0)),
             },
         )
+
+    def _urlopen_with_retries(self, request: urllib.request.Request) -> str:
+        for attempt in range(self.max_retries + 1):
+            try:
+                with urllib.request.urlopen(
+                    request,
+                    timeout=self.timeout_seconds,
+                ) as response:
+                    return response.read().decode("utf-8")
+            except urllib.error.HTTPError as exc:
+                if not self._should_retry_http(exc.code) or attempt >= self.max_retries:
+                    error_body = exc.read().decode("utf-8", errors="replace")
+                    raise RuntimeError(f"DeepSeek API error {exc.code}: {error_body}") from exc
+                self._sleep_before_retry(attempt)
+            except urllib.error.URLError as exc:
+                if attempt >= self.max_retries:
+                    raise RuntimeError(
+                        "DeepSeek network error after "
+                        f"{self.max_retries + 1} attempts: {exc.reason}"
+                    ) from exc
+                self._sleep_before_retry(attempt)
+        raise RuntimeError("DeepSeek request failed without a captured exception.")
+
+    def _should_retry_http(self, status_code: int) -> bool:
+        return status_code in RETRYABLE_HTTP_STATUS_CODES
+
+    def _sleep_before_retry(self, attempt: int) -> None:
+        delay = self.retry_backoff_seconds * (2 ** attempt)
+        if delay > 0:
+            time.sleep(delay)
 
 
 class DeepSeekExtractor:
@@ -109,6 +153,7 @@ class DeepSeekExtractor:
                 '"preferences": {"major_keyword": string|null, "major_exact_terms": [string], '
                 '"preferred_cities": [string], '
                 '"risk_preference_raw": string|null, "tuition_preference_raw": string|null, '
+                '"tuition_cap_yuan": number|null, '
                 '"major_expansion_raw": string|null, "cooperation_preference_raw": string|null, '
                 '"school_ownership_preference_raw": string|null}, '
                 '"raw_phrases": [string], '
@@ -199,6 +244,14 @@ def normalize_slots(slots: dict[str, Any], original_text: str) -> dict[str, Any]
     tuition = preferences.get("tuition_preference_raw")
     if tuition and "贵" in str(tuition):
         preferences["tuition_preference_raw"] = "太贵"
+    tuition_cap = preferences.get("tuition_cap_yuan")
+    if tuition_cap is None:
+        tuition_cap = _tuition_cap_yuan(original_text)
+    if tuition_cap is None and tuition:
+        tuition_cap = _tuition_cap_yuan(str(tuition))
+    preferences["tuition_cap_yuan"] = tuition_cap
+    if tuition_cap is not None and tuition and "贵" not in str(tuition):
+        preferences["tuition_preference_raw"] = None
 
     cooperation = preferences.get("cooperation_preference_raw")
     if cooperation and "中外合作" in str(cooperation):
@@ -221,6 +274,82 @@ def normalize_slots(slots: dict[str, Any], original_text: str) -> dict[str, Any]
     return output
 
 
+def has_deepseek_api_key() -> bool:
+    """Return whether DeepSeek credentials are available without exposing them."""
+
+    return bool(env_value("DEEPSEEK_API_KEY"))
+
+
+def env_value(name: str) -> str | None:
+    """Read an env var from the shell first, then from a local `.env` file."""
+
+    value = os.getenv(name)
+    if value:
+        return value
+    for dotenv_path in _dotenv_paths():
+        value = _read_dotenv_value(dotenv_path, name)
+        if value:
+            return value
+    return None
+
+
+def _int_env(name: str, default: int) -> int:
+    value = env_value(name)
+    if value is None:
+        return default
+    try:
+        return int(value)
+    except ValueError:
+        return default
+
+
+def _float_env(name: str, default: float) -> float:
+    value = env_value(name)
+    if value is None:
+        return default
+    try:
+        return float(value)
+    except ValueError:
+        return default
+
+
+def _dotenv_paths() -> list[Path]:
+    project_root = Path(__file__).resolve().parents[2]
+    candidates = [Path.cwd() / ".env", project_root / ".env"]
+    unique_paths = []
+    seen = set()
+    for path in candidates:
+        resolved = path.resolve()
+        if resolved in seen:
+            continue
+        seen.add(resolved)
+        unique_paths.append(resolved)
+    return unique_paths
+
+
+def _read_dotenv_value(path: Path, name: str) -> str | None:
+    if not path.exists():
+        return None
+    for raw_line in path.read_text(encoding="utf-8").splitlines():
+        line = raw_line.strip()
+        if not line or line.startswith("#"):
+            continue
+        if line.startswith("export "):
+            line = line[len("export ") :].strip()
+        key, separator, value = line.partition("=")
+        if not separator or key.strip() != name:
+            continue
+        return _clean_dotenv_value(value)
+    return None
+
+
+def _clean_dotenv_value(value: str) -> str:
+    cleaned = value.strip()
+    if len(cleaned) >= 2 and cleaned[0] == cleaned[-1] and cleaned[0] in {"'", '"'}:
+        return cleaned[1:-1]
+    return cleaned.split(" #", 1)[0].strip()
+
+
 def _terms_in_text_order(terms: list[str], texts: list[str]) -> list[str]:
     positions: dict[str, tuple[int, int]] = {}
     for term in terms:
@@ -230,3 +359,38 @@ def _terms_in_text_order(terms: list[str], texts: list[str]) -> list[str]:
                 positions[term] = (text_index, char_index)
                 break
     return sorted(positions, key=positions.get)
+
+
+def _tuition_cap_yuan(text: str) -> int | None:
+    import re
+
+    ten_thousand_match = re.search(r"(?:学费|费用|预算)?\s*([一二两三四五六七八九十\d.]+)\s*万\s*以内", text)
+    if ten_thousand_match:
+        value = _parse_small_number(ten_thousand_match.group(1))
+        return int(value * 10000) if value is not None else None
+
+    yuan_match = re.search(r"(?:学费|费用|预算)\D{0,4}(\d{4,6})\s*(?:元)?\s*以内", text)
+    if yuan_match:
+        return int(yuan_match.group(1))
+    return None
+
+
+def _parse_small_number(value: str) -> float | None:
+    import re
+
+    if re.fullmatch(r"\d+(?:\.\d+)?", value):
+        return float(value)
+    mapping = {
+        "一": 1,
+        "二": 2,
+        "两": 2,
+        "三": 3,
+        "四": 4,
+        "五": 5,
+        "六": 6,
+        "七": 7,
+        "八": 8,
+        "九": 9,
+        "十": 10,
+    }
+    return float(mapping[value]) if value in mapping else None

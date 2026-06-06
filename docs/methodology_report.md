@@ -49,7 +49,75 @@ safety_level = 稳妥
 
 unless the system has a schema-grounded rule and the user confirms the interpretation.
 
-## 3. Methodology Pipeline
+## 3. Minimum Executable Information
+
+The first step of a college application planning system is not recommendation. It is checking whether the system has the minimum executable information: applicant rank, subject type, application batch, target data fields, and explicit preference boundaries. When that information is missing, the system should ask a follow-up question or mark the request as non-executable instead of letting an LLM directly generate advice.
+
+For Guangdong, the minimum user gate is:
+
+```text
+source province = 广东
+subject type = 物理 / 历史
+rank = user_rank
+batch = 本科 / 专科 / 提前批, etc.
+```
+
+Rank is more important than score. Score lines fluctuate by year, while rank is more suitable for comparison with historical admission data. If the user provides only a score and no rank, the system should ask:
+
+```text
+请提供你的省排名/位次。仅凭分数无法稳定判断风险。
+```
+
+The minimum executable dataset fields include:
+
+```text
+院校名称
+院校代码
+院校专业组代码
+专业名称
+专业代码
+科类
+批次
+城市
+计划人数
+学费
+往年最低分
+往年最低位次
+专业组最低位次
+选科要求
+本科/专科
+公私性质
+院校标签 / 院校水平
+```
+
+For Guangdong, outputting only school names is not enough because many decisions happen at the `院校专业组 + 专业` level. A valid output should at least include:
+
+```text
+院校名称
+院校专业组代码
+专业名称
+城市
+学费
+专业组最低位次
+专业最低位次 / if available
+safety margin
+```
+
+Risk judgment needs `user_rank`, historical professional-group minimum rank, historical major minimum rank, enrollment plan count, whether the major or group is new, and two- or three-year admission trends. The MVP currently uses only `专业组最低位次1`. That is enough to demonstrate rule verification, but the methodology must state the limitation: one year of rank data is not stable enough. A fuller system should use 2-3 years of minimum ranks, plan-count changes, and new-major/new-group flags.
+
+User preferences are handled in three classes:
+
+| Class | Examples | Handling |
+|---|---|---|
+| Deterministic | `学费两万以内`, `城市在广州深圳`, `专业名称包含计算机` | Executable when the field exists and the value boundary is explicit. |
+| Candidate | `稳一点`, `太贵`, `计算机相关`, `学校好一点`, `离家近` | Requires confirmation of thresholds, sets, proxy metrics, or home location. |
+| LLM/external/reference only | `就业前景好`, `学校氛围好`, `宿舍条件好`, `专业未来趋势`, `城市发展潜力` | Cannot execute without a corresponding field; preserve as explanation, external-info need, or reference context. |
+
+The final natural-language answer also has minimum requirements: explain which rules executed, which rules need confirmation, which preferences were not executed, how many rows were found, which top results are shown, why each result was retained, what risks remain, and what the user should provide next.
+
+These categories are recorded in `rules/information_requirements.json` as an auditable boundary between methodology and executable rules.
+
+## 4. Methodology Pipeline
 
 The current methodology is:
 
@@ -113,7 +181,7 @@ This means extracted attributes do not need to be executable by default. They mu
 
 This closes an important gap: an extractor may mention attributes such as `公办`, `学校名气`, or `偏远城市`, but those attributes cannot become executable rules unless they are grounded in the Excel schema.
 
-## 4. Rule Classes
+## 5. Rule Classes
 
 ### Deterministic Rules
 
@@ -126,9 +194,10 @@ Examples from the MVP:
 科类 == 物理
 专业名称 contains 计算机
 城市 contains 广州 or 深圳
+学费 <= 20000
 ```
 
-Exact keyword match can be deterministic when the field exists and the operation is allowed.
+Exact keyword match or an explicit numeric boundary can be deterministic when the field exists and the operation is allowed. For example, `学费两万以内` can normalize to `学费 <= 20000`; `太贵` has no explicit threshold and remains a candidate rule.
 
 ### Candidate Rules
 
@@ -159,7 +228,7 @@ In the current Excel schema, there is no dedicated `cooperation_type` field. The
 
 The system also avoids deriving `cooperation_type` from free-text fields in the MVP. That inference may be possible later, but only after creating and verifying a derived structured field.
 
-## 5. Current Demo
+## 6. Current Demo
 
 Input:
 
@@ -209,7 +278,7 @@ The threshold `35200` is derived from:
 
 The current workbook run produces 93 filtered rows.
 
-## 6. Schema Registry As System Boundary
+## 7. Schema Registry As System Boundary
 
 The schema registry defines what the system may execute. A rule cannot become deterministic unless its field is present in the registry and passes verification.
 
@@ -248,7 +317,7 @@ Some of these concepts now have candidate Excel columns discovered by the schema
 
 These fields are not automatically executable. They need human schema review, allowed operators, semantic notes, and tests before promotion into the active schema registry.
 
-## 7. Backend Abstraction
+## 8. Backend Abstraction
 
 Excel is only the first case study. The methodology separates rule verification from data execution.
 
@@ -278,7 +347,7 @@ API executor for tool-backed data
 
 Non-structured text and PDF cannot be deterministically executed until structured schema has been extracted and verified.
 
-## 8. LLM Boundary
+## 9. LLM Boundary
 
 The optional DeepSeek extractor is used only for preference extraction and source spans.
 
@@ -300,7 +369,7 @@ Disallowed LLM roles:
 
 All DeepSeek output goes through the same rule classifier and symbolic verifier as regex output.
 
-## 9. Rule Verification Protocol
+## 10. Rule Verification Protocol
 
 Each executable rule must pass:
 
@@ -345,7 +414,7 @@ The key execution levels are:
 | `blocked` | Grounded but not currently executable. |
 | `rejected` | Not schema-grounded. |
 
-## 10. Evaluation Summary
+## 11. Evaluation Summary
 
 The current evaluation compares task success under token budget.
 
@@ -354,18 +423,18 @@ Single MVP input:
 | Method | Result rows | Task success | Total tokens | Over-promotion |
 |---|---:|---:|---:|---:|
 | `regex_extractor_symbolic_verifier` | 93 | 5/5 | 0 | 0 |
-| `deepseek_extractor_symbolic_verifier` | 93 | 5/5 | 689 | 0 |
-| `llm_only_baseline` | n/a | 1/5 | 824 | unsafe |
-| `schema_aware_llm_only_baseline` | n/a | 2/5 | 1212 | unsafe |
+| `deepseek_extractor_symbolic_verifier` | 93 | 5/5 | 834 | 0 |
+| `llm_only_baseline` | n/a | 1/5 | 818 | unsafe |
+| `schema_aware_llm_only_baseline` | n/a | 1/5 | 1282 | unsafe |
 
 40-case fuzzy evaluation:
 
 | Method | Score | Success rate | Total tokens | Over-promotion rate |
 |---|---:|---:|---:|---:|
 | `rule_regex_extractor_symbolic_verifier` | 320/320 | 1.000 | 0 | 0.000 |
-| `deepseek_extractor_symbolic_verifier` | 320/320 | 1.000 | 23528 | 0.000 |
-| `llm_only_baseline` | 107/200 | 0.535 | 23955 | 0.450 |
-| `schema_aware_llm_only_baseline` | 157/200 | 0.785 | 43069 | 0.300 |
+| `deepseek_extractor_symbolic_verifier` | 320/320 | 1.000 | 25334 | 0.000 |
+| `llm_only_baseline` | 107/200 | 0.535 | 24388 | 0.475 |
+| `schema_aware_llm_only_baseline` | 156/200 | 0.780 | 42916 | 0.275 |
 
 The benchmark now contains 40 layered inputs covering clear, vague, unsupported, mixed, adversarial, contradictory, and end-to-end demo cases. The DeepSeek extractor previously scored `314/320`; after representation normalization for multi-major terms, broader city normalization, and school-ownership preference preservation, it reached `320/320`. This improvement came from better slot representation, not from relaxing the verifier.
 
@@ -384,13 +453,13 @@ Pipeline token budget comparison:
 |---|---:|---|
 | Direct LLM with full Excel | 23,040,523 | Not executed; exceeds practical context budgets. |
 | Direct LLM with MVP columns only | 483,922 | Still large and lacks deterministic verification. |
-| DeepSeek extractor + symbolic verifier | 689 | 93 rows, 5/5. |
+| DeepSeek extractor + symbolic verifier | 834 | 93 rows, 5/5. |
 | Regex extractor + symbolic verifier | 0 | 93 rows, 5/5. |
-| Schema-aware LLM-only baseline | 1212 | 2/5; still unsafe. |
+| Schema-aware LLM-only baseline | 1282 | 1/5; still unsafe. |
 
 The strongest evidence so far is not that LLMs are useless. It is that LLM extraction becomes safer when symbolic verification controls execution.
 
-## 11. Current Limitations
+## 12. Current Limitations
 
 The current system is still narrow.
 
@@ -409,7 +478,7 @@ Limitations:
 
 These limitations are acceptable for the current research stage because the goal is rule verification methodology, not a complete advising product.
 
-## 12. Next Methodology Work
+## 13. Next Methodology Work
 
 Next steps should focus on evaluation and safety:
 
@@ -424,7 +493,7 @@ Next steps should focus on evaluation and safety:
 - Stress-test whether the `320/320` DeepSeek result holds when inputs become longer, noisier, or contradictory.
 - Keep recommendation quality evaluation separate from rule verification evaluation.
 
-## 13. Generalization
+## 14. Generalization
 
 The methodology can generalize to other structured decision systems where users express natural-language preferences over structured data:
 

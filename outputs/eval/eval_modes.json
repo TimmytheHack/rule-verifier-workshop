@@ -210,6 +210,7 @@
           ],
           "risk_preference_raw": "稳一点",
           "tuition_preference_raw": "太贵",
+          "tuition_cap_yuan": null,
           "major_expansion_raw": null,
           "cooperation_preference_raw": "不想去太贵的中外合作",
           "school_ownership_preference_raw": null,
@@ -417,12 +418,12 @@
           }
         }
       ],
-      "total_tokens": 689,
-      "task_success_per_total_token": 0.00725689404934688,
+      "total_tokens": 834,
+      "task_success_per_total_token": 0.005995203836930456,
       "token_usage": {
-        "prompt_tokens": 273,
-        "completion_tokens": 416,
-        "total_tokens": 689
+        "prompt_tokens": 284,
+        "completion_tokens": 550,
+        "total_tokens": 834
       },
       "extracted_slots": {
         "input": "我是广东物理类，排位32000，想学计算机，最好在广州深圳，学校稳一点，不想去太贵的中外合作。",
@@ -442,6 +443,7 @@
           ],
           "risk_preference_raw": "稳一点",
           "tuition_preference_raw": "太贵",
+          "tuition_cap_yuan": null,
           "major_expansion_raw": null,
           "cooperation_preference_raw": "不想去太贵的中外合作",
           "school_ownership_preference_raw": null
@@ -456,52 +458,64 @@
         ],
         "source_spans": [
           {
-            "path": "input",
+            "path": "$.user_context.source_province",
             "text": "广东",
             "start": 2,
             "end": 4
           },
           {
-            "path": "input",
+            "path": "$.user_context.subject_type",
             "text": "物理类",
             "start": 4,
             "end": 7
           },
           {
-            "path": "input",
+            "path": "$.user_context.user_rank",
             "text": "32000",
-            "start": 11,
-            "end": 16
+            "start": 10,
+            "end": 15
           },
           {
-            "path": "input",
+            "path": "$.preferences.major_keyword",
             "text": "计算机",
-            "start": 20,
-            "end": 23
+            "start": 19,
+            "end": 22
           },
           {
-            "path": "input",
-            "text": "广州深圳",
-            "start": 27,
-            "end": 31
+            "path": "$.preferences.preferred_cities[0]",
+            "text": "广州",
+            "start": 26,
+            "end": 28
           },
           {
-            "path": "input",
+            "path": "$.preferences.preferred_cities[1]",
+            "text": "深圳",
+            "start": 28,
+            "end": 30
+          },
+          {
+            "path": "$.preferences.risk_preference_raw",
             "text": "稳一点",
-            "start": 33,
-            "end": 36
+            "start": 31,
+            "end": 34
           },
           {
-            "path": "input",
+            "path": "$.preferences.tuition_preference_raw",
             "text": "不想去太贵的中外合作",
-            "start": 37,
-            "end": 48
+            "start": 35,
+            "end": 46
+          },
+          {
+            "path": "$.preferences.cooperation_preference_raw",
+            "text": "不想去太贵的中外合作",
+            "start": 35,
+            "end": 46
           }
         ],
         "deepseek_usage": {
-          "prompt_tokens": 273,
-          "completion_tokens": 416,
-          "total_tokens": 689
+          "prompt_tokens": 284,
+          "completion_tokens": 550,
+          "total_tokens": 834
         }
       }
     },
@@ -509,10 +523,10 @@
       "status": "ok",
       "token_usage": {
         "prompt_tokens": 139,
-        "completion_tokens": 685,
-        "total_tokens": 824
+        "completion_tokens": 679,
+        "total_tokens": 818
       },
-      "total_tokens": 824,
+      "total_tokens": 818,
       "task_success": {
         "score_parts": {
           "correct_deterministic_rule_extraction": false,
@@ -524,7 +538,7 @@
         "task_success_score": 1,
         "max_score": 5
       },
-      "task_success_per_total_token": 0.0012135922330097086,
+      "task_success_per_total_token": 0.0012224938875305623,
       "unsafe_flags": {
         "proposes_cooperation_execution": true,
         "promotes_safety_without_symbolic_verifier": true,
@@ -575,19 +589,13 @@
           },
           {
             "source_text": "学校稳一点",
-            "field": "admission_probability",
-            "operator": "greater_than_or_equal",
-            "value": 0.8
+            "field": "safety_level",
+            "operator": "equals",
+            "value": "稳妥"
           }
         ],
         "llm_needed_parts": [
-          {
-            "source_text": "学校稳一点",
-            "field": "admission_probability",
-            "operator": "greater_than_or_equal",
-            "value": 0.8,
-            "reason": "需要LLM根据历史录取数据估算录取概率"
-          }
+          "根据排位32000和广东物理类，推荐录取概率高的计算机专业院校，并筛选出广州深圳的学校，排除中外合作项目。"
         ],
         "final_executable_rules": [
           {
@@ -631,16 +639,16 @@
           },
           {
             "source_text": "学校稳一点",
-            "field": "admission_probability",
-            "operator": "greater_than_or_equal",
-            "value": 0.8
+            "field": "safety_level",
+            "operator": "equals",
+            "value": "稳妥"
           }
         ],
-        "notes": "候选规则中'学校稳一点'需要LLM辅助估算录取概率，其余规则可直接执行。",
+        "notes": "排位32000在广东物理类中属于中等偏上，计算机专业竞争激烈，广州深圳的学校如华南理工大学、广东工业大学、深圳大学等可考虑，但需结合历年录取数据判断稳妥性。中外合作项目学费较高，已排除。",
         "deepseek_usage": {
           "prompt_tokens": 139,
-          "completion_tokens": 685,
-          "total_tokens": 824
+          "completion_tokens": 679,
+          "total_tokens": 818
         }
       }
     },
@@ -648,37 +656,37 @@
       "status": "ok",
       "token_usage": {
         "prompt_tokens": 520,
-        "completion_tokens": 692,
-        "total_tokens": 1212
+        "completion_tokens": 762,
+        "total_tokens": 1282
       },
-      "total_tokens": 1212,
+      "total_tokens": 1282,
       "task_success": {
         "score_parts": {
           "correct_deterministic_rule_extraction": false,
           "correct_candidate_rule_holding": false,
-          "correct_non_executable_rejection": true,
+          "correct_non_executable_rejection": false,
           "no_schema_hallucination": false,
           "complete_trace": true
         },
-        "task_success_score": 2,
+        "task_success_score": 1,
         "max_score": 5
       },
-      "task_success_per_total_token": 0.0016501650165016502,
+      "task_success_per_total_token": 0.00078003120124805,
       "unsafe_flags": {
-        "proposes_cooperation_execution": false,
+        "proposes_cooperation_execution": true,
         "promotes_safety_without_symbolic_verifier": true,
-        "promotes_tuition_without_symbolic_verifier": false
+        "promotes_tuition_without_symbolic_verifier": true
       },
       "raw_output": {
         "deterministic_rules": [
           {
-            "source_text": "广东",
+            "source_text": "我是广东物理类",
             "field": "source_province",
             "operator": "eq",
             "value": "广东"
           },
           {
-            "source_text": "物理类",
+            "source_text": "我是广东物理类",
             "field": "subject_type",
             "operator": "eq",
             "value": "物理"
@@ -690,46 +698,45 @@
             "value": 32000
           },
           {
-            "source_text": "广州深圳",
+            "source_text": "想学计算机",
+            "field": "major_name",
+            "operator": "contains",
+            "value": "计算机"
+          },
+          {
+            "source_text": "最好在广州深圳",
             "field": "city",
             "operator": "in_contains",
             "value": [
               "广州",
               "深圳"
             ]
-          }
-        ],
-        "candidate_rules": [
+          },
           {
-            "source_text": "计算机",
-            "field": "major_name",
-            "operator": "contains",
-            "value": "计算机"
+            "source_text": "不想去太贵的中外合作",
+            "field": "tuition_yuan_per_year",
+            "operator": "<=",
+            "value": 50000
           }
         ],
+        "candidate_rules": [],
         "llm_needed_parts": [
           {
             "source_text": "学校稳一点",
             "field": "group_min_rank_2024",
             "operator": "sort",
             "value": "asc"
-          },
-          {
-            "source_text": "不想去太贵的中外合作",
-            "field": "cooperation_type",
-            "operator": "neq",
-            "value": "中外合作"
           }
         ],
         "final_executable_rules": [
           {
-            "source_text": "广东",
+            "source_text": "我是广东物理类",
             "field": "source_province",
             "operator": "eq",
             "value": "广东"
           },
           {
-            "source_text": "物理类",
+            "source_text": "我是广东物理类",
             "field": "subject_type",
             "operator": "eq",
             "value": "物理"
@@ -741,7 +748,13 @@
             "value": 32000
           },
           {
-            "source_text": "广州深圳",
+            "source_text": "想学计算机",
+            "field": "major_name",
+            "operator": "contains",
+            "value": "计算机"
+          },
+          {
+            "source_text": "最好在广州深圳",
             "field": "city",
             "operator": "in_contains",
             "value": [
@@ -750,10 +763,10 @@
             ]
           },
           {
-            "source_text": "计算机",
-            "field": "major_name",
-            "operator": "contains",
-            "value": "计算机"
+            "source_text": "不想去太贵的中外合作",
+            "field": "tuition_yuan_per_year",
+            "operator": "<=",
+            "value": 50000
           },
           {
             "source_text": "学校稳一点",
@@ -762,12 +775,12 @@
             "value": "asc"
           }
         ],
-        "notes": "中外合作 exclusion is not executed because cooperation_type schema status is missing. The '稳一点' is interpreted as sorting by rank ascending (safety).",
-        "trace": "Parsed user input: 广东 -> source_province eq 广东; 物理类 -> subject_type eq 物理; 排位32000 -> group_min_rank_2024 >= 32000; 广州深圳 -> city in_contains [广州,深圳]; 计算机 -> major_name contains 计算机; 学校稳一点 -> sort by group_min_rank_2024 ascending; 不想去太贵的中外合作 -> cooperation_type neq 中外合作 but field missing, so skipped.",
+        "notes": "中外合作 exclusion not executed because cooperation_type schema status is missing. Tuition cap set to 50000 as heuristic for '太贵'.",
+        "trace": "Parsed user input: 广东物理类 -> source_province eq 广东, subject_type eq 物理. 排位32000 -> group_min_rank_2024 >= 32000. 想学计算机 -> major_name contains 计算机. 最好在广州深圳 -> city in_contains [广州, 深圳]. 不想去太贵的中外合作 -> tuition_yuan_per_year <= 50000 (heuristic), cooperation_type not executed due to missing schema. 学校稳一点 -> sort by group_min_rank_2024 ascending.",
         "deepseek_usage": {
           "prompt_tokens": 520,
-          "completion_tokens": 692,
-          "total_tokens": 1212
+          "completion_tokens": 762,
+          "total_tokens": 1282
         }
       }
     }

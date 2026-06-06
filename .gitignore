@@ -3,3 +3,6 @@ __pycache__/
 *.pyc
 .venv/
 .env
+outputs/eval/deepseek_fuzzy_cache.json
+outputs/eval/fuzzy_quick_*.json
+outputs/eval/fuzzy_deepseek_extractor_results.json

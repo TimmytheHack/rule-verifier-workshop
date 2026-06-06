@@ -119,8 +119,8 @@ Latest benchmark snapshot:
 |---|---:|---:|
 | `rule_regex_extractor_symbolic_verifier` | 320/320 | 0.000 |
 | `deepseek_extractor_symbolic_verifier` | 320/320 | 0.000 |
-| `llm_only_baseline` | 107/200 | 0.450 |
-| `schema_aware_llm_only_baseline` | 157/200 | 0.300 |
+| `llm_only_baseline` | 107/200 | 0.475 |
+| `schema_aware_llm_only_baseline` | 156/200 | 0.275 |
 
 ## What Not To Build Yet
 

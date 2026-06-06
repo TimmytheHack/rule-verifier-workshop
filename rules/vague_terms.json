@@ -29,12 +29,21 @@
     {
       "term": "太贵",
       "class": "cost_preference",
-      "examples": ["太贵", "不要太贵", "不想太贵", "费用别太高", "费用低一点", "学费低", "两万以内"],
+      "examples": ["太贵", "不要太贵", "不想太贵", "费用别太高", "费用低一点", "学费低"],
       "default_rule_class": "candidate",
       "candidate_action": "ask_tuition_cap",
       "confirmation_options": [10000, 20000, 40000, "do_not_execute"],
       "requires_human_confirmation": true,
       "execution_without_confirmation": "forbidden"
+    },
+    {
+      "term": "学费两万以内",
+      "class": "explicit_cost_cap",
+      "examples": ["学费两万以内", "两万以内", "学费20000以内"],
+      "default_rule_class": "deterministic_if_schema_grounded",
+      "candidate_action": "normalize_numeric_cap",
+      "requires_human_confirmation": false,
+      "execution_without_schema_grounding": "forbidden"
     },
     {
       "term": "相关",

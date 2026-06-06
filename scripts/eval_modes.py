@@ -14,7 +14,6 @@ total_tokens, and task_success_score / total_tokens where applicable.
 from __future__ import annotations
 
 import json
-import os
 import sys
 from pathlib import Path
 from typing import Any
@@ -26,7 +25,7 @@ if str(ROOT_DIR) not in sys.path:
 from src.adapters.excel_adapter import ExcelAdapter, ExcelDataSet
 from src.baselines.llm_only_baseline import LLMOnlyBaseline, SchemaAwareLLMOnlyBaseline
 from src.executors.pandas_executor import PandasExecutor
-from src.extractors.deepseek_extractor import DeepSeekExtractor
+from src.extractors.deepseek_extractor import DeepSeekExtractor, has_deepseek_api_key
 from src.extractors.regex_extractor import RegexExtractor
 from src.evaluation.scoring import (
     score_llm_only_baseline,
@@ -121,7 +120,7 @@ def run_eval() -> dict[str, Any]:
     )
     modes["regex_extractor_symbolic_verifier"]["extracted_slots"] = regex_slots
 
-    has_deepseek_key = bool(os.getenv("DEEPSEEK_API_KEY"))
+    has_deepseek_key = has_deepseek_api_key()
     if has_deepseek_key:
         deepseek_slots = DeepSeekExtractor().extract(DEMO_INPUT)
         append_usage("deepseek_extractor_symbolic_verifier", deepseek_slots.get("deepseek_usage", {}))

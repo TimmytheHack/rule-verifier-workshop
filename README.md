@@ -78,10 +78,23 @@ The profile is a review artifact. Columns are not executable until promoted into
 
 ## Evaluation
 
-Offline regex baseline:
+Fast local regex-only evaluation:
 
 ```bash
-python3 scripts/eval_fuzzy_inputs.py
+python3 scripts/eval_fuzzy_inputs.py --methods regex
+```
+
+Faster DeepSeek extractor-only evaluation:
+
+```bash
+python3 scripts/eval_fuzzy_inputs.py --quick --output-path outputs/eval/fuzzy_deepseek_extractor_results.json
+```
+
+Full comparison:
+
+```bash
+python3 scripts/eval_modes.py
+python3 scripts/eval_fuzzy_inputs.py --methods all
 ```
 
 Current 40-case evaluation summary:
@@ -90,17 +103,14 @@ Current 40-case evaluation summary:
 |---|---:|---:|
 | `rule_regex_extractor_symbolic_verifier` | 320/320 | 0.000 |
 | `deepseek_extractor_symbolic_verifier` | 320/320 | 0.000 |
-| `llm_only_baseline` | 107/200 | 0.450 |
-| `schema_aware_llm_only_baseline` | 157/200 | 0.300 |
+| `llm_only_baseline` | 107/200 | 0.475 |
+| `schema_aware_llm_only_baseline` | 156/200 | 0.275 |
 
-DeepSeek comparison requires `.env`:
+DeepSeek comparison reads `.env` automatically:
 
 ```bash
-set -a
-source .env
-set +a
 python3 scripts/eval_modes.py
-python3 scripts/eval_fuzzy_inputs.py
+python3 scripts/eval_fuzzy_inputs.py --methods all
 ```
 
 ## Tests

@@ -38,6 +38,11 @@
       "attribute_class": "candidate",
       "requires_human_confirmation": true
     },
+    "preferences.tuition_cap_yuan": {
+      "field_id": "tuition_yuan_per_year",
+      "attribute_class": "deterministic_candidate",
+      "reason": "Explicit numeric tuition caps such as 学费两万以内 can become executable after rule construction and verification."
+    },
     "preferences.major_expansion_raw": {
       "field_id": "major_name",
       "attribute_class": "candidate",

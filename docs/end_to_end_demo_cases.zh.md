@@ -38,7 +38,7 @@ distance/remoteness
 | E2E04 | 广东物理 28000，冲好学校，不去偏远城市 | 生源地、科类、排位 context | 冲一冲 | 好学校、太偏远城市缺 verified schema |
 | E2E05 | 广东历史 30000，公办本科，专业不冷门，费用低 | 生源地、科类、排位 context | 费用低一点 | 公办本科、专业冷门度 |
 | E2E06 | 广东物理 70000，保底，计算机/电子/自动化相关 | 生源地、科类、确认后的 exact major keyword | 保底、相关专业扩展 | major family 需要确认扩展集合 |
-| E2E07 | 广东物理 40000，深圳广州佛山，学费两万以内，优先公办 | 生源地、科类、城市 contains 深圳/广州/佛山 | 学费两万以内 | 公办 |
+| E2E07 | 广东物理 40000，深圳广州佛山，学费两万以内，优先公办 | 生源地、科类、城市 contains 深圳/广州/佛山、学费 <= 20000 | 无 | 公办 |
 | E2E08 | 广东历史 18000，新闻传播或法学，学校名气重要 | 生源地、科类、确认后的 exact major keyword | 新闻传播/法学选择或扩展 | 学校名气 |
 | E2E09 | 广东物理 35000，人工智能/软件工程/网络安全，稳一点 | 生源地、科类、确认后的 exact major keyword | 多专业选择/扩展、稳一点 | 暂无额外可执行字段 |
 | E2E10 | 广东物理 60000，不冒险，学费低，城市不要太差 | 生源地、科类、排位 context | 不想太冒险、学费低、城市集合确认 | 城市质量 tier 缺失，除非确认成明确城市 |
@@ -57,7 +57,7 @@ distance/remoteness
 
 - `rule_regex_extractor_symbolic_verifier`：`320/320`，over-promotion `0.000`；
 - `deepseek_extractor_symbolic_verifier`：`320/320`，over-promotion `0.000`；
-- `llm_only_baseline`：`107/200`，over-promotion `0.450`；
-- `schema_aware_llm_only_baseline`：`157/200`，over-promotion `0.300`。
+- `llm_only_baseline`：`107/200`，over-promotion `0.475`；
+- `schema_aware_llm_only_baseline`：`156/200`，over-promotion `0.275`。
 
 这个结果支持当前边界：LLM extraction 可以提高覆盖率，但 executability 必须由 symbolic verification 控制。

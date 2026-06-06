@@ -49,7 +49,75 @@ safety_level = 稳妥
 
 除非系统有 schema-grounded rule，并且用户确认了这种解释。
 
-## 3. 方法论 Pipeline
+## 3. 最低可执行信息
+
+志愿填报系统的第一步不是推荐，而是检查是否具备最低可执行信息：考生位次、科类、批次、目标数据字段和用户偏好边界。缺少这些信息时，系统应该追问或标记不可执行，而不是让 LLM 直接生成建议。
+
+对广东场景，最小 user gate 是：
+
+```text
+生源地 = 广东
+科类 = 物理 / 历史
+位次 = user_rank
+批次 = 本科 / 专科 / 提前批等
+```
+
+其中位次比分数更重要。不同年份分数线波动大，位次更适合和往年录取数据比较。如果用户只给分数没有给位次，系统应该追问：
+
+```text
+请提供你的省排名/位次。仅凭分数无法稳定判断风险。
+```
+
+数据集的最低可执行字段包括：
+
+```text
+院校名称
+院校代码
+院校专业组代码
+专业名称
+专业代码
+科类
+批次
+城市
+计划人数
+学费
+往年最低分
+往年最低位次
+专业组最低位次
+选科要求
+本科/专科
+公私性质
+院校标签 / 院校水平
+```
+
+广东尤其不能只输出学校名，因为很多判断发生在“院校专业组 + 专业”层面。合格输出至少应包含：
+
+```text
+院校名称
+院校专业组代码
+专业名称
+城市
+学费
+专业组最低位次
+专业最低位次 / 如果有
+安全边际
+```
+
+风险判断需要 `user_rank`、往年专业组最低位次、专业最低位次、招生计划人数、是否新增专业或专业组、以及近两年/三年录取趋势。当前 MVP 只使用 `专业组最低位次1`，这可以演示 rule verification，但方法论必须承认限制：只用一年位次不够稳，更完整系统应该使用 2-3 年最低位次、计划人数变化、是否新增等信息。
+
+用户偏好分三类处理：
+
+| 类型 | 示例 | 处理方式 |
+|---|---|---|
+| Deterministic | `学费两万以内`、`城市在广州深圳`、`专业名称包含计算机` | 字段存在且值边界明确时可以执行。 |
+| Candidate | `稳一点`、`太贵`、`计算机相关`、`学校好一点`、`离家近` | 需要确认阈值、集合、代理指标或家庭城市。 |
+| LLM/external/reference only | `就业前景好`、`学校氛围好`、`宿舍条件好`、`专业未来趋势`、`城市发展潜力` | 没有对应字段时不能执行，只能解释、标记外部信息需求或保留为参考。 |
+
+最终自然语言答案也有最低要求：说明执行了哪些规则、哪些规则需要确认、哪些偏好没有执行、筛选出多少结果、展示前若干结果、每个结果为什么保留、风险提醒，以及下一步需要用户补充什么。
+
+这些分类被记录在 `rules/information_requirements.json` 中，作为方法论和可执行规则之间的审查边界。
+
+## 4. 方法论 Pipeline
 
 当前方法论是：
 
@@ -112,7 +180,7 @@ extracted attributes
 
 这样可以补上一个重要缺口：extractor 可以提到 `公办`、`学校名气`、`偏远城市` 等属性，但只要它们没有 grounded 到 Excel schema，就不能成为 executable rules。
 
-## 4. 规则分类
+## 5. 规则分类
 
 ### Deterministic Rules
 
@@ -125,9 +193,10 @@ MVP 示例：
 科类 == 物理
 专业名称 contains 计算机
 城市 contains 广州 or 深圳
+学费 <= 20000
 ```
 
-当字段存在、操作符允许，并且用户表达足够明确时，exact keyword match 可以作为 deterministic rule。
+当字段存在、操作符允许，并且用户表达足够明确时，exact keyword match 或明确数值边界可以作为 deterministic rule。比如 `学费两万以内` 可以归一化为 `学费 <= 20000`；但 `太贵` 没有明确阈值，仍然是 candidate。
 
 ### Candidate Rules
 
@@ -158,7 +227,7 @@ LLM-needed 或 non-executable parts 是当前 schema 无法安全支持的偏好
 
 MVP 也不会从自由文本字段中推断 `cooperation_type`。未来可以考虑这种派生字段，但前提是先建立并验证结构化字段。
 
-## 5. 当前 Demo
+## 6. 当前 Demo
 
 输入：
 
@@ -208,7 +277,7 @@ MVP 也不会从自由文本字段中推断 `cooperation_type`。未来可以考
 
 当前 workbook 运行结果是 93 条过滤结果。
 
-## 6. Schema Registry 是系统边界
+## 7. Schema Registry 是系统边界
 
 Schema registry 定义系统可以执行什么。一个规则只有在字段存在于 registry 且通过 verification 后，才能成为 deterministic rule。
 
@@ -247,7 +316,7 @@ city_remoteness
 
 这些字段不能自动执行。它们需要人工 schema review、allowed operators、语义说明和测试后，才能进入 active schema registry。
 
-## 7. Backend Abstraction
+## 8. Backend Abstraction
 
 Excel 只是第一个 case study。方法论将 rule verification 和 data execution 分离。
 
@@ -277,7 +346,7 @@ API executor for tool-backed data
 
 非结构化文本和 PDF 不能被确定性执行，除非先抽取并验证结构化 schema。
 
-## 8. LLM 边界
+## 9. LLM 边界
 
 可选 DeepSeek extractor 只用于 preference extraction 和 source spans。
 
@@ -299,7 +368,7 @@ API executor for tool-backed data
 
 所有 DeepSeek 输出都必须经过和 regex 输出相同的 rule classifier 和 symbolic verifier。
 
-## 9. Rule Verification Protocol
+## 10. Rule Verification Protocol
 
 每条可执行规则必须通过：
 
@@ -344,7 +413,7 @@ Verification output 必须解释规则为什么可执行、被阻止、或等待
 | `blocked` | 已 grounded，但当前不能执行。 |
 | `rejected` | 没有 schema grounding。 |
 
-## 10. 评估摘要
+## 11. 评估摘要
 
 当前评估比较的是 token budget 下的 task success。
 
@@ -353,18 +422,18 @@ Verification output 必须解释规则为什么可执行、被阻止、或等待
 | 方法 | 结果行数 | Task success | Total tokens | Over-promotion |
 |---|---:|---:|---:|---:|
 | `regex_extractor_symbolic_verifier` | 93 | 5/5 | 0 | 0 |
-| `deepseek_extractor_symbolic_verifier` | 93 | 5/5 | 689 | 0 |
-| `llm_only_baseline` | n/a | 1/5 | 824 | unsafe |
-| `schema_aware_llm_only_baseline` | n/a | 2/5 | 1212 | unsafe |
+| `deepseek_extractor_symbolic_verifier` | 93 | 5/5 | 834 | 0 |
+| `llm_only_baseline` | n/a | 1/5 | 818 | unsafe |
+| `schema_aware_llm_only_baseline` | n/a | 1/5 | 1282 | unsafe |
 
 40 条模糊输入评估：
 
 | 方法 | 得分 | 成功率 | Total tokens | Over-promotion rate |
 |---|---:|---:|---:|---:|
 | `rule_regex_extractor_symbolic_verifier` | 320/320 | 1.000 | 0 | 0.000 |
-| `deepseek_extractor_symbolic_verifier` | 320/320 | 1.000 | 23528 | 0.000 |
-| `llm_only_baseline` | 107/200 | 0.535 | 23955 | 0.450 |
-| `schema_aware_llm_only_baseline` | 157/200 | 0.785 | 43069 | 0.300 |
+| `deepseek_extractor_symbolic_verifier` | 320/320 | 1.000 | 25334 | 0.000 |
+| `llm_only_baseline` | 107/200 | 0.535 | 24388 | 0.475 |
+| `schema_aware_llm_only_baseline` | 156/200 | 0.780 | 42916 | 0.275 |
 
 当前 benchmark 文件包含 40 条分层输入，覆盖 clear、vague、unsupported、mixed、adversarial、contradictory 和 end-to-end demo cases。DeepSeek extractor 上一轮是 `314/320`；加入多专业词、更多城市归一化和学校性质偏好保留后，达到 `320/320`。这个提升来自更好的 slot representation，不是放宽 verifier。
 
@@ -383,13 +452,13 @@ Pipeline token budget 对比：
 |---|---:|---|
 | Direct LLM with full Excel | 23,040,523 | 未执行；超过现实上下文预算。 |
 | Direct LLM with MVP columns only | 483,922 | 仍然很大，并且缺少 deterministic verification。 |
-| DeepSeek extractor + symbolic verifier | 689 | 93 rows, 5/5。 |
+| DeepSeek extractor + symbolic verifier | 834 | 93 rows, 5/5。 |
 | Regex extractor + symbolic verifier | 0 | 93 rows, 5/5。 |
-| Schema-aware LLM-only baseline | 1212 | 2/5；仍然 unsafe。 |
+| Schema-aware LLM-only baseline | 1282 | 1/5；仍然 unsafe。 |
 
 目前最强的证据不是 LLM 没有用，而是：当 symbolic verification 控制执行时，LLM extraction 会更安全。
 
-## 11. 当前局限性
+## 12. 当前局限性
 
 当前系统仍然很窄。
 
@@ -408,7 +477,7 @@ Pipeline token budget 对比：
 
 这些限制在当前研究阶段是可以接受的，因为目标是 rule verification methodology，不是完整 advisor 产品。
 
-## 12. 下一步方法论工作
+## 13. 下一步方法论工作
 
 下一步应聚焦评估和安全性：
 
@@ -423,7 +492,7 @@ Pipeline token budget 对比：
 - 压测 `320/320` DeepSeek 结果在更长、更乱、矛盾输入下是否仍然稳定。
 - 将 recommendation quality evaluation 和 rule verification evaluation 分开。
 
-## 13. 泛化意义
+## 14. 泛化意义
 
 该方法论可以泛化到其他用户用自然语言表达结构化偏好的决策系统：
 
