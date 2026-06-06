@@ -76,7 +76,9 @@ def _result_line(row: dict[str, Any]) -> str:
     parts = [
         f"{row['rank']}. {row.get('院校名称')}",
         f"专业组代码：{row.get('院校专业组代码')}",
+        f"专业代码：{row.get('专业代码')}",
         f"专业名称：{row.get('专业名称')}",
+        f"专业全称：{row.get('专业全称')}",
         f"城市：{row.get('城市')}",
         f"学费：{_money(row.get('学费'))}",
         f"专业组最低位次：{row.get('专业组最低位次')}",

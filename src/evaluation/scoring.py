@@ -219,7 +219,13 @@ def _mentions_rule(answer: str, rule: dict[str, Any]) -> bool:
 
 
 def _mentions_top_result(answer: str, row: dict[str, Any]) -> bool:
-    required_keys = ["院校名称", "院校专业组代码", "专业名称"]
+    required_keys = [
+        "院校名称",
+        "院校专业组代码",
+        "专业代码",
+        "专业名称",
+        "专业全称",
+    ]
     return all(
         str(row.get(key)) in answer
         for key in required_keys

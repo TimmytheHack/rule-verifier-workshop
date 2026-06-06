@@ -30,8 +30,9 @@ class DeepSeekAnswerGenerator:
                 "every not_executed_preferences item and preserve every "
                 "trace_summary.safety_warnings item. For each top_k_results item, "
                 "copy the school name, professional group code, major name, city, "
-                "tuition, group minimum rank, available major minimum rank, and "
-                "safety margin exactly as supplied."
+                "major code, full major name, tuition, group minimum rank, "
+                "available major minimum rank, and safety margin exactly as "
+                "supplied."
             ),
             user_prompt=(
                 "Generate one concise Chinese answer from this evidence_pack. "
@@ -39,7 +40,7 @@ class DeepSeekAnswerGenerator:
                 "candidate_confirmations, top_k_results, not_executed_preferences, "
                 "and safety warnings. For every top result, include these fields "
                 "when present: 院校名称、院校专业组代码、专业名称、"
-                "城市、学费、"
+                "专业代码、专业全称、城市、学费、"
                 "专业组最低位次、专业最低位次、safety_margin. Evidence pack JSON: "
                 f"{json.dumps(evidence, ensure_ascii=False)}"
             ),
@@ -157,7 +158,9 @@ def _top_result_text(row: dict[str, Any]) -> str:
     parts = [
         f"{row['rank']}. {row.get('院校名称')}",
         f"院校专业组代码：{row.get('院校专业组代码')}",
+        f"专业代码：{row.get('专业代码')}",
         f"专业名称：{row.get('专业名称')}",
+        f"专业全称：{row.get('专业全称')}",
         f"城市：{row.get('城市')}",
         f"学费：{_format_money(row.get('学费'))}",
         f"专业组最低位次：{row.get('专业组最低位次')}",

@@ -88,7 +88,9 @@ def sample_evidence() -> EvidencePack:
                 "rank": 1,
                 "院校名称": "深圳大学",
                 "院校专业组代码": "10590251",
+                "专业代码": "353",
                 "专业名称": "计算机类",
+                "专业全称": "计算机类(含：计算机科学与技术、软件工程)",
                 "城市": "深圳",
                 "学费": 6853.0,
                 "专业组最低位次": 38998,
@@ -151,6 +153,8 @@ class AnswerReportingTest(unittest.TestCase):
         self.assertNotIn("ExcelAdapter", fake_client.last_user_prompt)
         self.assertIn("证据覆盖清单", result["answer"])
         self.assertIn("院校专业组代码：10590251", result["answer"])
+        self.assertIn("专业代码：353", result["answer"])
+        self.assertIn("专业全称：计算机类", result["answer"])
         self.assertEqual(score["task_success_score"], score["max_score"])
 
     def test_compare_answers_skips_deepseek_when_not_requested(self) -> None:
