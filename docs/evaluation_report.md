@@ -140,7 +140,48 @@ Representative failure patterns:
 
 These failures are directly related to the project’s main risk: vague or unsupported natural-language preferences can be turned into executable filters without evidence that the data schema supports them.
 
-## 8. Interpretation
+## 8. Answer-Level Evaluation
+
+The reporting layer is evaluated separately from rule execution. It receives
+post-execution evidence, not raw Excel.
+
+Compared answer modes:
+
+| Mode | Input | Expected role |
+|---|---|---|
+| `llm_only_schema_sample` | User request, schema summary, and sample projected rows | Baseline for unsupported natural-language claims. |
+| `pipeline_template` | Verified `evidence_pack` only | Deterministic answer fallback with no LLM. |
+| `pipeline_deepseek_evidence` | Verified `evidence_pack` only | Optional LLM prose plus deterministic evidence coverage. |
+
+Answer-level success is scored across five criteria:
+
+| Criterion | Meaning |
+|---|---|
+| Correct result count | The answer states the verified `result_count`. |
+| Correct executed rules | The answer includes every verified executed rule. |
+| Correct top results | The answer includes the projected top results, including professional group code, major code, and full major name. |
+| Mentions not-executed preferences | Preserved but unexecuted preferences such as `中外合作` are explicitly mentioned as not executed. |
+| No unsupported claims | The answer does not add claims unsupported by the evidence pack. |
+
+Representative answer-demo behavior:
+
+| Mode | Answer score | Notes |
+|---|---:|---|
+| `llm_only_schema_sample` | 1/5 | Often produces fluent but unsupported claims such as `非中外合作`, `录取希望`, or `非常稳妥`. |
+| `pipeline_template` | 5/5 | Fully deterministic and evidence-aligned. |
+| `pipeline_deepseek_evidence` | 5/5 | DeepSeek prose is backed by a deterministic evidence coverage checklist. |
+
+`unsupported_claims` means unsupported by verified evidence, not necessarily
+absent from raw Excel. For example, the Excel profile contains a candidate
+`公私性质` column, but `中外合作` exclusion cannot be claimed until a reviewed
+active schema field and verifier policy support it.
+
+The top-results check intentionally includes `专业代码` and `专业全称`. Two rows
+can share the same school, professional-group code, and short major name while
+representing different tracks, such as `计算机科学与技术(腾安班，校企联合培养，校本部)`
+versus `计算机科学与技术(校本部)`.
+
+## 9. Interpretation
 
 The results support a conservative research-engineering claim:
 
@@ -148,9 +189,9 @@ LLMs are useful for extracting preferences and source spans, especially when use
 
 The strongest current result is that `deepseek_extractor_symbolic_verifier` reaches the same task success as the curated regex baseline on the 40-case benchmark while keeping deterministic over-promotion at zero. This supports the architecture boundary: the LLM can improve extraction coverage, but the verifier controls execution safety.
 
-Schema-aware prompting is not enough by itself. It improves the LLM-only baseline, but does not enforce the rule lifecycle, human confirmation boundary, or schema-grounded execution.
+Schema-aware prompting is not enough by itself. It improves the LLM-only baseline, but does not enforce the rule lifecycle, human confirmation boundary, schema-grounded execution, or evidence-aligned answer generation.
 
-## 9. Limitations
+## 10. Limitations
 
 - The evaluation set is still small at 40 cases.
 - The regex patterns are curated for the current examples.
@@ -159,8 +200,10 @@ Schema-aware prompting is not enough by itself. It improves the LLM-only baselin
 - There is no real user study yet.
 - The current benchmark evaluates rule safety and traceability, not final college application quality.
 - The MVP uses one Excel dataset and one pandas executor.
+- Answer-level evaluation is currently rule/evidence alignment, not user-study
+  quality or final application-strategy quality.
 
-## 10. Next Steps
+## 11. Next Steps
 
 - Expand `eval_inputs.jsonl` to 50-100 cases.
 - Add more paraphrases for vague terms such as safety, cost, school quality, city preference, employment, distance, and major-family expansion.
@@ -168,5 +211,6 @@ Schema-aware prompting is not enough by itself. It improves the LLM-only baselin
 - Report deterministic over-promotion rate as the main safety metric.
 - Report schema hallucination rate separately from general extraction accuracy.
 - Add per-rule trace completeness checks.
+- Add more answer-level adversarial cases for unsupported claims and duplicate-looking projected results.
 - Add adversarial cases where a user mentions unsupported fields that appear semantically inferable from text fields.
 - Keep the evaluation focused on preference-to-rule verification, not full college recommendation quality.

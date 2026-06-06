@@ -132,6 +132,8 @@ Natural-language input
 -> executable rule set
 -> backend-specific query execution
 -> result trace
+-> evidence pack
+-> answer/report generation
 -> evaluation
 ```
 
@@ -141,6 +143,7 @@ Natural-language input
 No schema grounding, no deterministic execution.
 No human confirmation, no candidate rule promotion.
 No trace, no verified result.
+No evidence pack, no final answer.
 Neural proposes; symbolic verifies and executes.
 ```
 
@@ -155,9 +158,32 @@ extracted_preference
 -> executable_rule
 -> executed_rule
 -> traced_result
+-> evidence_pack
+-> generated_answer
 ```
 
 这个 lifecycle 很重要，因为它区分了 extractor 提出了什么，以及 verifier 最终允许什么执行。
+
+答案层必须位于 trace 之后。它不读取 raw Excel，也不判断 executability。它只接收
+evidence pack，字段包括：
+
+- `user_request`；
+- `executed_rules`；
+- `candidate_confirmations`；
+- `not_executed_preferences`；
+- `result_count`；
+- `top_k_results`；
+- `trace_summary`。
+
+`TemplateReportBuilder` 根据 evidence pack 确定性生成中文答案。可选的
+`DeepSeekAnswerGenerator` 也只能接收同一个 evidence pack。由于 LLM 可能省略
+必要字段，DeepSeek 路径会追加一段确定性的证据覆盖清单，补齐已执行规则、前若干
+专业组结果、未执行偏好和安全说明。
+
+答案层的最小结果形状包括 `院校名称`、`院校专业组代码`、`专业代码`、`专业名称`、
+`专业全称`、`城市`、`学费`、`专业组最低位次`、可用时的 `专业最低位次` 和
+safety margin。`专业代码` 与 `专业全称` 必须保留，因为两条结果可能共享同一学校、
+同一专业组代码和同一个短专业名，但实际对应不同培养方向。
 
 实现中还增加了 attribute-level grounding audit，放在 rule construction 之前：
 
@@ -329,6 +355,8 @@ Backend abstraction 是：
 | Backend-specific Query Compiler | 将 verified rules 编译成 pandas、SQL、MongoDB 或 API 查询形式。 |
 | Executor | 在对应 backend 上执行规则。 |
 | Result Trace | 解释每条结果由哪些规则产生。 |
+| Evidence Pack | 将已验证规则、确认记录、未执行偏好、top results 和 trace summary 打包给答案层。 |
+| Report Builder / Answer Generator | 只根据 evidence pack 生成最终答案。 |
 
 当前 executor：
 
@@ -356,6 +384,7 @@ API executor for tool-backed data
 - 抽取 preference slots；
 - 保留 source spans；
 - 提出 candidate interpretations。
+- 根据 verified evidence pack 生成答案文案。
 
 不允许的 LLM 角色：
 
@@ -365,8 +394,14 @@ API executor for tool-backed data
 - 编译查询；
 - 执行 deterministic filters；
 - 声称缺失字段存在。
+- 在答案生成阶段读取 raw Excel；
+- 添加 evidence pack 中没有的录取、就业、中外合作、宿舍或学校质量事实。
 
 所有 DeepSeek 输出都必须经过和 regex 输出相同的 rule classifier 和 symbolic verifier。
+
+对于答案生成，DeepSeek 输出只被视为 prose。系统会追加确定性的 evidence
+coverage，保证最终答案即使在模型省略字段时，仍包含 verified rules、top
+results、未执行偏好和安全说明。
 
 ## 10. Rule Verification Protocol
 
@@ -455,6 +490,18 @@ Pipeline token budget 对比：
 | DeepSeek extractor + symbolic verifier | 834 | 93 rows, 5/5。 |
 | Regex extractor + symbolic verifier | 0 | 93 rows, 5/5。 |
 | Schema-aware LLM-only baseline | 1282 | 1/5；仍然 unsafe。 |
+
+Answer-level evaluation：
+
+| 答案模式 | 输入边界 | 预期结果 |
+|---|---|---|
+| `llm_only_schema_sample` | 用户请求、schema summary、sample projected rows | 对照组；因为没有 verified executed rules、未执行偏好状态和 trace summary，通常失败。 |
+| `pipeline_template` | 只使用 verified evidence pack | 5/5 evidence alignment；不使用 LLM。 |
+| `pipeline_deepseek_evidence` | 只使用 verified evidence pack | 追加确定性 evidence coverage 后达到 5/5 evidence alignment。 |
+
+Answer-level scoring 检查结果总数、已执行规则、top projected professional-group
+results、未执行偏好，以及 unsupported claims。Unsupported 指没有 verified
+evidence pack 支持，不等于 raw Excel workbook 中一定不存在。
 
 目前最强的证据不是 LLM 没有用，而是：当 symbolic verification 控制执行时，LLM extraction 会更安全。
 

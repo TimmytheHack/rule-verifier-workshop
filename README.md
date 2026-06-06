@@ -28,6 +28,8 @@ Extractor
 -> RulePromoter
 -> Executor
 -> TraceGenerator
+-> EvidencePack
+-> ReportBuilder / AnswerGenerator
 ```
 
 Important boundaries:
@@ -37,6 +39,9 @@ Important boundaries:
 - `AttributeGrounder` audits extracted attributes before rule construction.
 - `RuleVerifier` controls schema grounding and executability.
 - `PandasExecutor` is only the MVP executor for Excel/CSV.
+- `EvidencePack` is the only input to answer generation; raw Excel is not.
+- `TemplateReportBuilder` is deterministic and uses no LLM.
+- `DeepSeekAnswerGenerator` is optional and evidence-only.
 - `SchemaProfiler` is an offline schema-review tool, not runtime.
 
 ## Main Documents
@@ -112,6 +117,43 @@ DeepSeek comparison reads `.env` automatically:
 python3 scripts/eval_modes.py
 python3 scripts/eval_fuzzy_inputs.py --methods all
 ```
+
+## Answer Demo
+
+The answer layer compares three modes:
+
+| Mode | Input | Purpose |
+|---|---|---|
+| `llm_only_schema_sample` | User request, schema summary, and sample projected rows | Baseline for unsupported claims and missing verification trace. |
+| `pipeline_template` | Verified `evidence_pack` only | Deterministic production-safe fallback. |
+| `pipeline_deepseek_evidence` | Verified `evidence_pack` only | Optional LLM answer with a deterministic evidence coverage appendix. |
+
+Run:
+
+```bash
+python3 scripts/run_answer_demo.py
+```
+
+Outputs:
+
+- `outputs/answer_demo/evidence_pack.json`
+- `outputs/answer_demo/template_answer.md`
+- `outputs/answer_demo/llm_only_answer.md`
+- `outputs/answer_demo/deepseek_evidence_answer.md`
+- `outputs/answer_demo/answer_comparison.json`
+
+Answer-level evaluation checks:
+
+- correct result count;
+- correct executed rules;
+- correct top results, including professional group code, major code, and full major name;
+- mentions not-executed preferences;
+- no claims unsupported by verified evidence.
+
+`unsupported_claims` means unsupported by the verified evidence pack, not
+necessarily absent from raw Excel. For example, `公私性质` exists as a candidate
+column in the Excel profile, but `中外合作` exclusion remains unsupported until a
+reviewed active schema field and verifier policy are added.
 
 ## Tests
 

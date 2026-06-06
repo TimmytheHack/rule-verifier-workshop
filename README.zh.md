@@ -28,6 +28,8 @@ Extractor
 -> RulePromoter
 -> Executor
 -> TraceGenerator
+-> EvidencePack
+-> ReportBuilder / AnswerGenerator
 ```
 
 边界：
@@ -37,6 +39,9 @@ Extractor
 - `AttributeGrounder` 在 rule construction 前审计 extracted attributes。
 - `RuleVerifier` 控制 schema grounding 和 executability。
 - `PandasExecutor` 只是 Excel/CSV 的 MVP executor。
+- `EvidencePack` 是答案生成的唯一输入；答案层不能读 raw Excel。
+- `TemplateReportBuilder` 是确定性模板，不使用 LLM。
+- `DeepSeekAnswerGenerator` 是可选 evidence-only 答案生成器。
 - `SchemaProfiler` 是离线 schema-review 工具，不进入 runtime。
 
 ## 主文档
@@ -115,6 +120,42 @@ DeepSeek 对比会自动读取 `.env`：
 python3 scripts/eval_modes.py
 python3 scripts/eval_fuzzy_inputs.py --methods all
 ```
+
+## 答案 Demo
+
+答案层比较三种模式：
+
+| 模式 | 输入 | 目的 |
+|---|---|---|
+| `llm_only_schema_sample` | 用户请求、schema summary、sample projected rows | 对照组，用来暴露 unsupported claims 和 trace 缺失。 |
+| `pipeline_template` | 只使用 verified `evidence_pack` | 确定性的生产安全 fallback。 |
+| `pipeline_deepseek_evidence` | 只使用 verified `evidence_pack` | 可选 LLM 答案，并追加确定性证据覆盖清单。 |
+
+运行：
+
+```bash
+python3 scripts/run_answer_demo.py
+```
+
+输出：
+
+- `outputs/answer_demo/evidence_pack.json`
+- `outputs/answer_demo/template_answer.md`
+- `outputs/answer_demo/llm_only_answer.md`
+- `outputs/answer_demo/deepseek_evidence_answer.md`
+- `outputs/answer_demo/answer_comparison.json`
+
+Answer-level evaluation 检查：
+
+- 结果总数是否正确；
+- 已执行规则是否正确；
+- top results 是否正确，包括院校专业组代码、专业代码、专业全称；
+- 是否提到未执行偏好；
+- 是否没有 unsupported-by-verified-evidence claims。
+
+`unsupported_claims` 指“没有被 verified evidence pack 支持”，不是指 raw Excel
+里一定没有。例如 Excel profile 里有候选列 `公私性质`，但 `中外合作` 排除
+仍要等 reviewed active schema field 和 verifier policy 加入后才能执行或声称。
 
 ## Tests
 

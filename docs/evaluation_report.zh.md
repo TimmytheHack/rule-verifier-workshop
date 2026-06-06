@@ -140,7 +140,45 @@ schema-aware LLM-only baseline 减少了一些 schema hallucination 和 non-exec
 
 这些失败都和本项目的核心风险直接相关：模糊或缺少 schema 支持的自然语言偏好，可能在没有数据依据的情况下被转成可执行过滤条件。
 
-## 8. 结果解释
+## 8. Answer-Level Evaluation
+
+Reporting 层需要单独评估。它接收 execution 之后的证据，而不是 raw Excel。
+
+对比的答案模式：
+
+| 模式 | 输入 | 预期作用 |
+|---|---|---|
+| `llm_only_schema_sample` | 用户请求、schema summary、sample projected rows | 暴露 unsupported natural-language claims 的对照组。 |
+| `pipeline_template` | 只使用 verified `evidence_pack` | 无 LLM 的确定性答案 fallback。 |
+| `pipeline_deepseek_evidence` | 只使用 verified `evidence_pack` | 可选 LLM 文案，并追加确定性证据覆盖清单。 |
+
+Answer-level success 由五个维度评分：
+
+| 指标 | 含义 |
+|---|---|
+| Correct result count | 答案给出 verified `result_count`。 |
+| Correct executed rules | 答案包含所有 verified executed rules。 |
+| Correct top results | 答案包含 top results，并保留院校专业组代码、专业代码、专业全称。 |
+| Mentions not-executed preferences | 明确说明 `中外合作` 等被保留但未执行的偏好。 |
+| No unsupported claims | 不添加 evidence pack 不支持的结论。 |
+
+代表性 answer demo 行为：
+
+| 模式 | Answer score | 说明 |
+|---|---:|---|
+| `llm_only_schema_sample` | 1/5 | 常生成流畅但未验证的结论，例如 `非中外合作`、`录取希望`、`非常稳妥`。 |
+| `pipeline_template` | 5/5 | 完全确定性，和 evidence 对齐。 |
+| `pipeline_deepseek_evidence` | 5/5 | DeepSeek 文案由确定性证据覆盖清单兜底。 |
+
+`unsupported_claims` 指“没有 verified evidence 支持”，不等于 raw Excel 中一定不存在。
+例如 Excel profile 中有候选列 `公私性质`，但 `中外合作` 排除必须等 reviewed
+active schema field 和 verifier policy 支持后才能执行或声称。
+
+top-results 检查故意包含 `专业代码` 和 `专业全称`。两条结果可能共享同一学校、
+同一专业组代码和同一个短专业名，但实际对应不同培养方向，例如
+`计算机科学与技术(腾安班，校企联合培养，校本部)` 与 `计算机科学与技术(校本部)`。
+
+## 9. 结果解释
 
 当前结果支持一个保守的 research-engineering 结论：
 
@@ -148,9 +186,9 @@ LLM 对偏好抽取和 source span 提取有价值，尤其是在用户表达不
 
 目前最强的结果是：`deepseek_extractor_symbolic_verifier` 在 40-case benchmark 上达到了 curated regex baseline 的任务成功率，同时 deterministic over-promotion 保持为 0。这支持当前架构边界：LLM 可以提高 extraction coverage，但 verifier 控制 execution safety。
 
-Schema-aware prompting 本身还不够。它改善了 LLM-only baseline，但没有强制执行 rule lifecycle、human confirmation boundary 或 schema-grounded execution。
+Schema-aware prompting 本身还不够。它改善了 LLM-only baseline，但没有强制执行 rule lifecycle、human confirmation boundary、schema-grounded execution 或 evidence-aligned answer generation。
 
-## 9. 局限性
+## 10. 局限性
 
 - 评估集仍然较小，目前是 40 个 case。
 - Regex patterns 是针对当前 examples 人工整理的。
@@ -159,8 +197,9 @@ Schema-aware prompting 本身还不够。它改善了 LLM-only baseline，但没
 - 目前还没有真实用户研究。
 - 当前 benchmark 评估的是 rule safety 和 traceability，不是最终志愿推荐质量。
 - MVP 只使用一个 Excel dataset 和一个 pandas executor。
+- Answer-level evaluation 当前评估的是 rule/evidence alignment，不是真实用户研究质量或最终填报策略质量。
 
-## 10. 下一步
+## 11. 下一步
 
 - 将 `eval_inputs.jsonl` 扩展到 50-100 个 case。
 - 为 safety、cost、school quality、city preference、employment、distance、major-family expansion 等模糊表达增加更多 paraphrases。
@@ -168,5 +207,6 @@ Schema-aware prompting 本身还不够。它改善了 LLM-only baseline，但没
 - 将 deterministic over-promotion rate 作为主要安全指标报告。
 - 单独报告 schema hallucination rate。
 - 增加 per-rule trace completeness checks。
+- 增加更多 answer-level adversarial cases，覆盖 unsupported claims 和看起来重复的 projected results。
 - 增加 adversarial cases，测试用户提到 schema 不支持但看起来可以从文本字段推断的偏好。
 - 保持评估聚焦在 preference-to-rule verification，而不是完整志愿推荐质量。

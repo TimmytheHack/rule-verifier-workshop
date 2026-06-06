@@ -132,6 +132,8 @@ Natural-language input
 -> executable rule set
 -> backend-specific query execution
 -> result trace
+-> evidence pack
+-> answer/report generation
 -> evaluation
 ```
 
@@ -141,6 +143,7 @@ Core principles:
 No schema grounding, no deterministic execution.
 No human confirmation, no candidate rule promotion.
 No trace, no verified result.
+No evidence pack, no final answer.
 Neural proposes; symbolic verifies and executes.
 ```
 
@@ -156,9 +159,34 @@ extracted_preference
 -> executable_rule
 -> executed_rule
 -> traced_result
+-> evidence_pack
+-> generated_answer
 ```
 
 This lifecycle is important because it separates what an extractor proposes from what the verifier allows to execute.
+
+The answer layer is deliberately downstream of tracing. It does not inspect raw
+Excel and it does not decide executability. It receives an evidence pack with:
+
+- `user_request`;
+- `executed_rules`;
+- `candidate_confirmations`;
+- `not_executed_preferences`;
+- `result_count`;
+- `top_k_results`;
+- `trace_summary`.
+
+`TemplateReportBuilder` renders this evidence deterministically in Chinese.
+`DeepSeekAnswerGenerator` is optional; it receives only the same evidence pack.
+Because LLM output can omit required fields, the DeepSeek path appends a
+deterministic evidence coverage checklist that includes executed rules, top
+professional-group results, not-executed preferences, and safety warnings.
+
+The answer-level minimum result shape includes `院校名称`, `院校专业组代码`,
+`专业代码`, `专业名称`, `专业全称`, `城市`, `学费`, `专业组最低位次`,
+`专业最低位次` when available, and safety margin. `专业代码` and `专业全称`
+are required because two rows can share the same school, professional-group
+code, and short major name while representing different tracks.
 
 The implementation also adds an attribute-level grounding audit before rule construction:
 
@@ -330,6 +358,8 @@ The backend abstraction is:
 | Backend-specific Query Compiler | Convert verified rules into pandas, SQL, MongoDB, or API-specific query form. |
 | Executor | Execute compiled rules against the backend. |
 | Result Trace | Explain which rules produced each result. |
+| Evidence Pack | Package verified rules, confirmations, non-executed preferences, top results, and trace summary for answer generation. |
+| Report Builder / Answer Generator | Generate the final answer from the evidence pack only. |
 
 Current executor:
 
@@ -357,6 +387,7 @@ Allowed LLM roles:
 - extract preference slots;
 - preserve source spans;
 - propose candidate interpretations.
+- generate answer prose from a verified evidence pack.
 
 Disallowed LLM roles:
 
@@ -366,8 +397,16 @@ Disallowed LLM roles:
 - compile queries;
 - execute deterministic filters;
 - claim that missing fields exist.
+- read raw Excel during answer generation;
+- add admissions, employment, cooperation-type, dorm, or school-quality facts
+  that are not in the evidence pack.
 
 All DeepSeek output goes through the same rule classifier and symbolic verifier as regex output.
+
+For answer generation, DeepSeek output is treated as prose only. The system
+appends deterministic evidence coverage so that the final answer still contains
+the verified rules, top results, non-executed preferences, and safety warnings
+even if the model omits them.
 
 ## 10. Rule Verification Protocol
 
@@ -456,6 +495,19 @@ Pipeline token budget comparison:
 | DeepSeek extractor + symbolic verifier | 834 | 93 rows, 5/5. |
 | Regex extractor + symbolic verifier | 0 | 93 rows, 5/5. |
 | Schema-aware LLM-only baseline | 1282 | 1/5; still unsafe. |
+
+Answer-level evaluation:
+
+| Answer mode | Input boundary | Expected result |
+|---|---|---|
+| `llm_only_schema_sample` | User request, schema summary, sample projected rows | Baseline; often fails because it lacks verified executed rules, non-executed preference status, and trace summary. |
+| `pipeline_template` | Verified evidence pack only | 5/5 evidence alignment; no LLM. |
+| `pipeline_deepseek_evidence` | Verified evidence pack only | 5/5 evidence alignment after deterministic evidence coverage is appended. |
+
+Answer-level scoring checks result count, executed rules, top projected
+professional-group results, not-executed preferences, and unsupported claims.
+Unsupported means unsupported by the verified evidence pack, not necessarily
+absent from the raw Excel workbook.
 
 The strongest evidence so far is not that LLMs are useless. It is that LLM extraction becomes safer when symbolic verification controls execution.
 
