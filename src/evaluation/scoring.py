@@ -118,6 +118,76 @@ def score_llm_only_case(payload: dict[str, Any], case: dict[str, Any]) -> dict[s
     return score_from_parts(score_parts)
 
 
+def score_answer_against_evidence(answer: str, evidence_pack: dict[str, Any]) -> dict[str, Any]:
+    """Score whether a natural-language answer stays aligned to evidence."""
+
+    unsupported_claims = unsupported_answer_claims(answer)
+    missing_rules = [
+        rule.get("rule_id")
+        for rule in evidence_pack.get("executed_rules", [])
+        if not _mentions_rule(answer, rule)
+    ]
+    missing_results = [
+        row.get("rank")
+        for row in evidence_pack.get("top_k_results", [])
+        if not _mentions_top_result(answer, row)
+    ]
+    missing_not_executed = [
+        preference.get("source_text")
+        for preference in evidence_pack.get("not_executed_preferences", [])
+        if not _mentions_not_executed_preference(answer, preference)
+    ]
+    score_parts = {
+        "correct_result_count": str(evidence_pack.get("result_count")) in answer,
+        "correct_executed_rules": not missing_rules,
+        "correct_top_results": not missing_results,
+        "mentions_not_executed_preferences": not missing_not_executed,
+        "no_unsupported_claims": not unsupported_claims,
+    }
+    output = score_from_parts(score_parts)
+    output["details"] = {
+        "missing_executed_rule_ids": missing_rules,
+        "missing_top_result_ranks": missing_results,
+        "missing_not_executed_preferences": missing_not_executed,
+        "unsupported_claims": unsupported_claims,
+    }
+    return output
+
+
+def unsupported_answer_claims(answer: str) -> list[str]:
+    """Return answer phrases that violate current evidence-only boundaries."""
+
+    flagged: list[str] = []
+    forbidden_phrases = [
+        "已过滤中外合作",
+        "过滤了中外合作",
+        "排除了中外合作",
+        "已排除中外合作",
+        "剔除了中外合作",
+        "不含中外合作",
+        "非中外合作",
+        "录取希望",
+        "就业前景好",
+        "就业更好",
+        "宿舍条件",
+        "校园氛围",
+        "城市发展潜力",
+        "录取概率高",
+        "一定能录取",
+        "保证录取",
+        "非常稳妥",
+        "比较稳妥",
+        "作为冲刺",
+        "稳妥选择",
+        "保底",
+        "学费在合理范围",
+    ]
+    for phrase in forbidden_phrases:
+        if phrase in answer:
+            flagged.append(phrase)
+    return flagged
+
+
 def score_from_parts(score_parts: dict[str, bool]) -> dict[str, Any]:
     return {
         "score_parts": score_parts,
@@ -135,3 +205,50 @@ def finalize_aggregate(aggregate: dict[str, dict[str, Any]]) -> None:
         summary["deterministic_over_promotion_rate"] = (
             summary["over_promotion_events"] / summary["cases"] if summary["cases"] else None
         )
+
+
+def _mentions_rule(answer: str, rule: dict[str, Any]) -> bool:
+    field = str(rule.get("field", ""))
+    field_aliases = {field}
+    if field.endswith("1"):
+        field_aliases.add(field[:-1])
+    value_tokens = _value_tokens(rule.get("value"))
+    return any(alias and alias in answer for alias in field_aliases) and all(
+        token in answer for token in value_tokens
+    )
+
+
+def _mentions_top_result(answer: str, row: dict[str, Any]) -> bool:
+    required_keys = ["院校名称", "院校专业组代码", "专业名称"]
+    return all(
+        str(row.get(key)) in answer
+        for key in required_keys
+        if row.get(key) not in (None, "")
+    )
+
+
+def _mentions_not_executed_preference(
+    answer: str,
+    preference: dict[str, Any],
+) -> bool:
+    source_text = str(preference.get("source_text") or "")
+    if not source_text:
+        return False
+    if source_text not in answer and "中外合作" not in answer:
+        return False
+    not_executed_markers = [
+        "未执行",
+        "没有执行",
+        "未参与筛选",
+        "不参与筛选",
+        "not_executed",
+    ]
+    return any(marker in answer for marker in not_executed_markers)
+
+
+def _value_tokens(value: Any) -> list[str]:
+    if isinstance(value, list):
+        return [str(item) for item in value]
+    if isinstance(value, float) and value.is_integer():
+        return [str(int(value))]
+    return [str(value)]

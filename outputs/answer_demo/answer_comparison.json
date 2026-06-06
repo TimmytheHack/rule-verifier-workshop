@@ -1,0 +1,178 @@
+{
+  "input": "我是广东物理类，排位32000，想学计算机，最好在广州深圳，学校稳一点，不想去太贵的中外合作。",
+  "answer_goal": "Generate answers from verified evidence, not raw Excel.",
+  "comparison": {
+    "llm_only_schema_sample": {
+      "status": "ok",
+      "answer_source": "llm_only_schema_sample_user_input",
+      "answer": "根据你的情况（广东物理类，排位32000，想学计算机，广州深圳，求稳，不想中外合作），以下学校专业组比较稳妥：\n1. 深圳大学计算机类（深圳，学费6853元，专业组最低位次38998，你的排位32000低于该位次，录取希望大）\n2. 深圳技术大学计算机科学与技术（深圳，学费6200元，专业组最低位次42938，非常稳妥）\n3. 广东外语外贸大学计算机类（广州，学费6853元，专业组最低位次50802，非常稳妥）\n4. 广东工业大学(揭阳校区)计算机科学与技术（广州，学费6850元，专业组最低位次58867，非常稳妥）\n以上均为非中外合作办学，学费在合理范围内。建议优先考虑深圳大学和深圳技术大学，地理位置和学校实力更符合你的要求。",
+      "answer_evaluation": {
+        "score_parts": {
+          "correct_result_count": true,
+          "correct_executed_rules": false,
+          "correct_top_results": false,
+          "mentions_not_executed_preferences": false,
+          "no_unsupported_claims": false
+        },
+        "task_success_score": 1,
+        "max_score": 5,
+        "details": {
+          "missing_executed_rule_ids": [
+            "e_source_province",
+            "e_subject_type",
+            "e_major_keyword",
+            "e_city",
+            "e_safety_margin",
+            "e_tuition_cap"
+          ],
+          "missing_top_result_ranks": [
+            1,
+            2,
+            3,
+            4,
+            5
+          ],
+          "missing_not_executed_preferences": [
+            "不想去太贵的中外合作"
+          ],
+          "unsupported_claims": [
+            "非中外合作",
+            "录取希望",
+            "非常稳妥",
+            "比较稳妥",
+            "学费在合理范围"
+          ]
+        }
+      },
+      "token_usage": {
+        "prompt_tokens": 1859,
+        "completion_tokens": 208,
+        "total_tokens": 2067
+      }
+    },
+    "pipeline_template": {
+      "status": "ok",
+      "answer_source": "pipeline_template_from_evidence_pack",
+      "answer": "根据已验证规则生成结果：\n\n用户需求：我是广东物理类，排位32000，想学计算机，最好在广州深圳，学校稳一点，不想去太贵的中外合作。\n共筛选到 93 条符合已执行规则的结果。\n\n已执行规则：\n- e_source_province：生源地 == 广东\n- e_subject_type：科类 == 物理\n- e_major_keyword：专业名称 包含 计算机\n- e_city：城市 包含任一：广州、深圳\n- e_safety_margin：专业组最低位次1 >= 35200\n- e_tuition_cap：学费 <= 20000\n\n候选偏好确认记录：\n- 学校稳一点：已确认“适中稳妥”，执行为 专业组最低位次1 >= 35200。\n- 太贵：已确认“<= 20000 元/年”，执行为 学费 <= 20000。\n- 想学计算机：已确认“不扩展，只匹配“计算机””，未扩展专业关键词。\n- 不想去太贵的中外合作：未执行，原因：Missing dedicated cooperation_type field.。\n\n未执行但已保留的偏好：\n- 不想去太贵的中外合作：未执行，未参与筛选。原因：Missing dedicated cooperation_type field. No text-field inference is used in this MVP.\n\n前 5 条结果：\n- 1. 深圳大学；专业组代码：10590251；专业名称：计算机类；城市：深圳；学费：6853 元/年；专业组最低位次：38998；专业最低位次：15214；safety margin：21.87%。\n- 2. 深圳技术大学；专业组代码：14655203；专业名称：计算机科学与技术；城市：深圳；学费：6200 元/年；专业组最低位次：42938；专业最低位次：24887；safety margin：34.18%。\n- 3. 深圳技术大学；专业组代码：14655203；专业名称：计算机科学与技术；城市：深圳；学费：6200 元/年；专业组最低位次：42938；专业最低位次：31817；safety margin：34.18%。\n- 4. 广东外语外贸大学；专业组代码：11846212；专业名称：计算机类；城市：广州；学费：6853 元/年；专业组最低位次：50802；safety margin：58.76%。\n- 5. 广东工业大学(揭阳校区)；专业组代码：80003252；专业名称：计算机科学与技术；城市：广州；学费：6850 元/年；专业组最低位次：58867；专业最低位次：48752；safety margin：83.96%。\n\n安全说明：\n- 答案只能使用 evidence_pack 中的已验证规则、确认记录、结果摘要和 trace。\n- 候选偏好在确认或模拟确认之前不得执行。\n- 不想去太贵的中外合作 未执行：Missing dedicated cooperation_type field. No text-field inference is used in this MVP.",
+      "answer_evaluation": {
+        "score_parts": {
+          "correct_result_count": true,
+          "correct_executed_rules": true,
+          "correct_top_results": true,
+          "mentions_not_executed_preferences": true,
+          "no_unsupported_claims": true
+        },
+        "task_success_score": 5,
+        "max_score": 5,
+        "details": {
+          "missing_executed_rule_ids": [],
+          "missing_top_result_ranks": [],
+          "missing_not_executed_preferences": [],
+          "unsupported_claims": []
+        }
+      },
+      "token_usage": null
+    },
+    "pipeline_deepseek_evidence": {
+      "status": "ok",
+      "answer_source": "pipeline_deepseek_from_evidence_pack",
+      "answer": "根据您的条件（广东物理类，排位32000，想学计算机，广州或深圳，学费≤20000元/年，稳妥），共找到93个结果。以下是前5个推荐：\n\n1. **深圳大学** - 计算机类，深圳，学费6853元/年，专业组最低位次38998，专业最低位次15214，安全余量21.87%。\n2. **深圳技术大学** - 计算机科学与技术，深圳，学费6200元/年，专业组最低位次42938，专业最低位次24887，安全余量34.18%。\n3. **深圳技术大学** - 计算机科学与技术，深圳，学费6200元/年，专业组最低位次42938，专业最低位次31817，安全余量34.18%。\n4. **广东外语外贸大学** - 计算机类，广州，学费6853元/年，专业组最低位次50802，专业最低位次无数据，安全余量58.76%。\n5. **广东工业大学(揭阳校区)** - 计算机科学与技术，广州，学费6850元/年，专业组最低位次58867，专业最低位次48752，安全余量83.96%。\n\n注意：您提到的“不想去太贵的中外合作”因缺少合作类型字段未能执行，请自行留意。\n\n证据覆盖清单：\n- 结果总数：93\n- 已执行规则：\n  - e_source_province：生源地 == 广东\n  - e_subject_type：科类 == 物理\n  - e_major_keyword：专业名称 包含 计算机\n  - e_city：城市 包含任一：广州、深圳\n  - e_safety_margin：专业组最低位次1 >= 35200\n  - e_tuition_cap：学费 <= 20000\n- 候选偏好确认：\n  - 学校稳一点 已确认并执行为 专业组最低位次1 >= 35200\n  - 太贵 已确认并执行为 学费 <= 20000\n  - 想学计算机 已确认不扩展专业关键词\n  - 不想去太贵的中外合作 未执行，原因：Missing dedicated cooperation_type field.\n- 前置结果：\n  - 1. 深圳大学；院校专业组代码：10590251；专业名称：计算机类；城市：深圳；学费：6853 元/年；专业组最低位次：38998；专业最低位次：15214；safety margin：21.87%。\n  - 2. 深圳技术大学；院校专业组代码：14655203；专业名称：计算机科学与技术；城市：深圳；学费：6200 元/年；专业组最低位次：42938；专业最低位次：24887；safety margin：34.18%。\n  - 3. 深圳技术大学；院校专业组代码：14655203；专业名称：计算机科学与技术；城市：深圳；学费：6200 元/年；专业组最低位次：42938；专业最低位次：31817；safety margin：34.18%。\n  - 4. 广东外语外贸大学；院校专业组代码：11846212；专业名称：计算机类；城市：广州；学费：6853 元/年；专业组最低位次：50802；safety margin：58.76%。\n  - 5. 广东工业大学(揭阳校区)；院校专业组代码：80003252；专业名称：计算机科学与技术；城市：广州；学费：6850 元/年；专业组最低位次：58867；专业最低位次：48752；safety margin：83.96%。\n- 未执行偏好：\n  - 不想去太贵的中外合作：未执行，未参与筛选。原因：Missing dedicated cooperation_type field. No text-field inference is used in this MVP.\n- 安全说明：\n  - 答案只能使用 evidence_pack 中的已验证规则、确认记录、结果摘要和 trace。\n  - 候选偏好在确认或模拟确认之前不得执行。\n  - 不想去太贵的中外合作 未执行：Missing dedicated cooperation_type field. No text-field inference is used in this MVP.",
+      "answer_evaluation": {
+        "score_parts": {
+          "correct_result_count": true,
+          "correct_executed_rules": true,
+          "correct_top_results": true,
+          "mentions_not_executed_preferences": true,
+          "no_unsupported_claims": true
+        },
+        "task_success_score": 5,
+        "max_score": 5,
+        "details": {
+          "missing_executed_rule_ids": [],
+          "missing_top_result_ranks": [],
+          "missing_not_executed_preferences": [],
+          "unsupported_claims": []
+        }
+      },
+      "token_usage": {
+        "prompt_tokens": 2692,
+        "completion_tokens": 311,
+        "total_tokens": 3003
+      }
+    }
+  },
+  "answer_level_evaluation": {
+    "llm_only_schema_sample": {
+      "score_parts": {
+        "correct_result_count": true,
+        "correct_executed_rules": false,
+        "correct_top_results": false,
+        "mentions_not_executed_preferences": false,
+        "no_unsupported_claims": false
+      },
+      "task_success_score": 1,
+      "max_score": 5,
+      "details": {
+        "missing_executed_rule_ids": [
+          "e_source_province",
+          "e_subject_type",
+          "e_major_keyword",
+          "e_city",
+          "e_safety_margin",
+          "e_tuition_cap"
+        ],
+        "missing_top_result_ranks": [
+          1,
+          2,
+          3,
+          4,
+          5
+        ],
+        "missing_not_executed_preferences": [
+          "不想去太贵的中外合作"
+        ],
+        "unsupported_claims": [
+          "非中外合作",
+          "录取希望",
+          "非常稳妥",
+          "比较稳妥",
+          "学费在合理范围"
+        ]
+      }
+    },
+    "pipeline_template": {
+      "score_parts": {
+        "correct_result_count": true,
+        "correct_executed_rules": true,
+        "correct_top_results": true,
+        "mentions_not_executed_preferences": true,
+        "no_unsupported_claims": true
+      },
+      "task_success_score": 5,
+      "max_score": 5,
+      "details": {
+        "missing_executed_rule_ids": [],
+        "missing_top_result_ranks": [],
+        "missing_not_executed_preferences": [],
+        "unsupported_claims": []
+      }
+    },
+    "pipeline_deepseek_evidence": {
+      "score_parts": {
+        "correct_result_count": true,
+        "correct_executed_rules": true,
+        "correct_top_results": true,
+        "mentions_not_executed_preferences": true,
+        "no_unsupported_claims": true
+      },
+      "task_success_score": 5,
+      "max_score": 5,
+      "details": {
+        "missing_executed_rule_ids": [],
+        "missing_top_result_ranks": [],
+        "missing_not_executed_preferences": [],
+        "unsupported_claims": []
+      }
+    }
+  }
+}
