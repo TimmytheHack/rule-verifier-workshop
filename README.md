@@ -1,162 +1,169 @@
-# Preference-to-Rule Verification
+# 偏好到规则验证工作台
 
-Chinese version: [README.zh.md](/Users/tz/Desktop/Projects/SZU/README.zh.md)
+英文版 / English version: [README.en.md](README.en.md)
 
-This repository is a research-engineering project for:
+本项目是一个面向广东高考志愿填报场景的 research-engineering 项目，核心目标是验证“自然语言偏好”是否能被安全地转换为可执行规则。它不是普通的志愿推荐 bot，也不会把模糊偏好直接当成筛选条件执行。
+
+项目关注的问题是：
+
+- 哪些偏好可以被 schema 支持并转换成确定性规则；
+- 哪些偏好需要用户确认后才能执行；
+- 哪些偏好因为缺少字段、语义太模糊或需要外部信息而必须保留为不可执行项；
+- 前端如何把抽取、字段接地、规则验证、执行结果和 trace 展示给用户。
+
+## 当前形态
+
+仓库包含一个 FastAPI 后端和一个 Vue 3 前端工作台：
+
+- 后端运行现有验证管线，读取广东志愿填报 Excel 数据，返回规则、结果、trace 和证据回答。
+- 前端只可视化 mock 数据或后端 API 输出，不新增推荐逻辑，也不推断新规则。
+- LLM 可以用于辅助抽取或基于证据回答，但执行权仍由 schema-grounded verifier 控制。
+
+主要目录：
+
+| 路径 | 说明 |
+|---|---|
+| `src/` | 验证管线、规则、执行器、API 和报告生成代码 |
+| `frontend/` | Vue 3 + Vite + Element Plus 前端工作台 |
+| `schemas/` | 已审查 schema registry 和 schema profile |
+| `rules/` | 规则生命周期、分类和模糊词配置 |
+| `scripts/` | demo、评估和离线 schema profiling 脚本 |
+| `docs/` | 方法、评估和端到端 demo 文档 |
+| `outputs/` | 已生成 demo 和 evaluation artifact |
+
+## 本地环境
+
+建议环境：
+
+- Python 3.10+
+- Node.js 18+
+- npm
+
+后端 demo 会读取仓库根目录下的 Excel 文件：
 
 ```text
-Preference-to-Rule Verification for Guangdong College Application Planning
+广东省2025年志愿填报大数据（24-25）0523.xlsx
 ```
 
-It is not a normal recommendation bot. The project studies how natural-language preferences become:
+如果这个文件不存在，API 模式和 MVP demo 不能正常执行。
 
-- deterministic executable rules;
-- candidate rules requiring confirmation;
-- non-executable or LLM-needed semantic parts.
+## 启动后端
 
-The key safety goal is preventing vague or unsupported preferences from being silently promoted into deterministic filters.
+在仓库根目录创建并启用 Python 虚拟环境：
 
-## Runtime Core
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+python -m pip install --upgrade pip
+python -m pip install -r requirements.txt
+```
 
-The runtime path is intentionally small:
+创建本地环境变量文件：
+
+```bash
+cp .env.example .env
+```
+
+`.env` 里需要配置：
 
 ```text
-Extractor
--> AttributeGrounder
--> RuleClassifier
--> RuleVerifier
--> RulePromoter
--> Executor
--> TraceGenerator
--> EvidencePack
--> ReportBuilder / AnswerGenerator
+DEEPSEEK_API_KEY=replace_with_your_deepseek_api_key
+DEEPSEEK_MODEL=deepseek-chat
 ```
 
-Important boundaries:
+只使用前端 demo 模式、regex 抽取或模板证据回答时不需要 DeepSeek key；选择 LLM 辅助抽取或 LLM 证据回答时需要有效 key。
 
-- `RegexExtractor` is a benchmark baseline, not the final extraction strategy.
-- `DeepSeekExtractor` may extract preferences and source spans only.
-- `AttributeGrounder` audits extracted attributes before rule construction.
-- `RuleVerifier` controls schema grounding and executability.
-- `PandasExecutor` is only the MVP executor for Excel/CSV.
-- `EvidencePack` is the only input to answer generation; raw Excel is not.
-- `TemplateReportBuilder` is deterministic and uses no LLM.
-- `DeepSeekAnswerGenerator` is optional and evidence-only.
-- `SchemaProfiler` is an offline schema-review tool, not runtime.
+启动 FastAPI：
 
-## Main Documents
+```bash
+source .venv/bin/activate
+python -m uvicorn src.api.server:app --reload --port 8001
+```
 
-- [docs/methodology_report.md](/Users/tz/Desktop/Projects/SZU/docs/methodology_report.md)
-- [docs/evaluation_report.md](/Users/tz/Desktop/Projects/SZU/docs/evaluation_report.md)
-- [docs/excel_schema_profile.md](/Users/tz/Desktop/Projects/SZU/docs/excel_schema_profile.md)
-- [docs/end_to_end_demo_cases.md](/Users/tz/Desktop/Projects/SZU/docs/end_to_end_demo_cases.md)
-- [docs/full_project_plan.md](/Users/tz/Desktop/Projects/SZU/docs/full_project_plan.md)
+检查后端健康状态：
 
-## Run MVP Demo
+```bash
+curl http://127.0.0.1:8001/health
+```
+
+预期返回：
+
+```json
+{"status":"ok"}
+```
+
+## 启动前端
+
+另开一个终端：
+
+```bash
+cd frontend
+npm install
+npm run dev
+```
+
+打开：
+
+```text
+http://127.0.0.1:5173
+```
+
+Vite 已配置把 `/api` 代理到 `http://127.0.0.1:8001`。如果只看 demo 模式，前端可以不启动后端；如果切到 API 模式，需要后端正在运行。
+
+## 如何测试工作台
+
+1. 打开 `http://127.0.0.1:5173`。
+2. 先保持 demo 模式，点击“运行规则验证”，检查页面是否展示偏好解析、字段接地、规则审查、候选规则、不可执行偏好、筛选结果和 trace。
+3. 启动后端后切换到 API 模式，再次运行默认输入：
+
+```text
+我是广东物理类，排位32000，想学计算机，最好在广州深圳，学校稳一点，不想去太贵的中外合作。
+```
+
+4. 检查页面是否明确展示“中外合作”未执行，因为当前 schema 缺少合作办学类型字段。
+5. 如果选择 LLM 辅助解析或 LLM 证据回答，确认 `.env` 已配置 DeepSeek key，并观察页面 token 用量面板。
+
+## 本地验证命令
+
+运行单元测试：
+
+```bash
+python3 -m unittest discover -s tests
+```
+
+运行 MVP demo：
 
 ```bash
 python3 scripts/run_mvp_demo.py
 ```
 
-Expected current output:
-
-```text
-Wrote outputs/mvp_demo/rules.json
-Wrote outputs/mvp_demo/verification_report.md
-Wrote outputs/mvp_demo/filtered_results.csv
-Wrote outputs/mvp_demo/result_trace.md
-Filtered rows: 93
-```
-
-## Offline Schema Profile
-
-```bash
-python3 scripts/profile_excel_schema.py
-```
-
-This scans all Excel columns and writes:
-
-- [schemas/excel_schema_profile.json](/Users/tz/Desktop/Projects/SZU/schemas/excel_schema_profile.json)
-- [docs/excel_schema_profile.md](/Users/tz/Desktop/Projects/SZU/docs/excel_schema_profile.md)
-
-The profile is a review artifact. Columns are not executable until promoted into `schemas/schema_registry.json`.
-
-## Evaluation
-
-Fast local regex-only evaluation:
+运行快速 regex-only 评估：
 
 ```bash
 python3 scripts/eval_fuzzy_inputs.py --methods regex
 ```
 
-Faster DeepSeek extractor-only evaluation:
+构建前端：
 
 ```bash
+cd frontend
+npm run build
+```
+
+可选 DeepSeek-backed 评估：
+
+```bash
+python3 scripts/eval_modes.py
 python3 scripts/eval_fuzzy_inputs.py --quick --output-path outputs/eval/fuzzy_deepseek_extractor_results.json
-```
-
-Full comparison:
-
-```bash
-python3 scripts/eval_modes.py
 python3 scripts/eval_fuzzy_inputs.py --methods all
 ```
 
-Current 40-case evaluation summary:
+DeepSeek-backed 评估会读取 `.env`，并可能产生 API 延迟和 token 消耗。
 
-| Method | Score | Over-promotion |
-|---|---:|---:|
-| `rule_regex_extractor_symbolic_verifier` | 320/320 | 0.000 |
-| `deepseek_extractor_symbolic_verifier` | 320/320 | 0.000 |
-| `llm_only_baseline` | 107/200 | 0.475 |
-| `schema_aware_llm_only_baseline` | 156/200 | 0.275 |
+## 相关文档
 
-DeepSeek comparison reads `.env` automatically:
-
-```bash
-python3 scripts/eval_modes.py
-python3 scripts/eval_fuzzy_inputs.py --methods all
-```
-
-## Answer Demo
-
-The answer layer compares three modes:
-
-| Mode | Input | Purpose |
-|---|---|---|
-| `llm_only_schema_sample` | User request, schema summary, and sample projected rows | Baseline for unsupported claims and missing verification trace. |
-| `pipeline_template` | Verified `evidence_pack` only | Deterministic production-safe fallback. |
-| `pipeline_deepseek_evidence` | Verified `evidence_pack` only | Optional LLM answer with a deterministic evidence coverage appendix. |
-
-Run:
-
-```bash
-python3 scripts/run_answer_demo.py
-```
-
-Outputs:
-
-- `outputs/answer_demo/evidence_pack.json`
-- `outputs/answer_demo/template_answer.md`
-- `outputs/answer_demo/llm_only_answer.md`
-- `outputs/answer_demo/deepseek_evidence_answer.md`
-- `outputs/answer_demo/answer_comparison.json`
-
-Answer-level evaluation checks:
-
-- correct result count;
-- correct executed rules;
-- correct top results, including professional group code, major code, and full major name;
-- mentions not-executed preferences;
-- no claims unsupported by verified evidence.
-
-`unsupported_claims` means unsupported by the verified evidence pack, not
-necessarily absent from raw Excel. For example, `公私性质` exists as a candidate
-column in the Excel profile, but `中外合作` exclusion remains unsupported until a
-reviewed active schema field and verifier policy are added.
-
-## Tests
-
-```bash
-python3 -m unittest discover -s tests
-```
+- [方法报告](docs/methodology_report.zh.md)
+- [评估报告](docs/evaluation_report.zh.md)
+- [端到端 demo cases](docs/end_to_end_demo_cases.zh.md)
+- [Excel schema profile](docs/excel_schema_profile.md)
+- [完整项目计划](docs/full_project_plan.md)
