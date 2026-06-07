@@ -1,81 +1,81 @@
-# MVP Demo Verification Report
+# MVP 演示验证报告
 
-## Input
+## 输入
 
 ```text
 我是广东物理类，排位32000，想学计算机，最好在广州深圳，学校稳一点，不想去太贵的中外合作。
 ```
 
-## Workbook
+## 数据表
 
-- Sheet: `Sheet1`
-- Detected header row: `3`
-- Required demo columns found: `生源地, 科类, 专业名称, 城市, 专业组最低位次1, 学费`
+- 工作表：`Sheet1`
+- 检测到的表头行：`3`
+- 本演示需要并已找到的字段：`生源地, 科类, 选科要求, 专业名称, 城市, 专业组最低位次1, 学费`
 
-## Schema Boundary
+## 字段边界
 
-The schema registry was built only from real Excel fields needed for this demo.
+当前字段定义只由本演示需要的真实表格字段构成。
 
-Missing field:
+缺失字段：
 
-- `cooperation_type`: not present. The 中外合作 preference is not executable in this MVP.
+- 合作办学类型字段：当前不存在。因此“中外合作”偏好在本 MVP 中不可执行。
 
-## Data Coverage
+## 数据覆盖率
 
-| Column | Non-null | Total rows | Coverage |
+| 字段 | 非空行数 | 总行数 | 覆盖率 |
 |---|---:|---:|---:|
 | `生源地` | 30855 | 30855 | 100.00% |
 | `科类` | 30855 | 30855 | 100.00% |
+| `选科要求` | 30855 | 30855 | 100.00% |
 | `专业名称` | 30855 | 30855 | 100.00% |
 | `城市` | 30848 | 30855 | 99.98% |
 | `专业组最低位次1` | 30490 | 30855 | 98.82% |
 | `学费` | 30855 | 30855 | 100.00% |
 
-## Deterministic Rule Verification
+## 确定性规则验证
 
-| Rule | Field | Operator | Value | Executable | Reason |
+| 规则 | 字段 | 操作 | 规则值 | 是否可执行 | 原因 |
 |---|---|---|---|---:|---|
-| `d_source_province` | `生源地` | `eq` | `广东` | True | The user explicitly states 广东 and the Excel field 生源地 exists. |
-| `d_subject_type` | `科类` | `eq` | `物理` | True | The user explicitly states 物理类 and the Excel field 科类 exists. |
-| `d_major_keyword` | `专业名称` | `contains` | `计算机` | True | Exact keyword matching is allowed in the MVP. |
-| `d_city` | `城市` | `in_contains` | `['广州', '深圳']` | True | The Excel field 城市 exists and contains relevant values. |
+| `d_source_province` | 生源地 | 等于 | 广东 | 是 | 用户明确给出生源地为广东，且数据字段“生源地”存在。 |
+| `d_subject_type` | 科类 | 等于 | 物理 | 是 | 用户明确给出科类为物理，且数据字段“科类”存在。 |
+| `d_major_keyword` | 专业名称 | 包含 | 计算机 | 是 | 明确专业关键词允许作为确定性匹配规则。 |
+| `d_city` | 城市 | 包含任一 | 广州、深圳 | 是 | 数据字段“城市”存在，可用于匹配用户明确给出的城市。 |
 
-## Candidate Rules
+## 候选规则
 
-| Rule | Source text | Status | Requires confirmation | Reason |
+| 规则 | 来源文本 | 状态 | 是否需要确认 | 原因 |
 |---|---|---|---:|---|
-| `c_safety_margin` | 学校稳一点 | pending_confirmation | True | 稳一点 is vague and must not execute without a confirmed safety margin. |
-| `c_tuition_cap` | 太贵 | pending_confirmation | True | 太贵 is vague and requires a user-selected tuition cap. |
-| `c_major_expansion` | 计算机相关扩展 | pending_confirmation | True | Semantic expansion beyond exact 计算机 matching requires confirmation. |
+| `c_safety_margin` | 学校稳一点 | 等待确认 | 是 | “稳一点”是模糊风险偏好，必须确认位次窗口后才能执行。 |
+| `c_tuition_cap` | 太贵 | 等待确认 | 是 | “太贵”是模糊费用偏好，必须确认具体费用上限后才能执行。 |
 
-## Simulated Confirmations
+## 模拟确认
 
-- Safety margin: 10%, so `专业组最低位次1 >= 35200`.
-- Tuition cap: `学费 <= 20000`.
-- Major expansion: false; only exact keyword `计算机` is used.
-- Cooperation type exclusion: not executed because `cooperation_type` is missing.
+- 位次窗口：10%，因此执行为“专业组最低位次1 位于 28800-35200 名的窗口内”。
+- 学费上限：执行为“学费 不高于 20000”。
+- 专业扩展：未扩展，只使用用户明确说出的关键词“计算机”。
+- 中外合作排除：缺少合作办学类型字段，因此未执行。
 
-## Final Query Behavior
+## 最终筛选行为
 
-The query applies six executable rules with AND logic:
+最终筛选以 AND 逻辑执行六条已验证规则：
 
-1. `生源地 == 广东`
-2. `科类 == 物理`
-3. `专业名称 contains 计算机`
-4. `城市 contains 广州 or 深圳`
-5. `专业组最低位次1 >= 35200`
-6. `学费 <= 20000`
+1. 生源地 等于 广东
+2. 科类 等于 物理
+3. 专业名称 包含 计算机
+4. 城市 包含 广州 或 深圳
+5. 专业组最低位次1 位于 28800-35200 名的窗口内
+6. 学费 不高于 20000
 
-The query does not infer or filter 中外合作 from text fields.
+系统不会从文本字段推断或过滤“中外合作”。
 
-## Result Summary
+## 结果摘要
 
-- Filtered row count: `93`
-- Ranking: closest safe professional-group rank first, using `专业组最低位次1 - 35200`.
+- 通过已验证规则的记录数：`2`
+- 排序方式：限制在已确认位次窗口内，并按“专业组最低位次1”数值从小到大展示。
 
-## Safety Checks
+## 安全检查
 
-- No LLM is used in code.
-- No semantic major expansion is applied.
-- No `cooperation_type` field is invented.
-- Candidate rules are promoted only through simulated confirmation.
+- 本演示脚本不调用 LLM。
+- 未执行语义专业扩展。
+- 未虚构合作办学类型字段。
+- 候选规则只通过模拟确认提升为可执行规则。

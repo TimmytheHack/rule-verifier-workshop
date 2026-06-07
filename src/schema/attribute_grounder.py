@@ -55,6 +55,7 @@ class AttributeGrounder:
     def ground(self, slots: dict[str, Any]) -> dict[str, Any]:
         records = []
         known_paths = set(self.slot_policies)
+        known_paths.add(("preferences", "other_vague_preferences"))
         for path, policy in self.slot_policies.items():
             value = _value_at(slots, path)
             if not _present(value):
@@ -64,7 +65,7 @@ class AttributeGrounder:
         for term in (slots.get("preferences") or {}).get("other_vague_preferences") or []:
             policy = self.other_vague_policies.get(
                 term,
-                {"field_id": None, "status": "unmapped_attribute", "reason": "No attribute grounding policy."},
+                {"field_id": None, "status": "unmapped_attribute", "reason": "没有属性接地策略。"},
             )
             records.append(self._record("preferences.other_vague_preferences[]", term, policy))
 
@@ -137,7 +138,7 @@ class AttributeGrounder:
                         "status": "ignored_not_schema_mapped",
                         "execution_allowed_without_rule_verification": False,
                         "can_become_executable_rule": False,
-                        "reason": "Extractor emitted an unknown attribute; it is ignored by rule construction.",
+                        "reason": "抽取器输出了未登记属性，规则构造会忽略它。",
                     }
                 )
         return records
@@ -160,11 +161,11 @@ class AttributeGrounder:
 
     def _reason(self, status: str) -> str:
         if status == "schema_grounded":
-            return "Attribute maps to an active Excel schema field; rule verification is still required."
+            return "该属性已映射到当前数据字段，但仍需经过规则验证。"
         if status == "confirmable":
-            return "Attribute maps to an active field but is vague or semantic; confirmation is required."
+            return "该属性有对应字段，但语义或边界需要确认。"
         if status == "context_only":
-            return "Attribute is context only and must not be executed as an Excel filter."
+            return "该属性只作为上下文，不能直接作为筛表条件。"
         if status == "missing_schema":
-            return "Attribute has no active Excel schema field and must not execute."
-        return "Attribute is not executable."
+            return "当前数据中没有可执行字段，不能进入筛表。"
+        return "该属性不可执行。"

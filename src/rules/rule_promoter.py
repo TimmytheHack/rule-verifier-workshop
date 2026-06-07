@@ -31,6 +31,29 @@ class RulePromoter:
             )
 
         if self.simulated_confirmation_enabled:
-            executable_rules.extend(copy.deepcopy(self.taxonomy["confirmed_candidate_rules"]))
+            candidate_rule_ids = {
+                rule["rule_id"] for rule in classified_rules.get("candidate_rules", [])
+            }
+            simulated = classified_rules.get("simulated_confirmations", {})
+            for rule in self.taxonomy["confirmed_candidate_rules"]:
+                if rule.get("derived_from") not in candidate_rule_ids:
+                    continue
+                if rule.get("derived_from") == "c_safety_margin" and "safety_margin" not in simulated:
+                    continue
+                if rule.get("derived_from") == "c_tuition_cap" and "tuition_threshold" not in simulated:
+                    continue
+                promoted_rule = copy.deepcopy(rule)
+                if promoted_rule["rule_id"] == "e_safety_margin":
+                    confirmation = simulated.get("safety_margin", {})
+                    promoted_rule["operator"] = confirmation.get(
+                        "operator",
+                        promoted_rule["operator"],
+                    )
+                    promoted_rule["value"] = confirmation.get("value", promoted_rule["value"])
+                    promoted_rule["confirmation"] = "位次窗口已确认"
+                if promoted_rule["rule_id"] == "e_tuition_cap":
+                    confirmation = simulated.get("tuition_threshold", {})
+                    promoted_rule["value"] = confirmation.get("value", promoted_rule["value"])
+                executable_rules.append(promoted_rule)
 
         return executable_rules

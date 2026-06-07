@@ -1,0 +1,460 @@
+{
+  "user_input": "我是广东物理类，排位32000，想学计算机，最好在广州深圳，学校稳一点，不想去太贵的中外合作。",
+  "hard_filters": {
+    "source_province": "广东",
+    "subject_type": "物理",
+    "reselected_subjects": ["化学", "生物"],
+    "user_rank": 32000,
+    "major_keyword": null,
+    "preferred_cities": [],
+    "tuition_cap_yuan": null
+  },
+  "soft_preferences": {
+    "prompt": "想学计算机，最好在广州深圳，学校稳一点，不想去太贵的中外合作。",
+    "safety_margin_percent": 10,
+    "tuition_cap_yuan": 20000
+  },
+  "extracted_preferences": [
+    {
+      "id": "pref_origin",
+      "slot": "生源地",
+      "value": "广东",
+      "source_span": "广东",
+      "status": "已对齐字段"
+    },
+    {
+      "id": "pref_track",
+      "slot": "科类",
+      "value": "物理",
+      "source_span": "物理类",
+      "status": "已对齐字段"
+    },
+    {
+      "id": "pref_reselected_subjects",
+      "slot": "再选科目",
+      "value": ["化学", "生物"],
+      "source_span": "化学、生物",
+      "status": "已对齐字段"
+    },
+    {
+      "id": "pref_rank",
+      "slot": "排位",
+      "value": 32000,
+      "source_span": "排位32000",
+      "status": "已对齐字段"
+    },
+    {
+      "id": "pref_major",
+      "slot": "专业名称",
+      "value": "计算机",
+      "source_span": "想学计算机",
+      "status": "已对齐字段"
+    },
+    {
+      "id": "pref_city",
+      "slot": "城市",
+      "value": ["广州", "深圳"],
+      "source_span": "最好在广州深圳",
+      "status": "已对齐字段"
+    },
+    {
+      "id": "pref_stable",
+      "slot": "稳一点",
+      "value": "vague_safety_preference",
+      "source_span": "学校稳一点",
+      "status": "待确认"
+    },
+    {
+      "id": "pref_expensive",
+      "slot": "太贵",
+      "value": "vague_cost_preference",
+      "source_span": "太贵",
+      "status": "待确认"
+    },
+    {
+      "id": "pref_cooperation",
+      "slot": "中外合作",
+      "value": "avoid",
+      "source_span": "中外合作",
+      "status": "不可执行"
+    }
+  ],
+  "attribute_grounding": {
+    "summary": {
+      "total_attributes": 9,
+      "status_counts": {
+        "schema_grounded": 5,
+        "context_only": 1,
+        "confirmable": 2,
+        "missing_schema": 1
+      },
+      "unsafe_ungrounded_executable_attributes": 0
+    },
+    "attributes": [
+      {
+        "slot_path": "user_context.source_province",
+        "slot": "生源地",
+        "value": "广东",
+        "field": "生源地",
+        "status": "已接地到数据字段",
+        "status_type": "success",
+        "reason": "该属性已映射到当前数据字段，但仍需经过规则验证。"
+      },
+      {
+        "slot_path": "user_context.subject_type",
+        "slot": "科类",
+        "value": "物理",
+        "field": "科类",
+        "status": "已接地到数据字段",
+        "status_type": "success",
+        "reason": "该属性已映射到当前数据字段，但仍需经过规则验证。"
+      },
+      {
+        "slot_path": "user_context.reselected_subjects",
+        "slot": "再选科目",
+        "value": ["化学", "生物"],
+        "field": "选科要求",
+        "status": "已接地到数据字段",
+        "status_type": "success",
+        "reason": "再选科目用于验证专业选科要求。"
+      },
+      {
+        "slot_path": "user_context.user_rank",
+        "slot": "排位",
+        "value": 32000,
+        "field": "无可执行字段",
+        "status": "仅作为上下文",
+        "status_type": "warning",
+        "reason": "排位用于计算确认后的安全边界，不直接作为数据字段筛选。"
+      },
+      {
+        "slot_path": "preferences.major_keyword",
+        "slot": "专业关键词",
+        "value": "计算机",
+        "field": "专业名称",
+        "status": "已接地到数据字段",
+        "status_type": "success",
+        "reason": "该属性已映射到当前数据字段，但仍需经过规则验证。"
+      },
+      {
+        "slot_path": "preferences.preferred_cities",
+        "slot": "城市偏好",
+        "value": ["广州", "深圳"],
+        "field": "城市",
+        "status": "已接地到数据字段",
+        "status_type": "success",
+        "reason": "该属性已映射到当前数据字段，但仍需经过规则验证。"
+      },
+      {
+        "slot_path": "preferences.risk_preference_raw",
+        "slot": "风险偏好",
+        "value": "稳一点",
+        "field": "专业组最低位次1",
+        "status": "字段存在但需要确认",
+        "status_type": "warning",
+        "reason": "风险边界需要用户确认后才能执行。"
+      },
+      {
+        "slot_path": "preferences.tuition_preference_raw",
+        "slot": "费用偏好",
+        "value": "太贵",
+        "field": "学费",
+        "status": "字段存在但需要确认",
+        "status_type": "warning",
+        "reason": "费用偏好需要确认具体金额后才能执行。"
+      },
+      {
+        "slot_path": "preferences.cooperation_preference_raw",
+        "slot": "中外合作偏好",
+        "value": "不想去太贵的中外合作",
+        "field": "无可执行字段",
+        "status": "缺少可执行字段",
+        "status_type": "danger",
+        "reason": "当前数据中没有合作办学类型字段，不能进入筛表。"
+      }
+    ]
+  },
+  "proposed_rules": [
+    {
+      "id": "p_major",
+      "label": "专业名称 包含 计算机",
+      "source_text": "想学计算机",
+      "category": "确定性提议",
+      "status": "验证通过，可执行",
+      "status_type": "success",
+      "reason": "字段、操作符和值均通过确定性验证。",
+      "checks": [
+        {"label": "字段存在", "passed": true},
+        {"label": "源列存在", "passed": true},
+        {"label": "操作符允许", "passed": true},
+        {"label": "值类型有效", "passed": true},
+        {"label": "值已规范化", "passed": true}
+      ]
+    },
+    {
+      "id": "p_stable",
+      "label": "专业组最低位次1 在已确认安全边界名次及以后",
+      "source_text": "学校稳一点",
+      "category": "候选提议",
+      "status": "可确认后执行",
+      "status_type": "warning",
+      "reason": "规则形状可审查，但需要用户确认边界后才能执行。",
+      "checks": [
+        {"label": "字段存在", "passed": true},
+        {"label": "源列存在", "passed": true},
+        {"label": "操作符允许", "passed": true},
+        {"label": "值类型有效", "passed": true},
+        {"label": "值已规范化", "passed": false}
+      ]
+    },
+    {
+      "id": "p_cooperation",
+      "label": "合作办学类型字段 不等于 中外合作",
+      "source_text": "不想去太贵的中外合作",
+      "category": "确定性提议",
+      "status": "拒绝：缺少字段",
+      "status_type": "danger",
+      "reason": "当前数据中缺少对应字段。",
+      "checks": [
+        {"label": "字段存在", "passed": false},
+        {"label": "源列存在", "passed": false},
+        {"label": "操作符允许", "passed": false},
+        {"label": "值类型有效", "passed": false},
+        {"label": "值已规范化", "passed": false}
+      ]
+    }
+  ],
+  "deterministic_rules": [
+    {
+      "id": "rule_origin",
+      "label": "生源地 等于 广东",
+      "field": "生源地",
+      "operator": "==",
+      "value": "广东",
+      "source_span": "广东"
+    },
+    {
+      "id": "rule_track",
+      "label": "科类 等于 物理",
+      "field": "科类",
+      "operator": "==",
+      "value": "物理",
+      "source_span": "物理类"
+    },
+    {
+      "id": "rule_subject_requirement",
+      "label": "选科要求 满足已选再选科目：化学、生物",
+      "field": "选科要求",
+      "operator": "satisfies_subject_requirement",
+      "value": ["化学", "生物"],
+      "source_span": "化学、生物"
+    },
+    {
+      "id": "rule_major",
+      "label": "专业名称 包含 计算机",
+      "field": "专业名称",
+      "operator": "contains",
+      "value": "计算机",
+      "source_span": "想学计算机"
+    },
+    {
+      "id": "rule_city",
+      "label": "城市 包含 广州或深圳",
+      "field": "城市",
+      "operator": "contains_any",
+      "value": ["广州", "深圳"],
+      "source_span": "最好在广州深圳"
+    }
+  ],
+  "candidate_rules": [
+    {
+      "id": "candidate_safety",
+      "preference": "稳一点",
+      "label": "位次窗口候选规则",
+      "reason": "自然语言未给出明确位次窗口，需要确认后才可提升为可执行规则。",
+      "options": ["5% 位次窗口", "10% 位次窗口", "15% 位次窗口", "不使用"],
+      "simulated_selection": "10% 位次窗口"
+    },
+    {
+      "id": "candidate_tuition",
+      "preference": "太贵",
+      "label": "学费上限候选规则",
+      "reason": "“太贵”是模糊偏好，需要确认具体金额。",
+      "options": ["10000", "20000", "40000", "自定义"],
+      "simulated_selection": "20000"
+    }
+  ],
+  "not_executed_preferences": [
+    {
+      "id": "not_exec_cooperation",
+      "preference": "中外合作",
+      "display": "中外合作未执行：缺少合作办学类型字段",
+      "reason": "当前数据字段定义没有合作办学类型字段，不能验证或执行“排除中外合作”。",
+      "missing_field": "合作办学类型字段",
+      "source_span": "不想去太贵的中外合作"
+    }
+  ],
+  "simulated_confirmations": {
+    "safety_margin_percent": 10,
+    "tuition_cap": 20000,
+    "major_expansion": false
+  },
+  "executable_rules": [
+    {
+      "id": "exec_origin",
+      "label": "生源地 等于 广东",
+      "origin": "deterministic"
+    },
+    {
+      "id": "exec_track",
+      "label": "科类 等于 物理",
+      "origin": "deterministic"
+    },
+    {
+      "id": "exec_subject_requirement",
+      "label": "选科要求 满足已选再选科目：化学、生物",
+      "origin": "deterministic"
+    },
+    {
+      "id": "exec_major",
+      "label": "专业名称 包含 计算机",
+      "origin": "deterministic"
+    },
+    {
+      "id": "exec_city",
+      "label": "城市 包含 广州或深圳",
+      "origin": "deterministic"
+    },
+    {
+      "id": "exec_safety",
+      "label": "专业组最低位次1 位于 28800-35200 名的窗口内",
+      "origin": "simulated_confirmation"
+    },
+    {
+      "id": "exec_tuition",
+      "label": "学费 不高于 20000",
+      "origin": "simulated_confirmation"
+    }
+  ],
+  "result_count": 2,
+  "top_results": [
+    {
+      "id": "result_001",
+      "university_name": "广东工业大学",
+      "group_code": "11845216",
+      "major_code": "054",
+      "major_name": "计算机类",
+      "full_major_name": "计算机类(含：计算机科学与技术、软件工程，计算机类(含：080901计算机科学与技术、080902软件工程、080911网络空间安全专业)，大学城校区)",
+      "subject_requirement": "化学",
+      "city": "广州",
+      "tuition": 6850,
+      "group_min_rank": 30594,
+      "major_min_rank": 30996,
+      "safety_margin": "-4.4%",
+      "trace": [
+        {
+          "status": "PASS",
+          "text": "生源地 等于 广东"
+        },
+        {
+          "status": "PASS",
+          "text": "科类 等于 物理"
+        },
+        {
+          "status": "PASS",
+          "text": "选科要求 化学；已选再选科目：化学、生物"
+        },
+        {
+          "status": "PASS",
+          "text": "专业名称 包含 计算机"
+        },
+        {
+          "status": "PASS",
+          "text": "城市 包含任一：广州、深圳；命中 广州"
+        },
+        {
+          "status": "PASS",
+          "text": "专业组最低位次1 30594 位于 28800-35200 名的窗口内"
+        },
+        {
+          "status": "PASS",
+          "text": "学费 不高于 20000"
+        },
+        {
+          "status": "not_executed",
+          "text": "中外合作：缺少合作办学类型字段，未执行"
+        }
+      ]
+    },
+    {
+      "id": "result_002",
+      "university_name": "华南农业大学",
+      "group_code": "10564218",
+      "major_code": "044",
+      "major_name": "计算机科学与技术",
+      "full_major_name": "计算机科学与技术(校本部)",
+      "subject_requirement": "化学",
+      "city": "广州",
+      "tuition": 6853,
+      "group_min_rank": 33470,
+      "major_min_rank": null,
+      "safety_margin": "4.6%",
+      "trace": [
+        {
+          "status": "PASS",
+          "text": "生源地 等于 广东"
+        },
+        {
+          "status": "PASS",
+          "text": "科类 等于 物理"
+        },
+        {
+          "status": "PASS",
+          "text": "选科要求 化学；已选再选科目：化学、生物"
+        },
+        {
+          "status": "PASS",
+          "text": "专业名称 包含 计算机"
+        },
+        {
+          "status": "PASS",
+          "text": "城市 包含任一：广州、深圳；命中 广州"
+        },
+        {
+          "status": "PASS",
+          "text": "专业组最低位次1 33470 位于 28800-35200 名的窗口内"
+        },
+        {
+          "status": "PASS",
+          "text": "学费 不高于 20000"
+        },
+        {
+          "status": "not_executed",
+          "text": "中外合作：缺少合作办学类型字段，未执行"
+        }
+      ]
+    }
+  ],
+  "natural_language_report": {
+    "title": "规则验证结果（非最终志愿建议）",
+    "summary": "系统基于已验证规则完成筛选：生源地为广东、科类为物理、选科要求满足化学/生物、专业名称包含计算机、城市包含广州或深圳，并采用模拟确认的 10% 位次窗口与 20000 元学费上限。",
+    "result_count_text": "当前 mock 结果集中共有 2 条记录通过已验证规则。",
+    "executed_rules": [
+      "生源地 等于 广东",
+      "科类 等于 物理",
+      "选科要求 满足已选再选科目：化学、生物",
+      "专业名称 包含 计算机",
+      "城市 包含 广州或深圳",
+      "专业组最低位次1 位于 28800-35200 名的窗口内",
+      "学费 不高于 20000"
+    ],
+    "top_results": [
+      "广东工业大学（专业组 11845216）；专业代码 054；专业名称 计算机类；专业全称 计算机类(含：计算机科学与技术、软件工程，计算机类(含：080901计算机科学与技术、080902软件工程、080911网络空间安全专业)，大学城校区)；选科要求 化学；城市 广州；学费 6850；专业组最低位次 30594；专业最低位次 30996；相对排位差 -4.4%",
+      "华南农业大学（专业组 10564218）；专业代码 044；专业名称 计算机科学与技术；专业全称 计算机科学与技术(校本部)；选科要求 化学；城市 广州；学费 6853；专业组最低位次 33470；相对排位差 4.6%"
+    ],
+    "warnings": [
+      "中外合作偏好未执行：缺少合作办学类型字段，不能声称已过滤中外合作。"
+    ],
+    "disclaimer": "以上内容是规则验证结果和证据汇总，不是最终志愿建议。"
+  }
+}

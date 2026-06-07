@@ -7,7 +7,7 @@
       "field": "生源地",
       "operator": "eq",
       "value": "广东",
-      "description": "生源地 == 广东"
+      "description": "生源地 等于 广东"
     },
     {
       "rule_id": "e_subject_type",
@@ -15,7 +15,7 @@
       "field": "科类",
       "operator": "eq",
       "value": "物理",
-      "description": "科类 == 物理"
+      "description": "科类 等于 物理"
     },
     {
       "rule_id": "e_major_keyword",
@@ -42,8 +42,8 @@
       "field": "专业组最低位次1",
       "operator": ">=",
       "value": 35200,
-      "confirmation": "safety margin = 10%",
-      "description": "专业组最低位次1 >= 35200"
+      "confirmation": "安全边际已确认",
+      "description": "专业组最低位次1 不低于 35200"
     },
     {
       "rule_id": "e_tuition_cap",
@@ -51,9 +51,9 @@
       "field": "学费",
       "operator": "<=",
       "value": 20000,
-      "confirmation": "tuition cap = 20000",
-      "normalization": "parse numeric value from cell text",
-      "description": "学费 <= 20000"
+      "confirmation": "费用上限已确认",
+      "normalization": "从单元格文本解析数字学费",
+      "description": "学费 不高于 20000"
     }
   ],
   "candidate_confirmations": [
@@ -67,28 +67,19 @@
       "field": "专业组最低位次1",
       "operator": ">=",
       "value": 35200,
-      "description": "专业组最低位次1 >= 35200"
+      "description": "专业组最低位次1 不低于 35200"
     },
     {
       "confirmation_id": "tuition_threshold",
       "source_rule_id": "c_tuition_cap",
       "source_text": "太贵",
-      "selected_label": "<= 20000 元/年",
+      "selected_label": "不高于 20000 元/年",
       "selected_option": "B",
       "status": "promoted_to_executed_rule",
       "field": "学费",
       "operator": "<=",
       "value": 20000,
-      "description": "学费 <= 20000"
-    },
-    {
-      "confirmation_id": "major_expansion",
-      "source_rule_id": "c_major_expansion",
-      "source_text": "想学计算机",
-      "selected_label": "不扩展，只匹配“计算机”",
-      "selected_option": "A",
-      "status": "confirmed_without_expansion",
-      "expanded_terms": []
+      "description": "学费 不高于 20000"
     },
     {
       "confirmation_id": "cooperation_type",
@@ -97,15 +88,15 @@
       "selected_label": null,
       "selected_option": null,
       "status": "not_executable",
-      "reason": "Missing dedicated cooperation_type field."
+      "reason": "缺少合作办学类型字段。"
     }
   ],
   "not_executed_preferences": [
     {
       "source_text": "不想去太贵的中外合作",
       "status": "not_executed",
-      "reason": "Missing dedicated cooperation_type field. No text-field inference is used in this MVP.",
-      "safety_warning": "不想去太贵的中外合作 未执行：Missing dedicated cooperation_type field. No text-field inference is used in this MVP."
+      "reason": "缺少合作办学类型字段，当前版本不从文本字段推断。",
+      "safety_warning": "不想去太贵的中外合作 未执行：缺少合作办学类型字段，当前版本不从文本字段推断。"
     }
   ],
   "result_count": 93,
@@ -117,6 +108,7 @@
       "专业代码": "353",
       "专业名称": "计算机类",
       "专业全称": "计算机类(含：计算机科学与技术、计算机科学与技术(创新班)、软件工程，第二学期专业分流，地方专项计划，粤海校区)",
+      "选科要求": "化学",
       "城市": "深圳",
       "学费": 6853.0,
       "专业组最低位次": 38998,
@@ -126,37 +118,37 @@
         {
           "rule_id": "e_source_province",
           "status": "pass",
-          "reason": "生源地 == 广东"
+          "reason": "生源地 等于 广东"
         },
         {
           "rule_id": "e_subject_type",
           "status": "pass",
-          "reason": "科类 == 物理"
+          "reason": "科类 等于 物理"
         },
         {
           "rule_id": "e_major_keyword",
           "status": "pass",
-          "reason": "专业名称 contains 计算机"
+          "reason": "专业名称 包含 计算机"
         },
         {
           "rule_id": "e_city",
           "status": "pass",
-          "reason": "城市 matches 深圳"
+          "reason": "城市 包含任一：广州、深圳；命中 深圳"
         },
         {
           "rule_id": "e_safety_margin",
           "status": "pass",
-          "reason": "专业组最低位次1 38998 >= 35200"
+          "reason": "专业组最低位次1 38998 不低于 35200"
         },
         {
           "rule_id": "e_tuition_cap",
           "status": "pass",
-          "reason": "学费 6853 <= 20000"
+          "reason": "学费 6853 不高于 20000"
         },
         {
-          "rule_id": "l_cooperation_type",
+          "rule_id": "not_executed_1",
           "status": "not_executed",
-          "reason": "Missing dedicated cooperation_type field; no text inference applied."
+          "reason": "不想去太贵的中外合作 未执行：缺少合作办学类型字段，当前版本不从文本字段推断。"
         }
       ]
     },
@@ -167,6 +159,7 @@
       "专业代码": "006",
       "专业名称": "计算机科学与技术",
       "专业全称": "计算机科学与技术(腾安班，校企联合培养，校本部)",
+      "选科要求": "化学",
       "城市": "深圳",
       "学费": 6200.0,
       "专业组最低位次": 42938,
@@ -176,37 +169,37 @@
         {
           "rule_id": "e_source_province",
           "status": "pass",
-          "reason": "生源地 == 广东"
+          "reason": "生源地 等于 广东"
         },
         {
           "rule_id": "e_subject_type",
           "status": "pass",
-          "reason": "科类 == 物理"
+          "reason": "科类 等于 物理"
         },
         {
           "rule_id": "e_major_keyword",
           "status": "pass",
-          "reason": "专业名称 contains 计算机"
+          "reason": "专业名称 包含 计算机"
         },
         {
           "rule_id": "e_city",
           "status": "pass",
-          "reason": "城市 matches 深圳"
+          "reason": "城市 包含任一：广州、深圳；命中 深圳"
         },
         {
           "rule_id": "e_safety_margin",
           "status": "pass",
-          "reason": "专业组最低位次1 42938 >= 35200"
+          "reason": "专业组最低位次1 42938 不低于 35200"
         },
         {
           "rule_id": "e_tuition_cap",
           "status": "pass",
-          "reason": "学费 6200 <= 20000"
+          "reason": "学费 6200 不高于 20000"
         },
         {
-          "rule_id": "l_cooperation_type",
+          "rule_id": "not_executed_1",
           "status": "not_executed",
-          "reason": "Missing dedicated cooperation_type field; no text inference applied."
+          "reason": "不想去太贵的中外合作 未执行：缺少合作办学类型字段，当前版本不从文本字段推断。"
         }
       ]
     },
@@ -217,6 +210,7 @@
       "专业代码": "007",
       "专业名称": "计算机科学与技术",
       "专业全称": "计算机科学与技术(校本部)",
+      "选科要求": "化学",
       "城市": "深圳",
       "学费": 6200.0,
       "专业组最低位次": 42938,
@@ -226,37 +220,37 @@
         {
           "rule_id": "e_source_province",
           "status": "pass",
-          "reason": "生源地 == 广东"
+          "reason": "生源地 等于 广东"
         },
         {
           "rule_id": "e_subject_type",
           "status": "pass",
-          "reason": "科类 == 物理"
+          "reason": "科类 等于 物理"
         },
         {
           "rule_id": "e_major_keyword",
           "status": "pass",
-          "reason": "专业名称 contains 计算机"
+          "reason": "专业名称 包含 计算机"
         },
         {
           "rule_id": "e_city",
           "status": "pass",
-          "reason": "城市 matches 深圳"
+          "reason": "城市 包含任一：广州、深圳；命中 深圳"
         },
         {
           "rule_id": "e_safety_margin",
           "status": "pass",
-          "reason": "专业组最低位次1 42938 >= 35200"
+          "reason": "专业组最低位次1 42938 不低于 35200"
         },
         {
           "rule_id": "e_tuition_cap",
           "status": "pass",
-          "reason": "学费 6200 <= 20000"
+          "reason": "学费 6200 不高于 20000"
         },
         {
-          "rule_id": "l_cooperation_type",
+          "rule_id": "not_executed_1",
           "status": "not_executed",
-          "reason": "Missing dedicated cooperation_type field; no text inference applied."
+          "reason": "不想去太贵的中外合作 未执行：缺少合作办学类型字段，当前版本不从文本字段推断。"
         }
       ]
     },
@@ -267,6 +261,7 @@
       "专业代码": "075",
       "专业名称": "计算机类",
       "专业全称": "计算机类(含：计算机科学与技术、软件工程、网络空间安全，第二学期专业分流，大学城校区)",
+      "选科要求": "化学",
       "城市": "广州",
       "学费": 6853.0,
       "专业组最低位次": 50802,
@@ -276,37 +271,37 @@
         {
           "rule_id": "e_source_province",
           "status": "pass",
-          "reason": "生源地 == 广东"
+          "reason": "生源地 等于 广东"
         },
         {
           "rule_id": "e_subject_type",
           "status": "pass",
-          "reason": "科类 == 物理"
+          "reason": "科类 等于 物理"
         },
         {
           "rule_id": "e_major_keyword",
           "status": "pass",
-          "reason": "专业名称 contains 计算机"
+          "reason": "专业名称 包含 计算机"
         },
         {
           "rule_id": "e_city",
           "status": "pass",
-          "reason": "城市 matches 广州"
+          "reason": "城市 包含任一：广州、深圳；命中 广州"
         },
         {
           "rule_id": "e_safety_margin",
           "status": "pass",
-          "reason": "专业组最低位次1 50802 >= 35200"
+          "reason": "专业组最低位次1 50802 不低于 35200"
         },
         {
           "rule_id": "e_tuition_cap",
           "status": "pass",
-          "reason": "学费 6853 <= 20000"
+          "reason": "学费 6853 不高于 20000"
         },
         {
-          "rule_id": "l_cooperation_type",
+          "rule_id": "not_executed_1",
           "status": "not_executed",
-          "reason": "Missing dedicated cooperation_type field; no text inference applied."
+          "reason": "不想去太贵的中外合作 未执行：缺少合作办学类型字段，当前版本不从文本字段推断。"
         }
       ]
     },
@@ -317,6 +312,7 @@
       "专业代码": "154",
       "专业名称": "计算机科学与技术",
       "专业全称": "计算机科学与技术(揭阳校区)",
+      "选科要求": "化学",
       "城市": "广州",
       "学费": 6850.0,
       "专业组最低位次": 58867,
@@ -326,37 +322,37 @@
         {
           "rule_id": "e_source_province",
           "status": "pass",
-          "reason": "生源地 == 广东"
+          "reason": "生源地 等于 广东"
         },
         {
           "rule_id": "e_subject_type",
           "status": "pass",
-          "reason": "科类 == 物理"
+          "reason": "科类 等于 物理"
         },
         {
           "rule_id": "e_major_keyword",
           "status": "pass",
-          "reason": "专业名称 contains 计算机"
+          "reason": "专业名称 包含 计算机"
         },
         {
           "rule_id": "e_city",
           "status": "pass",
-          "reason": "城市 matches 广州"
+          "reason": "城市 包含任一：广州、深圳；命中 广州"
         },
         {
           "rule_id": "e_safety_margin",
           "status": "pass",
-          "reason": "专业组最低位次1 58867 >= 35200"
+          "reason": "专业组最低位次1 58867 不低于 35200"
         },
         {
           "rule_id": "e_tuition_cap",
           "status": "pass",
-          "reason": "学费 6850 <= 20000"
+          "reason": "学费 6850 不高于 20000"
         },
         {
-          "rule_id": "l_cooperation_type",
+          "rule_id": "not_executed_1",
           "status": "not_executed",
-          "reason": "Missing dedicated cooperation_type field; no text inference applied."
+          "reason": "不想去太贵的中外合作 未执行：缺少合作办学类型字段，当前版本不从文本字段推断。"
         }
       ]
     }
@@ -380,7 +376,10 @@
     "safety_warnings": [
       "答案只能使用 evidence_pack 中的已验证规则、确认记录、结果摘要和 trace。",
       "候选偏好在确认或模拟确认之前不得执行。",
-      "不想去太贵的中外合作 未执行：Missing dedicated cooperation_type field. No text-field inference is used in this MVP."
+      "不想去太贵的中外合作 未执行：缺少合作办学类型字段，当前版本不从文本字段推断。"
     ]
-  }
+  },
+  "extracted_preferences": [],
+  "attribute_grounding_summary": {},
+  "proposed_rule_audit": []
 }

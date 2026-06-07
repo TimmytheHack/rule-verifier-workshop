@@ -92,7 +92,7 @@ def parse_methods(raw: str) -> set[str]:
             continue
         if key not in METHOD_ALIASES:
             allowed = ", ".join(sorted(METHOD_ALIASES))
-            raise ValueError(f"Unknown method '{key}'. Allowed values: {allowed}")
+            raise ValueError(f"未知评估方法“{key}”。允许的取值：{allowed}")
         methods.update(METHOD_ALIASES[key])
     return methods or METHOD_ALIASES["all"]
 
@@ -216,7 +216,7 @@ def evaluate(
                 status = "cache" if cache_hit else "api"
                 print(f"  deepseek_extractor_symbolic_verifier: {status}", flush=True)
         else:
-            reason = "not selected" if "deepseek" not in selected_methods else "DEEPSEEK_API_KEY is not set"
+            reason = "未选择该方法" if "deepseek" not in selected_methods else "未配置 DeepSeek 密钥（环境变量 DEEPSEEK_API_KEY）"
             row["methods"]["deepseek_extractor_symbolic_verifier"] = {"status": "skipped", "reason": reason}
             aggregate["deepseek_extractor_symbolic_verifier"]["skipped"] += 1
 
@@ -246,7 +246,7 @@ def evaluate(
                 status = "cache" if cache_hit else "api"
                 print(f"  llm_only_baseline: {status}", flush=True)
         else:
-            reason = "not selected" if "llm_only" not in selected_methods else "DEEPSEEK_API_KEY is not set"
+            reason = "未选择该方法" if "llm_only" not in selected_methods else "未配置 DeepSeek 密钥（环境变量 DEEPSEEK_API_KEY）"
             row["methods"]["llm_only_baseline"] = {"status": "skipped", "reason": reason}
             aggregate["llm_only_baseline"]["skipped"] += 1
 
@@ -276,7 +276,7 @@ def evaluate(
                 status = "cache" if cache_hit else "api"
                 print(f"  schema_aware_llm_only_baseline: {status}", flush=True)
         else:
-            reason = "not selected" if "schema_aware" not in selected_methods else "DEEPSEEK_API_KEY is not set"
+            reason = "未选择该方法" if "schema_aware" not in selected_methods else "未配置 DeepSeek 密钥（环境变量 DEEPSEEK_API_KEY）"
             row["methods"]["schema_aware_llm_only_baseline"] = {"status": "skipped", "reason": reason}
             aggregate["schema_aware_llm_only_baseline"]["skipped"] += 1
 
@@ -285,8 +285,8 @@ def evaluate(
     finalize_aggregate(aggregate)
 
     return {
-        "evaluation_goal": "Compare task success under token budget on fuzzier inputs.",
-        "main_safety_metric": "deterministic over-promotion rate",
+        "evaluation_goal": "比较更模糊输入下不同方法的任务成功率和 token 预算。",
+        "main_safety_metric": "确定性规则过度提升率",
         "methods": [
             "rule_regex_extractor_symbolic_verifier",
             "deepseek_extractor_symbolic_verifier",

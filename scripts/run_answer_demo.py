@@ -69,9 +69,9 @@ def compare_answers(
 ) -> dict[str, Any]:
     evidence_dict = evidence.to_dict()
     comparison = {
-        "llm_only_schema_sample": _skipped_answer("DeepSeek not requested."),
+        "llm_only_schema_sample": _skipped_answer("未请求 DeepSeek。"),
         "pipeline_template": _template_answer(evidence_dict),
-        "pipeline_deepseek_evidence": _skipped_answer("DeepSeek not requested."),
+        "pipeline_deepseek_evidence": _skipped_answer("未请求 DeepSeek。"),
     }
 
     if include_deepseek and has_deepseek_api_key():
@@ -81,7 +81,7 @@ def compare_answers(
         )
         comparison["pipeline_deepseek_evidence"] = _deepseek_evidence_answer(evidence)
     elif include_deepseek:
-        skipped = _skipped_answer("DEEPSEEK_API_KEY is not set.")
+        skipped = _skipped_answer("未配置 DeepSeek 密钥（环境变量 DEEPSEEK_API_KEY）。")
         comparison["llm_only_schema_sample"] = dict(skipped)
         comparison["pipeline_deepseek_evidence"] = dict(skipped)
 
@@ -103,7 +103,7 @@ def run_answer_demo(
     )
     output = {
         "input": DEMO_INPUT,
-        "answer_goal": "Generate answers from verified evidence, not raw Excel.",
+        "answer_goal": "回答只能来自已验证证据包，不能直接读取原始 Excel。",
         "comparison": comparison,
         "answer_level_evaluation": {
             mode: payload.get("answer_evaluation")
@@ -147,8 +147,16 @@ def _run_verified_pipeline(
         TAXONOMY_PATH,
         simulated_confirmation_enabled=True,
     ).final_executable_rules(classified_rules)
-    raw_results = PandasExecutor().execute(dataset.dataframe, final_rules)
-    results = TraceGenerator().add_traces(raw_results)
+    raw_results = PandasExecutor().execute(
+        dataset.dataframe,
+        final_rules,
+        user_rank=slots.get("user_context", {}).get("user_rank"),
+    )
+    results = TraceGenerator().add_traces(
+        raw_results,
+        executable_rules=final_rules,
+        not_executed_preferences=classified_rules.get("non_executable_preferences", []),
+    )
     return {
         "classified_rules": classified_rules,
         "final_executable_rules": final_rules,
@@ -218,6 +226,11 @@ def _skipped_answer(reason: str) -> dict[str, Any]:
 
 def _write_optional_answer(output_dir: Path, filename: str, payload: dict[str, Any]) -> None:
     if payload.get("status") != "ok" or not payload.get("answer"):
+        reason = payload.get("reason") or "本次未生成该回答。"
+        (output_dir / filename).write_text(
+            f"本次未生成该回答：{reason}\n",
+            encoding="utf-8",
+        )
         return
     (output_dir / filename).write_text(payload["answer"], encoding="utf-8")
 

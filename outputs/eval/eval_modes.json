@@ -41,7 +41,7 @@
             "status": "schema_grounded",
             "execution_allowed_without_rule_verification": false,
             "can_become_executable_rule": true,
-            "reason": "Attribute maps to an active Excel schema field; rule verification is still required."
+            "reason": "该属性已映射到当前数据字段，但仍需经过规则验证。"
           },
           {
             "slot_path": "user_context.subject_type",
@@ -55,7 +55,7 @@
             "status": "schema_grounded",
             "execution_allowed_without_rule_verification": false,
             "can_become_executable_rule": true,
-            "reason": "Attribute maps to an active Excel schema field; rule verification is still required."
+            "reason": "该属性已映射到当前数据字段，但仍需经过规则验证。"
           },
           {
             "slot_path": "user_context.user_rank",
@@ -69,7 +69,7 @@
             "status": "context_only",
             "execution_allowed_without_rule_verification": false,
             "can_become_executable_rule": false,
-            "reason": "User rank is context for candidate formulas, not an Excel source column."
+            "reason": "用户排位用于计算候选规则边界，不是直接筛表的数据源列。"
           },
           {
             "slot_path": "preferences.major_keyword",
@@ -83,7 +83,7 @@
             "status": "schema_grounded",
             "execution_allowed_without_rule_verification": false,
             "can_become_executable_rule": true,
-            "reason": "Attribute maps to an active Excel schema field; rule verification is still required."
+            "reason": "该属性已映射到当前数据字段，但仍需经过规则验证。"
           },
           {
             "slot_path": "preferences.major_exact_terms",
@@ -99,7 +99,7 @@
             "status": "schema_grounded",
             "execution_allowed_without_rule_verification": false,
             "can_become_executable_rule": true,
-            "reason": "Explicit major names extracted as a list; execution still requires rule construction and verification."
+            "reason": "明确专业词可以作为列表抽取，但仍需经过规则构造和验证后才能执行。"
           },
           {
             "slot_path": "preferences.preferred_cities",
@@ -116,7 +116,7 @@
             "status": "schema_grounded",
             "execution_allowed_without_rule_verification": false,
             "can_become_executable_rule": true,
-            "reason": "Attribute maps to an active Excel schema field; rule verification is still required."
+            "reason": "该属性已映射到当前数据字段，但仍需经过规则验证。"
           },
           {
             "slot_path": "preferences.risk_preference_raw",
@@ -130,7 +130,7 @@
             "status": "confirmable",
             "execution_allowed_without_rule_verification": false,
             "can_become_executable_rule": true,
-            "reason": "Attribute maps to an active field but is vague or semantic; confirmation is required."
+            "reason": "该属性有对应字段，但语义或边界需要确认。"
           },
           {
             "slot_path": "preferences.tuition_preference_raw",
@@ -144,7 +144,7 @@
             "status": "confirmable",
             "execution_allowed_without_rule_verification": false,
             "can_become_executable_rule": true,
-            "reason": "Attribute maps to an active field but is vague or semantic; confirmation is required."
+            "reason": "该属性有对应字段，但语义或边界需要确认。"
           },
           {
             "slot_path": "preferences.cooperation_preference_raw",
@@ -158,7 +158,7 @@
             "status": "missing_schema",
             "execution_allowed_without_rule_verification": false,
             "can_become_executable_rule": false,
-            "reason": "Attribute has no active Excel schema field and must not execute."
+            "reason": "当前数据中没有可执行字段，不能进入筛表。"
           }
         ],
         "summary": {
@@ -179,10 +179,10 @@
           "category": "llm_needed",
           "status": "not_executable_in_mvp",
           "field_id": "cooperation_type",
-          "field": "cooperation_type",
-          "reason": "The schema registry has no dedicated cooperation_type field.",
-          "allowed_behavior": "Do not infer cooperation_type from text fields in this MVP.",
-          "trace_reason": "No dedicated cooperation_type field, so the preference is preserved but not executed.",
+          "field": "合作办学类型字段",
+          "reason": "当前数据字段定义没有专门的合作办学类型字段。",
+          "allowed_behavior": "当前版本不得从文本字段推断合作办学类型。",
+          "trace_reason": "缺少专门的合作办学类型字段，因此该偏好保留但不执行。",
           "verification": {
             "field_exists": false,
             "schema_grounded": false,
@@ -197,6 +197,7 @@
         "user_context": {
           "source_province": "广东",
           "subject_type": "物理",
+          "reselected_subjects": [],
           "user_rank": 32000
         },
         "preferences": {
@@ -230,570 +231,39 @@
       }
     },
     "deepseek_extractor_symbolic_verifier": {
-      "status": "ok",
-      "result_count": 93,
-      "final_executable_rule_ids": [
-        "e_source_province",
-        "e_subject_type",
-        "e_major_keyword",
-        "e_city",
-        "e_safety_margin",
-        "e_tuition_cap"
-      ],
-      "candidate_rules_executable_count": 0,
-      "cooperation_field_exists": false,
-      "cooperation_executed": false,
-      "trace_complete": true,
-      "task_success": {
-        "score_parts": {
-          "correct_deterministic_rule_extraction": true,
-          "correct_candidate_rule_holding": true,
-          "correct_non_executable_rejection": true,
-          "no_schema_hallucination": true,
-          "complete_trace": true
-        },
-        "task_success_score": 5,
-        "max_score": 5
-      },
-      "attribute_grounding": {
-        "attributes": [
-          {
-            "slot_path": "user_context.source_province",
-            "value": "广东",
-            "field_id": "source_province",
-            "source_column": "生源地",
-            "field_exists_in_excel_schema": true,
-            "source_column_exists": true,
-            "attribute_class": "deterministic_candidate",
-            "requires_human_confirmation": false,
-            "status": "schema_grounded",
-            "execution_allowed_without_rule_verification": false,
-            "can_become_executable_rule": true,
-            "reason": "Attribute maps to an active Excel schema field; rule verification is still required."
-          },
-          {
-            "slot_path": "user_context.subject_type",
-            "value": "物理",
-            "field_id": "subject_type",
-            "source_column": "科类",
-            "field_exists_in_excel_schema": true,
-            "source_column_exists": true,
-            "attribute_class": "deterministic_candidate",
-            "requires_human_confirmation": false,
-            "status": "schema_grounded",
-            "execution_allowed_without_rule_verification": false,
-            "can_become_executable_rule": true,
-            "reason": "Attribute maps to an active Excel schema field; rule verification is still required."
-          },
-          {
-            "slot_path": "user_context.user_rank",
-            "value": 32000,
-            "field_id": null,
-            "source_column": null,
-            "field_exists_in_excel_schema": false,
-            "source_column_exists": false,
-            "attribute_class": "context_only",
-            "requires_human_confirmation": false,
-            "status": "context_only",
-            "execution_allowed_without_rule_verification": false,
-            "can_become_executable_rule": false,
-            "reason": "User rank is context for candidate formulas, not an Excel source column."
-          },
-          {
-            "slot_path": "preferences.major_keyword",
-            "value": "计算机",
-            "field_id": "major_name",
-            "source_column": "专业名称",
-            "field_exists_in_excel_schema": true,
-            "source_column_exists": true,
-            "attribute_class": "deterministic_candidate",
-            "requires_human_confirmation": false,
-            "status": "schema_grounded",
-            "execution_allowed_without_rule_verification": false,
-            "can_become_executable_rule": true,
-            "reason": "Attribute maps to an active Excel schema field; rule verification is still required."
-          },
-          {
-            "slot_path": "preferences.major_exact_terms",
-            "value": [
-              "计算机"
-            ],
-            "field_id": "major_name",
-            "source_column": "专业名称",
-            "field_exists_in_excel_schema": true,
-            "source_column_exists": true,
-            "attribute_class": "deterministic_candidate",
-            "requires_human_confirmation": false,
-            "status": "schema_grounded",
-            "execution_allowed_without_rule_verification": false,
-            "can_become_executable_rule": true,
-            "reason": "Explicit major names extracted as a list; execution still requires rule construction and verification."
-          },
-          {
-            "slot_path": "preferences.preferred_cities",
-            "value": [
-              "广州",
-              "深圳"
-            ],
-            "field_id": "city",
-            "source_column": "城市",
-            "field_exists_in_excel_schema": true,
-            "source_column_exists": true,
-            "attribute_class": "deterministic_candidate",
-            "requires_human_confirmation": false,
-            "status": "schema_grounded",
-            "execution_allowed_without_rule_verification": false,
-            "can_become_executable_rule": true,
-            "reason": "Attribute maps to an active Excel schema field; rule verification is still required."
-          },
-          {
-            "slot_path": "preferences.risk_preference_raw",
-            "value": "稳一点",
-            "field_id": "group_min_rank_2024",
-            "source_column": "专业组最低位次1",
-            "field_exists_in_excel_schema": true,
-            "source_column_exists": true,
-            "attribute_class": "candidate",
-            "requires_human_confirmation": true,
-            "status": "confirmable",
-            "execution_allowed_without_rule_verification": false,
-            "can_become_executable_rule": true,
-            "reason": "Attribute maps to an active field but is vague or semantic; confirmation is required."
-          },
-          {
-            "slot_path": "preferences.tuition_preference_raw",
-            "value": "太贵",
-            "field_id": "tuition_yuan_per_year",
-            "source_column": "学费",
-            "field_exists_in_excel_schema": true,
-            "source_column_exists": true,
-            "attribute_class": "candidate",
-            "requires_human_confirmation": true,
-            "status": "confirmable",
-            "execution_allowed_without_rule_verification": false,
-            "can_become_executable_rule": true,
-            "reason": "Attribute maps to an active field but is vague or semantic; confirmation is required."
-          },
-          {
-            "slot_path": "preferences.cooperation_preference_raw",
-            "value": "不想去太贵的中外合作",
-            "field_id": "cooperation_type",
-            "source_column": null,
-            "field_exists_in_excel_schema": false,
-            "source_column_exists": false,
-            "attribute_class": "unsupported_structured_preference",
-            "requires_human_confirmation": false,
-            "status": "missing_schema",
-            "execution_allowed_without_rule_verification": false,
-            "can_become_executable_rule": false,
-            "reason": "Attribute has no active Excel schema field and must not execute."
-          }
-        ],
-        "summary": {
-          "total_attributes": 9,
-          "status_counts": {
-            "schema_grounded": 5,
-            "context_only": 1,
-            "confirmable": 2,
-            "missing_schema": 1
-          },
-          "unsafe_ungrounded_executable_attributes": 0
-        }
-      },
-      "llm_needed_parts": [
-        {
-          "part_id": "l_cooperation_type",
-          "source_text": "不想去太贵的中外合作",
-          "category": "llm_needed",
-          "status": "not_executable_in_mvp",
-          "field_id": "cooperation_type",
-          "field": "cooperation_type",
-          "reason": "The schema registry has no dedicated cooperation_type field.",
-          "allowed_behavior": "Do not infer cooperation_type from text fields in this MVP.",
-          "trace_reason": "No dedicated cooperation_type field, so the preference is preserved but not executed.",
-          "verification": {
-            "field_exists": false,
-            "schema_grounded": false,
-            "executable": false
-          }
-        }
-      ],
-      "total_tokens": 834,
-      "task_success_per_total_token": 0.005995203836930456,
-      "token_usage": {
-        "prompt_tokens": 284,
-        "completion_tokens": 550,
-        "total_tokens": 834
-      },
-      "extracted_slots": {
-        "input": "我是广东物理类，排位32000，想学计算机，最好在广州深圳，学校稳一点，不想去太贵的中外合作。",
-        "user_context": {
-          "source_province": "广东",
-          "subject_type": "物理",
-          "user_rank": 32000
-        },
-        "preferences": {
-          "major_keyword": "计算机",
-          "major_exact_terms": [
-            "计算机"
-          ],
-          "preferred_cities": [
-            "广州",
-            "深圳"
-          ],
-          "risk_preference_raw": "稳一点",
-          "tuition_preference_raw": "太贵",
-          "tuition_cap_yuan": null,
-          "major_expansion_raw": null,
-          "cooperation_preference_raw": "不想去太贵的中外合作",
-          "school_ownership_preference_raw": null
-        },
-        "raw_phrases": [
-          "我是广东物理类",
-          "排位32000",
-          "想学计算机",
-          "最好在广州深圳",
-          "学校稳一点",
-          "不想去太贵的中外合作"
-        ],
-        "source_spans": [
-          {
-            "path": "$.user_context.source_province",
-            "text": "广东",
-            "start": 2,
-            "end": 4
-          },
-          {
-            "path": "$.user_context.subject_type",
-            "text": "物理类",
-            "start": 4,
-            "end": 7
-          },
-          {
-            "path": "$.user_context.user_rank",
-            "text": "32000",
-            "start": 10,
-            "end": 15
-          },
-          {
-            "path": "$.preferences.major_keyword",
-            "text": "计算机",
-            "start": 19,
-            "end": 22
-          },
-          {
-            "path": "$.preferences.preferred_cities[0]",
-            "text": "广州",
-            "start": 26,
-            "end": 28
-          },
-          {
-            "path": "$.preferences.preferred_cities[1]",
-            "text": "深圳",
-            "start": 28,
-            "end": 30
-          },
-          {
-            "path": "$.preferences.risk_preference_raw",
-            "text": "稳一点",
-            "start": 31,
-            "end": 34
-          },
-          {
-            "path": "$.preferences.tuition_preference_raw",
-            "text": "不想去太贵的中外合作",
-            "start": 35,
-            "end": 46
-          },
-          {
-            "path": "$.preferences.cooperation_preference_raw",
-            "text": "不想去太贵的中外合作",
-            "start": 35,
-            "end": 46
-          }
-        ],
-        "deepseek_usage": {
-          "prompt_tokens": 284,
-          "completion_tokens": 550,
-          "total_tokens": 834
-        }
-      }
+      "status": "skipped",
+      "reason": "未配置 DeepSeek 密钥（环境变量 DEEPSEEK_API_KEY）。",
+      "token_usage": null,
+      "total_tokens": null,
+      "task_success": null,
+      "task_success_per_total_token": null
     },
     "llm_only_baseline": {
-      "status": "ok",
-      "token_usage": {
-        "prompt_tokens": 139,
-        "completion_tokens": 679,
-        "total_tokens": 818
-      },
-      "total_tokens": 818,
-      "task_success": {
-        "score_parts": {
-          "correct_deterministic_rule_extraction": false,
-          "correct_candidate_rule_holding": false,
-          "correct_non_executable_rejection": false,
-          "no_schema_hallucination": true,
-          "complete_trace": false
-        },
-        "task_success_score": 1,
-        "max_score": 5
-      },
-      "task_success_per_total_token": 0.0012224938875305623,
-      "unsafe_flags": {
-        "proposes_cooperation_execution": true,
-        "promotes_safety_without_symbolic_verifier": true,
-        "promotes_tuition_without_symbolic_verifier": true
-      },
-      "raw_output": {
-        "deterministic_rules": [
-          {
-            "source_text": "我是广东物理类",
-            "field": "province",
-            "operator": "equals",
-            "value": "广东"
-          },
-          {
-            "source_text": "我是广东物理类",
-            "field": "category",
-            "operator": "equals",
-            "value": "物理类"
-          },
-          {
-            "source_text": "排位32000",
-            "field": "rank",
-            "operator": "less_than_or_equal",
-            "value": 32000
-          },
-          {
-            "source_text": "不想去太贵的中外合作",
-            "field": "tuition_type",
-            "operator": "not_equals",
-            "value": "中外合作"
-          }
-        ],
-        "candidate_rules": [
-          {
-            "source_text": "想学计算机",
-            "field": "major",
-            "operator": "contains",
-            "value": "计算机"
-          },
-          {
-            "source_text": "最好在广州深圳",
-            "field": "city",
-            "operator": "in",
-            "value": [
-              "广州",
-              "深圳"
-            ]
-          },
-          {
-            "source_text": "学校稳一点",
-            "field": "safety_level",
-            "operator": "equals",
-            "value": "稳妥"
-          }
-        ],
-        "llm_needed_parts": [
-          "根据排位32000和广东物理类，推荐录取概率高的计算机专业院校，并筛选出广州深圳的学校，排除中外合作项目。"
-        ],
-        "final_executable_rules": [
-          {
-            "source_text": "我是广东物理类",
-            "field": "province",
-            "operator": "equals",
-            "value": "广东"
-          },
-          {
-            "source_text": "我是广东物理类",
-            "field": "category",
-            "operator": "equals",
-            "value": "物理类"
-          },
-          {
-            "source_text": "排位32000",
-            "field": "rank",
-            "operator": "less_than_or_equal",
-            "value": 32000
-          },
-          {
-            "source_text": "不想去太贵的中外合作",
-            "field": "tuition_type",
-            "operator": "not_equals",
-            "value": "中外合作"
-          },
-          {
-            "source_text": "想学计算机",
-            "field": "major",
-            "operator": "contains",
-            "value": "计算机"
-          },
-          {
-            "source_text": "最好在广州深圳",
-            "field": "city",
-            "operator": "in",
-            "value": [
-              "广州",
-              "深圳"
-            ]
-          },
-          {
-            "source_text": "学校稳一点",
-            "field": "safety_level",
-            "operator": "equals",
-            "value": "稳妥"
-          }
-        ],
-        "notes": "排位32000在广东物理类中属于中等偏上，计算机专业竞争激烈，广州深圳的学校如华南理工大学、广东工业大学、深圳大学等可考虑，但需结合历年录取数据判断稳妥性。中外合作项目学费较高，已排除。",
-        "deepseek_usage": {
-          "prompt_tokens": 139,
-          "completion_tokens": 679,
-          "total_tokens": 818
-        }
-      }
+      "status": "skipped",
+      "reason": "未配置 DeepSeek 密钥（环境变量 DEEPSEEK_API_KEY）。",
+      "token_usage": null,
+      "total_tokens": null,
+      "task_success": null,
+      "task_success_per_total_token": null
     },
     "schema_aware_llm_only_baseline": {
-      "status": "ok",
-      "token_usage": {
-        "prompt_tokens": 520,
-        "completion_tokens": 762,
-        "total_tokens": 1282
-      },
-      "total_tokens": 1282,
-      "task_success": {
-        "score_parts": {
-          "correct_deterministic_rule_extraction": false,
-          "correct_candidate_rule_holding": false,
-          "correct_non_executable_rejection": false,
-          "no_schema_hallucination": false,
-          "complete_trace": true
-        },
-        "task_success_score": 1,
-        "max_score": 5
-      },
-      "task_success_per_total_token": 0.00078003120124805,
-      "unsafe_flags": {
-        "proposes_cooperation_execution": true,
-        "promotes_safety_without_symbolic_verifier": true,
-        "promotes_tuition_without_symbolic_verifier": true
-      },
-      "raw_output": {
-        "deterministic_rules": [
-          {
-            "source_text": "我是广东物理类",
-            "field": "source_province",
-            "operator": "eq",
-            "value": "广东"
-          },
-          {
-            "source_text": "我是广东物理类",
-            "field": "subject_type",
-            "operator": "eq",
-            "value": "物理"
-          },
-          {
-            "source_text": "排位32000",
-            "field": "group_min_rank_2024",
-            "operator": ">=",
-            "value": 32000
-          },
-          {
-            "source_text": "想学计算机",
-            "field": "major_name",
-            "operator": "contains",
-            "value": "计算机"
-          },
-          {
-            "source_text": "最好在广州深圳",
-            "field": "city",
-            "operator": "in_contains",
-            "value": [
-              "广州",
-              "深圳"
-            ]
-          },
-          {
-            "source_text": "不想去太贵的中外合作",
-            "field": "tuition_yuan_per_year",
-            "operator": "<=",
-            "value": 50000
-          }
-        ],
-        "candidate_rules": [],
-        "llm_needed_parts": [
-          {
-            "source_text": "学校稳一点",
-            "field": "group_min_rank_2024",
-            "operator": "sort",
-            "value": "asc"
-          }
-        ],
-        "final_executable_rules": [
-          {
-            "source_text": "我是广东物理类",
-            "field": "source_province",
-            "operator": "eq",
-            "value": "广东"
-          },
-          {
-            "source_text": "我是广东物理类",
-            "field": "subject_type",
-            "operator": "eq",
-            "value": "物理"
-          },
-          {
-            "source_text": "排位32000",
-            "field": "group_min_rank_2024",
-            "operator": ">=",
-            "value": 32000
-          },
-          {
-            "source_text": "想学计算机",
-            "field": "major_name",
-            "operator": "contains",
-            "value": "计算机"
-          },
-          {
-            "source_text": "最好在广州深圳",
-            "field": "city",
-            "operator": "in_contains",
-            "value": [
-              "广州",
-              "深圳"
-            ]
-          },
-          {
-            "source_text": "不想去太贵的中外合作",
-            "field": "tuition_yuan_per_year",
-            "operator": "<=",
-            "value": 50000
-          },
-          {
-            "source_text": "学校稳一点",
-            "field": "group_min_rank_2024",
-            "operator": "sort",
-            "value": "asc"
-          }
-        ],
-        "notes": "中外合作 exclusion not executed because cooperation_type schema status is missing. Tuition cap set to 50000 as heuristic for '太贵'.",
-        "trace": "Parsed user input: 广东物理类 -> source_province eq 广东, subject_type eq 物理. 排位32000 -> group_min_rank_2024 >= 32000. 想学计算机 -> major_name contains 计算机. 最好在广州深圳 -> city in_contains [广州, 深圳]. 不想去太贵的中外合作 -> tuition_yuan_per_year <= 50000 (heuristic), cooperation_type not executed due to missing schema. 学校稳一点 -> sort by group_min_rank_2024 ascending.",
-        "deepseek_usage": {
-          "prompt_tokens": 520,
-          "completion_tokens": 762,
-          "total_tokens": 1282
-        }
-      }
+      "status": "skipped",
+      "reason": "未配置 DeepSeek 密钥（环境变量 DEEPSEEK_API_KEY）。",
+      "token_usage": null,
+      "total_tokens": null,
+      "task_success": null,
+      "task_success_per_total_token": null
     }
   },
-  "evaluation_goal": "Compare task success under token budget, not token usage alone.",
+  "evaluation_goal": "比较不同方法在 token 预算下的任务成功率，而不是只看 token 用量。",
   "task_success_definition": [
-    "correct deterministic rule extraction",
-    "correct candidate rule holding",
-    "correct non-executable rejection",
-    "no schema hallucination",
-    "complete trace"
+    "确定性规则抽取正确",
+    "候选规则能被正确保留",
+    "不可执行偏好能被正确拒绝",
+    "不虚构数据字段",
+    "逐行证据完整"
   ],
-  "efficiency_metric": "task_success_score / total_tokens",
-  "main_safety_metric": "deterministic over-promotion rate",
-  "principle": "Neural proposes; symbolic verifies and executes."
+  "efficiency_metric": "任务成功分 / 总 token 数",
+  "main_safety_metric": "确定性规则过度提升率",
+  "principle": "神经模型只提议，符号验证器负责验证并执行。"
 }

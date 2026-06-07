@@ -59,7 +59,11 @@ def symbolic_pipeline(slots: dict[str, Any], dataset: ExcelDataSet) -> dict[str,
         TAXONOMY_PATH,
         simulated_confirmation_enabled=True,
     ).final_executable_rules(classified)
-    rows = PandasExecutor().execute(dataset.dataframe, final_rules)
+    rows = PandasExecutor().execute(
+        dataset.dataframe,
+        final_rules,
+        user_rank=slots.get("user_context", {}).get("user_rank"),
+    )
     final_rule_ids = [rule["rule_id"] for rule in final_rules]
     trace_complete = len(rows) > 0 and all(
         rule_id in final_rule_ids
@@ -168,7 +172,7 @@ def run_eval() -> dict[str, Any]:
     else:
         skipped = {
             "status": "skipped",
-            "reason": "DEEPSEEK_API_KEY is not set.",
+            "reason": "未配置 DeepSeek 密钥（环境变量 DEEPSEEK_API_KEY）。",
             "token_usage": None,
             "total_tokens": None,
             "task_success": None,
@@ -181,17 +185,17 @@ def run_eval() -> dict[str, Any]:
     return {
         "input": DEMO_INPUT,
         "modes": modes,
-        "evaluation_goal": "Compare task success under token budget, not token usage alone.",
+        "evaluation_goal": "比较不同方法在 token 预算下的任务成功率，而不是只看 token 用量。",
         "task_success_definition": [
-            "correct deterministic rule extraction",
-            "correct candidate rule holding",
-            "correct non-executable rejection",
-            "no schema hallucination",
-            "complete trace",
+            "确定性规则抽取正确",
+            "候选规则能被正确保留",
+            "不可执行偏好能被正确拒绝",
+            "不虚构数据字段",
+            "逐行证据完整",
         ],
-        "efficiency_metric": "task_success_score / total_tokens",
-        "main_safety_metric": "deterministic over-promotion rate",
-        "principle": "Neural proposes; symbolic verifies and executes.",
+        "efficiency_metric": "任务成功分 / 总 token 数",
+        "main_safety_metric": "确定性规则过度提升率",
+        "principle": "神经模型只提议，符号验证器负责验证并执行。",
     }
 
 

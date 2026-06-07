@@ -15,6 +15,12 @@
       "missing_behavior": "ask_user"
     },
     {
+      "field_id": "reselected_subjects",
+      "label": "再选科目/四选二",
+      "guangdong_minimum": "从化学、生物、政治、地理中选择 2 门",
+      "missing_behavior": "ask_user"
+    },
+    {
       "field_id": "user_rank",
       "label": "省排名/位次",
       "importance": "rank_is_more_stable_than_score",
@@ -53,7 +59,8 @@
     "专业名称",
     "城市",
     "学费",
-    "专业组最低位次1"
+    "专业组最低位次1",
+    "选科要求"
   ],
   "guangdong_priority_fields": [
     "院校专业组代码",

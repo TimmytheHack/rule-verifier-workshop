@@ -14,6 +14,7 @@ from src.extractors.deepseek_extractor import (
     DeepSeekClient,
     DeepSeekExtractor,
     DeepSeekJSONResponse,
+    deepseek_usage_from_payload,
     normalize_slots,
 )
 from src.rules.rule_classifier import RuleClassifier
@@ -50,6 +51,35 @@ class FakeDeepSeekClient:
                     "major_expansion_raw": "计算机相关扩展",
                     "cooperation_preference_raw": "不想去太贵的中外合作",
                 },
+                "proposed_rules": [
+                    {
+                        "rule_id": "p_major",
+                        "source_text": "想学计算机",
+                        "category": "deterministic",
+                        "field_id": "major_name",
+                        "field": "专业名称",
+                        "operator": "contains",
+                        "value": "计算机",
+                        "semantic_type": "explicit_user_fact",
+                        "value_source": "explicit_user_fact",
+                        "requires_human_confirmation": False,
+                        "reason": "用户明确给出专业关键词。",
+                    }
+                ],
+                "unmapped_preferences": [
+                    {
+                        "source_text": "中外合作",
+                        "field_id": "cooperation_type",
+                        "reason": "字段未激活。",
+                    }
+                ],
+                "questions_needed": [
+                    {
+                        "source_text": "稳一点",
+                        "question": "请选择位次窗口。",
+                        "reason": "风险偏好需要边界。",
+                    }
+                ],
                 "raw_phrases": [
                     "广东物理类",
                     "排位32000",
@@ -82,19 +112,33 @@ class FakeHTTPResponse:
 
 class DeepSeekEvalModesTest(unittest.TestCase):
     def test_deepseek_extractor_output_still_goes_through_symbolic_verifier(self) -> None:
-        slots = DeepSeekExtractor(client=FakeDeepSeekClient()).extract("demo")
+        fake_client = FakeDeepSeekClient()
+        slots = DeepSeekExtractor(client=fake_client).extract(
+            "demo",
+            schema_context=[{"field_id": "major_name", "source_column": "专业名称"}],
+            hard_context={"source_province": "广东"},
+            boundary_context={"safety_margin_percent": 10},
+        )
         self.assertEqual(slots["deepseek_usage"]["total_tokens"], 33)
         self.assertIn("source_spans", slots)
+        self.assertIn("major_name", fake_client.last_user_prompt)
+        self.assertIn("结构化硬信息", fake_client.last_user_prompt)
+        self.assertIn("所有自然语言解释必须写中文", fake_client.last_user_prompt)
         self.assertEqual(slots["user_context"]["subject_type"], "物理")
         self.assertEqual(slots["preferences"]["major_exact_terms"], ["计算机"])
         self.assertEqual(slots["preferences"]["preferred_cities"], ["广州", "深圳"])
+        self.assertEqual(slots["proposed_rules"][0]["field_id"], "major_name")
+        self.assertEqual(slots["unmapped_preferences"][0]["source_text"], "中外合作")
 
         registry = SchemaRegistry.from_file(SCHEMA_PATH, AVAILABLE_COLUMNS)
-        classified = RuleClassifier(TAXONOMY_PATH, RuleVerifier(registry)).classify(slots)
+        verifier = RuleVerifier(registry)
+        classified = RuleClassifier(TAXONOMY_PATH, verifier).classify(slots)
+        audited = verifier.audit_proposed_rules(slots["proposed_rules"])
 
         self.assertTrue(all(rule["verification"]["executable"] for rule in classified["deterministic_rules"]))
         self.assertTrue(all(not rule["verification"]["executable"] for rule in classified["candidate_rules"]))
         self.assertFalse(classified["llm_needed_parts"][0]["verification"]["field_exists"])
+        self.assertTrue(audited[0]["verification"]["executable"])
 
     def test_eval_modes_skip_deepseek_without_api_key(self) -> None:
         with patch.dict(os.environ, {}, clear=True), patch(
@@ -103,7 +147,7 @@ class DeepSeekEvalModesTest(unittest.TestCase):
         ):
             result = run_eval()
         self.assertEqual(result["modes"]["regex_extractor_symbolic_verifier"]["status"], "ok")
-        self.assertEqual(result["modes"]["regex_extractor_symbolic_verifier"]["result_count"], 93)
+        self.assertEqual(result["modes"]["regex_extractor_symbolic_verifier"]["result_count"], 2)
         self.assertEqual(
             result["modes"]["regex_extractor_symbolic_verifier"]["task_success"]["task_success_score"],
             5,
@@ -113,9 +157,12 @@ class DeepSeekEvalModesTest(unittest.TestCase):
         self.assertEqual(result["modes"]["deepseek_extractor_symbolic_verifier"]["status"], "skipped")
         self.assertEqual(result["modes"]["llm_only_baseline"]["status"], "skipped")
         self.assertEqual(result["modes"]["schema_aware_llm_only_baseline"]["status"], "skipped")
-        self.assertEqual(result["evaluation_goal"], "Compare task success under token budget, not token usage alone.")
-        self.assertEqual(result["efficiency_metric"], "task_success_score / total_tokens")
-        self.assertEqual(result["main_safety_metric"], "deterministic over-promotion rate")
+        self.assertEqual(
+            result["evaluation_goal"],
+            "比较不同方法在 token 预算下的任务成功率，而不是只看 token 用量。",
+        )
+        self.assertEqual(result["efficiency_metric"], "任务成功分 / 总 token 数")
+        self.assertEqual(result["main_safety_metric"], "确定性规则过度提升率")
 
     def test_deepseek_client_reads_dotenv_without_exposing_secret(self) -> None:
         with TemporaryDirectory() as directory:
@@ -159,13 +206,34 @@ class DeepSeekEvalModesTest(unittest.TestCase):
         self.assertEqual(response.payload, {"ok": True})
         self.assertEqual(response.usage["total_tokens"], 3)
 
+    def test_deepseek_usage_preserves_cache_and_reasoning_tokens(self) -> None:
+        usage = deepseek_usage_from_payload(
+            {
+                "usage": {
+                    "prompt_tokens": 10,
+                    "completion_tokens": 20,
+                    "total_tokens": 30,
+                    "prompt_cache_hit_tokens": 4,
+                    "prompt_cache_miss_tokens": 6,
+                    "completion_tokens_details": {"reasoning_tokens": 7},
+                }
+            }
+        )
+
+        self.assertEqual(usage["prompt_tokens"], 10)
+        self.assertEqual(usage["completion_tokens"], 20)
+        self.assertEqual(usage["total_tokens"], 30)
+        self.assertEqual(usage["prompt_cache_hit_tokens"], 4)
+        self.assertEqual(usage["prompt_cache_miss_tokens"], 6)
+        self.assertEqual(usage["reasoning_tokens"], 7)
+
     def test_schema_aware_baseline_receives_schema_but_still_has_no_verifier(self) -> None:
         fake_client = FakeDeepSeekClient()
         schema_fields = SchemaRegistry.from_file(SCHEMA_PATH, AVAILABLE_COLUMNS).configured_fields
         payload = SchemaAwareLLMOnlyBaseline(schema_fields, client=fake_client).propose("广东物理，排位32000，不要中外合作。")
         self.assertEqual(payload["deepseek_usage"]["total_tokens"], 33)
         self.assertIn("cooperation_type", fake_client.last_user_prompt)
-        self.assertIn("no symbolic verifier", fake_client.last_system_prompt)
+        self.assertIn("没有符号验证器", fake_client.last_system_prompt)
 
     def test_deepseek_normalization_preserves_multi_city_and_ownership_slots(self) -> None:
         text = "我是广东物理类，排位40000，想看深圳、广州、佛山的学校，学费两万以内，优先公办。"

@@ -30,6 +30,7 @@ class RegexExtractor:
         "金融",
         "临床医学",
         "汉语言文学",
+        "数学",
     ]
     RISK_TERMS = [
         "稳一点",
@@ -37,8 +38,6 @@ class RegexExtractor:
         "稳妥",
         "保守一点",
         "不想太冒险",
-        "学校好一点",
-        "学校别太差",
         "冲一冲",
         "想冲",
         "保底",
@@ -81,6 +80,7 @@ class RegexExtractor:
         subject_type = "物理" if "物理" in text else None
         if "历史" in text:
             subject_type = "历史"
+        reselected_subjects = self._reselected_subjects(text)
 
         preferred_cities = [city for city in self.CITY_TERMS if city in text]
         major_exact_terms = self._major_exact_terms(text)
@@ -91,6 +91,7 @@ class RegexExtractor:
             "user_context": {
                 "source_province": "广东" if "广东" in text else None,
                 "subject_type": subject_type,
+                "reselected_subjects": reselected_subjects,
                 "user_rank": user_rank,
             },
             "preferences": {
@@ -128,6 +129,11 @@ class RegexExtractor:
             if candidate in text:
                 return candidate
         return None
+
+    def _reselected_subjects(self, text: str) -> list[str]:
+        normalized = text.replace("思想政治", "政治").replace("生物学", "生物")
+        subjects = [subject for subject in ["化学", "生物", "政治", "地理"] if subject in normalized]
+        return subjects[:2]
 
     def _tuition_cap_yuan(self, text: str) -> int | None:
         ten_thousand_match = re.search(r"(?:学费|费用|预算)?\s*([一二两三四五六七八九十\d.]+)\s*万\s*以内", text)
@@ -225,6 +231,8 @@ class RegexExtractor:
             "新闻传播",
             "网络安全",
             "自动化",
+            "数学",
+            "数学系",
         ]:
             if candidate in text:
                 phrases.append(candidate)

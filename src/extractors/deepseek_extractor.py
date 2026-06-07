@@ -1,8 +1,9 @@
 """Optional DeepSeek extractor.
 
-The DeepSeek path is deliberately narrow:
-- extracts preferences and source spans only
-- returns strict JSON
+The DeepSeek path proposes structure only:
+- extracts preferences and source spans
+- sees a compact field summary, never raw workbook rows
+- may propose rule-shaped objects for symbolic verification
 - does not verify schema
 - does not promote candidate rules
 - does not compile or execute filters
@@ -22,6 +23,12 @@ from typing import Any
 
 DEEPSEEK_API_URL = "https://api.deepseek.com/chat/completions"
 DEFAULT_MODEL = "deepseek-chat"
+SUPPORTED_MODELS = {
+    "deepseek-v4-flash",
+    "deepseek-v4-pro",
+    "deepseek-chat",
+    "deepseek-reasoner",
+}
 RETRYABLE_HTTP_STATUS_CODES = {408, 429, 500, 502, 503, 504}
 
 
@@ -64,7 +71,7 @@ class DeepSeekClient:
 
     def chat_json(self, system_prompt: str, user_prompt: str) -> DeepSeekJSONResponse:
         if not self.api_key:
-            raise RuntimeError("DEEPSEEK_API_KEY is not set.")
+            raise RuntimeError("未配置 DeepSeek 密钥（环境变量 DEEPSEEK_API_KEY）。")
 
         body = {
             "model": self.model,
@@ -88,14 +95,9 @@ class DeepSeekClient:
 
         api_payload = json.loads(raw)
         content = api_payload["choices"][0]["message"]["content"]
-        usage = api_payload.get("usage", {})
         return DeepSeekJSONResponse(
             payload=json.loads(content),
-            usage={
-                "prompt_tokens": int(usage.get("prompt_tokens", 0)),
-                "completion_tokens": int(usage.get("completion_tokens", 0)),
-                "total_tokens": int(usage.get("total_tokens", 0)),
-            },
+            usage=deepseek_usage_from_payload(api_payload),
         )
 
     def _urlopen_with_retries(self, request: urllib.request.Request) -> str:
@@ -109,16 +111,16 @@ class DeepSeekClient:
             except urllib.error.HTTPError as exc:
                 if not self._should_retry_http(exc.code) or attempt >= self.max_retries:
                     error_body = exc.read().decode("utf-8", errors="replace")
-                    raise RuntimeError(f"DeepSeek API error {exc.code}: {error_body}") from exc
+                    raise RuntimeError(f"DeepSeek 接口错误 {exc.code}：{error_body}") from exc
                 self._sleep_before_retry(attempt)
             except urllib.error.URLError as exc:
                 if attempt >= self.max_retries:
                     raise RuntimeError(
-                        "DeepSeek network error after "
-                        f"{self.max_retries + 1} attempts: {exc.reason}"
+                        "DeepSeek 网络请求失败，已重试 "
+                        f"{self.max_retries + 1} 次：{exc.reason}"
                     ) from exc
                 self._sleep_before_retry(attempt)
-        raise RuntimeError("DeepSeek request failed without a captured exception.")
+        raise RuntimeError("DeepSeek 请求失败，但没有捕获到具体异常。")
 
     def _should_retry_http(self, status_code: int) -> bool:
         return status_code in RETRYABLE_HTTP_STATUS_CODES
@@ -130,7 +132,7 @@ class DeepSeekClient:
 
 
 class DeepSeekExtractor:
-    """Uses DeepSeek only for preference extraction.
+    """Uses DeepSeek for schema-aware extraction and rule proposals.
 
     The returned slots must still go through RuleClassifier and RuleVerifier.
     """
@@ -138,28 +140,61 @@ class DeepSeekExtractor:
     def __init__(self, client: DeepSeekClient | None = None) -> None:
         self.client = client or DeepSeekClient()
 
-    def extract(self, text: str) -> dict[str, Any]:
+    def extract(
+        self,
+        text: str,
+        schema_context: list[dict[str, Any]] | None = None,
+        hard_context: dict[str, Any] | None = None,
+        boundary_context: dict[str, Any] | None = None,
+    ) -> dict[str, Any]:
+        schema_context = schema_context or []
+        hard_context = hard_context or {}
+        boundary_context = boundary_context or {}
         response = self.client.chat_json(
             system_prompt=(
-                "You extract user preferences for a rule-verification system. "
-                "Return strict JSON only. Do not decide final executability. "
-                "Do not promote candidate rules. Do not create final filters."
+                "你是高考志愿偏好到规则验证系统的抽取器。"
+                "只返回严格 JSON。你可以提出规则形状，但不能判断最终是否可执行；"
+                "最终可执行性由后端符号验证器决定。"
+                "不要声称任何规则已经执行，不要提升候选规则，不要生成最终筛选条件。"
+                "所有解释性文本字段必须使用中文，例如 reason、question、source_text。"
             ),
             user_prompt=(
-                "Extract slots from this Chinese college application preference. "
-                "Return exactly this JSON shape: "
+                "你会收到字段摘要、用户界面传入的结构化硬信息、可选的已确认边界，"
+                "以及用户软偏好文本。字段摘要只包含字段元数据，不包含原始表格行。"
+                "不要想象或补充原始 Excel 数据。提出规则时只能使用字段摘要中提供的 field_id。"
+                "缺失字段、未激活字段或外部信息偏好必须保留为 unmapped_preferences "
+                "或 explain-only 类型，不得包装成可执行规则。"
+                "所有自然语言解释必须写中文，不要输出英文说明。"
+                "请严格返回以下 JSON 结构："
                 '{"input": string, "user_context": {"source_province": string|null, '
-                '"subject_type": string|null, "user_rank": number|null}, '
+                '"subject_type": string|null, "reselected_subjects": [string], "user_rank": number|null}, '
                 '"preferences": {"major_keyword": string|null, "major_exact_terms": [string], '
                 '"preferred_cities": [string], '
                 '"risk_preference_raw": string|null, "tuition_preference_raw": string|null, '
                 '"tuition_cap_yuan": number|null, '
                 '"major_expansion_raw": string|null, "cooperation_preference_raw": string|null, '
-                '"school_ownership_preference_raw": string|null}, '
+                '"school_ownership_preference_raw": string|null, "other_vague_preferences": [string]}, '
+                '"proposed_rules": [{"rule_id": string|null, "source_text": string|null, '
+                '"category": "deterministic"|"candidate"|"explain_only", '
+                '"field_id": string|null, "field": string|null, "operator": string|null, '
+                '"value": any, "semantic_type": string|null, "value_source": string|null, '
+                '"requires_human_confirmation": boolean, "reason": string|null}], '
+                '"unmapped_preferences": [{"source_text": string, "field_id": string|null, '
+                '"reason": string}], '
+                '"questions_needed": [{"source_text": string, "question": string, '
+                '"reason": string}], '
                 '"raw_phrases": [string], '
                 '"source_spans": [{"path": string, "text": string, "start": number|null, "end": number|null}]}. '
-                "For this task, exact major terms are explicit major names only. "
-                f"Input: {text}"
+                "枚举值使用约定：明确事实使用 semantic_type=explicit_user_fact；"
+                "界面已确认的安全边界或费用边界使用 confirmed_boundary；"
+                "模糊偏好使用 vague_preference；专业语义扩展使用 semantic_expansion；"
+                "需要外部资料的偏好使用 external_info；当前缺字段的结构化偏好使用 "
+                "unsupported_structured_preference。"
+                "专业词只有用户明确说出的专业名称或专业关键词才算精确词。"
+                f"字段摘要：{json.dumps(schema_context, ensure_ascii=False)}。"
+                f"结构化硬信息：{json.dumps(hard_context, ensure_ascii=False)}。"
+                f"已确认边界：{json.dumps(boundary_context, ensure_ascii=False)}。"
+                f"用户软偏好文本：{text}"
             ),
         )
         slots = normalize_slots(response.payload, text)
@@ -193,6 +228,7 @@ def normalize_slots(slots: dict[str, Any], original_text: str) -> dict[str, Any]
         "金融",
         "临床医学",
         "汉语言文学",
+        "数学",
     ]
 
     source_province = user_context.get("source_province")
@@ -204,6 +240,15 @@ def normalize_slots(slots: dict[str, Any], original_text: str) -> dict[str, Any]
         user_context["subject_type"] = "物理"
     elif subject_type and "历史" in str(subject_type):
         user_context["subject_type"] = "历史"
+
+    subjects_value = user_context.get("reselected_subjects") or []
+    subject_texts = subjects_value if isinstance(subjects_value, list) else [subjects_value]
+    subject_texts.append(original_text)
+    reselected_subjects = []
+    for subject in ["化学", "生物", "政治", "地理"]:
+        if any(subject in str(text).replace("思想政治", "政治") for text in subject_texts):
+            reselected_subjects.append(subject)
+    user_context["reselected_subjects"] = reselected_subjects[:2]
 
     user_rank = user_context.get("user_rank")
     if isinstance(user_rank, str):
@@ -270,14 +315,94 @@ def normalize_slots(slots: dict[str, Any], original_text: str) -> dict[str, Any]
     output["input"] = output.get("input") or original_text
     output["user_context"] = user_context
     output["preferences"] = preferences
+    output["proposed_rules"] = _normalize_proposed_rules(
+        output.get("proposed_rules") or []
+    )
+    output["unmapped_preferences"] = _normalize_records(
+        output.get("unmapped_preferences") or []
+    )
+    output["questions_needed"] = _normalize_records(
+        output.get("questions_needed") or []
+    )
     output["raw_phrases"] = output.get("raw_phrases") or []
     return output
+
+
+def _normalize_proposed_rules(rules: Any) -> list[dict[str, Any]]:
+    if not isinstance(rules, list):
+        return []
+    normalized = []
+    for index, rule in enumerate(rules, start=1):
+        if not isinstance(rule, dict):
+            continue
+        category = str(rule.get("category") or "deterministic")
+        if category not in {"deterministic", "candidate", "explain_only"}:
+            category = "candidate" if rule.get("requires_human_confirmation") else "deterministic"
+        normalized.append(
+            {
+                "rule_id": rule.get("rule_id") or f"p_llm_{index:03d}",
+                "source_text": _optional_text(rule.get("source_text")),
+                "category": category,
+                "field_id": _optional_text(rule.get("field_id")),
+                "field": _optional_text(rule.get("field")),
+                "operator": _optional_text(rule.get("operator")),
+                "value": rule.get("value"),
+                "semantic_type": _optional_text(rule.get("semantic_type")),
+                "value_source": _optional_text(rule.get("value_source")),
+                "requires_human_confirmation": bool(
+                    rule.get("requires_human_confirmation", False)
+                ),
+                "reason": _optional_text(rule.get("reason")),
+                "proposed_by": "llm_extractor",
+            }
+        )
+    return normalized
+
+
+def _normalize_records(records: Any) -> list[dict[str, Any]]:
+    if not isinstance(records, list):
+        return []
+    return [record for record in records if isinstance(record, dict)]
+
+
+def _optional_text(value: Any) -> str | None:
+    if value is None:
+        return None
+    text = str(value).strip()
+    return text or None
 
 
 def has_deepseek_api_key() -> bool:
     """Return whether DeepSeek credentials are available without exposing them."""
 
     return bool(env_value("DEEPSEEK_API_KEY"))
+
+
+def deepseek_usage_from_payload(api_payload: dict[str, Any]) -> dict[str, int]:
+    """Extract token usage fields returned by DeepSeek's chat API."""
+
+    usage = api_payload.get("usage", {})
+    keys = [
+        "prompt_tokens",
+        "completion_tokens",
+        "total_tokens",
+        "prompt_cache_hit_tokens",
+        "prompt_cache_miss_tokens",
+        "reasoning_tokens",
+    ]
+    normalized: dict[str, int] = {}
+    for key in keys:
+        normalized[key] = _int_value(usage.get(key, 0))
+
+    completion_details = usage.get("completion_tokens_details")
+    if isinstance(completion_details, dict):
+        normalized["reasoning_tokens"] = _int_value(
+            completion_details.get(
+                "reasoning_tokens",
+                normalized.get("reasoning_tokens", 0),
+            )
+        )
+    return normalized
 
 
 def env_value(name: str) -> str | None:
@@ -311,6 +436,13 @@ def _float_env(name: str, default: float) -> float:
         return float(value)
     except ValueError:
         return default
+
+
+def _int_value(value: Any) -> int:
+    try:
+        return int(value)
+    except (TypeError, ValueError):
+        return 0
 
 
 def _dotenv_paths() -> list[Path]:

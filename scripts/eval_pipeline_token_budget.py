@@ -57,7 +57,7 @@ def detect_header_row(sheet: Any) -> tuple[int, list[str]]:
         headers = [cell_text(value) for value in row]
         if required.issubset(set(headers)):
             return row_number, headers
-    raise RuntimeError("Could not detect header row.")
+    raise RuntimeError("无法识别表头行。")
 
 
 def row_to_csv_line(values: list[Any]) -> str:
@@ -105,7 +105,7 @@ def estimate_workbook_serialization(column_filter: list[str] | None = None) -> d
 
 def load_methodology_results() -> dict[str, Any]:
     if not EVAL_MODES_PATH.exists():
-        return {"status": "missing", "reason": "Run scripts/eval_modes.py first."}
+        return {"status": "missing", "reason": "请先运行 scripts/eval_modes.py。"}
     eval_modes = json.loads(EVAL_MODES_PATH.read_text(encoding="utf-8"))
     modes = eval_modes["modes"]
     return {
@@ -144,8 +144,8 @@ def budget_fit(estimated_tokens: int) -> dict[str, bool]:
 def main() -> None:
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
     prompt_instruction = (
-        "You are a college application advisor. Read the Excel data and the user preference, "
-        "then return recommended rows and explanations.\n"
+        "你是高考志愿规划助手。请阅读表格数据和用户偏好，"
+        "返回推荐行和解释。\n"
     )
     prompt_tokens = estimate_tokens(prompt_instruction + DEMO_INPUT)
     full_excel = estimate_workbook_serialization()
@@ -157,39 +157,38 @@ def main() -> None:
     result = {
         "input": DEMO_INPUT,
         "token_estimation_note": (
-            "Approximate tokenizer-free estimate. Chinese chars count close to one token; "
-            "non-CJK chars are estimated at four chars per token."
+            "这是不依赖具体 tokenizer 的近似估算。中文字符近似按一个 token 计算；"
+            "非中文字符按约四个字符一个 token 估算。"
         ),
         "comparison_goal": (
-            "Compare direct Excel+NL-to-LLM prompting against the methodology pipeline on token budget and verifiable success."
+            "比较“直接把 Excel 和自然语言交给 LLM”与当前方法管线在 token 预算和可验证成功率上的差异。"
         ),
         "naive_direct_llm_full_excel": {
-            "description": "Send natural-language input plus full serialized Excel sheet to an LLM and ask for answer.",
+            "description": "把自然语言输入和完整序列化 Excel 表格一起发给 LLM，并要求它直接回答。",
             "estimated_input_tokens": naive_full_tokens,
             **budget_fit(naive_full_tokens),
             "task_success": "not_executed",
-            "reason_not_executed": "Naive full-Excel prompting is evaluated by token budget estimate, not API call.",
+            "reason_not_executed": "完整 Excel 直接提示只做 token 预算估算，不实际调用 API。",
             "expected_weaknesses": [
-                "Very high context cost.",
-                "No deterministic schema verification.",
-                "High risk of unsupported field inference.",
-                "Trace completeness not guaranteed.",
+                "上下文成本很高。",
+                "没有确定性字段验证。",
+                "容易推断不受支持的字段。",
+                "不能保证逐行证据完整。",
             ],
             "workbook_serialization": full_excel,
         },
         "naive_direct_llm_required_columns": {
-            "description": "Send natural-language input plus all rows for only the MVP-required columns.",
+            "description": "只发送 MVP 必需列的全部行，再加自然语言输入。",
             "estimated_input_tokens": naive_required_tokens,
             **budget_fit(naive_required_tokens),
             "task_success": "not_executed",
-            "reason_not_executed": "Still lacks deterministic verifier; included only as a lower-bound direct-prompt estimate.",
+            "reason_not_executed": "仍然没有确定性验证器，只作为直接提示的下界估算。",
             "workbook_serialization": required_columns_excel,
         },
         "methodology_pipeline": load_methodology_results(),
         "main_claim": (
-            "For clear requirements, the symbolic pipeline spends zero or few LLM tokens on extraction, "
-            "then executes exact deterministic filters with trace. Direct Excel+prompt LLM spends orders of magnitude more tokens "
-            "and still cannot guarantee schema grounding or non-executable rejection."
+            "对于明确需求，符号管线在抽取阶段消耗零或少量 LLM token，随后执行带 trace 的确定性筛选。"
+            "直接把 Excel 和 prompt 交给 LLM 会消耗数量级更高的 token，仍不能保证字段接地或不可执行偏好的拒绝。"
         ),
     }
     OUTPUT_PATH.write_text(json.dumps(result, ensure_ascii=False, indent=2), encoding="utf-8")

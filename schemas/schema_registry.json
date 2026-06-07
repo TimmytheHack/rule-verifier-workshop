@@ -6,7 +6,7 @@
       "aliases": ["广东", "生源地", "考生省份"],
       "allowed_ops": ["eq"],
       "nullable": false,
-      "notes": "User source province. For this demo, 广东 is grounded in 生源地."
+      "notes": "用户生源地。当前数据中“广东”对应字段“生源地”。"
     },
     "subject_type": {
       "source_column": "科类",
@@ -14,7 +14,15 @@
       "aliases": ["物理类", "历史类", "科类"],
       "allowed_ops": ["eq"],
       "nullable": false,
-      "notes": "The demo normalizes 物理类 to 物理."
+      "notes": "抽取时将“物理类”规范化为“物理”，将“历史类”规范化为“历史”。"
+    },
+    "subject_requirement": {
+      "source_column": "选科要求",
+      "type": "enum_or_category",
+      "aliases": ["选科要求", "再选科目", "四选二", "化学", "生物", "政治", "地理"],
+      "allowed_ops": ["satisfies_subject_requirement"],
+      "nullable": false,
+      "notes": "广东 3+1+2 模式下，用户再选科目必须满足每个专业的选科要求。"
     },
     "major_name": {
       "source_column": "专业名称",
@@ -22,7 +30,7 @@
       "aliases": ["专业", "想学", "计算机"],
       "allowed_ops": ["contains", "eq"],
       "nullable": false,
-      "notes": "Only exact keyword matching is deterministic in this MVP."
+      "notes": "当前版本只有明确专业关键词匹配可作为确定性规则。"
     },
     "city": {
       "source_column": "城市",
@@ -30,7 +38,7 @@
       "aliases": ["城市", "广州", "深圳"],
       "allowed_ops": ["contains", "in_contains"],
       "nullable": true,
-      "notes": "The demo uses contains matching for 广州 and 深圳."
+      "notes": "当前版本用包含匹配处理广州、深圳等城市偏好。"
     },
     "group_min_rank_2024": {
       "source_column": "专业组最低位次1",
@@ -38,7 +46,7 @@
       "aliases": ["专业组最低位次", "2024最低排位", "稳一点"],
       "allowed_ops": [">=", "<=", "between", "sort"],
       "nullable": true,
-      "notes": "Used as the confirmed safety-margin field in this MVP."
+      "notes": "该字段用于执行用户已确认的安全边际规则。"
     },
     "tuition_yuan_per_year": {
       "source_column": "学费",
@@ -46,7 +54,7 @@
       "aliases": ["学费", "太贵", "费用"],
       "allowed_ops": ["<=", ">=", "between"],
       "nullable": true,
-      "notes": "Parsed as a number from the Excel cell value."
+      "notes": "执行前会从单元格内容中解析出数字学费。"
     },
     "cooperation_type": {
       "source_column": null,
@@ -55,7 +63,7 @@
       "aliases": ["中外合作", "合作办学", "国际合作"],
       "allowed_ops": ["eq", "neq", "in", "not_in"],
       "nullable": true,
-      "notes": "Missing in the current Excel schema. Do not execute 中外合作 exclusion."
+      "notes": "当前数据缺少该字段，不能执行排除中外合作。"
     }
   }
 }

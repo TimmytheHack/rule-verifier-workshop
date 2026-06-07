@@ -20,15 +20,16 @@ class LLMOnlyBaseline:
     def propose(self, text: str) -> dict[str, Any]:
         response = self.client.chat_json(
             system_prompt=(
-                "You are an intentionally unconstrained baseline for evaluation. "
-                "Return strict JSON only. The downstream evaluator will check whether "
-                "your output violates rule-verification guardrails."
+                "你是评估用的非约束 LLM 基线。只返回严格 JSON。"
+                "下游评估器会检查你的输出是否违反规则验证边界。"
+                "所有解释性文本必须使用中文。"
             ),
             user_prompt=(
-                "Given this Chinese college application preference, output JSON with keys: "
-                "deterministic_rules, candidate_rules, llm_needed_parts, final_executable_rules, notes. "
-                "Each rule should include source_text, field, operator, value if applicable. "
-                f"Input: {text}"
+                "请根据这个中文高考志愿偏好输出 JSON，键包括："
+                "deterministic_rules、candidate_rules、llm_needed_parts、"
+                "final_executable_rules、notes。每条规则如适用需包含 "
+                "source_text、field、operator、value。"
+                f"用户输入：{text}"
             ),
         )
         payload = response.payload
@@ -60,18 +61,17 @@ class SchemaAwareLLMOnlyBaseline:
         }
         response = self.client.chat_json(
             system_prompt=(
-                "You are a schema-aware LLM-only baseline for evaluation. "
-                "Return strict JSON only. You receive schema context, but there is "
-                "no symbolic verifier. The evaluator will check whether you still "
-                "over-promote vague or unsupported preferences."
+                "你是评估用的字段感知纯 LLM 基线。只返回严格 JSON。"
+                "你会收到字段上下文，但没有符号验证器。评估器会检查你是否仍然"
+                "过度提升模糊或不受支持的偏好。所有解释性文本必须使用中文。"
             ),
             user_prompt=(
-                "Given the schema and this Chinese college application preference, output JSON with keys: "
-                "deterministic_rules, candidate_rules, llm_needed_parts, final_executable_rules, notes, trace. "
-                "Each rule should include source_text, field, operator, value if applicable. "
-                "Do not execute fields whose schema status is missing. "
-                f"Schema: {schema_summary}. "
-                f"Input: {text}"
+                "请根据字段摘要和中文高考志愿偏好输出 JSON，键包括："
+                "deterministic_rules、candidate_rules、llm_needed_parts、"
+                "final_executable_rules、notes、trace。每条规则如适用需包含 "
+                "source_text、field、operator、value。字段状态为 missing 的字段不得执行。"
+                f"字段摘要：{schema_summary}。"
+                f"用户输入：{text}"
             ),
         )
         payload = response.payload

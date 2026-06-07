@@ -5,6 +5,7 @@
     "user_context": {
       "source_province": "广东",
       "subject_type": "物理",
+      "reselected_subjects": [],
       "user_rank": 32000
     },
     "preferences": {
@@ -18,6 +19,7 @@
       ],
       "risk_preference_raw": "稳一点",
       "tuition_preference_raw": "太贵",
+      "tuition_cap_yuan": null,
       "major_expansion_raw": null,
       "cooperation_preference_raw": "不想去太贵的中外合作",
       "school_ownership_preference_raw": null,
@@ -48,7 +50,7 @@
         "eq"
       ],
       "nullable": false,
-      "notes": "User source province. For this demo, 广东 is grounded in 生源地."
+      "notes": "用户生源地。当前数据中“广东”对应字段“生源地”。"
     },
     "subject_type": {
       "source_column": "科类",
@@ -62,7 +64,25 @@
         "eq"
       ],
       "nullable": false,
-      "notes": "The demo normalizes 物理类 to 物理."
+      "notes": "抽取时将“物理类”规范化为“物理”，将“历史类”规范化为“历史”。"
+    },
+    "subject_requirement": {
+      "source_column": "选科要求",
+      "type": "enum_or_category",
+      "aliases": [
+        "选科要求",
+        "再选科目",
+        "四选二",
+        "化学",
+        "生物",
+        "政治",
+        "地理"
+      ],
+      "allowed_ops": [
+        "satisfies_subject_requirement"
+      ],
+      "nullable": false,
+      "notes": "广东 3+1+2 模式下，用户再选科目必须满足每个专业的选科要求。"
     },
     "major_name": {
       "source_column": "专业名称",
@@ -77,7 +97,7 @@
         "eq"
       ],
       "nullable": false,
-      "notes": "Only exact keyword matching is deterministic in this MVP."
+      "notes": "当前版本只有明确专业关键词匹配可作为确定性规则。"
     },
     "city": {
       "source_column": "城市",
@@ -92,7 +112,7 @@
         "in_contains"
       ],
       "nullable": true,
-      "notes": "The demo uses contains matching for 广州 and 深圳."
+      "notes": "当前版本用包含匹配处理广州、深圳等城市偏好。"
     },
     "group_min_rank_2024": {
       "source_column": "专业组最低位次1",
@@ -109,7 +129,7 @@
         "sort"
       ],
       "nullable": true,
-      "notes": "Used as the confirmed safety-margin field in this MVP."
+      "notes": "该字段用于执行用户已确认的安全边际规则。"
     },
     "tuition_yuan_per_year": {
       "source_column": "学费",
@@ -125,7 +145,7 @@
         "between"
       ],
       "nullable": true,
-      "notes": "Parsed as a number from the Excel cell value."
+      "notes": "执行前会从单元格内容中解析出数字学费。"
     }
   },
   "deterministic_rules": [
@@ -138,7 +158,7 @@
       "operator": "eq",
       "confidence": 1.0,
       "requires_human_confirmation": false,
-      "trace_reason": "The user explicitly states 广东 and the Excel field 生源地 exists.",
+      "trace_reason": "用户明确给出生源地为广东，且数据字段“生源地”存在。",
       "value": "广东",
       "verification": {
         "schema_grounded": true,
@@ -148,10 +168,13 @@
         "type_valid": true,
         "value_present": true,
         "value_normalized": true,
+        "normalized_value": "广东",
+        "value_error": null,
         "ambiguity_detected": false,
         "ambiguity_level": "none",
         "requires_human_confirmation": false,
         "execution_level": "executable",
+        "terminal_status": "executable",
         "executable": true
       },
       "status": "verified"
@@ -165,7 +188,7 @@
       "operator": "eq",
       "confidence": 1.0,
       "requires_human_confirmation": false,
-      "trace_reason": "The user explicitly states 物理类 and the Excel field 科类 exists.",
+      "trace_reason": "用户明确给出科类为物理，且数据字段“科类”存在。",
       "value": "物理",
       "verification": {
         "schema_grounded": true,
@@ -175,10 +198,13 @@
         "type_valid": true,
         "value_present": true,
         "value_normalized": true,
+        "normalized_value": "物理",
+        "value_error": null,
         "ambiguity_detected": false,
         "ambiguity_level": "none",
         "requires_human_confirmation": false,
         "execution_level": "executable",
+        "terminal_status": "executable",
         "executable": true
       },
       "status": "verified"
@@ -192,7 +218,7 @@
       "operator": "contains",
       "confidence": 1.0,
       "requires_human_confirmation": false,
-      "trace_reason": "Exact keyword matching is allowed in the MVP.",
+      "trace_reason": "明确专业关键词允许作为确定性匹配规则。",
       "value": "计算机",
       "verification": {
         "schema_grounded": true,
@@ -202,10 +228,13 @@
         "type_valid": true,
         "value_present": true,
         "value_normalized": true,
+        "normalized_value": "计算机",
+        "value_error": null,
         "ambiguity_detected": false,
         "ambiguity_level": "none",
         "requires_human_confirmation": false,
         "execution_level": "executable",
+        "terminal_status": "executable",
         "executable": true
       },
       "status": "verified"
@@ -219,7 +248,7 @@
       "operator": "in_contains",
       "confidence": 1.0,
       "requires_human_confirmation": false,
-      "trace_reason": "The Excel field 城市 exists and contains relevant values.",
+      "trace_reason": "数据字段“城市”存在，可用于匹配用户明确给出的城市。",
       "value": [
         "广州",
         "深圳"
@@ -232,10 +261,16 @@
         "type_valid": true,
         "value_present": true,
         "value_normalized": true,
+        "normalized_value": [
+          "广州",
+          "深圳"
+        ],
+        "value_error": null,
         "ambiguity_detected": false,
         "ambiguity_level": "none",
         "requires_human_confirmation": false,
         "execution_level": "executable",
+        "terminal_status": "executable",
         "executable": true
       },
       "status": "verified"
@@ -247,11 +282,11 @@
       "source_text": "排位32000",
       "category": "context",
       "field_id": "user_rank",
-      "field": "user_rank",
+      "field": "用户排位",
       "operator": "set_context",
       "confidence": 1.0,
       "requires_human_confirmation": false,
-      "trace_reason": "User rank is context for confirmed candidate rules, not an Excel filter.",
+      "trace_reason": "用户排位只作为候选规则计算上下文，不直接作为筛表字段。",
       "value": 32000,
       "verification": {
         "schema_grounded": true,
@@ -265,6 +300,7 @@
         "ambiguity_level": "none",
         "requires_human_confirmation": false,
         "execution_level": "context_only",
+        "terminal_status": "context_only",
         "executable": false
       }
     }
@@ -277,27 +313,31 @@
       "status": "pending_confirmation",
       "field_id": "group_min_rank_2024",
       "field": "专业组最低位次1",
-      "operator": ">=",
+      "operator": "between",
       "value_expression_options": [
-        "32000 * 1.05",
-        "32000 * 1.10",
-        "32000 * 1.15"
+        "32000 * 0.95 到 32000 * 1.05",
+        "32000 * 0.90 到 32000 * 1.10",
+        "32000 * 0.85 到 32000 * 1.15"
       ],
       "confidence": 0.8,
       "requires_human_confirmation": true,
-      "trace_reason": "稳一点 is vague and must not execute without a confirmed safety margin.",
+      "trace_reason": "“稳一点”是模糊风险偏好，必须确认位次窗口后才能执行。",
+      "value": "稳一点",
       "verification": {
         "schema_grounded": true,
         "field_exists": true,
         "source_column_exists": true,
         "operator_allowed": true,
         "type_valid": true,
-        "value_present": false,
+        "value_present": true,
         "value_normalized": false,
+        "normalized_value": null,
+        "value_error": "confirmation_value_required",
         "ambiguity_detected": true,
         "ambiguity_level": "medium",
         "requires_human_confirmation": true,
         "execution_level": "confirmable",
+        "terminal_status": "confirmable",
         "executable": false
       }
     },
@@ -316,51 +356,23 @@
       ],
       "confidence": 0.8,
       "requires_human_confirmation": true,
-      "trace_reason": "太贵 is vague and requires a user-selected tuition cap.",
+      "trace_reason": "“太贵”是模糊费用偏好，必须确认具体费用上限后才能执行。",
+      "value": "太贵",
       "verification": {
         "schema_grounded": true,
         "field_exists": true,
         "source_column_exists": true,
         "operator_allowed": true,
         "type_valid": true,
-        "value_present": false,
+        "value_present": true,
         "value_normalized": false,
+        "normalized_value": null,
+        "value_error": "confirmation_value_required",
         "ambiguity_detected": true,
         "ambiguity_level": "medium",
         "requires_human_confirmation": true,
         "execution_level": "confirmable",
-        "executable": false
-      }
-    },
-    {
-      "rule_id": "c_major_expansion",
-      "source_text": "计算机相关扩展",
-      "category": "candidate",
-      "status": "pending_confirmation",
-      "field_id": "major_name",
-      "field": "专业名称",
-      "operator": "contains_any",
-      "value_options": [
-        "软件工程",
-        "人工智能",
-        "数据科学",
-        "网络空间安全"
-      ],
-      "confidence": 0.7,
-      "requires_human_confirmation": true,
-      "trace_reason": "Semantic expansion beyond exact 计算机 matching requires confirmation.",
-      "verification": {
-        "schema_grounded": true,
-        "field_exists": true,
-        "source_column_exists": true,
-        "operator_allowed": false,
-        "type_valid": true,
-        "value_present": false,
-        "value_normalized": false,
-        "ambiguity_detected": true,
-        "ambiguity_level": "medium",
-        "requires_human_confirmation": true,
-        "execution_level": "confirmable",
+        "terminal_status": "confirmable",
         "executable": false
       }
     }
@@ -372,10 +384,10 @@
       "category": "llm_needed",
       "status": "not_executable_in_mvp",
       "field_id": "cooperation_type",
-      "field": "cooperation_type",
-      "reason": "The schema registry has no dedicated cooperation_type field.",
-      "allowed_behavior": "Do not infer cooperation_type from text fields in this MVP.",
-      "trace_reason": "No dedicated cooperation_type field, so the preference is preserved but not executed.",
+      "field": "合作办学类型字段",
+      "reason": "当前数据字段定义没有专门的合作办学类型字段。",
+      "allowed_behavior": "当前版本不得从文本字段推断合作办学类型。",
+      "trace_reason": "缺少专门的合作办学类型字段，因此该偏好保留但不执行。",
       "verification": {
         "field_exists": false,
         "schema_grounded": false,
@@ -389,19 +401,28 @@
       "source_text": "学校稳一点",
       "options": [
         {
-          "label": "轻微稳妥",
-          "value": 33600,
-          "expression": "32000 * 1.05"
+          "label": "5% 位次窗口",
+          "value": [
+            30400,
+            33600
+          ],
+          "expression": "32000 * 0.95 到 32000 * 1.05"
         },
         {
-          "label": "适中稳妥",
-          "value": 35200,
-          "expression": "32000 * 1.10"
+          "label": "10% 位次窗口",
+          "value": [
+            28800,
+            35200
+          ],
+          "expression": "32000 * 0.90 到 32000 * 1.10"
         },
         {
-          "label": "保守稳妥",
-          "value": 36800,
-          "expression": "32000 * 1.15"
+          "label": "15% 位次窗口",
+          "value": [
+            27200,
+            36800
+          ],
+          "expression": "32000 * 0.85 到 32000 * 1.15"
         },
         {
           "label": "不使用这个规则",
@@ -414,39 +435,20 @@
       "source_text": "太贵",
       "options": [
         {
-          "label": "<= 10000 元/年",
+          "label": "不高于 10000 元/年",
           "value": 10000
         },
         {
-          "label": "<= 20000 元/年",
+          "label": "不高于 20000 元/年",
           "value": 20000
         },
         {
-          "label": "<= 40000 元/年",
+          "label": "不高于 40000 元/年",
           "value": 40000
         },
         {
           "label": "不使用学费规则",
           "value": null
-        }
-      ]
-    },
-    {
-      "question_id": "q_major_expansion",
-      "source_text": "想学计算机",
-      "options": [
-        {
-          "label": "不扩展，只匹配“计算机”",
-          "value": []
-        },
-        {
-          "label": "扩展到相关专业",
-          "value": [
-            "软件工程",
-            "人工智能",
-            "数据科学",
-            "网络空间安全"
-          ]
         }
       ]
     }
@@ -456,26 +458,24 @@
       "selected_option": "B",
       "label": "适中稳妥",
       "field": "专业组最低位次1",
-      "operator": ">=",
-      "value": 35200,
-      "source_expression": "32000 * 1.10"
+      "operator": "between",
+      "value": [
+        28800,
+        35200
+      ],
+      "source_expression": "32000 * 0.90 到 32000 * 1.10"
     },
     "tuition_threshold": {
       "selected_option": "B",
-      "label": "<= 20000 元/年",
+      "label": "不高于 20000 元/年",
       "field": "学费",
       "operator": "<=",
       "value": 20000
     },
-    "major_expansion": {
-      "selected_option": "A",
-      "label": "不扩展，只匹配“计算机”",
-      "expanded_terms": []
-    },
     "cooperation_type": {
       "selected_option": null,
       "status": "not_executable",
-      "reason": "Missing dedicated cooperation_type field."
+      "reason": "缺少合作办学类型字段。"
     }
   },
   "final_executable_rules": [
@@ -514,9 +514,12 @@
       "rule_id": "e_safety_margin",
       "derived_from": "c_safety_margin",
       "field": "专业组最低位次1",
-      "operator": ">=",
-      "value": 35200,
-      "confirmation": "safety margin = 10%"
+      "operator": "between",
+      "value": [
+        28800,
+        35200
+      ],
+      "confirmation": "位次窗口已确认"
     },
     {
       "rule_id": "e_tuition_cap",
@@ -524,15 +527,15 @@
       "field": "学费",
       "operator": "<=",
       "value": 20000,
-      "normalization": "parse numeric value from cell text",
-      "confirmation": "tuition cap = 20000"
+      "normalization": "从单元格文本解析数字学费",
+      "confirmation": "费用上限已确认"
     }
   ],
   "non_executable_preferences": [
     {
       "source_text": "不想去太贵的中外合作",
       "status": "not_executed",
-      "reason": "Missing dedicated cooperation_type field. No text-field inference is used in this MVP."
+      "reason": "缺少合作办学类型字段，当前版本不从文本字段推断。"
     }
   ]
 }

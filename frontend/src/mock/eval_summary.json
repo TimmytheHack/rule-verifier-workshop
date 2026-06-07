@@ -1,0 +1,19 @@
+{
+  "methods": [
+    {
+      "method": "regex_extractor_symbolic_verifier",
+      "task_score": "5/5",
+      "tokens": 0,
+      "efficiency": "最高：符号验证，零 token",
+      "key_failure": "覆盖范围依赖显式规则模板"
+    },
+    {
+      "method": "deepseek_extractor_symbolic_verifier",
+      "task_score": "5/5",
+      "tokens": 773,
+      "efficiency": "较高：LLM 只用于抽取，执行仍由符号验证控制",
+      "key_failure": "需要 API 调用，成本和延迟高于 regex"
+    }
+  ],
+  "unsafe_behaviors": []
+}

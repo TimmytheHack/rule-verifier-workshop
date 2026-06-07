@@ -39,7 +39,7 @@ def sample_evidence() -> EvidencePack:
                 "field": "生源地",
                 "operator": "eq",
                 "value": "广东",
-                "description": "生源地 == 广东",
+                "description": "生源地 等于 广东",
             },
             {
                 "rule_id": "e_city",
@@ -53,32 +53,32 @@ def sample_evidence() -> EvidencePack:
                 "field": "学费",
                 "operator": "<=",
                 "value": 20000,
-                "description": "学费 <= 20000",
+                "description": "学费 不高于 20000",
             },
         ],
         candidate_confirmations=[
             {
                 "confirmation_id": "tuition_threshold",
                 "source_text": "太贵",
-                "selected_label": "<= 20000 元/年",
+                "selected_label": "不高于 20000 元/年",
                 "status": "promoted_to_executed_rule",
-                "description": "学费 <= 20000",
+                "description": "学费 不高于 20000",
             },
             {
                 "confirmation_id": "cooperation_type",
                 "source_text": "不想去太贵的中外合作",
                 "status": "not_executable",
-                "reason": "Missing dedicated cooperation_type field.",
+                "reason": "缺少合作办学类型字段。",
             },
         ],
         not_executed_preferences=[
             {
                 "source_text": "不想去太贵的中外合作",
                 "status": "not_executed",
-                "reason": "Missing dedicated cooperation_type field.",
+                "reason": "缺少合作办学类型字段。",
                 "safety_warning": (
                     "不想去太贵的中外合作 未执行："
-                    "Missing dedicated cooperation_type field."
+                    "缺少合作办学类型字段。"
                 ),
             }
         ],
@@ -105,7 +105,7 @@ def sample_evidence() -> EvidencePack:
                 "候选偏好在确认或模拟确认之前不得执行。",
                 (
                     "不想去太贵的中外合作 未执行："
-                    "Missing dedicated cooperation_type field."
+                    "缺少合作办学类型字段。"
                 ),
             ],
         },
@@ -145,8 +145,8 @@ class AnswerReportingTest(unittest.TestCase):
         score = score_answer_against_evidence(result["answer"], evidence)
 
         self.assertEqual(result["deepseek_usage"]["total_tokens"], 3)
-        self.assertIn("Use only the supplied evidence_pack", fake_client.last_system_prompt)
-        self.assertIn("professional group code", fake_client.last_system_prompt)
+        self.assertIn("只能使用传入的证据包", fake_client.last_system_prompt)
+        self.assertIn("院校专业组代码", fake_client.last_system_prompt)
         self.assertIn("not_executed_preferences", fake_client.last_user_prompt)
         self.assertIn("院校专业组代码", fake_client.last_user_prompt)
         self.assertIn("不想去太贵的中外合作", fake_client.last_user_prompt)

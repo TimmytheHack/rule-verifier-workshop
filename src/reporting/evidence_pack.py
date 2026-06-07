@@ -6,7 +6,7 @@ or decide whether a preference can execute.
 
 from __future__ import annotations
 
-from dataclasses import asdict, dataclass
+from dataclasses import asdict, dataclass, field
 from typing import Any
 
 
@@ -21,6 +21,9 @@ class EvidencePack:
     result_count: int
     top_k_results: list[dict[str, Any]]
     trace_summary: dict[str, Any]
+    extracted_preferences: list[dict[str, Any]] = field(default_factory=list)
+    attribute_grounding_summary: dict[str, Any] = field(default_factory=dict)
+    proposed_rule_audit: list[dict[str, Any]] = field(default_factory=list)
 
     @classmethod
     def from_verified_pipeline(
@@ -30,6 +33,9 @@ class EvidencePack:
         classified_rules: dict[str, Any],
         traced_results: list[dict[str, Any]],
         top_k: int = 5,
+        extracted_preferences: list[dict[str, Any]] | None = None,
+        attribute_grounding: dict[str, Any] | None = None,
+        proposed_rules: list[dict[str, Any]] | None = None,
     ) -> "EvidencePack":
         """Build an answer-safe evidence pack from post-execution artifacts."""
 
@@ -54,6 +60,9 @@ class EvidencePack:
             result_count=len(traced_results),
             top_k_results=top_results,
             trace_summary=trace_summary,
+            extracted_preferences=extracted_preferences or [],
+            attribute_grounding_summary=(attribute_grounding or {}).get("summary", {}),
+            proposed_rule_audit=_compact_proposed_rule_audit(proposed_rules or []),
         )
 
     def to_dict(self) -> dict[str, Any]:
@@ -80,6 +89,24 @@ def _compact_rule(rule: dict[str, Any]) -> dict[str, Any]:
         if optional_key in rule:
             compact[optional_key] = rule[optional_key]
     compact["description"] = _rule_description(compact)
+    return compact
+
+
+def _compact_proposed_rule_audit(rules: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    compact = []
+    for rule in rules:
+        verification = rule.get("verification", {})
+        compact.append(
+            {
+                "rule_id": rule.get("rule_id"),
+                "source_text": rule.get("source_text"),
+                "field": rule.get("field"),
+                "operator": rule.get("operator"),
+                "value": rule.get("value"),
+                "terminal_status": verification.get("terminal_status"),
+                "executable": bool(verification.get("executable")),
+            }
+        )
     return compact
 
 
@@ -121,7 +148,7 @@ def _candidate_confirmations(classified_rules: dict[str, Any]) -> list[dict[str,
         if confirmation.get("expanded_terms") is not None:
             record["expanded_terms"] = confirmation["expanded_terms"]
         if confirmation.get("reason"):
-            record["reason"] = confirmation["reason"]
+            record["reason"] = _user_facing_reason(confirmation["reason"])
         confirmations.append(record)
     return confirmations
 
@@ -162,7 +189,7 @@ def _not_executed_preferences(classified_rules: dict[str, Any]) -> list[dict[str
         record = {
             "source_text": preference.get("source_text"),
             "status": preference.get("status", "not_executed"),
-            "reason": preference.get("reason"),
+            "reason": _user_facing_reason(preference.get("reason")),
         }
         record["safety_warning"] = _not_executed_warning(record)
         preferences.append(record)
@@ -179,7 +206,7 @@ def _not_executed_preferences(classified_rules: dict[str, Any]) -> list[dict[str
         record = {
             "source_text": source_text,
             "status": part.get("status", "not_executed"),
-            "reason": part.get("reason") or part.get("trace_reason"),
+            "reason": _user_facing_reason(part.get("reason") or part.get("trace_reason")),
             "field_id": part.get("field_id"),
         }
         record["safety_warning"] = _not_executed_warning(record)
@@ -193,6 +220,48 @@ def _not_executed_warning(preference: dict[str, Any]) -> str:
     return f"{source_text} 未执行：{reason}"
 
 
+def _user_facing_reason(reason: Any) -> str | None:
+    if reason is None:
+        return None
+    text = str(reason)
+    replacements = {
+        "Missing dedicated cooperation_type field. No text-field inference is used in this MVP.": (
+            "缺少合作办学类型字段，未使用文本字段推断。"
+        ),
+        "Missing dedicated cooperation_type field.": "缺少合作办学类型字段。",
+        "The schema registry has no dedicated cooperation_type field.": (
+            "当前数据字段定义缺少合作办学类型字段。"
+        ),
+        "No dedicated cooperation_type field, so the preference is preserved but not executed.": (
+            "缺少合作办学类型字段，因此该偏好已保留但未执行。"
+        ),
+        "No reviewed active school reputation field.": "当前数据中没有已审查的学校声誉字段。",
+        "No reviewed active school ranking field.": "当前数据中没有已审查的学校排名字段。",
+        "No reviewed active school quality field.": "当前数据中没有已审查的学校质量字段。",
+        "No reviewed active school ownership field in MVP schema.": (
+            "当前数据中没有已审查的办学性质字段。"
+        ),
+        "No employment outcome field.": "当前数据中没有就业结果字段。",
+        "No home location or distance field.": "当前数据中没有家庭位置或距离字段。",
+        "No reviewed active remoteness field.": "当前数据中没有已审查的偏远程度字段。",
+        "No major popularity field.": "当前数据中没有专业热度字段。",
+        "No admission probability field.": "当前数据中没有录取概率字段。",
+        "Needs confirmed city set.": "需要确认具体城市集合。",
+        "Needs confirmed Pearl River Delta city set.": "需要确认珠三角城市集合。",
+        "Needs confirmed city quality proxy or city set.": (
+            "需要确认城市质量代理字段或具体城市集合。"
+        ),
+        "Conflicts with city preference and needs confirmation.": (
+            "与城市偏好可能冲突，需要确认。"
+        ),
+        "cooperation_type": "合作办学类型字段",
+        "schema registry": "数据字段定义",
+    }
+    for source, target in replacements.items():
+        text = text.replace(source, target)
+    return text
+
+
 def _compact_result(rank: int, row: dict[str, Any]) -> dict[str, Any]:
     return {
         "rank": rank,
@@ -201,6 +270,7 @@ def _compact_result(rank: int, row: dict[str, Any]) -> dict[str, Any]:
         "专业代码": row.get("专业代码"),
         "专业名称": row.get("专业名称"),
         "专业全称": row.get("专业全称"),
+        "选科要求": row.get("选科要求"),
         "城市": row.get("城市"),
         "学费": row.get("学费"),
         "专业组最低位次": row.get("专业组最低位次1"),
@@ -250,13 +320,37 @@ def _rule_description(rule: dict[str, Any]) -> str:
     operator = rule.get("operator")
     value = rule.get("value")
     if operator == "eq":
-        return f"{field} == {_format_value(value)}"
+        return f"{field} 等于 {_format_value(value)}"
+    if operator == "neq":
+        return f"{field} 不等于 {_format_value(value)}"
     if operator == "contains":
         return f"{field} 包含 {_format_value(value)}"
-    if operator == "in_contains":
+    if operator in {"in_contains", "contains_any"}:
         return f"{field} 包含任一：{_format_value(value)}"
-    if operator in {">=", "<="}:
-        return f"{field} {operator} {_format_value(value)}"
+    if operator == "in":
+        return f"{field} 属于：{_format_value(value)}"
+    if operator == "not_in":
+        return f"{field} 不属于：{_format_value(value)}"
+    if operator == "satisfies_subject_requirement":
+        return f"{field} 满足已选再选科目：{_format_value(value)}"
+    if operator == ">=":
+        if field == "专业组最低位次1":
+            return (
+                f"{field} 在 {_format_value(value)} 名及以后"
+                f"（数值 >= {_format_value(value)}）"
+            )
+        return f"{field} 不低于 {_format_value(value)}"
+    if operator == "<=":
+        if field == "专业组最低位次1":
+            return (
+                f"{field} 在 {_format_value(value)} 名以内"
+                f"（数值 <= {_format_value(value)}）"
+            )
+        return f"{field} 不高于 {_format_value(value)}"
+    if operator == "between":
+        if field == "专业组最低位次1":
+            return f"{field} 位于 {_format_rank_window(value)}的窗口内"
+        return f"{field} 位于 {_format_value(value)} 之间"
     return f"{field} {operator} {_format_value(value)}"
 
 
@@ -266,6 +360,12 @@ def _format_value(value: Any) -> str:
     if isinstance(value, float) and value.is_integer():
         return str(int(value))
     return str(value)
+
+
+def _format_rank_window(value: Any) -> str:
+    if isinstance(value, list) and len(value) == 2:
+        return f"{_format_value(value[0])}-{_format_value(value[1])} 名"
+    return f"{_format_value(value)} 名"
 
 
 def _format_percent(value: Any) -> str | None:

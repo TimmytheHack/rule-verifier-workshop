@@ -1,20 +1,20 @@
 {
   "input": "我是广东物理类，排位32000，想学计算机，最好在广州深圳，学校稳一点，不想去太贵的中外合作。",
-  "token_estimation_note": "Approximate tokenizer-free estimate. Chinese chars count close to one token; non-CJK chars are estimated at four chars per token.",
-  "comparison_goal": "Compare direct Excel+NL-to-LLM prompting against the methodology pipeline on token budget and verifiable success.",
+  "token_estimation_note": "这是不依赖具体 tokenizer 的近似估算。中文字符近似按一个 token 计算；非中文字符按约四个字符一个 token 估算。",
+  "comparison_goal": "比较“直接把 Excel 和自然语言交给 LLM”与当前方法管线在 token 预算和可验证成功率上的差异。",
   "naive_direct_llm_full_excel": {
-    "description": "Send natural-language input plus full serialized Excel sheet to an LLM and ask for answer.",
-    "estimated_input_tokens": 23040523,
+    "description": "把自然语言输入和完整序列化 Excel 表格一起发给 LLM，并要求它直接回答。",
+    "estimated_input_tokens": 23040521,
     "fits_32000_token_budget": false,
     "fits_128000_token_budget": false,
     "fits_1000000_token_budget": false,
     "task_success": "not_executed",
-    "reason_not_executed": "Naive full-Excel prompting is evaluated by token budget estimate, not API call.",
+    "reason_not_executed": "完整 Excel 直接提示只做 token 预算估算，不实际调用 API。",
     "expected_weaknesses": [
-      "Very high context cost.",
-      "No deterministic schema verification.",
-      "High risk of unsupported field inference.",
-      "Trace completeness not guaranteed."
+      "上下文成本很高。",
+      "没有确定性字段验证。",
+      "容易推断不受支持的字段。",
+      "不能保证逐行证据完整。"
     ],
     "workbook_serialization": {
       "sheet": "Sheet1",
@@ -26,13 +26,13 @@
     }
   },
   "naive_direct_llm_required_columns": {
-    "description": "Send natural-language input plus all rows for only the MVP-required columns.",
-    "estimated_input_tokens": 483922,
+    "description": "只发送 MVP 必需列的全部行，再加自然语言输入。",
+    "estimated_input_tokens": 483920,
     "fits_32000_token_budget": false,
     "fits_128000_token_budget": false,
     "fits_1000000_token_budget": true,
     "task_success": "not_executed",
-    "reason_not_executed": "Still lacks deterministic verifier; included only as a lower-bound direct-prompt estimate.",
+    "reason_not_executed": "仍然没有确定性验证器，只作为直接提示的下界估算。",
     "workbook_serialization": {
       "sheet": "Sheet1",
       "header_row": 3,
@@ -60,62 +60,24 @@
       "trace_complete": true
     },
     "deepseek_extractor_symbolic_verifier": {
-      "status": "ok",
-      "result_count": 93,
-      "task_success": {
-        "score_parts": {
-          "correct_deterministic_rule_extraction": true,
-          "correct_candidate_rule_holding": true,
-          "correct_non_executable_rejection": true,
-          "no_schema_hallucination": true,
-          "complete_trace": true
-        },
-        "task_success_score": 5,
-        "max_score": 5
-      },
-      "total_tokens": 834,
-      "trace_complete": true
+      "status": "skipped",
+      "result_count": null,
+      "task_success": null,
+      "total_tokens": null,
+      "trace_complete": null
     },
     "llm_only_baseline": {
-      "status": "ok",
-      "task_success": {
-        "score_parts": {
-          "correct_deterministic_rule_extraction": false,
-          "correct_candidate_rule_holding": false,
-          "correct_non_executable_rejection": false,
-          "no_schema_hallucination": true,
-          "complete_trace": false
-        },
-        "task_success_score": 1,
-        "max_score": 5
-      },
-      "total_tokens": 818,
-      "unsafe_flags": {
-        "proposes_cooperation_execution": true,
-        "promotes_safety_without_symbolic_verifier": true,
-        "promotes_tuition_without_symbolic_verifier": true
-      }
+      "status": "skipped",
+      "task_success": null,
+      "total_tokens": null,
+      "unsafe_flags": null
     },
     "schema_aware_llm_only_baseline": {
-      "status": "ok",
-      "task_success": {
-        "score_parts": {
-          "correct_deterministic_rule_extraction": false,
-          "correct_candidate_rule_holding": false,
-          "correct_non_executable_rejection": false,
-          "no_schema_hallucination": false,
-          "complete_trace": true
-        },
-        "task_success_score": 1,
-        "max_score": 5
-      },
-      "total_tokens": 1282,
-      "unsafe_flags": {
-        "proposes_cooperation_execution": true,
-        "promotes_safety_without_symbolic_verifier": true,
-        "promotes_tuition_without_symbolic_verifier": true
-      }
+      "status": "skipped",
+      "task_success": null,
+      "total_tokens": null,
+      "unsafe_flags": null
     }
   },
-  "main_claim": "For clear requirements, the symbolic pipeline spends zero or few LLM tokens on extraction, then executes exact deterministic filters with trace. Direct Excel+prompt LLM spends orders of magnitude more tokens and still cannot guarantee schema grounding or non-executable rejection."
+  "main_claim": "对于明确需求，符号管线在抽取阶段消耗零或少量 LLM token，随后执行带 trace 的确定性筛选。直接把 Excel 和 prompt 交给 LLM 会消耗数量级更高的 token，仍不能保证字段接地或不可执行偏好的拒绝。"
 }

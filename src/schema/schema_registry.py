@@ -35,5 +35,52 @@ class SchemaRegistry:
     def field(self, field_id: str) -> dict[str, Any]:
         return self.active_fields[field_id]
 
+    def configured_field(self, field_id: str | None) -> dict[str, Any]:
+        """Return a configured field, including missing-but-documented fields."""
+
+        if not field_id:
+            return {}
+        return self.configured_fields.get(field_id, {})
+
+    def resolve_field_id(
+        self,
+        field_id: str | None = None,
+        source_column: str | None = None,
+    ) -> str | None:
+        """Resolve a proposed rule field id from an id or source column name."""
+
+        if field_id in self.configured_fields:
+            return field_id
+        if not source_column:
+            return None
+        for candidate_id, spec in self.configured_fields.items():
+            if spec.get("source_column") == source_column:
+                return candidate_id
+        return None
+
+    def field_summary_for_llm(self) -> list[dict[str, Any]]:
+        """Return a compact schema summary for extraction prompts.
+
+        This intentionally exposes field metadata only, not raw workbook rows.
+        """
+
+        summary = []
+        for field_id, spec in self.configured_fields.items():
+            source_column = spec.get("source_column")
+            active = self.has_field(field_id)
+            summary.append(
+                {
+                    "field_id": field_id,
+                    "source_column": source_column,
+                    "active": active,
+                    "status": "active" if active else spec.get("status", "inactive"),
+                    "type": spec.get("type"),
+                    "aliases": spec.get("aliases", []),
+                    "allowed_ops": spec.get("allowed_ops", []),
+                    "notes": spec.get("notes"),
+                }
+            )
+        return summary
+
     def to_dict(self) -> dict[str, dict[str, Any]]:
         return self.active_fields
