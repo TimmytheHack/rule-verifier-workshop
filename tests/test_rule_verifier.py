@@ -201,6 +201,27 @@ class RuleVerifierTest(unittest.TestCase):
 
         self.assertEqual([row["ID"] for row in results], [1, 2])
 
+    def test_recommendation_query_does_not_apply_unselected_boundaries(self) -> None:
+        query = "排位10000名，想读人工智能，计算机，而且不想去国外，想留在广东省，请给出推荐"
+        registry = SchemaRegistry.from_file(
+            SCHEMA_PATH,
+            AVAILABLE_COLUMNS + ["所在省"],
+        )
+        verifier = RuleVerifier(registry)
+        config = WorkbenchConfig(user_input=query, soft_preferences={"prompt": query})
+        slots = _slots_from_inputs(RegexExtractor().extract(query), config)
+        classified = RuleClassifier(TAXONOMY_PATH, verifier).classify(slots)
+        classified = _apply_soft_confirmations(classified, config, slots)
+        final_rules = RulePromoter(
+            TAXONOMY_PATH,
+            simulated_confirmation_enabled=True,
+        ).final_executable_rules(classified)
+        final_by_id = {rule["rule_id"]: rule for rule in final_rules}
+
+        self.assertIn("e_recommendation_rank_floor", final_by_id)
+        self.assertNotIn("e_safety_margin", final_by_id)
+        self.assertNotIn("e_tuition_cap", final_by_id)
+
     def test_vague_terms_are_configured_to_block_over_promotion(self) -> None:
         vague_terms = json.loads(VAGUE_TERMS_PATH.read_text(encoding="utf-8"))
         terms = {item["term"]: item for item in vague_terms["terms"]}

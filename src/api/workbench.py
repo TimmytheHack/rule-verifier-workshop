@@ -7,6 +7,8 @@ the UI. It does not add verifier, promoter, executor, or recommendation logic.
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+from functools import lru_cache
+from pathlib import Path
 from typing import Any
 
 from scripts.run_mvp_demo import (
@@ -15,7 +17,7 @@ from scripts.run_mvp_demo import (
     TAXONOMY_PATH,
     WORKBOOK_NAME,
 )
-from src.adapters.excel_adapter import ExcelAdapter
+from src.adapters.excel_adapter import ExcelAdapter, ExcelDataSet
 from src.executors.pandas_executor import PandasExecutor
 from src.extractors.deepseek_extractor import DeepSeekClient, DeepSeekExtractor
 from src.extractors.regex_extractor import RegexExtractor
@@ -51,6 +53,8 @@ MODEL_OPTIONS = {
     "deepseek-v4-flash": "LLM 快速模型",
     "deepseek-v4-pro": "LLM 高质量模型",
 }
+INTERACTIVE_DEEPSEEK_TIMEOUT_SECONDS = 25
+INTERACTIVE_DEEPSEEK_MAX_RETRIES = 1
 
 NOT_EXECUTED_COOPERATION_TEXT = "中外合作未执行：缺少合作办学类型字段"
 NOT_EXECUTED_COOPERATION_REASON = (
@@ -86,8 +90,8 @@ def run_workbench(config: WorkbenchConfig) -> dict[str, Any]:
 
     _validate_config(config)
 
-    dataset = ExcelAdapter(WORKBOOK_NAME, REQUIRED_COLUMNS).load()
-    schema_registry = SchemaRegistry.from_file(SCHEMA_PATH, dataset.headers)
+    dataset = _load_dataset()
+    schema_registry = _load_schema_registry(tuple(dataset.headers))
     slots, extractor_usage = _extract_slots(config, schema_registry=schema_registry)
     verifier = RuleVerifier(schema_registry)
     attribute_grounding = AttributeGrounder(schema_registry).ground(slots)
@@ -166,6 +170,48 @@ def run_workbench(config: WorkbenchConfig) -> dict[str, Any]:
     }
 
 
+def _load_dataset() -> ExcelDataSet:
+    workbook_path = Path(WORKBOOK_NAME)
+    stat = workbook_path.stat()
+    return _load_dataset_cached(
+        str(workbook_path),
+        stat.st_mtime_ns,
+        stat.st_size,
+    )
+
+
+@lru_cache(maxsize=1)
+def _load_dataset_cached(
+    workbook_path: str,
+    modified_ns: int,
+    file_size: int,
+) -> ExcelDataSet:
+    _ = (modified_ns, file_size)
+    return ExcelAdapter(workbook_path, REQUIRED_COLUMNS).load()
+
+
+def _load_schema_registry(headers: tuple[str, ...]) -> SchemaRegistry:
+    schema_path = Path(SCHEMA_PATH)
+    stat = schema_path.stat()
+    return _load_schema_registry_cached(
+        str(schema_path),
+        stat.st_mtime_ns,
+        stat.st_size,
+        headers,
+    )
+
+
+@lru_cache(maxsize=4)
+def _load_schema_registry_cached(
+    schema_path: str,
+    modified_ns: int,
+    file_size: int,
+    headers: tuple[str, ...],
+) -> SchemaRegistry:
+    _ = (modified_ns, file_size)
+    return SchemaRegistry.from_file(Path(schema_path), list(headers))
+
+
 def _validate_config(config: WorkbenchConfig) -> None:
     if config.extractor not in EXTRACTOR_OPTIONS:
         raise ValueError(f"不支持的规则提取方式：{config.extractor}")
@@ -186,7 +232,7 @@ def _extract_slots(
             config=config,
         ), None
 
-    client = DeepSeekClient(model=config.model)
+    client = _interactive_deepseek_client(config.model)
     slots = _slots_from_inputs(
         DeepSeekExtractor(client=client).extract(
             soft_prompt,
@@ -214,11 +260,19 @@ def _generate_report(
         answer = TemplateReportBuilder().build(evidence)
         return _report_from_answer(answer, evidence_dict), None
 
-    client = DeepSeekClient(model=config.model)
+    client = _interactive_deepseek_client(config.model)
     payload = DeepSeekAnswerGenerator(client=client).generate(evidence)
     return (
         _report_from_answer(payload["answer"], evidence_dict),
         payload.get("deepseek_usage"),
+    )
+
+
+def _interactive_deepseek_client(model: str) -> DeepSeekClient:
+    return DeepSeekClient(
+        model=model,
+        timeout_seconds=INTERACTIVE_DEEPSEEK_TIMEOUT_SECONDS,
+        max_retries=INTERACTIVE_DEEPSEEK_MAX_RETRIES,
     )
 
 

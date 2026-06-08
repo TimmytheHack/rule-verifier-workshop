@@ -30,8 +30,8 @@ class SoftPreferencesRequest(BaseModel):
     """Soft preferences that stay candidate/not-executed until verified."""
 
     prompt: str | None = "想学计算机，最好在广州深圳，学校稳一点，不想去太贵的中外合作。"
-    safety_margin_percent: int | None = 10
-    tuition_cap_yuan: int | None = 20000
+    safety_margin_percent: int | None = None
+    tuition_cap_yuan: int | None = None
 
 
 class WorkbenchRunRequest(BaseModel):

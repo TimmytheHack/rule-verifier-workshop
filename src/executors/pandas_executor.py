@@ -51,13 +51,13 @@ class PandasExecutor:
         user_rank: int | None = None,
     ) -> list[dict[str, Any]]:
         context = _execution_context(executable_rules, user_rank)
+        filtered = self._filtered_frame(dataframe, executable_rules)
         results: list[dict[str, Any]] = []
-        for frame_index, row in dataframe.iterrows():
+        for frame_index, row in filtered.iterrows():
             row_dict = row.to_dict()
-            if self._passes(row_dict, executable_rules):
-                projected = self._project_row(frame_index, row_dict, context)
-                if projected is not None:
-                    results.append(projected)
+            projected = self._project_row(frame_index, row_dict, context)
+            if projected is not None:
+                results.append(projected)
         return sorted(
             results,
             key=lambda item: (
@@ -68,6 +68,54 @@ class PandasExecutor:
                 item["ID"] if isinstance(item["ID"], (int, float)) else 999999,
             ),
         )
+
+    def _filtered_frame(
+        self,
+        dataframe: pd.DataFrame,
+        executable_rules: list[dict[str, Any]],
+    ) -> pd.DataFrame:
+        mask = pd.Series(True, index=dataframe.index)
+        for rule in executable_rules:
+            field = rule["field"]
+            operator = rule["operator"]
+            value = rule["value"]
+            series = _field_series(dataframe, field)
+            if operator == "eq":
+                mask &= series.map(cell_text).eq(str(value))
+            if operator == "contains":
+                mask &= series.map(lambda cell: str(value) in cell_text(cell))
+            if operator in {"in_contains", "contains_any"}:
+                values = _value_list(value)
+                mask &= series.map(
+                    lambda cell: any(str(item) in cell_text(cell) for item in values)
+                )
+            if operator == "in":
+                allowed = {str(item) for item in _value_list(value)}
+                mask &= series.map(lambda cell: cell_text(cell) in allowed)
+            if operator == "not_in":
+                blocked = {str(item) for item in _value_list(value)}
+                mask &= series.map(lambda cell: cell_text(cell) in blocked).eq(False)
+            if operator == "satisfies_subject_requirement":
+                mask &= series.map(
+                    lambda cell: _subject_requirement_satisfied(cell, value)
+                )
+            if operator == ">=":
+                parsed = series.map(parse_number)
+                threshold = parse_number(value)
+                mask &= parsed.notna() & (parsed >= threshold if threshold is not None else False)
+            if operator == "<=":
+                parsed = series.map(parse_number)
+                threshold = parse_number(value)
+                mask &= parsed.notna() & (parsed <= threshold if threshold is not None else False)
+            if operator == "between":
+                parsed = series.map(parse_number)
+                lower, upper = _numeric_range(value)
+                mask &= (
+                    parsed.notna()
+                    & (parsed >= lower if lower is not None else False)
+                    & (parsed <= upper if upper is not None else False)
+                )
+        return dataframe.loc[mask]
 
     def _passes(self, row: dict[str, Any], executable_rules: list[dict[str, Any]]) -> bool:
         for rule in executable_rules:
@@ -176,6 +224,22 @@ def _execution_context(
         "user_rank": user_rank,
         "safety_cutoff": safety_cutoff,
     }
+
+
+def _field_series(dataframe: pd.DataFrame, field: str) -> pd.Series:
+    if field in dataframe.columns:
+        return dataframe[field]
+    return pd.Series([None] * len(dataframe), index=dataframe.index, dtype=object)
+
+
+def _value_list(value: Any) -> list[Any]:
+    if isinstance(value, list):
+        return value
+    if isinstance(value, tuple):
+        return list(value)
+    if isinstance(value, set):
+        return list(value)
+    return [value]
 
 
 def _numeric_range(value: Any) -> tuple[float | None, float | None]:

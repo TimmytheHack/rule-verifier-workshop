@@ -26,8 +26,8 @@ const defaultHardFilters = {
 };
 const defaultSoftPreferences = {
   prompt: '想学计算机，最好在广州深圳，学校稳一点，不想去太贵的中外合作。',
-  safety_margin_percent: 10,
-  tuition_cap_yuan: 20000,
+  safety_margin_percent: null,
+  tuition_cap_yuan: null,
 };
 
 const runData = ref(null);
