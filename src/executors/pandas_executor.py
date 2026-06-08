@@ -79,7 +79,13 @@ class PandasExecutor:
                 return False
             if operator == "contains" and value not in cell_text(cell):
                 return False
-            if operator == "in_contains" and not any(item in cell_text(cell) for item in value):
+            if operator in {"in_contains", "contains_any"} and not any(
+                item in cell_text(cell) for item in value
+            ):
+                return False
+            if operator == "in" and cell_text(cell) not in {str(item) for item in value}:
+                return False
+            if operator == "not_in" and cell_text(cell) in {str(item) for item in value}:
                 return False
             if operator == "satisfies_subject_requirement" and not _subject_requirement_satisfied(cell, value):
                 return False
@@ -132,6 +138,7 @@ class PandasExecutor:
             "专业代码": clean_value(row.get("专业代码")),
             "专业名称": cell_text(row.get("专业名称")),
             "专业全称": clean_value(row.get("专业全称")),
+            "所在省": clean_value(row.get("所在省")),
             "城市": cell_text(row.get("城市")),
             "学费": tuition,
             "专业组最低位次1": int(group_rank),

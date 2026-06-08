@@ -33,6 +33,11 @@
       "field_id": "city",
       "attribute_class": "deterministic_candidate"
     },
+    "preferences.preferred_school_provinces": {
+      "field_id": "school_province",
+      "attribute_class": "deterministic_candidate",
+      "reason": "院校所在地省份偏好可以映射到数据字段“所在省”，仍需经过规则验证。"
+    },
     "preferences.risk_preference_raw": {
       "field_id": "group_min_rank_2024",
       "attribute_class": "candidate",
@@ -57,11 +62,23 @@
       "field_id": "cooperation_type",
       "attribute_class": "unsupported_structured_preference"
     },
+    "preferences.overseas_preference_raw": {
+      "field_id": "school_country_or_region",
+      "attribute_class": "unsupported_structured_preference",
+      "status": "missing_schema",
+      "reason": "当前数据中没有已审查的国家或境外办学字段，不能从院校名称、专业全称或备注推断。"
+    },
     "preferences.school_ownership_preference_raw": {
       "field_id": "school_ownership",
       "attribute_class": "unsupported_structured_preference",
       "status": "missing_schema",
       "reason": "字段画像中存在候选办学性质列，但该字段尚未进入当前可执行字段定义。"
+    },
+    "preferences.recommendation_request_raw": {
+      "field_id": "group_min_rank_2024",
+      "attribute_class": "candidate",
+      "requires_human_confirmation": true,
+      "reason": "推荐请求需要结合用户位次生成基本可达边界，确认后才能执行。"
     }
   },
   "other_vague_policies": {

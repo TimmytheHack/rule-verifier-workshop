@@ -164,16 +164,20 @@ class DeepSeekExtractor:
                 "不要想象或补充原始 Excel 数据。提出规则时只能使用字段摘要中提供的 field_id。"
                 "缺失字段、未激活字段或外部信息偏好必须保留为 unmapped_preferences "
                 "或 explain-only 类型，不得包装成可执行规则。"
+                "“留在广东省/省内/不出省”表示院校所在地偏好，不能写入生源地。"
+                "“不想去国外/不出国”缺少专门字段时必须保留为不可执行偏好。"
                 "所有自然语言解释必须写中文，不要输出英文说明。"
                 "请严格返回以下 JSON 结构："
                 '{"input": string, "user_context": {"source_province": string|null, '
                 '"subject_type": string|null, "reselected_subjects": [string], "user_rank": number|null}, '
                 '"preferences": {"major_keyword": string|null, "major_exact_terms": [string], '
-                '"preferred_cities": [string], '
+                '"preferred_cities": [string], "preferred_school_provinces": [string], '
                 '"risk_preference_raw": string|null, "tuition_preference_raw": string|null, '
                 '"tuition_cap_yuan": number|null, '
                 '"major_expansion_raw": string|null, "cooperation_preference_raw": string|null, '
-                '"school_ownership_preference_raw": string|null, "other_vague_preferences": [string]}, '
+                '"overseas_preference_raw": string|null, '
+                '"school_ownership_preference_raw": string|null, '
+                '"recommendation_request_raw": string|null, "other_vague_preferences": [string]}, '
                 '"proposed_rules": [{"rule_id": string|null, "source_text": string|null, '
                 '"category": "deterministic"|"candidate"|"explain_only", '
                 '"field_id": string|null, "field": string|null, "operator": string|null, '
@@ -282,6 +286,19 @@ def normalize_slots(slots: dict[str, Any], original_text: str) -> dict[str, Any]
         cities = [city for city in known_cities if city in original_text]
     preferences["preferred_cities"] = cities
 
+    school_provinces = preferences.get("preferred_school_provinces") or []
+    if isinstance(school_provinces, str):
+        school_province_texts = [school_provinces]
+    else:
+        school_province_texts = [str(province) for province in school_provinces]
+    if any("广东" in text for text in school_province_texts) or any(
+        term in original_text
+        for term in ["留在广东", "广东省内", "省内", "不出省", "不想出省", "留省内"]
+    ):
+        preferences["preferred_school_provinces"] = ["广东"]
+    else:
+        preferences["preferred_school_provinces"] = []
+
     risk = preferences.get("risk_preference_raw")
     if risk and "稳" in str(risk):
         preferences["risk_preference_raw"] = "稳一点"
@@ -305,12 +322,31 @@ def normalize_slots(slots: dict[str, Any], original_text: str) -> dict[str, Any]
         preferences["school_ownership_preference_raw"] = str(cooperation)
         preferences["cooperation_preference_raw"] = None
 
+    overseas = preferences.get("overseas_preference_raw")
+    if overseas and ("国外" in str(overseas) or "出国" in str(overseas)):
+        preferences["overseas_preference_raw"] = str(overseas)
+    elif any(
+        term in original_text
+        for term in ["不想去国外", "不要国外", "不去国外", "不出国", "不想出国", "想留在国内"]
+    ):
+        preferences["overseas_preference_raw"] = "不想去国外"
+    else:
+        preferences["overseas_preference_raw"] = None
+
     ownership = preferences.get("school_ownership_preference_raw")
     if not ownership:
         for term in ["公办本科", "优先公办", "公办", "民办"]:
             if term in original_text:
                 preferences["school_ownership_preference_raw"] = term
                 break
+
+    recommendation = preferences.get("recommendation_request_raw")
+    if recommendation:
+        preferences["recommendation_request_raw"] = str(recommendation)
+    elif any(term in original_text for term in ["给出推荐", "请推荐", "推荐一下", "推荐"]):
+        preferences["recommendation_request_raw"] = "给出推荐"
+    else:
+        preferences["recommendation_request_raw"] = None
 
     output["input"] = output.get("input") or original_text
     output["user_context"] = user_context

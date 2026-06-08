@@ -15,6 +15,7 @@ class RegexExtractor:
     """Benchmark-only extractor using conservative regex/string rules."""
 
     CITY_TERMS = ["广州", "深圳", "佛山", "东莞", "珠海", "惠州", "汕头", "中山"]
+    SCHOOL_PROVINCE_TERMS = ["留在广东", "广东省内", "省内", "不出省", "不想出省", "留省内"]
     MAJOR_TERMS = [
         "计算机",
         "软件工程",
@@ -44,7 +45,9 @@ class RegexExtractor:
     ]
     TUITION_TERMS = ["太贵", "不要太贵", "不想太贵", "费用别太高", "费用低一点", "学费低", "学费低一点", "便宜点", "预算有限"]
     COOPERATION_TERMS = ["不想去太贵的中外合作", "不要中外合作", "不考虑中外合作", "中外合作"]
+    OVERSEAS_AVOIDANCE_TERMS = ["不想去国外", "不要国外", "不去国外", "不出国", "不想出国", "想留在国内"]
     OWNERSHIP_TERMS = ["公办本科", "优先公办", "公办", "民办"]
+    RECOMMENDATION_TERMS = ["给出推荐", "请推荐", "推荐一下", "推荐"]
     OTHER_VAGUE_TERMS = [
         "录取概率高",
         "排名靠前",
@@ -89,7 +92,7 @@ class RegexExtractor:
         return {
             "input": text,
             "user_context": {
-                "source_province": "广东" if "广东" in text else None,
+                "source_province": self._source_province(text),
                 "subject_type": subject_type,
                 "reselected_subjects": reselected_subjects,
                 "user_rank": user_rank,
@@ -98,12 +101,15 @@ class RegexExtractor:
                 "major_keyword": major_keyword,
                 "major_exact_terms": major_exact_terms,
                 "preferred_cities": preferred_cities,
+                "preferred_school_provinces": self._preferred_school_provinces(text),
                 "risk_preference_raw": self._first_present(text, self.RISK_TERMS),
                 "tuition_preference_raw": self._first_present(text, self.TUITION_TERMS),
                 "tuition_cap_yuan": self._tuition_cap_yuan(text),
                 "major_expansion_raw": self._major_expansion(text),
                 "cooperation_preference_raw": self._first_present(text, self.COOPERATION_TERMS),
+                "overseas_preference_raw": self._first_present(text, self.OVERSEAS_AVOIDANCE_TERMS),
                 "school_ownership_preference_raw": self._first_present(text, self.OWNERSHIP_TERMS),
+                "recommendation_request_raw": self._first_present(text, self.RECOMMENDATION_TERMS),
                 "other_vague_preferences": [
                     term for term in self.OTHER_VAGUE_TERMS if term in text
                 ],
@@ -129,6 +135,20 @@ class RegexExtractor:
             if candidate in text:
                 return candidate
         return None
+
+    def _source_province(self, text: str) -> str | None:
+        if re.search(r"广东\s*(?:物理|历史)", text):
+            return "广东"
+        if re.search(r"(?:我是|本人|考生|生源地|户籍|来自)\s*广东", text):
+            return "广东"
+        if "广东考生" in text or "广东省考生" in text:
+            return "广东"
+        return None
+
+    def _preferred_school_provinces(self, text: str) -> list[str]:
+        if self._first_present(text, self.SCHOOL_PROVINCE_TERMS):
+            return ["广东"]
+        return []
 
     def _reselected_subjects(self, text: str) -> list[str]:
         normalized = text.replace("思想政治", "政治").replace("生物学", "生物")
@@ -176,9 +196,13 @@ class RegexExtractor:
             "广东历史",
             "物理类",
             "历史类",
+            "广东省内",
+            "留在广东省",
+            "不出省",
             "想学计算机",
             "想读法学",
             "软件工程",
+            "人工智能",
             "最好在广州深圳",
             "只看广州",
             "深圳",
@@ -204,6 +228,8 @@ class RegexExtractor:
             "不要中外合作",
             "不考虑中外合作",
             "不想去太贵的中外合作",
+            "不想去国外",
+            "不去国外",
             "就业前景好",
             "好就业",
             "离家近一点",
@@ -233,6 +259,8 @@ class RegexExtractor:
             "自动化",
             "数学",
             "数学系",
+            "给出推荐",
+            "请推荐",
         ]:
             if candidate in text:
                 phrases.append(candidate)

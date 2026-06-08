@@ -128,7 +128,11 @@ def _sanitize_reason(reason: Any) -> str:
             "缺少合作办学类型字段，未使用文本字段推断。"
         ),
         "Missing dedicated cooperation_type field.": "缺少合作办学类型字段。",
+        "No dedicated school country or overseas study field.": (
+            "缺少国家或境外办学字段。"
+        ),
         "cooperation_type": "合作办学类型字段",
+        "school_country_or_region": "国家或境外办学字段",
         "schema": "数据字段定义",
     }
     for source, target in replacements.items():

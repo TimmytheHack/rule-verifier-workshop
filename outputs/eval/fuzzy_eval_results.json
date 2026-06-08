@@ -88,12 +88,15 @@
               "preferred_cities": [
                 "广州"
               ],
+              "preferred_school_provinces": [],
               "risk_preference_raw": null,
               "tuition_preference_raw": null,
               "tuition_cap_yuan": null,
               "major_expansion_raw": null,
               "cooperation_preference_raw": null,
+              "overseas_preference_raw": null,
               "school_ownership_preference_raw": null,
+              "recommendation_request_raw": null,
               "other_vague_preferences": []
             },
             "raw_phrases": [
@@ -250,12 +253,15 @@
                 "法学"
               ],
               "preferred_cities": [],
+              "preferred_school_provinces": [],
               "risk_preference_raw": null,
               "tuition_preference_raw": null,
               "tuition_cap_yuan": null,
               "major_expansion_raw": null,
               "cooperation_preference_raw": null,
+              "overseas_preference_raw": null,
               "school_ownership_preference_raw": null,
+              "recommendation_request_raw": null,
               "other_vague_preferences": []
             },
             "raw_phrases": [
@@ -400,12 +406,15 @@
               "preferred_cities": [
                 "深圳"
               ],
+              "preferred_school_provinces": [],
               "risk_preference_raw": null,
               "tuition_preference_raw": null,
               "tuition_cap_yuan": null,
               "major_expansion_raw": null,
               "cooperation_preference_raw": null,
+              "overseas_preference_raw": null,
               "school_ownership_preference_raw": null,
+              "recommendation_request_raw": null,
               "other_vague_preferences": []
             },
             "raw_phrases": [
@@ -566,17 +575,21 @@
                 "广州",
                 "深圳"
               ],
+              "preferred_school_provinces": [],
               "risk_preference_raw": null,
               "tuition_preference_raw": null,
               "tuition_cap_yuan": null,
               "major_expansion_raw": "语义扩展待确认",
               "cooperation_preference_raw": null,
+              "overseas_preference_raw": null,
               "school_ownership_preference_raw": null,
+              "recommendation_request_raw": null,
               "other_vague_preferences": []
             },
             "raw_phrases": [
               "排位42000",
               "广东物理",
+              "人工智能",
               "深圳",
               "都可以"
             ]
@@ -747,12 +760,15 @@
               "preferred_cities": [
                 "广州"
               ],
+              "preferred_school_provinces": [],
               "risk_preference_raw": null,
               "tuition_preference_raw": null,
               "tuition_cap_yuan": null,
               "major_expansion_raw": null,
               "cooperation_preference_raw": null,
+              "overseas_preference_raw": null,
               "school_ownership_preference_raw": null,
+              "recommendation_request_raw": null,
               "other_vague_preferences": []
             },
             "raw_phrases": [
@@ -908,12 +924,15 @@
                 "法学"
               ],
               "preferred_cities": [],
+              "preferred_school_provinces": [],
               "risk_preference_raw": null,
               "tuition_preference_raw": null,
               "tuition_cap_yuan": null,
               "major_expansion_raw": null,
               "cooperation_preference_raw": null,
+              "overseas_preference_raw": null,
               "school_ownership_preference_raw": null,
+              "recommendation_request_raw": null,
               "other_vague_preferences": [
                 "学校好一点"
               ]
@@ -1074,12 +1093,15 @@
                 "计算机"
               ],
               "preferred_cities": [],
+              "preferred_school_provinces": [],
               "risk_preference_raw": null,
               "tuition_preference_raw": null,
               "tuition_cap_yuan": null,
               "major_expansion_raw": "语义扩展待确认",
               "cooperation_preference_raw": null,
+              "overseas_preference_raw": null,
               "school_ownership_preference_raw": null,
+              "recommendation_request_raw": null,
               "other_vague_preferences": []
             },
             "raw_phrases": [
@@ -1219,12 +1241,15 @@
               "major_keyword": null,
               "major_exact_terms": [],
               "preferred_cities": [],
+              "preferred_school_provinces": [],
               "risk_preference_raw": null,
               "tuition_preference_raw": "太贵",
               "tuition_cap_yuan": null,
               "major_expansion_raw": null,
               "cooperation_preference_raw": null,
+              "overseas_preference_raw": null,
               "school_ownership_preference_raw": null,
+              "recommendation_request_raw": null,
               "other_vague_preferences": []
             },
             "raw_phrases": [
@@ -1350,12 +1375,15 @@
                 "计算机"
               ],
               "preferred_cities": [],
+              "preferred_school_provinces": [],
               "risk_preference_raw": "冲一冲",
               "tuition_preference_raw": null,
               "tuition_cap_yuan": null,
               "major_expansion_raw": null,
               "cooperation_preference_raw": null,
+              "overseas_preference_raw": null,
               "school_ownership_preference_raw": null,
+              "recommendation_request_raw": null,
               "other_vague_preferences": []
             },
             "raw_phrases": [
@@ -1512,12 +1540,15 @@
                 "计算机"
               ],
               "preferred_cities": [],
+              "preferred_school_provinces": [],
               "risk_preference_raw": "稳妥一点",
               "tuition_preference_raw": null,
               "tuition_cap_yuan": null,
               "major_expansion_raw": null,
               "cooperation_preference_raw": null,
+              "overseas_preference_raw": null,
               "school_ownership_preference_raw": null,
+              "recommendation_request_raw": null,
               "other_vague_preferences": []
             },
             "raw_phrases": [
@@ -1675,12 +1706,15 @@
                 "电子信息"
               ],
               "preferred_cities": [],
+              "preferred_school_provinces": [],
               "risk_preference_raw": "保底",
               "tuition_preference_raw": null,
               "tuition_cap_yuan": null,
               "major_expansion_raw": null,
               "cooperation_preference_raw": null,
+              "overseas_preference_raw": null,
               "school_ownership_preference_raw": null,
+              "recommendation_request_raw": null,
               "other_vague_preferences": []
             },
             "raw_phrases": [
@@ -1836,12 +1870,15 @@
                 "软件工程"
               ],
               "preferred_cities": [],
+              "preferred_school_provinces": [],
               "risk_preference_raw": null,
               "tuition_preference_raw": "费用别太高",
               "tuition_cap_yuan": null,
               "major_expansion_raw": null,
               "cooperation_preference_raw": null,
+              "overseas_preference_raw": null,
               "school_ownership_preference_raw": null,
+              "recommendation_request_raw": null,
               "other_vague_preferences": []
             },
             "raw_phrases": [
@@ -1998,12 +2035,15 @@
                 "法学"
               ],
               "preferred_cities": [],
+              "preferred_school_provinces": [],
               "risk_preference_raw": null,
               "tuition_preference_raw": "预算有限",
               "tuition_cap_yuan": null,
               "major_expansion_raw": null,
               "cooperation_preference_raw": null,
+              "overseas_preference_raw": null,
               "school_ownership_preference_raw": null,
+              "recommendation_request_raw": null,
               "other_vague_preferences": []
             },
             "raw_phrases": [
@@ -2157,12 +2197,15 @@
               "major_keyword": null,
               "major_exact_terms": [],
               "preferred_cities": [],
+              "preferred_school_provinces": [],
               "risk_preference_raw": null,
               "tuition_preference_raw": "费用别太高",
               "tuition_cap_yuan": null,
               "major_expansion_raw": null,
               "cooperation_preference_raw": null,
+              "overseas_preference_raw": null,
               "school_ownership_preference_raw": null,
+              "recommendation_request_raw": null,
               "other_vague_preferences": [
                 "一线城市"
               ]
@@ -2305,12 +2348,15 @@
                 "计算机"
               ],
               "preferred_cities": [],
+              "preferred_school_provinces": [],
               "risk_preference_raw": null,
               "tuition_preference_raw": null,
               "tuition_cap_yuan": null,
               "major_expansion_raw": null,
               "cooperation_preference_raw": null,
+              "overseas_preference_raw": null,
               "school_ownership_preference_raw": null,
+              "recommendation_request_raw": null,
               "other_vague_preferences": [
                 "大城市"
               ]
@@ -2466,12 +2512,15 @@
               "major_keyword": null,
               "major_exact_terms": [],
               "preferred_cities": [],
+              "preferred_school_provinces": [],
               "risk_preference_raw": null,
               "tuition_preference_raw": null,
               "tuition_cap_yuan": null,
               "major_expansion_raw": null,
               "cooperation_preference_raw": "不要中外合作",
+              "overseas_preference_raw": null,
               "school_ownership_preference_raw": null,
+              "recommendation_request_raw": null,
               "other_vague_preferences": []
             },
             "raw_phrases": [
@@ -2595,12 +2644,15 @@
               "major_keyword": null,
               "major_exact_terms": [],
               "preferred_cities": [],
+              "preferred_school_provinces": [],
               "risk_preference_raw": null,
               "tuition_preference_raw": null,
               "tuition_cap_yuan": null,
               "major_expansion_raw": null,
               "cooperation_preference_raw": null,
+              "overseas_preference_raw": null,
               "school_ownership_preference_raw": null,
+              "recommendation_request_raw": null,
               "other_vague_preferences": [
                 "就业前景好"
               ]
@@ -2728,12 +2780,15 @@
                 "人工智能"
               ],
               "preferred_cities": [],
+              "preferred_school_provinces": [],
               "risk_preference_raw": null,
               "tuition_preference_raw": null,
               "tuition_cap_yuan": null,
               "major_expansion_raw": null,
               "cooperation_preference_raw": null,
+              "overseas_preference_raw": null,
               "school_ownership_preference_raw": null,
+              "recommendation_request_raw": null,
               "other_vague_preferences": [
                 "好就业"
               ]
@@ -2741,6 +2796,7 @@
             "raw_phrases": [
               "排位36000",
               "广东物理",
+              "人工智能",
               "好就业"
             ]
           },
@@ -2891,12 +2947,15 @@
                 "计算机"
               ],
               "preferred_cities": [],
+              "preferred_school_provinces": [],
               "risk_preference_raw": null,
               "tuition_preference_raw": null,
               "tuition_cap_yuan": null,
               "major_expansion_raw": null,
               "cooperation_preference_raw": null,
+              "overseas_preference_raw": null,
               "school_ownership_preference_raw": null,
+              "recommendation_request_raw": null,
               "other_vague_preferences": [
                 "离家近一点",
                 "离家近"
@@ -3068,12 +3127,15 @@
               "major_keyword": null,
               "major_exact_terms": [],
               "preferred_cities": [],
+              "preferred_school_provinces": [],
               "risk_preference_raw": null,
               "tuition_preference_raw": "学费低",
               "tuition_cap_yuan": null,
               "major_expansion_raw": null,
               "cooperation_preference_raw": "不考虑中外合作",
+              "overseas_preference_raw": null,
               "school_ownership_preference_raw": null,
+              "recommendation_request_raw": null,
               "other_vague_preferences": []
             },
             "raw_phrases": [
@@ -3219,12 +3281,15 @@
                 "广州",
                 "深圳"
               ],
+              "preferred_school_provinces": [],
               "risk_preference_raw": "稳一点",
               "tuition_preference_raw": "太贵",
               "tuition_cap_yuan": null,
               "major_expansion_raw": null,
               "cooperation_preference_raw": "不想去太贵的中外合作",
+              "overseas_preference_raw": null,
               "school_ownership_preference_raw": null,
+              "recommendation_request_raw": null,
               "other_vague_preferences": []
             },
             "raw_phrases": [
@@ -3434,12 +3499,15 @@
               "preferred_cities": [
                 "深圳"
               ],
+              "preferred_school_provinces": [],
               "risk_preference_raw": null,
               "tuition_preference_raw": "太贵",
               "tuition_cap_yuan": null,
               "major_expansion_raw": "语义扩展待确认",
               "cooperation_preference_raw": null,
+              "overseas_preference_raw": null,
               "school_ownership_preference_raw": null,
+              "recommendation_request_raw": null,
               "other_vague_preferences": []
             },
             "raw_phrases": [
@@ -3630,12 +3698,15 @@
               "preferred_cities": [
                 "广州"
               ],
+              "preferred_school_provinces": [],
               "risk_preference_raw": null,
               "tuition_preference_raw": null,
               "tuition_cap_yuan": null,
               "major_expansion_raw": null,
               "cooperation_preference_raw": null,
+              "overseas_preference_raw": null,
               "school_ownership_preference_raw": null,
+              "recommendation_request_raw": null,
               "other_vague_preferences": [
                 "学校别太差"
               ]
@@ -3812,17 +3883,21 @@
                 "广州",
                 "深圳"
               ],
+              "preferred_school_provinces": [],
               "risk_preference_raw": "想冲",
               "tuition_preference_raw": null,
               "tuition_cap_yuan": null,
               "major_expansion_raw": null,
               "cooperation_preference_raw": "不要中外合作",
+              "overseas_preference_raw": null,
               "school_ownership_preference_raw": null,
+              "recommendation_request_raw": null,
               "other_vague_preferences": []
             },
             "raw_phrases": [
               "排位38000",
               "广东物理",
+              "人工智能",
               "深圳",
               "想冲",
               "不要中外合作"
@@ -4010,12 +4085,15 @@
                 "佛山",
                 "东莞"
               ],
+              "preferred_school_provinces": [],
               "risk_preference_raw": "保守一点",
               "tuition_preference_raw": "费用别太高",
               "tuition_cap_yuan": null,
               "major_expansion_raw": null,
               "cooperation_preference_raw": null,
+              "overseas_preference_raw": null,
               "school_ownership_preference_raw": null,
+              "recommendation_request_raw": null,
               "other_vague_preferences": []
             },
             "raw_phrases": [
@@ -4203,12 +4281,15 @@
                 "计算机"
               ],
               "preferred_cities": [],
+              "preferred_school_provinces": [],
               "risk_preference_raw": null,
               "tuition_preference_raw": null,
               "tuition_cap_yuan": null,
               "major_expansion_raw": null,
               "cooperation_preference_raw": null,
+              "overseas_preference_raw": null,
               "school_ownership_preference_raw": null,
+              "recommendation_request_raw": null,
               "other_vague_preferences": [
                 "录取概率高"
               ]
@@ -4366,12 +4447,15 @@
                 "计算机"
               ],
               "preferred_cities": [],
+              "preferred_school_provinces": [],
               "risk_preference_raw": null,
               "tuition_preference_raw": null,
               "tuition_cap_yuan": null,
               "major_expansion_raw": null,
               "cooperation_preference_raw": null,
+              "overseas_preference_raw": null,
               "school_ownership_preference_raw": null,
+              "recommendation_request_raw": null,
               "other_vague_preferences": [
                 "排名靠前"
               ]
@@ -4529,12 +4613,15 @@
                 "法学"
               ],
               "preferred_cities": [],
+              "preferred_school_provinces": [],
               "risk_preference_raw": null,
               "tuition_preference_raw": null,
               "tuition_cap_yuan": null,
               "major_expansion_raw": null,
               "cooperation_preference_raw": null,
+              "overseas_preference_raw": null,
               "school_ownership_preference_raw": null,
+              "recommendation_request_raw": null,
               "other_vague_preferences": [
                 "口碑好"
               ]
@@ -4695,12 +4782,15 @@
                 "广州",
                 "深圳"
               ],
+              "preferred_school_provinces": [],
               "risk_preference_raw": null,
               "tuition_preference_raw": null,
               "tuition_cap_yuan": null,
               "major_expansion_raw": "语义扩展待确认",
               "cooperation_preference_raw": null,
+              "overseas_preference_raw": null,
               "school_ownership_preference_raw": null,
+              "recommendation_request_raw": null,
               "other_vague_preferences": [
                 "城市不限"
               ]
@@ -4891,12 +4981,15 @@
                 "计算机"
               ],
               "preferred_cities": [],
+              "preferred_school_provinces": [],
               "risk_preference_raw": "稳一点",
               "tuition_preference_raw": null,
               "tuition_cap_yuan": null,
               "major_expansion_raw": null,
               "cooperation_preference_raw": null,
+              "overseas_preference_raw": null,
               "school_ownership_preference_raw": null,
+              "recommendation_request_raw": null,
               "other_vague_preferences": []
             },
             "raw_phrases": [
@@ -5056,12 +5149,15 @@
                 "广州",
                 "深圳"
               ],
+              "preferred_school_provinces": [],
               "risk_preference_raw": "稳一点",
               "tuition_preference_raw": "太贵",
               "tuition_cap_yuan": null,
               "major_expansion_raw": null,
               "cooperation_preference_raw": "不想去太贵的中外合作",
+              "overseas_preference_raw": null,
               "school_ownership_preference_raw": null,
+              "recommendation_request_raw": null,
               "other_vague_preferences": []
             },
             "raw_phrases": [
@@ -5271,12 +5367,15 @@
               "preferred_cities": [
                 "广州"
               ],
+              "preferred_school_provinces": [],
               "risk_preference_raw": null,
               "tuition_preference_raw": "太贵",
               "tuition_cap_yuan": null,
               "major_expansion_raw": null,
               "cooperation_preference_raw": null,
+              "overseas_preference_raw": null,
               "school_ownership_preference_raw": null,
+              "recommendation_request_raw": null,
               "other_vague_preferences": [
                 "学校尽量好一点"
               ]
@@ -5471,12 +5570,15 @@
                 "计算机"
               ],
               "preferred_cities": [],
+              "preferred_school_provinces": [],
               "risk_preference_raw": "稳妥一点",
               "tuition_preference_raw": null,
               "tuition_cap_yuan": null,
               "major_expansion_raw": "语义扩展待确认",
               "cooperation_preference_raw": null,
+              "overseas_preference_raw": null,
               "school_ownership_preference_raw": null,
+              "recommendation_request_raw": null,
               "other_vague_preferences": [
                 "珠三角"
               ]
@@ -5666,12 +5768,15 @@
               "major_keyword": null,
               "major_exact_terms": [],
               "preferred_cities": [],
+              "preferred_school_provinces": [],
               "risk_preference_raw": "冲一冲",
               "tuition_preference_raw": null,
               "tuition_cap_yuan": null,
               "major_expansion_raw": null,
               "cooperation_preference_raw": null,
+              "overseas_preference_raw": null,
               "school_ownership_preference_raw": null,
+              "recommendation_request_raw": null,
               "other_vague_preferences": [
                 "偏远",
                 "太偏远",
@@ -5848,12 +5953,15 @@
               "major_keyword": null,
               "major_exact_terms": [],
               "preferred_cities": [],
+              "preferred_school_provinces": [],
               "risk_preference_raw": null,
               "tuition_preference_raw": "费用低一点",
               "tuition_cap_yuan": null,
               "major_expansion_raw": null,
               "cooperation_preference_raw": null,
+              "overseas_preference_raw": null,
               "school_ownership_preference_raw": "公办本科",
+              "recommendation_request_raw": null,
               "other_vague_preferences": [
                 "公办本科",
                 "公办",
@@ -6062,12 +6170,15 @@
                 "自动化"
               ],
               "preferred_cities": [],
+              "preferred_school_provinces": [],
               "risk_preference_raw": "保底",
               "tuition_preference_raw": null,
               "tuition_cap_yuan": null,
               "major_expansion_raw": "语义扩展待确认",
               "cooperation_preference_raw": null,
+              "overseas_preference_raw": null,
               "school_ownership_preference_raw": null,
+              "recommendation_request_raw": null,
               "other_vague_preferences": []
             },
             "raw_phrases": [
@@ -6243,12 +6354,15 @@
                 "深圳",
                 "佛山"
               ],
+              "preferred_school_provinces": [],
               "risk_preference_raw": null,
               "tuition_preference_raw": null,
               "tuition_cap_yuan": 20000,
               "major_expansion_raw": "语义扩展待确认",
               "cooperation_preference_raw": null,
+              "overseas_preference_raw": null,
               "school_ownership_preference_raw": "优先公办",
+              "recommendation_request_raw": null,
               "other_vague_preferences": [
                 "优先公办",
                 "公办"
@@ -6458,12 +6572,15 @@
                 "法学"
               ],
               "preferred_cities": [],
+              "preferred_school_provinces": [],
               "risk_preference_raw": null,
               "tuition_preference_raw": null,
               "tuition_cap_yuan": null,
               "major_expansion_raw": "语义扩展待确认",
               "cooperation_preference_raw": null,
+              "overseas_preference_raw": null,
               "school_ownership_preference_raw": null,
+              "recommendation_request_raw": null,
               "other_vague_preferences": [
                 "学校名气",
                 "名气重要"
@@ -6658,12 +6775,15 @@
                 "网络安全"
               ],
               "preferred_cities": [],
+              "preferred_school_provinces": [],
               "risk_preference_raw": "稳一点",
               "tuition_preference_raw": null,
               "tuition_cap_yuan": null,
               "major_expansion_raw": "语义扩展待确认",
               "cooperation_preference_raw": null,
+              "overseas_preference_raw": null,
               "school_ownership_preference_raw": null,
+              "recommendation_request_raw": null,
               "other_vague_preferences": []
             },
             "raw_phrases": [
@@ -6672,6 +6792,7 @@
               "广东物理",
               "物理类",
               "软件工程",
+              "人工智能",
               "都可以",
               "网络安全"
             ]
@@ -6837,12 +6958,15 @@
               "major_keyword": null,
               "major_exact_terms": [],
               "preferred_cities": [],
+              "preferred_school_provinces": [],
               "risk_preference_raw": "不想太冒险",
               "tuition_preference_raw": "学费低",
               "tuition_cap_yuan": null,
               "major_expansion_raw": "语义扩展待确认",
               "cooperation_preference_raw": null,
+              "overseas_preference_raw": null,
               "school_ownership_preference_raw": null,
+              "recommendation_request_raw": null,
               "other_vague_preferences": [
                 "城市不要太差"
               ]

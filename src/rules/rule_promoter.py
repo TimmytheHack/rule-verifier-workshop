@@ -42,7 +42,20 @@ class RulePromoter:
                     continue
                 if rule.get("derived_from") == "c_tuition_cap" and "tuition_threshold" not in simulated:
                     continue
+                if (
+                    rule.get("derived_from") == "c_recommendation_rank_floor"
+                    and "recommendation_rank_floor" not in simulated
+                ):
+                    continue
                 promoted_rule = copy.deepcopy(rule)
+                if promoted_rule["rule_id"] == "e_recommendation_rank_floor":
+                    confirmation = simulated.get("recommendation_rank_floor", {})
+                    promoted_rule["operator"] = confirmation.get(
+                        "operator",
+                        promoted_rule["operator"],
+                    )
+                    promoted_rule["value"] = confirmation.get("value", promoted_rule["value"])
+                    promoted_rule["confirmation"] = "基本可达边界已确认"
                 if promoted_rule["rule_id"] == "e_safety_margin":
                     confirmation = simulated.get("safety_margin", {})
                     promoted_rule["operator"] = confirmation.get(

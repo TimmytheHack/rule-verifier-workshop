@@ -10,6 +10,7 @@ from src.extractors.regex_extractor import RegexExtractor
 from src.api.workbench import (
     WorkbenchConfig,
     _apply_soft_confirmations,
+    _append_grounding_non_executable_preferences,
     _extract_slots,
     _merge_verified_proposed_rules,
     _slots_from_inputs,
@@ -127,6 +128,78 @@ class RuleVerifierTest(unittest.TestCase):
         self.assertEqual(slots["preferences"]["major_keyword"], "数学")
         self.assertIn("e_major_keyword", {rule["rule_id"] for rule in final_rules})
         self.assertNotIn("e_subject_type", {rule["rule_id"] for rule in final_rules})
+
+    def test_recommendation_query_uses_school_province_major_or_and_rank_floor(self) -> None:
+        query = "排位10000名，想读人工智能，计算机，而且不想去国外，想留在广东省，请给出推荐"
+        registry = SchemaRegistry.from_file(
+            SCHEMA_PATH,
+            AVAILABLE_COLUMNS + ["所在省"],
+        )
+        verifier = RuleVerifier(registry)
+        slots = RegexExtractor().extract(query)
+
+        self.assertIsNone(slots["user_context"]["source_province"])
+        self.assertEqual(slots["user_context"]["user_rank"], 10000)
+        self.assertEqual(slots["preferences"]["major_exact_terms"], ["人工智能", "计算机"])
+        self.assertEqual(slots["preferences"]["preferred_school_provinces"], ["广东"])
+        self.assertEqual(slots["preferences"]["overseas_preference_raw"], "不想去国外")
+        self.assertEqual(slots["preferences"]["recommendation_request_raw"], "给出推荐")
+
+        classified = RuleClassifier(TAXONOMY_PATH, verifier).classify(slots)
+        grounding = AttributeGrounder(registry).ground(slots)
+        classified = _append_grounding_non_executable_preferences(classified, grounding)
+        final_rules = RulePromoter(
+            TAXONOMY_PATH,
+            simulated_confirmation_enabled=True,
+        ).final_executable_rules(classified)
+        final_by_id = {rule["rule_id"]: rule for rule in final_rules}
+
+        self.assertEqual(final_by_id["e_major_keyword"]["operator"], "contains_any")
+        self.assertEqual(final_by_id["e_major_keyword"]["value"], ["人工智能", "计算机"])
+        self.assertEqual(final_by_id["e_school_province"]["field"], "所在省")
+        self.assertEqual(final_by_id["e_school_province"]["value"], ["广东"])
+        self.assertEqual(final_by_id["e_recommendation_rank_floor"]["value"], 10000)
+        self.assertIn(
+            "不想去国外",
+            {item["source_text"] for item in classified["non_executable_preferences"]},
+        )
+
+        dataframe = pd.DataFrame(
+            [
+                {
+                    "ID": 1,
+                    "所在省": "广东",
+                    "专业名称": "人工智能",
+                    "专业组最低位次1": 12064,
+                    "学费": 6853,
+                },
+                {
+                    "ID": 2,
+                    "所在省": "广东",
+                    "专业名称": "计算机类",
+                    "专业组最低位次1": 12232,
+                    "学费": 6853,
+                },
+                {
+                    "ID": 3,
+                    "所在省": "广东",
+                    "专业名称": "人工智能",
+                    "专业组最低位次1": 9000,
+                    "学费": 6853,
+                },
+                {
+                    "ID": 4,
+                    "所在省": "湖南",
+                    "专业名称": "计算机科学与技术",
+                    "专业组最低位次1": 20000,
+                    "学费": 6500,
+                },
+            ]
+        )
+
+        results = PandasExecutor().execute(dataframe, final_rules, user_rank=10000)
+
+        self.assertEqual([row["ID"] for row in results], [1, 2])
 
     def test_vague_terms_are_configured_to_block_over_promotion(self) -> None:
         vague_terms = json.loads(VAGUE_TERMS_PATH.read_text(encoding="utf-8"))

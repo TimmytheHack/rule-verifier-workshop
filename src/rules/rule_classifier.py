@@ -101,6 +101,8 @@ def _value_present(value: Any) -> bool:
 def _llm_needed_part_is_relevant(part: dict[str, Any], slots: dict[str, Any]) -> bool:
     if part.get("part_id") == "l_cooperation_type":
         return _value_present(_slot_value(slots, ["preferences", "cooperation_preference_raw"]))
+    if part.get("part_id") == "l_overseas_scope":
+        return _value_present(_slot_value(slots, ["preferences", "overseas_preference_raw"]))
     return True
 
 
@@ -109,6 +111,7 @@ def _relevant_confirmation_questions(
     candidate_rule_ids: set[str],
 ) -> list[dict[str, Any]]:
     question_by_candidate = {
+        "q_recommendation_rank_floor": "c_recommendation_rank_floor",
         "q_safety_margin": "c_safety_margin",
         "q_tuition_cap": "c_tuition_cap",
         "q_major_expansion": "c_major_expansion",
@@ -127,6 +130,7 @@ def _relevant_simulated_confirmations(
     slots: dict[str, Any],
 ) -> dict[str, Any]:
     confirmation_by_candidate = {
+        "recommendation_rank_floor": "c_recommendation_rank_floor",
         "safety_margin": "c_safety_margin",
         "tuition_threshold": "c_tuition_cap",
         "major_expansion": "c_major_expansion",
@@ -146,6 +150,14 @@ def _relevant_simulated_confirmations(
             relevant["safety_margin"]["source_expression"] = (
                 f"{rank} * 0.90 到 {rank} * 1.10"
             )
+    if "recommendation_rank_floor" in relevant:
+        rank = _slot_value(slots, ["user_context", "user_rank"])
+        if isinstance(rank, (int, float)):
+            relevant["recommendation_rank_floor"]["operator"] = ">="
+            relevant["recommendation_rank_floor"]["value"] = int(rank)
+            relevant["recommendation_rank_floor"]["source_expression"] = f"用户排位 {rank}"
+        else:
+            relevant.pop("recommendation_rank_floor")
     if "l_cooperation_type" in llm_needed_part_ids and "cooperation_type" in confirmations:
         relevant["cooperation_type"] = copy.deepcopy(confirmations["cooperation_type"])
     return relevant
@@ -155,6 +167,8 @@ def _relevant_non_executable_preferences(
     preferences: list[dict[str, Any]],
     llm_needed_part_ids: set[str],
 ) -> list[dict[str, Any]]:
-    if "l_cooperation_type" not in llm_needed_part_ids:
-        return []
-    return copy.deepcopy(preferences)
+    return [
+        copy.deepcopy(preference)
+        for preference in preferences
+        if preference.get("part_id") in llm_needed_part_ids
+    ]

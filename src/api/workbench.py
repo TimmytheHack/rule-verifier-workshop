@@ -299,7 +299,12 @@ def _apply_soft_confirmations(
         rule["rule_id"] for rule in updated.get("candidate_rules", [])
     }
     soft = config.soft_preferences
+    existing_simulated = updated.get("simulated_confirmations", {})
     simulated: dict[str, Any] = {}
+    if "recommendation_rank_floor" in existing_simulated:
+        simulated["recommendation_rank_floor"] = existing_simulated[
+            "recommendation_rank_floor"
+        ]
 
     safety_percent = _optional_int(soft.get("safety_margin_percent"))
     user_rank = _optional_int(slots.get("user_context", {}).get("user_rank"))
@@ -649,14 +654,37 @@ def _extracted_preferences(slots: dict[str, Any]) -> list[dict[str, Any]]:
             "已对齐字段",
         ),
         ("pref_rank", "排位", context.get("user_rank"), "已对齐字段"),
-        ("pref_major", "专业名称", preferences.get("major_keyword"), "已对齐字段"),
+        (
+            "pref_major",
+            "专业名称",
+            preferences.get("major_exact_terms") or preferences.get("major_keyword"),
+            "已对齐字段",
+        ),
         ("pref_city", "城市", preferences.get("preferred_cities"), "已对齐字段"),
+        (
+            "pref_school_province",
+            "院校所在地省份",
+            preferences.get("preferred_school_provinces"),
+            "已对齐字段",
+        ),
+        (
+            "pref_recommendation",
+            "推荐请求",
+            preferences.get("recommendation_request_raw"),
+            "待确认",
+        ),
         ("pref_stable", "稳一点", preferences.get("risk_preference_raw"), "待确认"),
         ("pref_expensive", "太贵", preferences.get("tuition_preference_raw"), "待确认"),
         (
             "pref_cooperation",
             "中外合作",
             preferences.get("cooperation_preference_raw"),
+            "不可执行",
+        ),
+        (
+            "pref_overseas",
+            "境外就读",
+            preferences.get("overseas_preference_raw"),
             "不可执行",
         ),
     ]
@@ -732,6 +760,7 @@ def _candidate_rules(classified_rules: dict[str, Any]) -> list[dict[str, Any]]:
         for question in classified_rules.get("confirmation_questions", [])
     }
     question_id_by_rule = {
+        "c_recommendation_rank_floor": "q_recommendation_rank_floor",
         "c_safety_margin": "q_safety_margin",
         "c_tuition_cap": "q_tuition_cap",
         "c_major_expansion": "q_major_expansion",
@@ -756,6 +785,8 @@ def _candidate_rules(classified_rules: dict[str, Any]) -> list[dict[str, Any]]:
 
 
 def _candidate_label(rule: dict[str, Any]) -> str:
+    if rule.get("rule_id") == "c_recommendation_rank_floor":
+        return "基本可达位次候选规则"
     if rule.get("rule_id") == "c_safety_margin":
         return "位次窗口候选规则"
     if rule.get("rule_id") == "c_tuition_cap":
@@ -766,6 +797,8 @@ def _candidate_label(rule: dict[str, Any]) -> str:
 
 
 def _candidate_reason(rule: dict[str, Any]) -> str:
+    if rule.get("rule_id") == "c_recommendation_rank_floor":
+        return "推荐请求需要先确认是否按用户位次排除明显不可达结果。"
     if rule.get("rule_id") == "c_safety_margin":
         return "风险边界需要明确位次窗口；用户选择后才可提升为可执行规则。"
     if rule.get("rule_id") == "c_tuition_cap":
@@ -777,6 +810,8 @@ def _candidate_reason(rule: dict[str, Any]) -> str:
 
 def _simulated_label(classified_rules: dict[str, Any], rule: dict[str, Any]) -> str:
     simulated = classified_rules.get("simulated_confirmations", {})
+    if rule.get("rule_id") == "c_recommendation_rank_floor":
+        return str(simulated.get("recommendation_rank_floor", {}).get("label", ""))
     if rule.get("rule_id") == "c_safety_margin":
         return str(simulated.get("safety_margin", {}).get("label", ""))
     if rule.get("rule_id") == "c_tuition_cap":
@@ -821,6 +856,10 @@ def _simulated_confirmations(classified_rules: dict[str, Any]) -> dict[str, Any]
     simulated = classified_rules.get("simulated_confirmations", {})
     safety_value = simulated.get("safety_margin", {}).get("value")
     return {
+        "recommendation_rank_floor": simulated.get(
+            "recommendation_rank_floor",
+            {},
+        ).get("value"),
         "safety_margin_percent": _confirmation_percent(
             simulated.get("safety_margin", {}).get("label")
         ),
@@ -946,12 +985,15 @@ def _slot_path_label(slot_path: Any) -> str:
         "preferences.major_keyword": "专业关键词",
         "preferences.major_exact_terms": "专业精确词",
         "preferences.preferred_cities": "城市偏好",
+        "preferences.preferred_school_provinces": "院校所在地省份偏好",
         "preferences.risk_preference_raw": "风险偏好",
         "preferences.tuition_preference_raw": "费用偏好",
         "preferences.tuition_cap_yuan": "明确费用上限",
         "preferences.major_expansion_raw": "专业扩展偏好",
         "preferences.cooperation_preference_raw": "中外合作偏好",
+        "preferences.overseas_preference_raw": "境外就读偏好",
         "preferences.school_ownership_preference_raw": "办学性质偏好",
+        "preferences.recommendation_request_raw": "推荐请求",
         "preferences.other_vague_preferences[]": "其他模糊偏好",
     }
     return labels.get(str(slot_path), str(slot_path))
@@ -1192,8 +1234,20 @@ def _sanitize_user_text(text: str) -> str:
         "A candidate Excel column exists in the schema profile, but school ownership has not been promoted into the active MVP schema registry.": (
             "字段画像中存在候选办学性质列，但该字段尚未进入当前可执行字段定义。"
         ),
+        "No reviewed active school country or overseas study field.": (
+            "当前数据中没有已审查的国家或境外办学字段。"
+        ),
+        "No dedicated school country or overseas study field.": (
+            "缺少国家或境外办学字段。"
+        ),
         "Guangdong 3+1+2 reselected subjects are matched against the Excel field 选科要求.": (
             "广东 3+1+2 的再选科目需要和数据字段“选科要求”匹配。"
+        ),
+        "School province preference maps to the Excel field 所在省; rule verification is still required.": (
+            "院校所在地省份偏好可以映射到数据字段“所在省”，仍需经过规则验证。"
+        ),
+        "Recommendation requests need a rank-derived reachability boundary before execution.": (
+            "推荐请求需要结合用户位次生成基本可达边界，确认后才能执行。"
         ),
         "User rank is context for candidate formulas, not an Excel source column.": (
             "用户排位用于计算候选规则边界，不是直接筛表的数据源列。"

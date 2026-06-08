@@ -45,12 +45,25 @@
       "category": "deterministic",
       "field_id": "major_name",
       "field": "专业名称",
-      "operator": "contains",
-      "slot_path": ["preferences", "major_keyword"],
+      "operator": "contains_any",
+      "slot_path": ["preferences", "major_exact_terms"],
       "skip_if_missing": true,
       "confidence": 1.0,
       "requires_human_confirmation": false,
-      "trace_reason": "明确专业关键词允许作为确定性匹配规则。"
+      "trace_reason": "明确专业关键词列表允许作为确定性 OR 匹配规则。"
+    },
+    {
+      "rule_id": "d_school_province",
+      "source_text": "留在广东省",
+      "category": "deterministic",
+      "field_id": "school_province",
+      "field": "所在省",
+      "operator": "in",
+      "slot_path": ["preferences", "preferred_school_provinces"],
+      "skip_if_missing": true,
+      "confidence": 1.0,
+      "requires_human_confirmation": false,
+      "trace_reason": "用户明确要求院校所在地留在广东省，且数据字段“所在省”存在。"
     },
     {
       "rule_id": "d_city",
@@ -94,6 +107,20 @@
     }
   ],
   "candidate_rules": [
+    {
+      "rule_id": "c_recommendation_rank_floor",
+      "source_text": "请给出推荐",
+      "category": "candidate",
+      "status": "pending_confirmation",
+      "field_id": "group_min_rank_2024",
+      "field": "专业组最低位次1",
+      "operator": ">=",
+      "slot_path": ["preferences", "recommendation_request_raw"],
+      "skip_if_missing": true,
+      "confidence": 0.8,
+      "requires_human_confirmation": true,
+      "trace_reason": "推荐请求会使用用户位次生成基本可达边界，需确认后才执行。"
+    },
     {
       "rule_id": "c_safety_margin",
       "source_text": "学校稳一点",
@@ -155,9 +182,28 @@
       "reason": "当前数据字段定义没有专门的合作办学类型字段。",
       "allowed_behavior": "当前版本不得从文本字段推断合作办学类型。",
       "trace_reason": "缺少专门的合作办学类型字段，因此该偏好保留但不执行。"
+    },
+    {
+      "part_id": "l_overseas_scope",
+      "source_text": "不想去国外",
+      "category": "llm_needed",
+      "status": "not_executable_in_mvp",
+      "field_id": "school_country_or_region",
+      "field": "国家或境外办学字段",
+      "reason": "当前数据字段定义没有专门的国家或境外办学字段。",
+      "allowed_behavior": "当前版本不得从院校名称、专业全称或备注推断是否需要去国外。",
+      "trace_reason": "缺少专门的国家或境外办学字段，因此该偏好保留但不执行。"
     }
   ],
   "confirmation_questions": [
+    {
+      "question_id": "q_recommendation_rank_floor",
+      "source_text": "请给出推荐",
+      "options": [
+        {"label": "按我的位次做基本可达筛选", "value": "use_user_rank"},
+        {"label": "暂不使用位次筛选", "value": null}
+      ]
+    },
     {
       "question_id": "q_safety_margin",
       "source_text": "学校稳一点",
@@ -200,6 +246,14 @@
     }
   ],
   "simulated_confirmations": {
+    "recommendation_rank_floor": {
+      "selected_option": "use_user_rank",
+      "label": "按用户位次做基本可达筛选",
+      "field": "专业组最低位次1",
+      "operator": ">=",
+      "value": null,
+      "source_expression": "用户排位"
+    },
     "safety_margin": {
       "selected_option": "B",
       "label": "适中稳妥",
@@ -228,6 +282,14 @@
   },
   "confirmed_candidate_rules": [
     {
+      "rule_id": "e_recommendation_rank_floor",
+      "derived_from": "c_recommendation_rank_floor",
+      "field": "专业组最低位次1",
+      "operator": ">=",
+      "value": null,
+      "confirmation": "基本可达边界已确认"
+    },
+    {
       "rule_id": "e_safety_margin",
       "derived_from": "c_safety_margin",
       "field": "专业组最低位次1",
@@ -247,9 +309,16 @@
   ],
   "non_executable_preferences": [
     {
+      "part_id": "l_cooperation_type",
       "source_text": "不想去太贵的中外合作",
       "status": "not_executed",
       "reason": "缺少合作办学类型字段，当前版本不从文本字段推断。"
+    },
+    {
+      "part_id": "l_overseas_scope",
+      "source_text": "不想去国外",
+      "status": "not_executed",
+      "reason": "缺少国家或境外办学字段，当前版本不从院校名称、专业全称或备注推断。"
     }
   ]
 }

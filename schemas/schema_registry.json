@@ -28,9 +28,17 @@
       "source_column": "专业名称",
       "type": "string",
       "aliases": ["专业", "想学", "计算机"],
-      "allowed_ops": ["contains", "eq"],
+      "allowed_ops": ["contains", "contains_any", "eq"],
       "nullable": false,
       "notes": "当前版本只有明确专业关键词匹配可作为确定性规则。"
+    },
+    "school_province": {
+      "source_column": "所在省",
+      "type": "enum_or_category",
+      "aliases": ["所在省", "省内", "广东省内", "留在广东省", "不出省"],
+      "allowed_ops": ["eq", "in"],
+      "nullable": false,
+      "notes": "用于执行用户明确提出的院校所在地省份偏好，例如留在广东省。"
     },
     "city": {
       "source_column": "城市",
@@ -64,6 +72,15 @@
       "allowed_ops": ["eq", "neq", "in", "not_in"],
       "nullable": true,
       "notes": "当前数据缺少该字段，不能执行排除中外合作。"
+    },
+    "school_country_or_region": {
+      "source_column": null,
+      "status": "missing",
+      "type": "enum",
+      "aliases": ["国外", "境外", "出国", "国内", "不想去国外"],
+      "allowed_ops": ["eq", "neq", "in", "not_in"],
+      "nullable": true,
+      "notes": "当前可执行字段定义缺少国家/境外办学字段，不能从院校名称或专业全称推断。"
     }
   }
 }

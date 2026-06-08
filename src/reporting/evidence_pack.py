@@ -120,6 +120,7 @@ def _candidate_confirmations(classified_rules: dict[str, Any]) -> list[dict[str,
     }
     simulated = classified_rules.get("simulated_confirmations", {})
     mapping = {
+        "recommendation_rank_floor": "c_recommendation_rank_floor",
         "safety_margin": "c_safety_margin",
         "tuition_threshold": "c_tuition_cap",
         "major_expansion": "c_major_expansion",
@@ -161,6 +162,7 @@ def _confirmation_source_text(
     if source_rule.get("source_text"):
         return source_rule["source_text"]
     question_id_by_confirmation = {
+        "recommendation_rank_floor": "q_recommendation_rank_floor",
         "safety_margin": "q_safety_margin",
         "tuition_threshold": "q_tuition_cap",
         "major_expansion": "q_major_expansion",
@@ -246,6 +248,12 @@ def _user_facing_reason(reason: Any) -> str | None:
         "No reviewed active remoteness field.": "当前数据中没有已审查的偏远程度字段。",
         "No major popularity field.": "当前数据中没有专业热度字段。",
         "No admission probability field.": "当前数据中没有录取概率字段。",
+        "No reviewed active school country or overseas study field.": (
+            "当前数据中没有已审查的国家或境外办学字段。"
+        ),
+        "No dedicated school country or overseas study field.": (
+            "缺少国家或境外办学字段。"
+        ),
         "Needs confirmed city set.": "需要确认具体城市集合。",
         "Needs confirmed Pearl River Delta city set.": "需要确认珠三角城市集合。",
         "Needs confirmed city quality proxy or city set.": (
