@@ -418,10 +418,18 @@ Workbench 的 confirmation loop 也属于执行边界：
 Workbench API 返回固定的 `WorkbenchResponse` contract：
 
 - `status` 只能是 `ok`、`needs_confirmation`、`no_results`、`blocked`、`error`。
+- 顶层固定包含 `schema_version`、`domain`、`domain_version`、`domain_pack_status`、
+  `query`、`items`、`top_results`、`evidence_pack` 和 `debug_trace` 等字段。
+- `domain_pack_status` 至少支持 `draft`、`needs_review`、`approved`、`blocked`；
+  `draft` / `needs_review` 默认返回 `blocked`，不执行 SQL。
 - `needs_confirmation` 表示存在未确认的 `partial_match` 偏好，这些偏好不能声称已执行；当前结果只能作为已执行规则下的 provisional results。
 - `blocked` 用于 fingerprint guard、伪造/过期/不属于当前 query 的 `candidate_id` 等安全阻断；此状态下 `execution.sql` 为空，不执行 DuckDB SQL。
 - `no_results` 表示 SQL 正常执行但 `filtered_row_count = 0`；答案不得编造推荐。
-- 前端展示的 `top_results` 只使用英文 key，例如 `university_name`、`group_code`、`major_code`、`major_name`、`full_major_name`、`city`、`tuition`、`rank_2024`、`plan_count`。EvidencePack 内部继续保留中文原始字段用于 trace。
+- 前端主列表优先读取跨领域 `items`。`top_results` 只作为 domain-specific 兼容层，
+  由 `domains/<domain>/top_result_mapping.yaml` 生成；招生 domain 继续保留
+  `university_name`、`group_code`、`major_code`、`major_name`、`full_major_name`、
+  `city`、`tuition`、`rank_2024`、`plan_count` 等英文 key。
+  EvidencePack 内部继续保留中文原始字段用于 trace。
 - 完整字段和 JSON 示例见 `docs/api_contract.md`。
 
 ## 9. LLM 边界

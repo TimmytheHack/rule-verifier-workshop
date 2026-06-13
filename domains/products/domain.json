@@ -1,0 +1,66 @@
+{
+  "domain_id": "products",
+  "display_name": "商品筛选",
+  "domain_version": "1",
+  "status": "approved",
+  "data": {
+    "workbook_path": "fixtures/products.csv",
+    "fixture_path": "fixtures/products.csv",
+    "table_name": "products",
+    "warehouse_database_path": "outputs/data/products.duckdb",
+    "value_index_path": "outputs/data/products_schema_value_index.json",
+    "required_field_ids": ["product_id", "product_name", "category", "price_usd"]
+  },
+  "paths": {
+    "schema": "schema_registry.json",
+    "attribute_grounding": "attribute_grounding.json",
+    "rule_taxonomy": "rule_taxonomy.json",
+    "value_aliases": "value_aliases.json",
+    "answer_templates": "answer_templates.json",
+    "golden_cases": "golden_cases.json",
+    "top_result_mapping": "top_result_mapping.yaml"
+  },
+  "execution": {
+    "rank_field_id": null,
+    "tuition_field_id": "price_usd",
+    "projectable_required_field_ids": ["price_usd"],
+    "numeric_helper_fields": [
+      {"name": "__price_num", "field_id": "price_usd"},
+      {"name": "__rating_num", "field_id": "rating", "optional": true},
+      {"name": "__product_id_num", "field_id": "product_id", "optional": true}
+    ],
+    "sort_policy": [
+      {"helper": "__price_num", "label_field_id": "price_usd", "direction": "ASC", "nulls": "LAST"},
+      {"helper": "__rating_num", "label_field_id": "rating", "direction": "DESC", "nulls": "LAST", "optional": true},
+      {"helper": "__product_id_num", "label_field_id": "product_id", "direction": "ASC", "nulls": "LAST", "optional": true}
+    ],
+    "row_number_output_key": "source_row_number",
+    "row_number_offset": 1,
+    "output_fields": [
+      {"output_key": "product_id", "field_id": "product_id", "transform": "clean"},
+      {"output_key": "product_name", "field_id": "product_name", "transform": "text"},
+      {"output_key": "category", "field_id": "category", "transform": "text"},
+      {"output_key": "price_usd", "field_id": "price_usd", "transform": "number", "helper": "__price_num"},
+      {"output_key": "rating", "field_id": "rating", "transform": "number", "helper": "__rating_num"},
+      {"output_key": "stock_count", "field_id": "stock_count", "transform": "int"},
+      {"output_key": "brand", "field_id": "brand", "transform": "text"},
+      {"output_key": "description", "field_id": "description", "transform": "text"}
+    ],
+    "static_output_fields": {}
+  },
+  "workbench": {
+    "slot_labels": {
+      "preferences.categories": "商品类别",
+      "preferences.price_cap": "价格上限",
+      "preferences.rating_min": "最低评分"
+    },
+    "extracted_preferences": [
+      {"id": "pref_category", "slot": "商品类别", "path": "preferences.categories", "status": "已对齐字段"},
+      {"id": "pref_price", "slot": "价格上限", "path": "preferences.price_cap", "status": "已对齐字段"},
+      {"id": "pref_rating", "slot": "最低评分", "path": "preferences.rating_min", "status": "已对齐字段"}
+    ],
+    "reviewed_candidate_mappings": [],
+    "not_executed_overrides": [],
+    "context_warnings": []
+  }
+}

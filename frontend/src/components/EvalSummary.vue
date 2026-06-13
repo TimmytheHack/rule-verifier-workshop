@@ -9,8 +9,13 @@ const props = defineProps({
 });
 
 const auditCards = computed(() => {
-  const results = props.runData.top_results || [];
-  const tracedRows = results.filter((row) => Array.isArray(row.trace) && row.trace.length > 0);
+  const results = props.runData.items?.length ? props.runData.items : (props.runData.top_results || []);
+  const tracedRows = results.filter((row) => {
+    if (Array.isArray(row.matched_filters)) {
+      return row.matched_filters.length > 0;
+    }
+    return Array.isArray(row.trace) && row.trace.length > 0;
+  });
   const notExecuted = props.runData.not_executed_preferences || [];
   return [
     {

@@ -1,0 +1,9 @@
+[
+  {"key": "listing_id", "field_id": "listing_id"},
+  {"key": "city", "field_id": "city"},
+  {"key": "bedrooms", "field_id": "bedrooms"},
+  {"key": "rent_usd", "field_id": "rent_usd"},
+  {"key": "property_type", "field_id": "property_type"},
+  {"key": "pet_policy", "field_id": "pet_policy"},
+  {"key": "rating", "field_id": "rating"}
+]

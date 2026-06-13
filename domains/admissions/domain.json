@@ -1,6 +1,8 @@
 {
   "domain_id": "admissions",
   "display_name": "广东招生志愿",
+  "domain_version": "1",
+  "status": "approved",
   "data": {
     "workbook_path": "广东省2025年志愿填报大数据（24-25）0523.xlsx",
     "table_name": "admissions",
@@ -22,7 +24,8 @@
     "rule_taxonomy": "rule_taxonomy.json",
     "value_aliases": "value_aliases.json",
     "answer_templates": "answer_templates.json",
-    "golden_cases": "golden_cases.json"
+    "golden_cases": "golden_cases.json",
+    "top_result_mapping": "top_result_mapping.yaml"
   },
   "subject_policy": {
     "subjects": ["化学", "生物", "政治", "地理"],

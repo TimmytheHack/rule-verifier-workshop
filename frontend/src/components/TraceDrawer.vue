@@ -26,6 +26,40 @@ function tagType(status) {
 function statusLabel(status) {
   return status === 'PASS' || status === 'pass' ? '通过' : '未执行';
 }
+
+const title = computed(() => {
+  if (!props.result) {
+    return '';
+  }
+  return props.result.title || props.result.university_name || props.result.item_id;
+});
+
+const subtitle = computed(() => {
+  if (!props.result) {
+    return '';
+  }
+  if (props.result.subtitle) {
+    return props.result.subtitle;
+  }
+  return [
+    props.result.group_code,
+    props.result.major_name,
+    props.result.city,
+  ].filter(Boolean).join(' · ');
+});
+
+const traceItems = computed(() => {
+  if (!props.result) {
+    return [];
+  }
+  if (Array.isArray(props.result.matched_filters)) {
+    return props.result.matched_filters.map((item) => ({
+      status: item.matched ? 'pass' : 'not_executed',
+      text: item.text || `${item.field} ${item.operator} ${item.value}`,
+    }));
+  }
+  return props.result.trace || [];
+});
 </script>
 
 <template>
@@ -37,10 +71,8 @@ function statusLabel(status) {
   >
     <template v-if="result">
       <div class="trace-heading">
-        <h2>{{ result.university_name }}</h2>
-        <p>
-          {{ result.group_code }} · {{ result.major_name }} · {{ result.city }}
-        </p>
+        <h2>{{ title }}</h2>
+        <p>{{ subtitle }}</p>
       </div>
 
       <el-alert
@@ -53,7 +85,7 @@ function statusLabel(status) {
 
       <div class="trace-list">
         <div
-          v-for="item in result.trace"
+          v-for="item in traceItems"
           :key="`${item.status}-${item.text}`"
           class="trace-item"
         >

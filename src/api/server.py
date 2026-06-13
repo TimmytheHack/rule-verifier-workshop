@@ -44,6 +44,7 @@ class WorkbenchRunRequest(BaseModel):
     generator: str = "template_evidence"
     model: str = "deepseek-v4-flash"
     confirmed_candidates: list[str] = Field(default_factory=list)
+    domain_name: str = "admissions"
 
 
 app = FastAPI(title="Preference-to-Rule Workbench API")
@@ -85,5 +86,6 @@ def run(request: WorkbenchRunRequest) -> dict[str, object]:
         generator=request.generator,
         model=request.model,
         confirmed_candidates=request.confirmed_candidates,
+        domain_name=request.domain_name,
     )
     return run_workbench(config)

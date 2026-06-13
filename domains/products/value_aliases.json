@@ -1,0 +1,10 @@
+{
+  "description": "Toy products aliases for fixture-only tests.",
+  "category_aliases": {
+    "audio": ["audio", "音频"],
+    "laptop": ["laptop", "笔记本"],
+    "tablet": ["tablet", "平板"],
+    "phone": ["phone", "手机"],
+    "accessory": ["accessory", "配件"]
+  }
+}

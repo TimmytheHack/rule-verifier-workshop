@@ -76,6 +76,7 @@ WORKBENCH_STATUS_VALUES = {
 INTERACTIVE_DEEPSEEK_TIMEOUT_SECONDS = 25
 INTERACTIVE_DEEPSEEK_MAX_RETRIES = 1
 EVIDENCE_TOP_K = 5
+WORKBENCH_SCHEMA_VERSION = "workbench_response.v1"
 
 WAREHOUSE_DATABASE_PATH = Path("outputs/data/guangdong_admissions.duckdb")
 WAREHOUSE_VALUE_INDEX_PATH = Path("outputs/data/schema_value_index.json")
@@ -97,14 +98,21 @@ class WorkbenchConfig:
     model: str = "deepseek-v4-flash"
     confirmed_candidates: list[str] = field(default_factory=list)
     domain_name: str = "admissions"
+    domain_path: str | None = None
 
 
 @dataclass(frozen=True)
 class WorkbenchResponse:
     """前端可依赖的 Workbench 固定响应契约。"""
 
+    schema_version: str
+    domain: str
+    domain_version: str
+    domain_pack_status: str
     status: str
+    query: dict[str, Any]
     answer: str
+    items: list[dict[str, Any]]
     top_results: list[dict[str, Any]]
     result_count: int
     executed_filters: list[dict[str, Any]]
@@ -121,11 +129,26 @@ class WorkbenchResponse:
     def __post_init__(self) -> None:
         if self.status not in WORKBENCH_STATUS_VALUES:
             raise ValueError(f"Unsupported workbench status: {self.status}")
+        if self.domain_pack_status not in {
+            "draft",
+            "needs_review",
+            "approved",
+            "blocked",
+        }:
+            raise ValueError(
+                f"Unsupported domain pack status: {self.domain_pack_status}"
+            )
 
     def to_dict(self) -> dict[str, Any]:
         return {
+            "schema_version": self.schema_version,
+            "domain": self.domain,
+            "domain_version": self.domain_version,
+            "domain_pack_status": self.domain_pack_status,
             "status": self.status,
+            "query": self.query,
             "answer": self.answer,
+            "items": self.items,
             "top_results": self.top_results,
             "result_count": self.result_count,
             "executed_filters": self.executed_filters,
@@ -152,6 +175,8 @@ def available_options() -> dict[str, Any]:
 
 
 def _domain_config(config: WorkbenchConfig) -> DomainConfig:
+    if config.domain_path:
+        return DomainConfig.from_path(config.domain_path, domain_id=config.domain_name)
     return DomainConfig.load(config.domain_name)
 
 
@@ -187,6 +212,8 @@ def _run_workbench(config: WorkbenchConfig) -> dict[str, Any]:
 
     _validate_config(config)
     domain_config = _domain_config(config)
+    if not _domain_pack_can_execute(domain_config):
+        return _domain_pack_blocked_payload(config, domain_config)
     warehouse_audit = _data_warehouse_audit(domain_config)
     if not warehouse_audit["ok"]:
         return _data_warehouse_warning_payload(config, warehouse_audit)
@@ -299,8 +326,11 @@ def _run_workbench(config: WorkbenchConfig) -> dict[str, Any]:
         "status": "ok",
         "user_input": _compose_user_request(config),
         "data_warehouse": warehouse_audit,
-        "hard_filters": _display_hard_filters(config.hard_filters),
-        "soft_preferences": _display_soft_preferences(config.soft_preferences),
+        "hard_filters": _display_hard_filters_for_domain(config, domain_config),
+        "soft_preferences": _display_soft_preferences_for_domain(
+            config,
+            domain_config,
+        ),
         "selected_options": _selected_options(config),
         "extracted_preferences": extracted_preferences,
         "extracted_slots": slots,
@@ -325,6 +355,10 @@ def _run_workbench(config: WorkbenchConfig) -> dict[str, Any]:
             _top_result(rank, row, domain_config)
             for rank, row in enumerate(traced_results[:EVIDENCE_TOP_K], start=1)
         ],
+        "items": [
+            _item_card(rank, row, hard_rules, domain_config)
+            for rank, row in enumerate(traced_results[:EVIDENCE_TOP_K], start=1)
+        ],
         "trace": {},
         "evidence_pack": evidence.to_dict(),
         "natural_language_report": _with_context_warnings(
@@ -342,6 +376,8 @@ def _run_workbench(config: WorkbenchConfig) -> dict[str, Any]:
         legacy_payload=legacy_payload,
         hard_rules=hard_rules,
         confirmation_state=confirmation_state,
+        config=config,
+        domain_config=domain_config,
     )
 
 
@@ -349,11 +385,19 @@ def _contract_success_payload(
     legacy_payload: dict[str, Any],
     hard_rules: list[dict[str, Any]],
     confirmation_state: dict[str, Any],
+    config: WorkbenchConfig,
+    domain_config: DomainConfig,
 ) -> dict[str, Any]:
     status = _success_status(legacy_payload, confirmation_state)
     response = WorkbenchResponse(
+        schema_version=WORKBENCH_SCHEMA_VERSION,
+        domain=domain_config.domain_id,
+        domain_version=domain_config.domain_version,
+        domain_pack_status=domain_config.pack_status,
         status=status,
+        query=_contract_query(config),
         answer=legacy_payload["natural_language_report"]["full_text"],
+        items=legacy_payload["items"],
         top_results=legacy_payload["top_results"],
         result_count=legacy_payload["result_count"],
         executed_filters=[_display_rule(rule) for rule in hard_rules],
@@ -487,6 +531,7 @@ def _debug_trace(payload: dict[str, Any]) -> dict[str, Any]:
         "executable_rules",
         "execution",
         "trace",
+        "items",
         "natural_language_report",
         "token_usage",
     ]
@@ -506,6 +551,7 @@ def _data_warehouse_warning_payload(
     config: WorkbenchConfig,
     warehouse_audit: dict[str, Any],
 ) -> dict[str, Any]:
+    domain_config = _domain_config(config)
     messages = [
         str(warning.get("message"))
         for warning in warehouse_audit.get("warnings", [])
@@ -522,8 +568,11 @@ def _data_warehouse_warning_payload(
         "data_warehouse": warehouse_audit,
         "structured_warnings": warehouse_audit.get("warnings", []),
         "warnings": warehouse_audit.get("warnings", []),
-        "hard_filters": _display_hard_filters(config.hard_filters),
-        "soft_preferences": _display_soft_preferences(config.soft_preferences),
+        "hard_filters": _display_hard_filters_for_domain(config, domain_config),
+        "soft_preferences": _display_soft_preferences_for_domain(
+            config,
+            domain_config,
+        ),
         "selected_options": _selected_options(config),
         "extracted_preferences": [],
         "extracted_slots": {},
@@ -546,6 +595,7 @@ def _data_warehouse_warning_payload(
             "skipped_soft_rule_ids": [],
         },
         "result_count": 0,
+        "items": [],
         "top_results": [],
         "trace": {},
         "evidence_pack": {},
@@ -566,7 +616,85 @@ def _data_warehouse_warning_payload(
             "total": {"prompt_tokens": 0, "completion_tokens": 0, "total_tokens": 0},
         },
     }
-    return _contract_blocked_payload(legacy_payload)
+    return _contract_blocked_payload(legacy_payload, config, domain_config)
+
+
+def _domain_pack_can_execute(domain_config: DomainConfig) -> bool:
+    return domain_config.pack_status == "approved"
+
+
+def _domain_pack_blocked_payload(
+    config: WorkbenchConfig,
+    domain_config: DomainConfig,
+) -> dict[str, Any]:
+    message = (
+        f"domain pack 状态为 {domain_config.pack_status}，未 approve 前不能执行 SQL。"
+    )
+    legacy_payload = {
+        "mode": "api",
+        "status": "blocked",
+        "warning_type": "domain_pack_status_guard",
+        "user_input": _compose_user_request(config),
+        "data_warehouse": {},
+        "structured_warnings": [
+            {
+                "code": "domain_pack_not_approved",
+                "message": message,
+                "severity": "error",
+                "domain": domain_config.domain_id,
+                "domain_pack_status": domain_config.pack_status,
+            }
+        ],
+        "warnings": [
+            {
+                "code": "domain_pack_not_approved",
+                "message": message,
+                "severity": "error",
+                "domain": domain_config.domain_id,
+                "domain_pack_status": domain_config.pack_status,
+            }
+        ],
+        "hard_filters": _display_hard_filters_for_domain(config, domain_config),
+        "soft_preferences": _display_soft_preferences_for_domain(
+            config,
+            domain_config,
+        ),
+        "selected_options": _selected_options(config),
+        "extracted_preferences": [],
+        "extracted_slots": {},
+        "attribute_grounding": {"summary": {}, "attributes": []},
+        "confirmation_candidates": [],
+        "confirmation_state": _display_confirmation_state({}),
+        "proposed_rules": [],
+        "deterministic_rules": [],
+        "candidate_rules": [],
+        "not_executed_preferences": [],
+        "simulated_confirmations": {},
+        "executable_rules": [],
+        "execution": _blocked_execution_summary(),
+        "result_count": 0,
+        "items": [],
+        "top_results": [],
+        "trace": {},
+        "evidence_pack": {},
+        "natural_language_report": {
+            "title": "Domain pack 未启用",
+            "summary": message,
+            "full_text": message,
+            "result_count_text": "当前未执行筛选，结果数为 0。",
+            "executed_rules": [],
+            "attribute_explanations": [],
+            "top_results": [],
+            "warnings": [message],
+            "disclaimer": "draft/needs_review domain pack 不能执行 hard filters。",
+        },
+        "token_usage": {
+            "extractor": None,
+            "generator": None,
+            "total": {"prompt_tokens": 0, "completion_tokens": 0, "total_tokens": 0},
+        },
+    }
+    return _contract_blocked_payload(legacy_payload, config, domain_config)
 
 
 def _confirmation_blocked_payload(
@@ -578,6 +706,7 @@ def _confirmation_blocked_payload(
     confirmation_candidates: list[dict[str, Any]],
     confirmation_state: dict[str, Any],
 ) -> dict[str, Any]:
+    domain_config = _domain_config(config)
     rejected = confirmation_state.get("rejected_candidates", [])
     messages = [
         item.get("reason") or "candidate_id 未被接受。"
@@ -616,14 +745,17 @@ def _confirmation_blocked_payload(
             for item in rejected
             if item.get("blocks_execution")
         ],
-        "hard_filters": _display_hard_filters(config.hard_filters),
-        "soft_preferences": _display_soft_preferences(config.soft_preferences),
+        "hard_filters": _display_hard_filters_for_domain(config, domain_config),
+        "soft_preferences": _display_soft_preferences_for_domain(
+            config,
+            domain_config,
+        ),
         "selected_options": _selected_options(config),
-        "extracted_preferences": _extracted_preferences(slots, _domain_config(config)),
+        "extracted_preferences": _extracted_preferences(slots, domain_config),
         "extracted_slots": slots,
         "attribute_grounding": _display_attribute_grounding(
             attribute_grounding,
-            _domain_config(config),
+            domain_config,
         ),
         "confirmation_candidates": confirmation_candidates,
         "confirmation_state": _display_confirmation_state(confirmation_state),
@@ -635,6 +767,7 @@ def _confirmation_blocked_payload(
         "executable_rules": [],
         "execution": _blocked_execution_summary(),
         "result_count": 0,
+        "items": [],
         "top_results": [],
         "trace": {},
         "evidence_pack": {},
@@ -655,14 +788,24 @@ def _confirmation_blocked_payload(
             "total": _sum_usage([extractor_usage]),
         },
     }
-    return _contract_blocked_payload(legacy_payload)
+    return _contract_blocked_payload(legacy_payload, config, domain_config)
 
 
-def _contract_blocked_payload(legacy_payload: dict[str, Any]) -> dict[str, Any]:
+def _contract_blocked_payload(
+    legacy_payload: dict[str, Any],
+    config: WorkbenchConfig,
+    domain_config: DomainConfig,
+) -> dict[str, Any]:
     warnings = legacy_payload.get("warnings", [])
     response = WorkbenchResponse(
+        schema_version=WORKBENCH_SCHEMA_VERSION,
+        domain=domain_config.domain_id,
+        domain_version=domain_config.domain_version,
+        domain_pack_status=domain_config.pack_status,
         status="blocked",
+        query=_contract_query(config),
         answer=legacy_payload["natural_language_report"]["full_text"],
+        items=[],
         top_results=[],
         result_count=0,
         executed_filters=[],
@@ -729,8 +872,8 @@ def _error_payload(config: WorkbenchConfig, exc: Exception) -> dict[str, Any]:
                 "error_type": type(exc).__name__,
             }
         ],
-        "hard_filters": _display_hard_filters(config.hard_filters),
-        "soft_preferences": _display_soft_preferences(config.soft_preferences),
+        "hard_filters": dict(config.hard_filters),
+        "soft_preferences": dict(config.soft_preferences),
         "selected_options": _selected_options(config),
         "extracted_preferences": [],
         "extracted_slots": {},
@@ -745,6 +888,7 @@ def _error_payload(config: WorkbenchConfig, exc: Exception) -> dict[str, Any]:
         "executable_rules": [],
         "execution": _blocked_execution_summary(),
         "result_count": 0,
+        "items": [],
         "top_results": [],
         "trace": {},
         "evidence_pack": {},
@@ -766,8 +910,14 @@ def _error_payload(config: WorkbenchConfig, exc: Exception) -> dict[str, Any]:
         },
     }
     response = WorkbenchResponse(
+        schema_version=WORKBENCH_SCHEMA_VERSION,
+        domain=config.domain_name,
+        domain_version="unknown",
+        domain_pack_status="blocked",
         status="error",
+        query=_contract_query(config),
         answer=legacy_payload["natural_language_report"]["full_text"],
+        items=[],
         top_results=[],
         result_count=0,
         executed_filters=[],
@@ -895,6 +1045,17 @@ def _selected_options(config: WorkbenchConfig) -> dict[str, str]:
         "extractor": EXTRACTOR_OPTIONS.get(config.extractor, str(config.extractor)),
         "generator": GENERATOR_OPTIONS.get(config.generator, str(config.generator)),
         "model": MODEL_OPTIONS.get(config.model, str(config.model)),
+        "domain": config.domain_name,
+    }
+
+
+def _contract_query(config: WorkbenchConfig) -> dict[str, Any]:
+    return {
+        "text": _compose_user_request(config),
+        "domain": config.domain_name,
+        "hard_filters": dict(config.hard_filters),
+        "soft_preferences": dict(config.soft_preferences),
+        "confirmed_candidates": list(config.confirmed_candidates),
     }
 
 
@@ -904,6 +1065,8 @@ def _extract_slots(
     domain_config: DomainConfig | None = None,
 ) -> tuple[dict[str, Any], dict[str, int] | None]:
     domain_config = domain_config or _domain_config(config)
+    if domain_config.domain_id != ADMISSIONS_DOMAIN.domain_id:
+        return _generic_domain_slots(config), None
     soft_prompt = _soft_prompt(config)
     if config.extractor == "regex":
         return _slots_from_inputs(
@@ -1053,6 +1216,37 @@ def _slots_from_inputs(
     return slots
 
 
+def _generic_domain_slots(config: WorkbenchConfig) -> dict[str, Any]:
+    """把非招生 toy domain 的结构化输入作为 slots 进入同一验证管线。"""
+
+    preferences = {
+        key: value
+        for key, value in {
+            **config.hard_filters,
+            **{
+                key: value
+                for key, value in config.soft_preferences.items()
+                if key != "prompt"
+            },
+        }.items()
+        if value not in (None, "", [])
+    }
+    return {
+        "input": _compose_user_request(config),
+        "user_context": {},
+        "preferences": preferences,
+        "raw_sources": {
+            f"preferences.{key}": value
+            for key, value in preferences.items()
+        },
+        "raw_phrases": [
+            str(value)
+            for value in preferences.values()
+            if value not in (None, "", [])
+        ],
+    }
+
+
 def _apply_soft_confirmations(
     classified_rules: dict[str, Any],
     config: WorkbenchConfig,
@@ -1060,6 +1254,8 @@ def _apply_soft_confirmations(
     domain_config: DomainConfig | None = None,
 ) -> dict[str, Any]:
     domain_config = domain_config or _domain_config(config)
+    if domain_config.domain_id != ADMISSIONS_DOMAIN.domain_id:
+        return classified_rules
     updated = dict(classified_rules)
     candidate_rule_ids = {
         rule["rule_id"] for rule in updated.get("candidate_rules", [])
@@ -1686,6 +1882,17 @@ def _stable_value(value: Any) -> str:
 
 
 def _compose_user_request(config: WorkbenchConfig) -> str:
+    if config.domain_name != ADMISSIONS_DOMAIN.domain_id or config.domain_path:
+        prompt = _clean_sentence(config.soft_preferences.get("prompt"))
+        if prompt:
+            return prompt
+        parts = []
+        for key, value in {**config.hard_filters, **config.soft_preferences}.items():
+            if value in (None, "", []):
+                continue
+            parts.append(f"{key}={_format_value(value)}")
+        return "，".join(parts) if parts else config.user_input
+
     hard = config.hard_filters
     soft = config.soft_preferences
     parts = []
@@ -1743,6 +1950,15 @@ def _display_hard_filters(hard_filters: dict[str, Any]) -> dict[str, Any]:
     }
 
 
+def _display_hard_filters_for_domain(
+    config: WorkbenchConfig,
+    domain_config: DomainConfig,
+) -> dict[str, Any]:
+    if domain_config.domain_id == ADMISSIONS_DOMAIN.domain_id:
+        return _display_hard_filters(config.hard_filters)
+    return dict(config.hard_filters)
+
+
 def _boundary_context(soft_preferences: dict[str, Any]) -> dict[str, Any]:
     return {
         "safety_margin_percent": _optional_int(
@@ -1760,6 +1976,15 @@ def _display_soft_preferences(soft_preferences: dict[str, Any]) -> dict[str, Any
         ),
         "tuition_cap_yuan": _optional_int(soft_preferences.get("tuition_cap_yuan")),
     }
+
+
+def _display_soft_preferences_for_domain(
+    config: WorkbenchConfig,
+    domain_config: DomainConfig,
+) -> dict[str, Any]:
+    if domain_config.domain_id == ADMISSIONS_DOMAIN.domain_id:
+        return _display_soft_preferences(config.soft_preferences)
+    return dict(config.soft_preferences)
 
 
 def _clean_text(value: Any) -> str | None:
@@ -2132,7 +2357,7 @@ def _top_result(
         "id": f"result_{rank:03d}",
         "trace": trace,
     }
-    for item in domain_config.payload.get("top_result_mapping") or []:
+    for item in domain_config.top_result_mapping:
         key = item["key"]
         if item.get("computed") == "percent:safety_margin_pct":
             result[key] = _percent(row.get("safety_margin_pct"))
@@ -2145,6 +2370,119 @@ def _top_result(
                 item.get("field_ids") or [],
             )
     return result
+
+
+def _item_card(
+    rank: int,
+    row: dict[str, Any],
+    hard_rules: list[dict[str, Any]],
+    domain_config: DomainConfig,
+) -> dict[str, Any]:
+    top_result = _top_result(rank, row, domain_config)
+    raw = {key: value for key, value in row.items() if key != "trace"}
+    title = _item_title(top_result, raw, domain_config, rank)
+    subtitle = _item_subtitle(top_result, raw, title)
+    attributes = _item_attributes(top_result)
+    return {
+        "item_id": str(top_result.get("id") or f"item_{rank:03d}"),
+        "title": title,
+        "subtitle": subtitle,
+        "primary_attributes": attributes[:4],
+        "secondary_attributes": attributes[4:],
+        "matched_filters": _item_matched_filters(row, hard_rules),
+        "raw": raw,
+    }
+
+
+def _item_title(
+    top_result: dict[str, Any],
+    raw: dict[str, Any],
+    domain_config: DomainConfig,
+    rank: int,
+) -> str:
+    preferred_keys = [
+        "university_name",
+        "product_name",
+        "listing_id",
+        "title",
+        "name",
+        "major_name",
+    ]
+    for key in preferred_keys:
+        value = top_result.get(key)
+        if value not in (None, ""):
+            return str(value)
+    for field_id in ["university_name", "product_name", "listing_id", "major_name"]:
+        source_column = domain_config.source_column_or_none(field_id)
+        if source_column and raw.get(source_column) not in (None, ""):
+            return str(raw[source_column])
+    return f"Item {rank}"
+
+
+def _item_subtitle(
+    top_result: dict[str, Any],
+    raw: dict[str, Any],
+    title: str,
+) -> str:
+    preferred_keys = [
+        "full_major_name",
+        "major_name",
+        "group_code",
+        "category",
+        "property_type",
+        "city",
+        "brand",
+    ]
+    for key in preferred_keys:
+        value = top_result.get(key)
+        if value not in (None, "") and str(value) != title:
+            return str(value)
+    for value in raw.values():
+        if value not in (None, "") and str(value) != title:
+            return str(value)
+    return ""
+
+
+def _item_attributes(top_result: dict[str, Any]) -> list[dict[str, Any]]:
+    skipped = {"id", "trace"}
+    attributes = []
+    for key, value in top_result.items():
+        if key in skipped or value in (None, ""):
+            continue
+        attributes.append(
+            {
+                "key": key,
+                "label": key,
+                "value": value,
+            }
+        )
+    return attributes
+
+
+def _item_matched_filters(
+    row: dict[str, Any],
+    hard_rules: list[dict[str, Any]],
+) -> list[dict[str, Any]]:
+    trace_by_rule = {
+        item.get("rule_id"): item
+        for item in row.get("trace", [])
+        if item.get("status") == "pass"
+    }
+    matched = []
+    for rule in hard_rules:
+        rule_id = rule.get("rule_id")
+        trace = trace_by_rule.get(rule_id)
+        matched.append(
+            {
+                "id": rule_id,
+                "field": rule.get("field"),
+                "operator": rule.get("operator"),
+                "value": rule.get("value"),
+                "matched": bool(trace),
+                "text": _trace_text(trace or rule),
+            }
+        )
+    return matched
 
 
 def _first_row_value(

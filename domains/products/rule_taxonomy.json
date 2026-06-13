@@ -1,0 +1,50 @@
+{
+  "deterministic_rules": [
+    {
+      "rule_id": "d_category",
+      "source_text": "category",
+      "category": "deterministic",
+      "field_id": "category",
+      "field": "category",
+      "operator": "in",
+      "slot_path": ["preferences", "categories"],
+      "skip_if_missing": true,
+      "confidence": 1.0,
+      "requires_human_confirmation": false,
+      "trace_reason": "明确商品类别可以作为确定性筛选。"
+    },
+    {
+      "rule_id": "d_price_cap",
+      "source_text": "price cap",
+      "category": "deterministic",
+      "field_id": "price_usd",
+      "field": "price_usd",
+      "operator": "<=",
+      "slot_path": ["preferences", "price_cap"],
+      "skip_if_missing": true,
+      "confidence": 1.0,
+      "requires_human_confirmation": false,
+      "trace_reason": "明确价格上限可以作为确定性筛选。"
+    },
+    {
+      "rule_id": "d_rating_min",
+      "source_text": "rating",
+      "category": "deterministic",
+      "field_id": "rating",
+      "field": "rating",
+      "operator": ">=",
+      "slot_path": ["preferences", "rating_min"],
+      "skip_if_missing": true,
+      "confidence": 1.0,
+      "requires_human_confirmation": false,
+      "trace_reason": "明确最低评分可以作为确定性筛选。"
+    }
+  ],
+  "context_rules": [],
+  "candidate_rules": [],
+  "llm_needed_parts": [],
+  "confirmation_questions": [],
+  "simulated_confirmations": {},
+  "confirmed_candidate_rules": [],
+  "non_executable_preferences": []
+}

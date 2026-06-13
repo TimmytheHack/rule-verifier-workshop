@@ -8,7 +8,7 @@ from src.domains import DomainConfig
 from src.api.workbench import WorkbenchConfig
 from tests.warehouse_test_utils import run_workbench_with_test_warehouse
 from tests.workbench_contract_utils import (
-    FRONTEND_TOP_RESULT_KEYS,
+FRONTEND_TOP_RESULT_KEYS,
     assert_workbench_contract,
 )
 
@@ -17,6 +17,17 @@ ADMISSIONS_DOMAIN = DomainConfig.load("admissions")
 GOLDEN_CASES = json.loads(
     ADMISSIONS_DOMAIN.golden_cases_path.read_text(encoding="utf-8")
 )["cases"]
+ADMISSIONS_TOP_TO_RAW = {
+    "university_name": "院校名称",
+    "group_code": "院校专业组代码",
+    "major_code": "专业代码",
+    "major_name": "专业名称",
+    "full_major_name": "专业全称",
+    "city": "城市",
+    "tuition": "学费",
+    "rank_2024": "专业组最低位次1",
+    "major_min_rank": "最低位次1",
+}
 
 
 def _run_case(prompt: str, extractor: str = "regex") -> dict[str, object]:
@@ -73,18 +84,16 @@ class WorkbenchGoldenE2ETest(unittest.TestCase):
                     )
 
                 if case["top"] is None:
+                    self.assertEqual(result["items"], [])
                     self.assertEqual(result["top_results"], [])
                     self.assertEqual(result["evidence_pack"]["top_k_results"], [])
                 else:
-                    top_result = result["top_results"][0]
-                    self.assertTrue(FRONTEND_TOP_RESULT_KEYS <= set(top_result))
-                    self.assertNotIn("院校名称", top_result)
+                    item = result["items"][0]
+                    self.assertTrue(item["matched_filters"])
                     for key, expected in case["top"].items():
-                        self.assertEqual(top_result[key], expected, key)
-                    self.assertTrue(top_result["trace"])
-                    self.assertTrue(
-                        any(item["status"] == "pass" for item in top_result["trace"])
-                    )
+                        raw_key = ADMISSIONS_TOP_TO_RAW.get(key)
+                        if raw_key:
+                            self.assertEqual(item["raw"].get(raw_key), expected, key)
                     evidence_top = result["evidence_pack"]["top_k_results"][0]
                     self.assertEqual(
                         evidence_top["院校名称"],

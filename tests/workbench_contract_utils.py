@@ -4,8 +4,14 @@ from typing import Any
 
 
 CONTRACT_KEYS = {
+    "schema_version",
+    "domain",
+    "domain_version",
+    "domain_pack_status",
     "status",
+    "query",
     "answer",
+    "items",
     "top_results",
     "result_count",
     "executed_filters",
@@ -21,6 +27,16 @@ CONTRACT_KEYS = {
 }
 
 STATUS_VALUES = {"ok", "needs_confirmation", "no_results", "blocked", "error"}
+DOMAIN_PACK_STATUS_VALUES = {"draft", "needs_review", "approved", "blocked"}
+ITEM_KEYS = {
+    "item_id",
+    "title",
+    "subtitle",
+    "primary_attributes",
+    "secondary_attributes",
+    "matched_filters",
+    "raw",
+}
 
 FRONTEND_TOP_RESULT_KEYS = {
     "university_name",
@@ -52,8 +68,14 @@ CHINESE_TOP_RESULT_KEYS = {
 
 def assert_workbench_contract(testcase: Any, payload: dict[str, Any]) -> None:
     testcase.assertTrue(CONTRACT_KEYS <= set(payload))
+    testcase.assertEqual(payload["schema_version"], "workbench_response.v1")
+    testcase.assertIsInstance(payload["domain"], str)
+    testcase.assertIsInstance(payload["domain_version"], str)
+    testcase.assertIn(payload["domain_pack_status"], DOMAIN_PACK_STATUS_VALUES)
     testcase.assertIn(payload["status"], STATUS_VALUES)
+    testcase.assertIsInstance(payload["query"], dict)
     testcase.assertIsInstance(payload["answer"], str)
+    testcase.assertIsInstance(payload["items"], list)
     testcase.assertIsInstance(payload["top_results"], list)
     testcase.assertIsInstance(payload["result_count"], int)
     testcase.assertIsInstance(payload["executed_filters"], list)
@@ -66,10 +88,23 @@ def assert_workbench_contract(testcase: Any, payload: dict[str, Any]) -> None:
     testcase.assertIsInstance(payload["warnings"], list)
     testcase.assertIsInstance(payload["evidence_pack"], dict)
     testcase.assertIsInstance(payload["debug_trace"], dict)
+    for item in payload["items"]:
+        testcase.assertTrue(ITEM_KEYS <= set(item))
+        testcase.assertIsInstance(item["item_id"], str)
+        testcase.assertIsInstance(item["title"], str)
+        testcase.assertIsInstance(item["subtitle"], str)
+        testcase.assertIsInstance(item["primary_attributes"], list)
+        testcase.assertIsInstance(item["secondary_attributes"], list)
+        testcase.assertIsInstance(item["matched_filters"], list)
+        testcase.assertIsInstance(item["raw"], dict)
     for warning in payload["warnings"]:
         testcase.assertIsInstance(warning, dict)
         testcase.assertIn("code", warning)
         testcase.assertIn("message", warning)
+    for result in payload["top_results"]:
+        testcase.assertTrue(CHINESE_TOP_RESULT_KEYS.isdisjoint(result))
+    if payload["domain"] != "admissions":
+        return
     for result in payload["top_results"]:
         testcase.assertTrue(FRONTEND_TOP_RESULT_KEYS <= set(result))
         testcase.assertTrue(CHINESE_TOP_RESULT_KEYS.isdisjoint(result))

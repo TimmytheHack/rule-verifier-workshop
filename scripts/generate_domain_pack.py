@@ -534,7 +534,7 @@ def approve_domain_pack(
         spec["reviewed"] = True
         spec["allowed_ops"] = list(spec.get("candidate_allowed_ops") or [])
 
-    domain["status"] = "active"
+    domain["status"] = "approved"
     domain["review_required"] = False
     domain["data"]["required_field_ids"] = [
         field_id for field_id in output_fields if field_id in fields

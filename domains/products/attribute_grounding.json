@@ -1,0 +1,18 @@
+{
+  "description": "Products toy domain attribute grounding policy.",
+  "slot_policies": {
+    "preferences.categories": {
+      "field_id": "category",
+      "attribute_class": "deterministic_candidate"
+    },
+    "preferences.price_cap": {
+      "field_id": "price_usd",
+      "attribute_class": "deterministic_candidate"
+    },
+    "preferences.rating_min": {
+      "field_id": "rating",
+      "attribute_class": "deterministic_candidate"
+    }
+  },
+  "other_vague_policies": {}
+}

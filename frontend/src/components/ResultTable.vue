@@ -14,11 +14,43 @@ defineProps({
 
 const emit = defineEmits(['view-trace']);
 
-function formatNumber(value) {
-  if (value === null || value === undefined || value === '') {
-    return '暂无';
+function isItem(row) {
+  return row && Object.prototype.hasOwnProperty.call(row, 'item_id');
+}
+
+function rowTitle(row) {
+  return isItem(row) ? row.title : row.university_name;
+}
+
+function rowSubtitle(row) {
+  if (isItem(row)) {
+    return row.subtitle;
   }
-  return new Intl.NumberFormat('zh-CN').format(value);
+  return `专业组代码：${row.group_code || '暂无'}`;
+}
+
+function rowAttributes(row) {
+  if (isItem(row)) {
+    return [
+      ...(row.primary_attributes || []),
+      ...(row.secondary_attributes || []),
+    ].slice(0, 8);
+  }
+  return [
+    { key: 'major_name', label: '专业', value: row.major_name },
+    { key: 'city', label: '城市', value: row.city },
+    { key: 'tuition', label: '学费', value: row.tuition },
+    { key: 'group_min_rank', label: '专业组最低位次', value: row.group_min_rank },
+    { key: 'major_min_rank', label: '专业最低位次', value: row.major_min_rank },
+    { key: 'safety_margin', label: '位次差距', value: row.safety_margin },
+  ];
+}
+
+function matchedCount(row) {
+  if (isItem(row)) {
+    return (row.matched_filters || []).filter((item) => item.matched).length;
+  }
+  return (row.trace || []).filter((item) => item.status === 'pass').length;
 }
 </script>
 
@@ -36,48 +68,27 @@ function formatNumber(value) {
 
     <div class="table-scroll">
       <el-table :data="results" border stripe>
-        <el-table-column label="院校名称" min-width="180">
+        <el-table-column label="条目" min-width="220">
           <template #default="{ row }">
-            <strong>{{ row.university_name }}</strong>
-            <p class="table-subtext">专业组代码：{{ row.group_code }}</p>
+            <strong>{{ rowTitle(row) }}</strong>
+            <p class="table-subtext">{{ rowSubtitle(row) }}</p>
           </template>
         </el-table-column>
-        <el-table-column label="专业" min-width="260">
+        <el-table-column label="属性" min-width="420">
           <template #default="{ row }">
-            <strong>{{ row.major_name }}</strong>
-            <p class="table-subtext">专业代码：{{ row.major_code || '暂无' }}</p>
-            <p v-if="row.full_major_name" class="table-subtext compact-major">
-              {{ row.full_major_name }}
-            </p>
+            <div class="attribute-list">
+              <el-tag
+                v-for="item in rowAttributes(row)"
+                :key="item.key"
+                effect="plain"
+              >
+                {{ item.label }}：{{ item.value ?? '暂无' }}
+              </el-tag>
+            </div>
           </template>
         </el-table-column>
-        <el-table-column prop="city" label="城市" width="110" />
-        <el-table-column label="选科要求" width="120">
-          <template #default="{ row }">
-            {{ row.subject_requirement || '不限' }}
-          </template>
-        </el-table-column>
-        <el-table-column label="学费" width="120">
-          <template #default="{ row }">
-            ¥{{ formatNumber(row.tuition) }}
-          </template>
-        </el-table-column>
-        <el-table-column label="专业组最低位次" width="150">
-          <template #default="{ row }">
-            {{ formatNumber(row.group_min_rank) }}
-          </template>
-        </el-table-column>
-        <el-table-column label="专业最低位次" width="140">
-          <template #default="{ row }">
-            {{ formatNumber(row.major_min_rank) }}
-          </template>
-        </el-table-column>
-        <el-table-column label="位次差距" width="120">
-          <template #default="{ row }">
-            <el-tag :type="row.safety_margin ? 'success' : 'info'" effect="plain">
-              {{ row.safety_margin || '未计算' }}
-            </el-tag>
-          </template>
+        <el-table-column label="匹配规则" width="120">
+          <template #default="{ row }">{{ matchedCount(row) }}</template>
         </el-table-column>
         <el-table-column label="操作" width="130" fixed="right">
           <template #default="{ row }">

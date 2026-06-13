@@ -1,0 +1,21 @@
+{
+  "cases": [
+    {
+      "case_id": "p01_audio_under_100",
+      "slots": {
+        "preferences": {
+          "categories": ["audio"],
+          "price_cap": 100
+        }
+      },
+      "hard_rule_ids": ["e_category", "e_price_cap"],
+      "result_count": 2,
+      "top": {
+        "product_id": 17,
+        "product_name": "Speaker Mini",
+        "category": "audio",
+        "price_usd": 49
+      }
+    }
+  ]
+}

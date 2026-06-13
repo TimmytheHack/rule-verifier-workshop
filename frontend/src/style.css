@@ -558,6 +558,12 @@ input {
   margin: 6px 0 0;
 }
 
+.attribute-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
 .compact-major {
   max-width: 520px;
   line-height: 1.5;

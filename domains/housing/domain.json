@@ -1,6 +1,8 @@
 {
   "domain_id": "housing",
   "display_name": "租房筛选",
+  "domain_version": "1",
+  "status": "approved",
   "data": {
     "workbook_path": "fixtures/housing.csv",
     "fixture_path": "fixtures/housing.csv",
@@ -15,7 +17,8 @@
     "rule_taxonomy": "rule_taxonomy.json",
     "value_aliases": "value_aliases.json",
     "answer_templates": "answer_templates.json",
-    "golden_cases": "golden_cases.json"
+    "golden_cases": "golden_cases.json",
+    "top_result_mapping": "top_result_mapping.yaml"
   },
   "execution": {
     "rank_field_id": null,

@@ -1,0 +1,76 @@
+{
+  "fields": {
+    "product_id": {
+      "source_column": "product_id",
+      "type": "number",
+      "label": "商品编号",
+      "aliases": ["product_id", "商品编号"],
+      "allowed_ops": ["eq", "sort"],
+      "nullable": false,
+      "notes": "商品追溯编号。"
+    },
+    "product_name": {
+      "source_column": "product_name",
+      "type": "string",
+      "label": "商品名称",
+      "aliases": ["product_name", "商品名称"],
+      "allowed_ops": ["contains", "eq"],
+      "nullable": false,
+      "notes": "展示字段，不从模糊偏好自动扩展。"
+    },
+    "category": {
+      "source_column": "category",
+      "type": "enum",
+      "label": "商品类别",
+      "aliases": ["category", "类别"],
+      "allowed_ops": ["eq", "in"],
+      "nullable": false,
+      "notes": "商品类别。"
+    },
+    "price_usd": {
+      "source_column": "price_usd",
+      "type": "number",
+      "label": "价格",
+      "aliases": ["price", "price_usd", "价格"],
+      "allowed_ops": ["<=", ">=", "between", "sort"],
+      "nullable": false,
+      "notes": "商品价格，单位美元。"
+    },
+    "rating": {
+      "source_column": "rating",
+      "type": "number",
+      "label": "评分",
+      "aliases": ["rating", "评分"],
+      "allowed_ops": [">=", "sort"],
+      "nullable": true,
+      "notes": "商品评分。"
+    },
+    "stock_count": {
+      "source_column": "stock_count",
+      "type": "number",
+      "label": "库存",
+      "aliases": ["stock_count", "库存"],
+      "allowed_ops": [">=", "sort"],
+      "nullable": true,
+      "notes": "库存数量。"
+    },
+    "brand": {
+      "source_column": "brand",
+      "type": "enum",
+      "label": "品牌",
+      "aliases": ["brand", "品牌"],
+      "allowed_ops": ["eq", "in"],
+      "nullable": true,
+      "notes": "商品品牌。"
+    },
+    "description": {
+      "source_column": "description",
+      "type": "string",
+      "label": "描述",
+      "aliases": ["description", "描述"],
+      "allowed_ops": ["contains"],
+      "nullable": true,
+      "notes": "展示字段。"
+    }
+  }
+}

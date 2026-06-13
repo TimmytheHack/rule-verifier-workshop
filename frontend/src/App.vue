@@ -204,7 +204,7 @@ function openTrace(result) {
       />
 
       <ResultTable
-        :results="runData.top_results"
+        :results="runData.items?.length ? runData.items : runData.top_results"
         :total="runData.result_count"
         @view-trace="openTrace"
       />

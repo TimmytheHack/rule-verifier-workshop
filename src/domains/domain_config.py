@@ -7,6 +7,11 @@ from functools import lru_cache
 from pathlib import Path
 from typing import Any
 
+try:
+    import yaml
+except ImportError:  # pragma: no cover - JSON-compatible 配置仍可运行
+    yaml = None
+
 
 ROOT_DIR = Path(__file__).resolve().parents[2]
 DOMAINS_DIR = ROOT_DIR / "domains"
@@ -69,6 +74,26 @@ class DomainConfig:
         return self._path("golden_cases")
 
     @property
+    def top_result_mapping_path(self) -> Path | None:
+        paths = self.payload.get("paths") or {}
+        if "top_result_mapping" not in paths:
+            return None
+        return self.resolve_path(paths["top_result_mapping"])
+
+    @property
+    def domain_version(self) -> str:
+        return str(self.payload.get("domain_version") or "1")
+
+    @property
+    def pack_status(self) -> str:
+        status = str(self.payload.get("status") or "blocked")
+        if status == "active":
+            return "approved"
+        if status in {"draft", "needs_review", "approved", "blocked"}:
+            return status
+        return "blocked"
+
+    @property
     def fixture_path(self) -> Path | None:
         value = (self.payload.get("data") or {}).get("fixture_path")
         return self.resolve_path(value) if value else None
@@ -111,6 +136,13 @@ class DomainConfig:
     @property
     def answer_templates(self) -> dict[str, Any]:
         return json.loads(self.answer_templates_path.read_text(encoding="utf-8"))
+
+    @property
+    def top_result_mapping(self) -> list[dict[str, Any]]:
+        path = self.top_result_mapping_path
+        if path and path.exists():
+            return _load_json_like(path)
+        return list(self.payload.get("top_result_mapping") or [])
 
     @property
     def subject_policy(self) -> dict[str, Any]:
@@ -196,3 +228,15 @@ def _load_domain(domain_id: str) -> DomainConfig:
         raise FileNotFoundError(f"Domain pack not found: {path}")
     payload = json.loads(path.read_text(encoding="utf-8"))
     return DomainConfig(domain_id=domain_id, root=root, payload=payload)
+
+
+def _load_json_like(path: Path) -> Any:
+    """读取 JSON/YAML 配置。"""
+
+    text = path.read_text(encoding="utf-8")
+    try:
+        return json.loads(text)
+    except json.JSONDecodeError:
+        if yaml is None:
+            raise
+        return yaml.safe_load(text)

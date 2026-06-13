@@ -1,0 +1,9 @@
+[
+  {"key": "product_id", "field_id": "product_id"},
+  {"key": "product_name", "field_id": "product_name"},
+  {"key": "category", "field_id": "category"},
+  {"key": "price_usd", "field_id": "price_usd"},
+  {"key": "rating", "field_id": "rating"},
+  {"key": "stock_count", "field_id": "stock_count"},
+  {"key": "brand", "field_id": "brand"}
+]

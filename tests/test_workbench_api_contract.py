@@ -1,16 +1,25 @@
 from __future__ import annotations
 
 import unittest
+from tempfile import TemporaryDirectory
 
+from scripts.generate_domain_pack import generate_domain_pack
 from src.api.workbench import WorkbenchConfig
-from tests.warehouse_test_utils import run_workbench_with_test_warehouse
-from tests.workbench_contract_utils import assert_workbench_contract
+from tests.warehouse_test_utils import (
+    run_workbench_with_domain_warehouse,
+    run_workbench_with_test_warehouse,
+)
+from tests.workbench_contract_utils import (
+    FRONTEND_TOP_RESULT_KEYS,
+    assert_workbench_contract,
+)
 
 
 OK_PROMPT = "广东物理，排位32000，想学计算机，广深优先。"
 JIKE_PROMPT = "广东物理，物化生，排位32000，想学计科，广深优先。"
 PRD_PROMPT = "广东物理，排名3.2万，计算机相关，珠三角优先，不要校企合作。"
 NO_RESULTS_PROMPT = "广东物理，排位90000，想学网络安全，深圳。"
+HOUSING_FIXTURE = "domains/housing/fixtures/housing.csv"
 
 
 def _run(prompt: str, confirmed: list[str] | None = None) -> dict[str, object]:
@@ -53,10 +62,14 @@ def _contract_snapshot(result: dict[str, object]) -> dict[str, object]:
 
 
 class WorkbenchApiContractTest(unittest.TestCase):
-    def test_ok_contract_shape_and_top_result_keys(self) -> None:
+    def test_admissions_ok_contract_shape_and_top_result_keys(self) -> None:
         result = _run(OK_PROMPT)
 
         assert_workbench_contract(self, result)
+        self.assertEqual(result["schema_version"], "workbench_response.v1")
+        self.assertEqual(result["domain"], "admissions")
+        self.assertEqual(result["domain_pack_status"], "approved")
+        self.assertTrue(result["items"])
         self.assertEqual(
             _contract_snapshot(result),
             {
@@ -78,6 +91,9 @@ class WorkbenchApiContractTest(unittest.TestCase):
         self.assertIn("rank_2024", top_result)
         self.assertIn("plan_count", top_result)
         self.assertNotIn("院校名称", top_result)
+        self.assertTrue(FRONTEND_TOP_RESULT_KEYS <= set(top_result))
+        self.assertEqual(result["items"][0]["title"], top_result["university_name"])
+        self.assertTrue(result["items"][0]["matched_filters"])
         self.assertIn("sql", result["evidence_pack"]["execution_summary"])
 
     def test_needs_confirmation_keeps_partial_out_of_executed_filters(self) -> None:
@@ -91,6 +107,12 @@ class WorkbenchApiContractTest(unittest.TestCase):
             [item["id"] for item in result["executed_filters"]],
         )
         self.assertEqual(result["confirmed_rules"], [])
+        self.assertFalse(
+            any(
+                item["id"].startswith("e_confirmed_")
+                for item in result["executed_filters"]
+            )
+        )
         self.assertIn("needs_confirmation", [w["code"] for w in result["warnings"]])
 
     def test_confirmed_rerun_promotes_candidate_by_id_only(self) -> None:
@@ -121,6 +143,7 @@ class WorkbenchApiContractTest(unittest.TestCase):
         self.assertEqual(result["evidence_pack"]["top_k_results"], [])
         self.assertIn("共筛选到 0 条", result["answer"])
         self.assertIn("no_results", [warning["code"] for warning in result["warnings"]])
+        self.assertEqual(result["items"], [])
 
     def test_blocked_contract_does_not_execute_sql(self) -> None:
         result = _run(PRD_PROMPT, ["cand_forged"])
@@ -171,7 +194,86 @@ class WorkbenchApiContractTest(unittest.TestCase):
         self.assertEqual(result["top_results"], [])
         self.assertEqual(result["debug_trace"]["execution"]["sql"], "")
         self.assertNotIn("Traceback", result["answer"])
+        self.assertNotIn("Traceback", str(result["warnings"]))
         self.assertIn("workbench_error", [w["code"] for w in result["warnings"]])
+
+    def test_housing_returns_generic_items_and_domain_top_results(self) -> None:
+        result = run_workbench_with_domain_warehouse(
+            WorkbenchConfig(
+                domain_name="housing",
+                user_input="Austin, at least 2 bedrooms, under 1900.",
+                hard_filters={
+                    "city": ["Austin"],
+                    "bedrooms_min": 2,
+                    "rent_cap": 1900,
+                    "property_types": ["apartment", "townhouse"],
+                },
+                soft_preferences={
+                    "prompt": "Austin, at least 2 bedrooms, under 1900."
+                },
+                extractor="regex",
+            )
+        )
+
+        assert_workbench_contract(self, result)
+        self.assertEqual(result["domain"], "housing")
+        self.assertEqual(result["status"], "ok")
+        self.assertEqual(result["result_count"], 3)
+        self.assertEqual(result["items"][0]["item_id"], "result_001")
+        self.assertEqual(result["items"][0]["title"], "14")
+        self.assertIn("rent_usd", result["top_results"][0])
+        self.assertNotIn("university_name", result["top_results"][0])
+
+    def test_products_returns_generic_items_and_domain_top_results(self) -> None:
+        result = run_workbench_with_domain_warehouse(
+            WorkbenchConfig(
+                domain_name="products",
+                user_input="audio products under 100",
+                hard_filters={
+                    "categories": ["audio"],
+                    "price_cap": 100,
+                },
+                soft_preferences={"prompt": "audio products under 100"},
+                extractor="regex",
+            )
+        )
+
+        assert_workbench_contract(self, result)
+        self.assertEqual(result["domain"], "products")
+        self.assertEqual(result["status"], "ok")
+        self.assertEqual(result["result_count"], 2)
+        self.assertEqual(result["items"][0]["title"], "Speaker Mini")
+        self.assertEqual(result["top_results"][0]["product_name"], "Speaker Mini")
+        self.assertEqual(result["top_results"][0]["price_usd"], 49)
+
+    def test_draft_domain_pack_is_blocked_before_sql(self) -> None:
+        with TemporaryDirectory() as directory:
+            generated = generate_domain_pack(
+                source_path=HOUSING_FIXTURE,
+                domain_name="draft_contract",
+                output_root=directory,
+            )
+            result = run_workbench_with_domain_warehouse(
+                WorkbenchConfig(
+                    domain_name="draft_contract",
+                    domain_path=str(generated.domain_dir),
+                    user_input="Austin under 1900",
+                    hard_filters={"city": ["Austin"], "rent_cap": 1900},
+                    soft_preferences={"prompt": "Austin under 1900"},
+                    extractor="regex",
+                )
+            )
+
+        assert_workbench_contract(self, result)
+        self.assertEqual(result["status"], "blocked")
+        self.assertEqual(result["domain_pack_status"], "draft")
+        self.assertEqual(result["result_count"], 0)
+        self.assertEqual(result["items"], [])
+        self.assertEqual(result["debug_trace"]["execution"]["sql"], "")
+        self.assertIn(
+            "domain_pack_not_approved",
+            [warning["code"] for warning in result["warnings"]],
+        )
 
 
 if __name__ == "__main__":

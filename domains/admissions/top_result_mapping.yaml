@@ -1,0 +1,21 @@
+[
+  {"key": "year", "field_id": "year"},
+  {"key": "batch", "field_id": "batch"},
+  {"key": "university_code", "field_id": "university_code"},
+  {"key": "university_name", "field_id": "university_name"},
+  {"key": "group_code", "field_id": "group_code"},
+  {"key": "group_name", "field_id": "group_name"},
+  {"key": "major_code", "field_id": "major_code"},
+  {"key": "major_name", "field_id": "major_name"},
+  {"key": "full_major_name", "field_id": "full_major_name"},
+  {"key": "subject_requirement", "field_id": "subject_requirement"},
+  {"key": "province", "field_id": "school_province"},
+  {"key": "city", "field_id": "city"},
+  {"key": "tuition", "field_id": "tuition_yuan_per_year"},
+  {"key": "rank_2024", "field_id": "group_min_rank_2024"},
+  {"key": "major_rank_2024", "field_id": "major_min_rank_2024"},
+  {"key": "plan_count", "field_ids": ["plan_count", "group_plan_count"]},
+  {"key": "group_min_rank", "field_id": "group_min_rank_2024"},
+  {"key": "major_min_rank", "field_id": "major_min_rank_2024"},
+  {"key": "safety_margin", "computed": "percent:safety_margin_pct"}
+]

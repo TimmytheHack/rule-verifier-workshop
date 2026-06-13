@@ -1,0 +1,18 @@
+{
+  "rank_field_id": null,
+  "money_field_ids": ["price_usd"],
+  "result_line_fields": [
+    {"field_id": "product_id", "label": "商品编号", "rank_prefix": true},
+    {"field_id": "product_name", "label": "商品"},
+    {"field_id": "category", "label": "类别"},
+    {"field_id": "price_usd", "label": "价格", "format": "money"},
+    {"field_id": "rating", "label": "评分", "optional": true}
+  ],
+  "result_text_fields": [
+    {"field_id": "product_id", "label": "商品编号"},
+    {"field_id": "product_name", "label": "商品"},
+    {"field_id": "category", "label": "类别"},
+    {"field_id": "price_usd", "label": "价格"},
+    {"field_id": "rating", "label": "评分", "optional": true}
+  ]
+}
