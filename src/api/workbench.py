@@ -19,6 +19,12 @@ from scripts.run_mvp_demo import (
 )
 from src.adapters.data_warehouse import SchemaValueIndex, load_structured_dataset
 from src.adapters.excel_adapter import ExcelAdapter, ExcelDataSet
+from src.executors.duckdb_executor import (
+    DuckDBExecutor,
+    ExecutionAudit,
+    ExecutionResult,
+    hard_filter_rules,
+)
 from src.executors.pandas_executor import PandasExecutor
 from src.extractors.deepseek_extractor import (
     DeepSeekClient,
@@ -62,6 +68,7 @@ MODEL_OPTIONS = {
 }
 INTERACTIVE_DEEPSEEK_TIMEOUT_SECONDS = 25
 INTERACTIVE_DEEPSEEK_MAX_RETRIES = 1
+EVIDENCE_TOP_K = 5
 
 NOT_EXECUTED_COOPERATION_TEXT = "中外合作未执行：缺少合作办学类型字段"
 NOT_EXECUTED_COOPERATION_REASON = (
@@ -122,26 +129,29 @@ def run_workbench(config: WorkbenchConfig) -> dict[str, Any]:
         TAXONOMY_PATH,
         simulated_confirmation_enabled=True,
     ).final_executable_rules(classified_rules)
-    raw_results = PandasExecutor().execute(
-        dataset.dataframe,
-        final_rules,
+    hard_rules, _ = hard_filter_rules(final_rules)
+    execution = _execute_verified_hard_rules(
+        dataset=dataset,
+        executable_rules=final_rules,
         user_rank=slots.get("user_context", {}).get("user_rank"),
+        top_k=EVIDENCE_TOP_K,
     )
     traced_results = TraceGenerator().add_traces(
-        raw_results,
-        executable_rules=final_rules,
+        execution.rows,
+        executable_rules=hard_rules,
         not_executed_preferences=classified_rules.get("non_executable_preferences", []),
     )
     extracted_preferences = _extracted_preferences(slots)
     evidence = EvidencePack.from_verified_pipeline(
         user_request=_compose_user_request(config),
-        executed_rules=final_rules,
+        executed_rules=hard_rules,
         classified_rules=classified_rules,
         traced_results=traced_results,
-        top_k=5,
+        top_k=EVIDENCE_TOP_K,
         extracted_preferences=extracted_preferences,
         attribute_grounding=attribute_grounding,
         proposed_rules=proposed_rules,
+        execution_summary=execution.audit.to_dict(),
     )
     report, generator_usage = _generate_report(
         config=config,
@@ -166,11 +176,12 @@ def run_workbench(config: WorkbenchConfig) -> dict[str, Any]:
         "candidate_rules": _candidate_rules(classified_rules),
         "not_executed_preferences": _not_executed_preferences(classified_rules),
         "simulated_confirmations": _simulated_confirmations(classified_rules),
-        "executable_rules": [_executable_rule(rule) for rule in final_rules],
+        "executable_rules": [_executable_rule(rule) for rule in hard_rules],
+        "execution": _display_execution_summary(execution.audit.to_dict()),
         "result_count": len(traced_results),
         "top_results": [
             _top_result(rank, row)
-            for rank, row in enumerate(traced_results[:5], start=1)
+            for rank, row in enumerate(traced_results[:EVIDENCE_TOP_K], start=1)
         ],
         "trace": {},
         "natural_language_report": _with_context_warnings(report, slots),
@@ -217,6 +228,43 @@ def _load_dataset_cached(
 ) -> ExcelDataSet:
     _ = (modified_ns, file_size)
     return ExcelAdapter(workbook_path, REQUIRED_COLUMNS).load()
+
+
+def _execute_verified_hard_rules(
+    dataset: ExcelDataSet,
+    executable_rules: list[dict[str, Any]],
+    user_rank: int | None,
+    top_k: int,
+) -> ExecutionResult:
+    if WAREHOUSE_DATABASE_PATH.exists():
+        return DuckDBExecutor(WAREHOUSE_DATABASE_PATH).execute(
+            executable_rules,
+            user_rank=user_rank,
+            top_k=top_k,
+        )
+
+    hard_rules, skipped_soft_rules = hard_filter_rules(executable_rules)
+    rows = PandasExecutor().execute(dataset.dataframe, hard_rules, user_rank=user_rank)
+    return ExecutionResult(
+        rows=rows,
+        audit=ExecutionAudit(
+            executor="pandas",
+            sql="",
+            params=[],
+            input_row_count=len(dataset.dataframe),
+            filtered_row_count=len(rows),
+            sort_key=[
+                "专业组最低位次1 ASC NULLS LAST",
+                "院校排名 ASC NULLS LAST",
+                "ID ASC NULLS LAST",
+            ],
+            top_k=top_k,
+            hard_rule_ids=[str(rule.get("rule_id")) for rule in hard_rules],
+            skipped_soft_rule_ids=[
+                str(rule.get("rule_id")) for rule in skipped_soft_rules
+            ],
+        ),
+    )
 
 
 def _load_schema_registry(headers: tuple[str, ...]) -> SchemaRegistry:
@@ -856,6 +904,20 @@ def _display_attribute_grounding(grounding: dict[str, Any]) -> dict[str, Any]:
             }
             for record in grounding.get("attributes", [])
         ],
+    }
+
+
+def _display_execution_summary(summary: dict[str, Any]) -> dict[str, Any]:
+    return {
+        "executor": summary.get("executor"),
+        "sql": summary.get("sql"),
+        "params": summary.get("params", []),
+        "input_row_count": summary.get("input_row_count"),
+        "filtered_row_count": summary.get("filtered_row_count"),
+        "sort_key": summary.get("sort_key", []),
+        "top_k": summary.get("top_k"),
+        "hard_rule_ids": summary.get("hard_rule_ids", []),
+        "skipped_soft_rule_ids": summary.get("skipped_soft_rule_ids", []),
     }
 
 

@@ -27,6 +27,14 @@ class ApiWorkbenchTest(unittest.TestCase):
                 for record in result["attribute_grounding"]["attributes"]
             )
         )
+        execution = result["execution"]
+        self.assertEqual(execution["executor"], "duckdb")
+        self.assertIn("sql", execution)
+        self.assertIsInstance(execution["params"], list)
+        self.assertGreater(execution["input_row_count"], 0)
+        self.assertGreaterEqual(execution["filtered_row_count"], result["result_count"])
+        self.assertEqual(execution["top_k"], 5)
+        self.assertTrue(execution["sort_key"])
 
 
 if __name__ == "__main__":

@@ -24,6 +24,7 @@ class EvidencePack:
     extracted_preferences: list[dict[str, Any]] = field(default_factory=list)
     attribute_grounding_summary: dict[str, Any] = field(default_factory=dict)
     proposed_rule_audit: list[dict[str, Any]] = field(default_factory=list)
+    execution_summary: dict[str, Any] = field(default_factory=dict)
 
     @classmethod
     def from_verified_pipeline(
@@ -36,11 +37,13 @@ class EvidencePack:
         extracted_preferences: list[dict[str, Any]] | None = None,
         attribute_grounding: dict[str, Any] | None = None,
         proposed_rules: list[dict[str, Any]] | None = None,
+        execution_summary: dict[str, Any] | None = None,
     ) -> "EvidencePack":
         """Build an answer-safe evidence pack from post-execution artifacts."""
 
         compact_rules = [_compact_rule(rule) for rule in executed_rules]
-        confirmations = _candidate_confirmations(classified_rules)
+        execution = execution_summary or {}
+        confirmations = _candidate_confirmations(classified_rules, execution)
         not_executed = _not_executed_preferences(classified_rules)
         top_results = [
             _compact_result(rank, row)
@@ -63,6 +66,7 @@ class EvidencePack:
             extracted_preferences=extracted_preferences or [],
             attribute_grounding_summary=(attribute_grounding or {}).get("summary", {}),
             proposed_rule_audit=_compact_proposed_rule_audit(proposed_rules or []),
+            execution_summary=execution,
         )
 
     def to_dict(self) -> dict[str, Any]:
@@ -110,7 +114,10 @@ def _compact_proposed_rule_audit(rules: list[dict[str, Any]]) -> list[dict[str, 
     return compact
 
 
-def _candidate_confirmations(classified_rules: dict[str, Any]) -> list[dict[str, Any]]:
+def _candidate_confirmations(
+    classified_rules: dict[str, Any],
+    execution_summary: dict[str, Any],
+) -> list[dict[str, Any]]:
     candidate_by_id = {
         rule["rule_id"]: rule for rule in classified_rules.get("candidate_rules", [])
     }
@@ -125,6 +132,12 @@ def _candidate_confirmations(classified_rules: dict[str, Any]) -> list[dict[str,
         "tuition_threshold": "c_tuition_cap",
         "major_expansion": "c_major_expansion",
     }
+    promoted_rule_ids = {
+        "recommendation_rank_floor": "e_recommendation_rank_floor",
+        "safety_margin": "e_safety_margin",
+        "tuition_threshold": "e_tuition_cap",
+    }
+    skipped_soft_rule_ids = set(execution_summary.get("skipped_soft_rule_ids") or [])
     confirmations: list[dict[str, Any]] = []
     for confirmation_id, confirmation in simulated.items():
         source_rule_id = mapping.get(confirmation_id)
@@ -139,7 +152,12 @@ def _candidate_confirmations(classified_rules: dict[str, Any]) -> list[dict[str,
             ),
             "selected_label": confirmation.get("label"),
             "selected_option": confirmation.get("selected_option"),
-            "status": _confirmation_status(confirmation_id, confirmation),
+            "status": _confirmation_status(
+                confirmation_id=confirmation_id,
+                confirmation=confirmation,
+                promoted_rule_id=promoted_rule_ids.get(confirmation_id),
+                skipped_soft_rule_ids=skipped_soft_rule_ids,
+            ),
         }
         if confirmation.get("field"):
             record["field"] = confirmation["field"]
@@ -175,9 +193,16 @@ def _confirmation_source_text(
     return None
 
 
-def _confirmation_status(confirmation_id: str, confirmation: dict[str, Any]) -> str:
+def _confirmation_status(
+    confirmation_id: str,
+    confirmation: dict[str, Any],
+    promoted_rule_id: str | None,
+    skipped_soft_rule_ids: set[str],
+) -> str:
     if confirmation.get("status") == "not_executable":
         return "not_executable"
+    if promoted_rule_id in skipped_soft_rule_ids:
+        return "confirmed_not_hard_filter"
     if confirmation_id == "major_expansion" and not confirmation.get("expanded_terms"):
         return "confirmed_without_expansion"
     return "promoted_to_executed_rule"

@@ -73,6 +73,11 @@ def _confirmation_line(confirmation: dict[str, Any]) -> str:
             f"- {source_text}：已确认“{label}”，执行为 "
             f"{confirmation.get('description')}。"
         )
+    if status == "confirmed_not_hard_filter":
+        return (
+            f"- {source_text}：已确认“{label}”，但未进入 hard filter，"
+            "仅作为候选边界记录。"
+        )
     if status == "confirmed_without_expansion":
         return f"- {source_text}：已确认“{label}”，未扩展专业关键词。"
     reason = confirmation.get("reason") or "缺少可执行依据"

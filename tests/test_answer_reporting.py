@@ -109,6 +109,15 @@ def sample_evidence() -> EvidencePack:
                 ),
             ],
         },
+        execution_summary={
+            "executor": "duckdb",
+            "sql": "SELECT * FROM admissions WHERE 城市 = ?",
+            "params": ["深圳"],
+            "input_row_count": 10,
+            "filtered_row_count": 1,
+            "sort_key": ["专业组最低位次1 ASC NULLS LAST"],
+            "top_k": 5,
+        },
     )
 
 
@@ -168,6 +177,62 @@ class AnswerReportingTest(unittest.TestCase):
         self.assertEqual(comparison["pipeline_template"]["status"], "ok")
         self.assertEqual(comparison["llm_only_schema_sample"]["status"], "skipped")
         self.assertEqual(comparison["pipeline_deepseek_evidence"]["status"], "skipped")
+
+    def test_evidence_pack_records_executor_audit(self) -> None:
+        evidence = sample_evidence().to_dict()
+        execution = evidence["execution_summary"]
+
+        self.assertEqual(execution["executor"], "duckdb")
+        self.assertEqual(execution["sql"], "SELECT * FROM admissions WHERE 城市 = ?")
+        self.assertEqual(execution["params"], ["深圳"])
+        self.assertEqual(execution["input_row_count"], 10)
+        self.assertEqual(execution["filtered_row_count"], 1)
+        self.assertEqual(execution["sort_key"], ["专业组最低位次1 ASC NULLS LAST"])
+        self.assertEqual(execution["top_k"], 5)
+
+    def test_skipped_soft_confirmation_is_not_reported_as_executed(self) -> None:
+        evidence = EvidencePack.from_verified_pipeline(
+            user_request="广东物理，预算有限。",
+            executed_rules=[],
+            classified_rules={
+                "candidate_rules": [
+                    {
+                        "rule_id": "c_tuition_cap",
+                        "source_text": "预算有限",
+                    }
+                ],
+                "confirmation_questions": [],
+                "simulated_confirmations": {
+                    "tuition_threshold": {
+                        "label": "不高于 20000 元/年",
+                        "selected_option": "20000",
+                        "field": "学费",
+                        "operator": "<=",
+                        "value": 20000,
+                    }
+                },
+                "non_executable_preferences": [],
+                "llm_needed_parts": [],
+            },
+            traced_results=[],
+            execution_summary={
+                "executor": "duckdb",
+                "sql": "SELECT * FROM admissions",
+                "params": [],
+                "input_row_count": 1,
+                "filtered_row_count": 1,
+                "sort_key": [],
+                "top_k": 5,
+                "skipped_soft_rule_ids": ["e_tuition_cap"],
+            },
+        )
+
+        payload = evidence.to_dict()
+        self.assertEqual(
+            payload["candidate_confirmations"][0]["status"],
+            "confirmed_not_hard_filter",
+        )
+        self.assertIn("未进入 hard filter", TemplateReportBuilder().build(payload))
 
 
 if __name__ == "__main__":
