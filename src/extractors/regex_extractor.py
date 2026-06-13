@@ -168,7 +168,11 @@ class RegexExtractor:
         normalized = text.replace("思想政治", "政治").replace("生物学", "生物")
         subjects = []
         for subject, aliases in self.aliases["reselected_subject_aliases"].items():
-            if any(alias in normalized for alias in aliases):
+            if any(
+                alias in normalized
+                for alias in aliases
+                if len(alias) > 1
+            ):
                 subjects.append(subject)
         return _unique(subjects)[:2]
 
@@ -234,16 +238,16 @@ class RegexExtractor:
         sources = []
         for aliases in self.aliases["reselected_subject_aliases"].values():
             for alias in aliases:
-                if alias in normalized:
+                if len(alias) > 1 and alias in normalized:
                     sources.append(alias)
                     break
         return _unique(sources)
 
     def _tuition_cap_yuan(self, text: str) -> int | None:
         patterns = [
-            rf"(?:不考虑|不要|不想要)?(?:学费|费用|预算)[^，。,.；;]{{0,12}}"
+            rf"(?:不考虑|不要|不想要)?(?:学费|费用|预算)[^，。,.；;]{{0,12}}?"
             rf"(?:超过|高于|大于)\s*({NUMBER_TEXT_PATTERN})",
-            rf"(?:学费|费用|预算)[^，。,.；;]{{0,12}}"
+            rf"(?:学费|费用|预算)[^，。,.；;]{{0,12}}?"
             rf"({NUMBER_TEXT_PATTERN})\s*(?:元|块)?\s*(?:以内|以下|内)",
             rf"({NUMBER_TEXT_PATTERN})\s*(?:元|块)?\s*(?:以内|以下|内)",
         ]

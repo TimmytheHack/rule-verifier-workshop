@@ -129,6 +129,10 @@ def run_workbench(config: WorkbenchConfig) -> dict[str, Any]:
         TAXONOMY_PATH,
         simulated_confirmation_enabled=True,
     ).final_executable_rules(classified_rules)
+    final_rules = _apply_value_index_hard_filter_guard(
+        final_rules,
+        attribute_grounding,
+    )
     hard_rules, _ = hard_filter_rules(final_rules)
     execution = _execute_verified_hard_rules(
         dataset=dataset,
@@ -170,6 +174,7 @@ def run_workbench(config: WorkbenchConfig) -> dict[str, Any]:
             "model": MODEL_OPTIONS[config.model],
         },
         "extracted_preferences": extracted_preferences,
+        "extracted_slots": slots,
         "attribute_grounding": _display_attribute_grounding(attribute_grounding),
         "proposed_rules": _display_proposed_rules(proposed_rules),
         "deterministic_rules": [_display_rule(rule) for rule in classified_rules["deterministic_rules"]],
@@ -184,6 +189,7 @@ def run_workbench(config: WorkbenchConfig) -> dict[str, Any]:
             for rank, row in enumerate(traced_results[:EVIDENCE_TOP_K], start=1)
         ],
         "trace": {},
+        "evidence_pack": evidence.to_dict(),
         "natural_language_report": _with_context_warnings(report, slots),
         "token_usage": {
             "extractor": extractor_usage,
@@ -612,6 +618,58 @@ def _append_grounding_non_executable_preferences(
         existing_field_ids.add(record.get("field_id"))
     updated["non_executable_preferences"] = preferences
     return updated
+
+
+def _apply_value_index_hard_filter_guard(
+    final_rules: list[dict[str, Any]],
+    attribute_grounding: dict[str, Any],
+) -> list[dict[str, Any]]:
+    blocked = _value_index_blocked_rule_keys(attribute_grounding)
+    guarded = []
+    for rule in final_rules:
+        updated = dict(rule)
+        if _rule_value_key(rule) in blocked:
+            updated["hard_filter_allowed"] = False
+            updated["hard_filter_block_reason"] = blocked[_rule_value_key(rule)]
+        guarded.append(updated)
+    return guarded
+
+
+def _value_index_blocked_rule_keys(
+    attribute_grounding: dict[str, Any],
+) -> dict[tuple[str, str], str]:
+    blocked = {}
+    for record in attribute_grounding.get("attributes", []):
+        field = record.get("source_column")
+        if not field:
+            continue
+        if not _grounded_attribute_is_blocked_from_hard_filter(record):
+            continue
+        blocked[(str(field), _stable_value(record.get("value")))] = (
+            "value_index_audit 未达到 exact_match，不能进入 hard filter。"
+        )
+    return blocked
+
+
+def _grounded_attribute_is_blocked_from_hard_filter(record: dict[str, Any]) -> bool:
+    status = record.get("status")
+    audit_status = (record.get("value_index_audit") or {}).get("status")
+    if status in {"missing_schema", "ignored_not_schema_mapped", "unmapped_attribute"}:
+        return True
+    if record.get("requires_human_confirmation") or status == "confirmable":
+        return True
+    return audit_status in {
+        "partial_match",
+        "not_found",
+        "not_found_in_partial_index",
+        "partial_numeric_profile",
+        "outside_numeric_profile",
+        "field_inactive",
+    }
+
+
+def _rule_value_key(rule: dict[str, Any]) -> tuple[str, str]:
+    return str(rule.get("field")), _stable_value(rule.get("value"))
 
 
 def _merge_verified_proposed_rules(
@@ -1524,6 +1582,7 @@ def _sanitize_user_text(text: str) -> str:
         "reason": "原因",
         "field": "字段",
         "cooperation_type": "合作办学类型字段",
+        "school_country_or_region": "国家或境外办学字段",
         "schema": "数据字段定义",
         "evidence_pack": "证据包",
         "safety margin": "安全边际",

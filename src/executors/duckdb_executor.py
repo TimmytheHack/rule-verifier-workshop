@@ -130,7 +130,7 @@ def hard_filter_rules(
     hard_rules = []
     skipped_soft_rules = []
     for rule in executable_rules:
-        if _is_soft_confirmation_rule(rule):
+        if _is_soft_confirmation_rule(rule) or rule.get("hard_filter_allowed") is False:
             skipped_soft_rules.append(rule)
             continue
         hard_rules.append(rule)
