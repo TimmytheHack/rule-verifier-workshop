@@ -117,8 +117,9 @@ deterministic over-promotion rate
 | P1 | API response contract freeze + snapshot tests | 已实现基础 contract |
 | P2 | demo acceptance script，导出多领域 Markdown/JSON 验收报告 | 已实现，当前覆盖 admissions 15 条、housing 5 条、products 5 条 |
 | P3 | 多数据源 ingestion 规范，支持新 Excel / CSV 进入同一 warehouse schema | 已实现 draft generator 和 Domain Pack Review / Approval workflow |
-| P4 | 非结构化政策/章程小型知识库，只做解释和候选，不进执行 | 待做 |
-| P5 | 可选模型/embedding 接入 | 暂不接入 |
+| P4 | 统一 Quality Gate，交付前运行测试、评估、demo acceptance、domain/warehouse guard 和前端 build | 已实现 |
+| P5 | 非结构化政策/章程小型知识库，只做解释和候选，不进执行 | 待做 |
+| P6 | 可选模型/embedding 接入 | 暂不接入 |
 
 ## 后续研究方向
 

@@ -41,12 +41,19 @@ generate draft
 -> review
 -> approve
 -> demo acceptance
--> production use
+-> quality gate
+-> commit / release
 ```
 
 其中 PII、高基数字段、自由文本 contains/keyword filter、未通过数值 sanity check 的字段
 不会自动成为 hard filter。`draft` / `needs_review` 即使包含 seed allowed ops，也仍然在
 Workbench 中返回 `blocked`，不执行 SQL。
+
+交付前必须运行 `scripts/run_quality_gate.py`。该门禁统一覆盖 Python 语法检查、unit
+tests、regex evaluator、API contract tests、demo acceptance、domain pack validate、domain
+review workflow smoke、warehouse fingerprint guard、`git diff --check` 和前端 build。报告
+写入 `outputs/quality_gate/report.md` 与 `outputs/quality_gate/report.json`，用于 commit /
+release 前的审计。
 
 这次抽象仍然坚持结构化存储优先：招生主数据使用 DuckDB 和 schema/value index；toy
 domain 使用 CSV fixture。系统没有接入 Qwen、BGE、向量库或全文表格 embedding。可选

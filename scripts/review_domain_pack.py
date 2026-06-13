@@ -37,6 +37,12 @@ REQUIRED_DRAFT_FILES = [
     "schema_registry.json",
     "rule_taxonomy.json",
 ]
+REQUIRED_RUNTIME_FILES = [
+    "domain.json",
+    "schema_registry.json",
+    "rule_taxonomy.json",
+    "top_result_mapping.yaml",
+]
 CONTRACT_KEYS = {
     "schema_version",
     "domain",
@@ -161,11 +167,16 @@ def validate_domain_pack(domain: str | Path) -> dict[str, Any]:
     root = resolve_domain_dir(domain)
     checks = []
     files = _read_pack_files(root, missing_ok=True)
-    for filename in REQUIRED_DRAFT_FILES:
-        checks.append(_check(filename, filename in files, f"缺少 {filename}"))
-
     domain_json = files.get("domain.json") or {}
     status = str(domain_json.get("status") or BLOCKED_STATUS)
+    required_files = (
+        REQUIRED_DRAFT_FILES
+        if status in {DRAFT_STATUS, REVIEW_STATUS}
+        else REQUIRED_RUNTIME_FILES
+    )
+    for filename in required_files:
+        checks.append(_check(filename, filename in files, f"缺少 {filename}"))
+
     checks.append(
         _check(
             "domain_pack_status",
@@ -183,8 +194,14 @@ def validate_domain_pack(domain: str | Path) -> dict[str, Any]:
     checks.extend(_validate_domain_config_shape(root, domain_json))
     checks.extend(_validate_schema_registry(files.get("schema_registry.json") or {}))
     checks.extend(_validate_top_result_mapping(files.get("top_result_mapping.yaml")))
-    checks.extend(_validate_rule_taxonomy(files.get("rule_taxonomy.seed.yaml")))
-    checks.extend(_validate_sort_policy(files.get("sort_policy.seed.yaml")))
+    if "rule_taxonomy.seed.yaml" in files:
+        checks.extend(_validate_rule_taxonomy(files.get("rule_taxonomy.seed.yaml")))
+    else:
+        checks.extend(_validate_runtime_rule_taxonomy(files.get("rule_taxonomy.json")))
+    if "sort_policy.seed.yaml" in files:
+        checks.extend(_validate_sort_policy(files.get("sort_policy.seed.yaml")))
+    else:
+        checks.extend(_validate_runtime_sort_policy(domain_json.get("execution") or {}))
     ok = all(item["ok"] for item in checks)
     return {
         "domain_dir": str(root),
@@ -917,11 +934,17 @@ def _validate_top_result_mapping(payload: Any) -> list[dict[str, Any]]:
         return [
             _check(
                 "top_result_mapping.runtime",
-                all("key" in item and "field_id" in item for item in payload),
-                "runtime top_result_mapping 每项必须包含 key/field_id。",
+                all(_valid_runtime_top_result_item(item) for item in payload),
+                "runtime top_result_mapping 每项必须包含 key，并声明 field_id、field_ids 或 computed。",
             )
         ]
     return [_check("top_result_mapping", False, "top_result_mapping 结构不合法。")]
+
+
+def _valid_runtime_top_result_item(item: Any) -> bool:
+    return isinstance(item, dict) and "key" in item and any(
+        key in item for key in ["field_id", "field_ids", "computed"]
+    )
 
 
 def _validate_rule_taxonomy(payload: Any) -> list[dict[str, Any]]:
@@ -936,6 +959,21 @@ def _validate_rule_taxonomy(payload: Any) -> list[dict[str, Any]]:
     ]
 
 
+def _validate_runtime_rule_taxonomy(payload: Any) -> list[dict[str, Any]]:
+    if not isinstance(payload, dict):
+        return [_check("rule_taxonomy.runtime", False, "rule_taxonomy.json 不是对象。")]
+    checks = []
+    for key in ["deterministic_rules", "candidate_rules", "non_executable_preferences"]:
+        checks.append(
+            _check(
+                f"rule_taxonomy.runtime.{key}",
+                isinstance(payload.get(key), list),
+                f"rule_taxonomy.json 缺少列表字段 {key}。",
+            )
+        )
+    return checks
+
+
 def _validate_sort_policy(payload: Any) -> list[dict[str, Any]]:
     if not isinstance(payload, dict):
         return [_check("sort_policy.seed", False, "sort policy seed 不是对象。")]
@@ -944,6 +982,18 @@ def _validate_sort_policy(payload: Any) -> list[dict[str, Any]]:
             "sort_policy.seed.candidate_sort_policy",
             isinstance(payload.get("candidate_sort_policy"), list),
             "sort_policy.seed.yaml 缺少 candidate_sort_policy。",
+        )
+    ]
+
+
+def _validate_runtime_sort_policy(execution: dict[str, Any]) -> list[dict[str, Any]]:
+    sort_policy = execution.get("sort_policy")
+    explicit_default = bool(execution.get("default_safe_sort"))
+    return [
+        _check(
+            "sort_policy.runtime",
+            isinstance(sort_policy, list) and (bool(sort_policy) or explicit_default),
+            "runtime execution.sort_policy 必须非空，或显式声明 default_safe_sort。",
         )
     ]
 

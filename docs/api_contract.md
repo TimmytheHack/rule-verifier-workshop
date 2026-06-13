@@ -32,7 +32,8 @@ generate draft
 -> review
 -> approve
 -> demo acceptance
--> production use
+-> quality gate
+-> commit / release
 ```
 
 `scripts/generate_domain_pack.py` 只生成 `draft` / `needs_review` 配置、schema profile、
@@ -62,6 +63,12 @@ reviewed_by 和 approval history。
 - 数值字段必须通过 dtype、空值率和范围 sanity check 后，才能 approve `<=`、`>=`、`between`。
 - categorical 字段必须唯一值数量低于阈值，且 value index 可审查，才能 approve `eq` / `in`。
 - text contains / keyword filter 默认 `needs_review`，不能自动 approve。
+
+`scripts/run_quality_gate.py` 是交付前统一门禁。它会运行 Python 语法检查、unit tests、
+regex evaluator、API contract tests、demo acceptance、domain pack validate、domain review
+workflow smoke、warehouse fingerprint guard、`git diff --check` 和可选前端 build。门禁报告写入
+`outputs/quality_gate/report.md` 和 `outputs/quality_gate/report.json`；任何 required check
+失败时，release 不应继续。
 
 ## 固定顶层字段
 
