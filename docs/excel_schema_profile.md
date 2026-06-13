@@ -1,26 +1,26 @@
-# Excel Schema Profile
+# 自动生成 Excel schema profile
 
-This report is generated automatically from the workbook. It is not an executable schema by itself.
+本报告由 workbook 自动生成，属于 schema review 辅助材料，不是可执行 schema 本身。重新生成时应使用对应 profiling 脚本，不应手工改动字段事实。
 
-- Workbook: `广东省2025年志愿填报大数据（24-25）0523.xlsx`
-- Sheet: `Sheet1`
-- Header row: `3`
-- Data rows: `30855`
-- Columns profiled: `57`
+- Workbook：`广东省2025年志愿填报大数据（24-25）0523.xlsx`
+- Sheet：`Sheet1`
+- 表头行：`3`
+- 数据行数：`30855`
+- 已 profile 列数：`57`
 
-## Methodology
+## 生成方法
 
-The system should not inspect every row manually. Instead, it should:
+系统不应该人工检查每一行，而应该：
 
-1. Detect the real header row.
-2. Profile every column automatically.
-3. Generate a field catalog with types, coverage, examples, and semantic hints.
-4. Let a human promote only trusted fields into `schema_registry.json`.
-5. Keep unsupported preferences non-executable until a verified field exists.
+1. 检测真实表头行。
+2. 自动 profile 每一列。
+3. 生成包含类型、覆盖率、样例和语义提示的字段目录。
+4. 只让人工 review 后可信的字段进入 `schema_registry.json`。
+5. 在 verified field 存在之前，将不受支持的偏好保持为不可执行。
 
-## Field Catalog
+## 字段目录
 
-| # | Source column | Suggested field ID | Type | Coverage | Unique | Registry action | Samples |
+| # | 原始列 | 建议字段 ID | 类型 | 覆盖率 | 唯一值数 | Registry 建议 | 样例 |
 |---:|---|---|---|---:|---:|---|---|
 | 1 | `ID` | `row_id` | `number` | 100.0% | 30855 | `candidate_for_schema_registry` | 1<br>2<br>3 |
 | 2 | `年份` | `year` | `number` | 100.0% | 1 | `candidate_for_schema_registry` | 2024 |
@@ -93,13 +93,13 @@ The system should not inspect every row manually. Instead, it should:
 | 56 | `本专业硕士点` | `major_master_program` | `enum_or_category` | 32.1% | 269 | `candidate_for_schema_registry` | 外国语言文学； 教育（专硕）； 翻译（专硕）<br>外国语言文学； 翻译（专硕）<br>博物馆（专硕） |
 | 57 | `本专业博士点` | `major_phd_program` | `enum_or_category` | 14.0% | 193 | `candidate_for_schema_registry` | 外国语言文学； 教育（专博）<br>外国语言文学<br>考古学 |
 
-## Important Consequence
+## 重要结论
 
-Some user preferences that were previously treated as missing may actually have candidate columns:
+一些过去被当作 missing schema 的用户偏好，在 Excel profile 中可能存在候选列：
 
-- `公办` may map to `公私性质` after verification.
-- `学校好一点` or `学校名气` may map to `院校水平`, `院校排名`, `院校标签`, or `软科排名`, but only after policy review.
-- `城市不要太差` or `偏远` may map to `城市水平标签`, but only after confirming the semantics.
-- `中外合作` still needs careful handling; it should not be inferred from free text until a dedicated or verified derived field exists.
+- `公办` 经过 verification 后可能映射到 `公私性质`。
+- `学校好一点` 或 `学校名气` 可能映射到 `院校水平`、`院校排名`、`院校标签` 或 `软科排名`，但必须先经过 policy review。
+- `城市不要太差` 或 `偏远` 可能映射到 `城市水平标签`，但必须先确认语义边界。
+- `中外合作` 仍需谨慎处理；在专用字段或 verified derived field 存在之前，不应从自由文本中推断并执行。
 
-The next step is not to execute all these fields automatically. The next step is to review and promote safe fields into the schema registry with allowed operators and trace notes.
+下一步不是自动执行这些字段，而是 review 安全字段，并在定义 allowed operators 和 trace notes 后 promotion 到 schema registry。

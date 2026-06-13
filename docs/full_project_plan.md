@@ -1,30 +1,30 @@
-# Full Project Roadmap
+# 完整项目规划
 
-This roadmap keeps the project focused. The goal is not to build a full college recommendation product; the goal is to study how natural-language preferences become verified executable rules.
+本文档保留项目的设计边界和后续研究方向。它不是产品路线图承诺，也不把当前 MVP 描述成完整志愿填报顾问。
 
-## Positioning
+## 项目定位
 
-Working title:
+工作标题：
 
 ```text
 Preference-to-Rule Verification for Structured Decision Systems
 ```
 
-Case study:
+当前案例：
 
 ```text
-Guangdong college application planning with one Excel dataset.
+基于一个 Excel 数据集的广东高考志愿填报场景。
 ```
 
-Main contribution:
+主要贡献：
 
 ```text
-Prevent unsafe promotion of vague or unsupported natural-language preferences into deterministic executable rules.
+防止模糊或缺少 schema 支持的自然语言偏好被不安全地提升为确定性可执行规则。
 ```
 
-## Runtime Core
+## 运行时核心
 
-The runtime path should stay small:
+运行时路径保持小而清晰：
 
 ```text
 Extractor
@@ -36,98 +36,100 @@ Extractor
 -> TraceGenerator
 ```
 
-Required boundaries:
+必须保留的边界：
 
-- Regex extractor is only a benchmark baseline.
-- DeepSeek extractor may extract preferences and source spans only.
-- Attribute grounding audits extracted attributes before rule construction.
-- Rule verifier is the authority for schema grounding and executability.
-- Candidate rules require confirmation before promotion.
-- Executor only receives verified executable rules.
+- `RegexExtractor` 只是 benchmark baseline。
+- `DeepSeekExtractor` 只能抽取偏好和 source span。
+- Attribute grounding 在 rule construction 之前审查抽取出的 attributes。
+- Rule verifier 是 schema 接地和 executability 的唯一执行门。
+- Candidate rules 需要确认后才能 promotion。
+- Executor 只接收已验证的可执行规则。
 
-## Offline Tools
+## 离线工具
 
-These tools support research and schema review, but are not part of runtime:
+这些工具支持研究、评估和 schema review，不属于运行时执行路径：
 
-| Tool | Role |
+| 工具 | 作用 |
 |---|---|
-| `scripts/profile_excel_schema.py` | Profiles every Excel column and generates a field catalog. |
-| `schemas/excel_schema_profile.json` | Machine-readable profile for schema review. |
-| `docs/excel_schema_profile.md` | Human-readable schema profile. |
-| `scripts/eval_modes.py` | Single-input method comparison. |
-| `scripts/eval_fuzzy_inputs.py` | 40-case benchmark comparison. |
-| `scripts/eval_pipeline_token_budget.py` | Token-budget comparison. |
+| `scripts/profile_excel_schema.py` | 扫描 Excel 列并生成字段目录。 |
+| `schemas/excel_schema_profile.json` | 供 schema review 使用的机器可读 profile。 |
+| `docs/excel_schema_profile.md` | 供人工阅读的 schema profile。 |
+| `scripts/eval_modes.py` | 单条输入的方法对比。 |
+| `scripts/eval_fuzzy_inputs.py` | 40-case benchmark 对比。 |
+| `scripts/eval_pipeline_token_budget.py` | token budget 对比。 |
 
-## Main Documents
+## 主要文档
 
-The project should maintain four main research documents:
+项目保留以下中文 canonical 文档：
 
-| Document | Purpose |
+| 文档 | 用途 |
 |---|---|
-| `docs/methodology_report.md` | Current methodology and safety boundary. |
-| `docs/evaluation_report.md` | Current experimental results. |
-| `docs/excel_schema_profile.md` | Field catalog generated from the Excel dataset. |
-| `docs/end_to_end_demo_cases.md` | Demo case matrix and expected rule treatment. |
+| `docs/methodology_report.md` | 当前方法论和安全边界。 |
+| `docs/evaluation_report.md` | 当前实验结果。 |
+| `docs/excel_schema_profile.md` | 从 Excel 数据集生成的字段目录。 |
+| `docs/end_to_end_demo_cases.md` | demo case matrix 和预期规则处理方式。 |
 
-Chinese companion documents may be kept for user-facing readability.
+## 当前评估计划
 
-## Current Evaluation Plan
+Benchmark 继续保持分层：
 
-Keep the benchmark layered:
+- 清晰 deterministic 输入；
+- 模糊 candidate-rule 输入；
+- 缺少 schema 支持的输入；
+- 混合输入；
+- adversarial 输入；
+- 矛盾输入；
+- 端到端 demo 输入。
 
-- clear deterministic inputs;
-- vague candidate-rule inputs;
-- unsupported-schema inputs;
-- mixed inputs;
-- adversarial inputs;
-- contradictory inputs;
-- end-to-end demo inputs.
-
-Compare:
+对比方法：
 
 1. `regex_extractor_symbolic_verifier`
 2. `deepseek_extractor_symbolic_verifier`
 3. `llm_only_baseline`
 4. `schema_aware_llm_only_baseline`
 
-Primary safety metric:
+主要安全指标：
 
 ```text
 deterministic over-promotion rate
 ```
 
-Supporting metrics:
+辅助指标：
 
-- schema hallucination rate;
-- candidate holding accuracy;
-- non-executable rejection accuracy;
-- trace completeness;
-- task success under token budget.
+- schema hallucination rate；
+- candidate holding accuracy；
+- non-executable rejection accuracy；
+- trace completeness；
+- token budget 下的 task success。
 
-## Next Steps
+## 后续研究方向
 
-1. Review `docs/excel_schema_profile.md`.
-2. Promote only trusted candidate fields into `schemas/schema_registry.json`.
-3. Add tests for each promoted field.
-4. Expand the 40-case benchmark toward 50-100 realistic paraphrases.
-5. Stress-test DeepSeek extraction on longer, noisier, incomplete, and contradictory inputs.
-6. Keep recommendation quality evaluation separate from rule-verification evaluation.
+这些方向仍然有价值，但不应被理解为已经完成的能力：
 
-Latest benchmark snapshot:
+1. Review `docs/excel_schema_profile.md`。
+2. 只将可信 candidate fields promotion 到 `schemas/schema_registry.json`。
+3. 为每个 promotion field 增加测试。
+4. 将 40-case benchmark 扩展到 50-100 条更真实的改写表达。
+5. 在更长、更乱、不完整和矛盾输入上 stress-test DeepSeek extraction。
+6. 将 recommendation quality evaluation 与 rule-verification evaluation 分开。
 
-| Method | Score | Over-promotion |
+当前 benchmark snapshot：
+
+| 方法 | 得分 | Over-promotion |
 |---|---:|---:|
 | `rule_regex_extractor_symbolic_verifier` | 320/320 | 0.000 |
 | `deepseek_extractor_symbolic_verifier` | 320/320 | 0.000 |
 | `llm_only_baseline` | 107/200 | 0.475 |
 | `schema_aware_llm_only_baseline` | 156/200 | 0.275 |
 
-## What Not To Build Yet
+## 暂不建设的内容
 
-- Full志愿表 generation.
-- School reputation ranking logic without reviewed schema.
-- Employment prediction.
-- Web-search augmentation.
-- Multi-turn advisor UI.
-- Universal symbolic AI.
-- More regex special cases solely to improve benchmark scores.
+以下内容如果没有新的 schema、规则策略和测试，不应作为当前系统能力描述：
+
+- 完整志愿表 generation。
+- 没有 reviewed schema 的学校声誉排序逻辑。
+- 就业预测。
+- Web-search augmentation。
+- 多轮 advisor UI。
+- 通用 symbolic AI。
+- 只为提高 benchmark 分数而增加更多 regex special cases。

@@ -8,7 +8,8 @@ system appear more capable than it is.
 
 ## Rules
 
-- Keep English and Chinese documents semantically aligned when both exist.
+- Keep ordinary Markdown docs in Chinese only.
+- Do not reintroduce parallel English/Chinese documentation files.
 - If benchmark numbers change, update every report and summary table that cites
   them.
 - State limitations plainly: one-year rank data is not stable enough for a full
@@ -26,4 +27,3 @@ git diff --check
 ```
 
 If numbers were changed, also inspect the corresponding files in `outputs/eval/`.
-

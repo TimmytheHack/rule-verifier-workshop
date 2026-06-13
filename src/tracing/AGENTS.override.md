@@ -10,11 +10,11 @@ LLM-needed.
 - Trace output should be auditable and tied to verified rules.
 - Do not invent execution reasons for skipped or missing-schema preferences.
 - Include non-executed preferences in trace when they matter to user intent.
-- Keep English/Chinese trace variants aligned if both are generated.
+- Generate one canonical Markdown trace artifact unless an evaluation explicitly
+  requires an additional variant.
 
 ## Verification
 
 ```bash
 python3 scripts/run_mvp_demo.py
 ```
-

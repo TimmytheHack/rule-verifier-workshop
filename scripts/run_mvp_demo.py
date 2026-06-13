@@ -227,8 +227,7 @@ def write_verification_report(
 - 未虚构合作办学类型字段。
 - 候选规则只通过模拟确认提升为可执行规则。
 """
-    for filename in ["verification_report.md", "verification_report.zh.md"]:
-        (OUTPUT_DIR / filename).write_text(content, encoding="utf-8")
+    (OUTPUT_DIR / "verification_report.md").write_text(content, encoding="utf-8")
 
 
 def write_result_trace(results: list[dict[str, Any]]) -> None:
@@ -265,8 +264,7 @@ def write_result_trace(results: list[dict[str, Any]]) -> None:
         lines.append("")
 
     content = "\n".join(lines)
-    for filename in ["result_trace.md", "result_trace.zh.md"]:
-        (OUTPUT_DIR / filename).write_text(content, encoding="utf-8")
+    (OUTPUT_DIR / "result_trace.md").write_text(content, encoding="utf-8")
 
 
 def main() -> None:

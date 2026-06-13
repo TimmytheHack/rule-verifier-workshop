@@ -1,8 +1,6 @@
 # 偏好到规则验证工作台
 
-英文版 / English version: [README.en.md](README.en.md)
-
-本项目是一个面向广东高考志愿填报场景的 research-engineering 项目，核心目标是验证“自然语言偏好”是否能被安全地转换为可执行规则。它不是普通的志愿推荐 bot，也不会把模糊偏好直接当成筛选条件执行。
+本项目是一个面向广东高考志愿填报场景的研究工程项目，核心目标是验证“自然语言偏好”能否被安全地转换为可执行规则。它不是普通志愿推荐 bot，也不会把模糊偏好直接当作筛选条件执行。
 
 项目关注的问题是：
 
@@ -17,7 +15,7 @@
 
 - 后端运行现有验证管线，读取广东志愿填报 Excel 数据，返回规则、结果、trace 和证据回答。
 - 前端只可视化 mock 数据或后端 API 输出，不新增推荐逻辑，也不推断新规则。
-- LLM 可以用于辅助抽取或基于证据回答，但执行权仍由 schema-grounded verifier 控制。
+- LLM 可以用于辅助抽取或基于证据回答，但执行权仍由基于 schema 接地的验证器控制。
 
 主要目录：
 
@@ -162,8 +160,8 @@ DeepSeek-backed 评估会读取 `.env`，并可能产生 API 延迟和 token 消
 
 ## 相关文档
 
-- [方法报告](docs/methodology_report.zh.md)
-- [评估报告](docs/evaluation_report.zh.md)
-- [端到端 demo cases](docs/end_to_end_demo_cases.zh.md)
+- [方法报告](docs/methodology_report.md)
+- [评估报告](docs/evaluation_report.md)
+- [端到端 demo 用例](docs/end_to_end_demo_cases.md)
 - [Excel schema profile](docs/excel_schema_profile.md)
 - [完整项目计划](docs/full_project_plan.md)
