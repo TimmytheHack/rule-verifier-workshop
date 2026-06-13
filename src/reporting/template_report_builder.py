@@ -32,6 +32,13 @@ class TemplateReportBuilder:
                 for rule in evidence["proposed_rule_audit"]
             )
 
+        if evidence.get("attribute_explanations"):
+            lines.extend(["", "字段值审计解释："])
+            lines.extend(
+                _attribute_explanation_line(explanation)
+                for explanation in evidence["attribute_explanations"]
+            )
+
         lines.extend(["", "已执行规则："])
         lines.extend(
             f"- {rule['rule_id']}：{rule['description']}"
@@ -102,6 +109,22 @@ def _proposed_rule_line(rule: dict[str, Any]) -> str:
         f"- {rule.get('rule_id')}："
         f"{_rule_text(rule.get('field'), rule.get('operator'), value)}；"
         f"审查状态：{_status_text(rule.get('terminal_status'))}"
+    )
+
+
+def _attribute_explanation_line(explanation: dict[str, Any]) -> str:
+    label = {
+        "executed": "已执行",
+        "executable": "可执行",
+        "needs_confirmation": "需确认",
+        "not_executed": "未执行",
+    }.get(str(explanation.get("action")), str(explanation.get("action")))
+    matched = explanation.get("matched_values") or []
+    matched_text = f"；索引命中：{'、'.join(str(item) for item in matched)}" if matched else ""
+    return (
+        f"- [{label}] {explanation.get('source_text')} -> "
+        f"{explanation.get('field')}：{explanation.get('match_type')}"
+        f"{matched_text}；{explanation.get('reason')}"
     )
 
 

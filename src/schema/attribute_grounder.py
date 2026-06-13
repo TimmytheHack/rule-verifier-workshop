@@ -63,14 +63,28 @@ class AttributeGrounder:
             value = _value_at(slots, path)
             if not _present(value):
                 continue
-            records.append(self._record(".".join(path), value, policy))
+            records.append(
+                self._record(
+                    slot_path=".".join(path),
+                    value=value,
+                    policy=policy,
+                    source_text=self._source_text(slots, ".".join(path), value),
+                )
+            )
 
         for term in (slots.get("preferences") or {}).get("other_vague_preferences") or []:
             policy = self.other_vague_policies.get(
                 term,
                 {"field_id": None, "status": "unmapped_attribute", "reason": "没有属性接地策略。"},
             )
-            records.append(self._record("preferences.other_vague_preferences[]", term, policy))
+            records.append(
+                self._record(
+                    slot_path="preferences.other_vague_preferences[]",
+                    value=term,
+                    policy=policy,
+                    source_text=term,
+                )
+            )
 
         records.extend(self._unknown_preference_records(slots, known_paths))
         return {
@@ -78,7 +92,13 @@ class AttributeGrounder:
             "summary": self._summary(records),
         }
 
-    def _record(self, slot_path: str, value: Any, policy: dict[str, Any]) -> dict[str, Any]:
+    def _record(
+        self,
+        slot_path: str,
+        value: Any,
+        policy: dict[str, Any],
+        source_text: Any,
+    ) -> dict[str, Any]:
         field_id = policy.get("field_id")
         field_exists = self.schema_registry.has_field(field_id)
         configured = self.schema_registry.configured_fields.get(field_id or "", {})
@@ -101,6 +121,7 @@ class AttributeGrounder:
         execution_allowed = status == "schema_grounded"
         return {
             "slot_path": slot_path,
+            "source_text": source_text,
             "value": value,
             "field_id": field_id,
             "source_column": source_column,
@@ -132,6 +153,7 @@ class AttributeGrounder:
                 records.append(
                     {
                         "slot_path": ".".join(path),
+                        "source_text": value,
                         "value": value,
                         "field_id": None,
                         "source_column": None,
@@ -146,6 +168,19 @@ class AttributeGrounder:
                     }
                 )
         return records
+
+    def _source_text(
+        self,
+        slots: dict[str, Any],
+        slot_path: str,
+        value: Any,
+    ) -> Any:
+        raw_sources = slots.get("raw_sources") or {}
+        if slot_path in raw_sources:
+            return raw_sources[slot_path]
+        if isinstance(value, list):
+            return "、".join(str(item) for item in value)
+        return value
 
     def _summary(self, records: list[dict[str, Any]]) -> dict[str, Any]:
         statuses = {}

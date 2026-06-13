@@ -42,6 +42,16 @@ class RegexExtractor:
         major_exact_terms = self._major_exact_terms(text)
         major_keyword = major_exact_terms[0] if major_exact_terms else None
         tuition_cap_yuan = self._tuition_cap_yuan(text)
+        major_expansion_raw = self._major_expansion(text)
+        cooperation_preference_raw = self._first_present(
+            text,
+            self.aliases["cooperation_terms"],
+        )
+        other_vague_preferences = [
+            term
+            for term in self.aliases["other_vague_terms"]
+            if term in text
+        ]
 
         return {
             "input": text,
@@ -66,11 +76,8 @@ class RegexExtractor:
                     else self._first_present(text, self.aliases["tuition_terms"])
                 ),
                 "tuition_cap_yuan": tuition_cap_yuan,
-                "major_expansion_raw": self._major_expansion(text),
-                "cooperation_preference_raw": self._first_present(
-                    text,
-                    self.aliases["cooperation_terms"],
-                ),
+                "major_expansion_raw": major_expansion_raw,
+                "cooperation_preference_raw": cooperation_preference_raw,
                 "overseas_preference_raw": self._first_present(
                     text,
                     self.aliases["overseas_avoidance_terms"],
@@ -83,12 +90,14 @@ class RegexExtractor:
                     text,
                     self.aliases["recommendation_terms"],
                 ),
-                "other_vague_preferences": [
-                    term
-                    for term in self.aliases["other_vague_terms"]
-                    if term in text
-                ],
+                "other_vague_preferences": other_vague_preferences,
             },
+            "raw_sources": self._raw_sources(
+                text=text,
+                major_expansion_raw=major_expansion_raw,
+                cooperation_preference_raw=cooperation_preference_raw,
+                other_vague_preferences=other_vague_preferences,
+            ),
             "raw_phrases": self._raw_phrases(text),
         }
 
@@ -128,8 +137,11 @@ class RegexExtractor:
         return _unique(cities)
 
     def _major_expansion(self, text: str) -> str | None:
+        for term in self._major_source_terms(text):
+            if f"{term}相关" in text:
+                return f"{term}相关"
         if any(token in text for token in ["相关", "都可以", "或者", "、", "/", "互联网"]):
-            return "语义扩展待确认"
+            return "相关专业"
         return None
 
     def _first_present(self, text: str, candidates: list[str]) -> str | None:
@@ -159,6 +171,73 @@ class RegexExtractor:
             if any(alias in normalized for alias in aliases):
                 subjects.append(subject)
         return _unique(subjects)[:2]
+
+    def _raw_sources(
+        self,
+        text: str,
+        major_expansion_raw: str | None,
+        cooperation_preference_raw: str | None,
+        other_vague_preferences: list[str],
+    ) -> dict[str, Any]:
+        sources: dict[str, Any] = {}
+        major_sources = self._major_source_terms(text)
+        if major_sources:
+            sources["preferences.major_exact_terms"] = major_sources
+            sources["preferences.major_keyword"] = major_sources[0]
+        city_sources = self._city_source_terms(text)
+        if city_sources:
+            sources["preferences.preferred_cities"] = city_sources
+        reselected_sources = self._reselected_subject_source_terms(text)
+        if reselected_sources:
+            sources["user_context.reselected_subjects"] = reselected_sources
+        if major_expansion_raw:
+            sources["preferences.major_expansion_raw"] = major_expansion_raw
+        if cooperation_preference_raw:
+            sources["preferences.cooperation_preference_raw"] = cooperation_preference_raw
+        if other_vague_preferences:
+            sources["preferences.other_vague_preferences"] = other_vague_preferences
+        return sources
+
+    def _major_source_terms(self, text: str) -> list[str]:
+        positions: dict[str, tuple[int, str]] = {}
+        for canonical, aliases in self.aliases["major_aliases"].items():
+            matches = [
+                (text.find(alias), alias)
+                for alias in aliases
+                if text.find(alias) >= 0
+            ]
+            if matches:
+                positions[canonical] = min(matches)
+        return [
+            alias
+            for _, alias in sorted(positions.values(), key=lambda item: item[0])
+        ]
+
+    def _city_source_terms(self, text: str) -> list[str]:
+        sources = [
+            alias
+            for alias in self.aliases["city_group_aliases"]
+            if alias in text
+        ]
+        for aliases in self.aliases["city_aliases"].values():
+            matches = [alias for alias in aliases if alias in text]
+            if matches:
+                sources.append(matches[0])
+        return _unique(sources)
+
+    def _reselected_subject_source_terms(self, text: str) -> list[str]:
+        bundles = ["物化生", "物化地", "物政地", "物生地", "史政地", "史化生"]
+        matches = [bundle for bundle in bundles if bundle in text]
+        if matches:
+            return matches[:1]
+        normalized = text.replace("思想政治", "政治").replace("生物学", "生物")
+        sources = []
+        for aliases in self.aliases["reselected_subject_aliases"].values():
+            for alias in aliases:
+                if alias in normalized:
+                    sources.append(alias)
+                    break
+        return _unique(sources)
 
     def _tuition_cap_yuan(self, text: str) -> int | None:
         patterns = [

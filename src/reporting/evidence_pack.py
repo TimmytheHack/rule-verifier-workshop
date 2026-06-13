@@ -25,6 +25,7 @@ class EvidencePack:
     attribute_grounding_summary: dict[str, Any] = field(default_factory=dict)
     proposed_rule_audit: list[dict[str, Any]] = field(default_factory=list)
     execution_summary: dict[str, Any] = field(default_factory=dict)
+    attribute_explanations: list[dict[str, Any]] = field(default_factory=list)
 
     @classmethod
     def from_verified_pipeline(
@@ -55,6 +56,10 @@ class EvidencePack:
             not_executed_preferences=not_executed,
             top_k=top_k,
         )
+        explanations = _attribute_explanations(
+            attribute_grounding=attribute_grounding or {},
+            executed_rules=compact_rules,
+        )
         return cls(
             user_request=user_request,
             executed_rules=compact_rules,
@@ -67,6 +72,7 @@ class EvidencePack:
             attribute_grounding_summary=(attribute_grounding or {}).get("summary", {}),
             proposed_rule_audit=_compact_proposed_rule_audit(proposed_rules or []),
             execution_summary=execution,
+            attribute_explanations=explanations,
         )
 
     def to_dict(self) -> dict[str, Any]:
@@ -112,6 +118,129 @@ def _compact_proposed_rule_audit(rules: list[dict[str, Any]]) -> list[dict[str, 
             }
         )
     return compact
+
+
+def _attribute_explanations(
+    attribute_grounding: dict[str, Any],
+    executed_rules: list[dict[str, Any]],
+) -> list[dict[str, Any]]:
+    executed_fields = {
+        rule.get("field")
+        for rule in executed_rules
+        if rule.get("field")
+    }
+    explanations = []
+    seen: set[tuple[str, str, str]] = set()
+    for record in attribute_grounding.get("attributes", []):
+        category = _attribute_match_category(record)
+        if category is None:
+            continue
+        source_text = _display_source_text(record.get("source_text"))
+        value = record.get("value")
+        field = record.get("source_column") or record.get("field_id") or "无可执行字段"
+        key = (category, str(field), _stable_value(value))
+        if key in seen:
+            continue
+        seen.add(key)
+        action = _attribute_action(
+            category=category,
+            field=field,
+            executed_fields=executed_fields,
+        )
+        explanations.append(
+            {
+                "source_text": source_text,
+                "slot_path": record.get("slot_path"),
+                "field": field,
+                "value": value,
+                "match_type": category,
+                "action": action,
+                "matched_values": _matched_values(record),
+                "reason": _attribute_reason(record, category, action),
+            }
+        )
+    return explanations
+
+
+def _attribute_match_category(record: dict[str, Any]) -> str | None:
+    status = record.get("status")
+    audit = record.get("value_index_audit") or {}
+    audit_status = audit.get("status")
+    if status == "context_only":
+        return None
+    if (
+        status in {"missing_schema", "ignored_not_schema_mapped", "unmapped_attribute"}
+        or not record.get("field_exists_in_excel_schema")
+        or audit_status == "field_inactive"
+    ):
+        return "no_schema_field"
+    if status == "confirmable" or record.get("requires_human_confirmation"):
+        return "partial_match"
+    if audit_status in {
+        "partial_match",
+        "not_found",
+        "not_found_in_partial_index",
+        "partial_numeric_profile",
+        "outside_numeric_profile",
+    }:
+        return "partial_match"
+    if status == "schema_grounded":
+        return "exact_match"
+    return None
+
+
+def _attribute_action(
+    category: str,
+    field: str,
+    executed_fields: set[Any],
+) -> str:
+    if category == "exact_match":
+        return "executed" if field in executed_fields else "executable"
+    if category == "partial_match":
+        return "needs_confirmation"
+    return "not_executed"
+
+
+def _attribute_reason(
+    record: dict[str, Any],
+    category: str,
+    action: str,
+) -> str:
+    field = record.get("source_column") or record.get("field_id") or "无可执行字段"
+    if category == "exact_match" and action == "executed":
+        return f"已匹配字段“{field}”，并已进入 hard filter。"
+    if category == "exact_match":
+        return f"已匹配字段“{field}”，可执行但本次未作为 hard filter 使用。"
+    if category == "partial_match":
+        reason = _user_facing_reason(record.get("reason")) or "需要确认具体边界。"
+        return f"{reason}未进入 hard filter。"
+    reason = _user_facing_reason(record.get("reason")) or "缺少可执行字段。"
+    return f"{reason}原文已保留，未进入 hard filter。"
+
+
+def _matched_values(record: dict[str, Any]) -> list[str]:
+    audit = record.get("value_index_audit") or {}
+    matched = []
+    for check in audit.get("checks") or []:
+        for value in check.get("matched_values") or []:
+            text = str(value)
+            if text not in matched:
+                matched.append(text)
+    return matched[:5]
+
+
+def _display_source_text(value: Any) -> str:
+    if isinstance(value, list):
+        return "、".join(str(item) for item in value)
+    return str(value)
+
+
+def _stable_value(value: Any) -> str:
+    if isinstance(value, list):
+        if len(value) == 1:
+            return str(value[0])
+        return "list:" + "|".join(str(item) for item in value)
+    return str(value)
 
 
 def _candidate_confirmations(

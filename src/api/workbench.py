@@ -1185,6 +1185,7 @@ def _report_from_answer(answer: str, evidence: dict[str, Any]) -> dict[str, Any]
         "executed_rules": [
             rule["description"] for rule in evidence["executed_rules"]
         ],
+        "attribute_explanations": evidence.get("attribute_explanations", []),
         "top_results": [_result_text(row) for row in evidence["top_k_results"][:3]],
         "warnings": warnings,
         "disclaimer": "以上内容是规则验证结果和证据汇总，不是最终志愿建议。",
@@ -1457,6 +1458,13 @@ def _confirmation_percent(label: Any) -> int | None:
 
 
 def _sanitize_user_text(text: str) -> str:
+    protected = {
+        "no_schema_field": "__NO_SCHEMA_FIELD__",
+        "exact_match": "__EXACT_MATCH__",
+        "partial_match": "__PARTIAL_MATCH__",
+    }
+    for source, marker in protected.items():
+        text = text.replace(source, marker)
     replacements = {
         "Missing dedicated cooperation_type field. No text-field inference is used in this MVP.": (
             "缺少合作办学类型字段，未使用文本字段推断。"
@@ -1523,6 +1531,8 @@ def _sanitize_user_text(text: str) -> str:
     output = text
     for source, target in replacements.items():
         output = output.replace(source, target)
+    for source, marker in protected.items():
+        output = output.replace(marker, source)
     return output
 
 
