@@ -1,0 +1,21 @@
+product_id,product_name,category,price_usd,rating,stock_count,brand,email_contact,description
+1,Notebook Alpha,laptop,899,4.5,12,Acme,seller1@example.com,Lightweight laptop for students
+2,Notebook Beta,laptop,1299,4.7,5,Acme,seller2@example.com,Performance laptop with metal body
+3,Tablet Mini,tablet,399,4.2,30,Orion,seller3@example.com,Compact tablet for reading
+4,Tablet Pro,tablet,699,4.6,18,Orion,seller4@example.com,Large tablet with pen support
+5,Phone Lite,phone,299,4.1,40,Nova,seller5@example.com,Entry phone with long battery life
+6,Phone Max,phone,999,4.8,8,Nova,seller6@example.com,Flagship phone with premium camera
+7,Monitor 24,monitor,179,4.0,25,ViewCo,seller7@example.com,Office monitor with adjustable stand
+8,Monitor 32,monitor,329,4.4,14,ViewCo,seller8@example.com,Wide monitor for productivity
+9,Keyboard Basic,accessory,29,3.9,100,KeyLab,seller9@example.com,Simple keyboard for daily work
+10,Keyboard Pro,accessory,119,4.6,35,KeyLab,seller10@example.com,Mechanical keyboard with backlight
+11,Mouse Mini,accessory,19,3.8,120,Clicker,seller11@example.com,Small wireless mouse
+12,Mouse Ergo,accessory,79,4.3,50,Clicker,seller12@example.com,Ergonomic mouse for long sessions
+13,Camera Home,camera,149,4.1,22,SecureIt,seller13@example.com,Indoor camera with app alerts
+14,Camera Pro,camera,349,4.5,9,SecureIt,seller14@example.com,Outdoor camera with night vision
+15,Router Basic,network,59,4.0,60,Wave,seller15@example.com,Home router for small apartments
+16,Router Mesh,network,229,4.7,16,Wave,seller16@example.com,Mesh router kit for large homes
+17,Speaker Mini,audio,49,4.2,44,Soundly,seller17@example.com,Portable speaker with clear voice
+18,Speaker Studio,audio,299,4.6,13,Soundly,seller18@example.com,Room speaker with stereo pairing
+19,Headphones Air,audio,89,4.1,70,Soundly,seller19@example.com,Wireless headphones for commuting
+20,Headphones Max,audio,249,4.8,11,Soundly,seller20@example.com,Noise cancelling headphones

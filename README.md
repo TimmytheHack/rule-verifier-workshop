@@ -26,7 +26,7 @@
 | `domains/` | domain pack 配置：schema mapping、value aliases、rule taxonomy、排序、答案模板和 golden cases |
 | `schemas/` | schema profile 和历史配置；运行时 schema 以 `domains/admissions/schema_registry.json` 为准 |
 | `rules/` | 跨 domain 的规则生命周期、信息需求和模糊词参考配置 |
-| `scripts/` | demo、评估和离线 schema profiling 脚本 |
+| `scripts/` | demo、评估、离线 schema profiling 和 domain pack auto-generator 脚本 |
 | `docs/` | 方法、评估和端到端 demo 文档 |
 | `outputs/` | 已生成 demo 和 evaluation artifact |
 
@@ -61,7 +61,16 @@ python scripts/build_data_warehouse.py
 
 Workbench API 每次执行前都会校验 DuckDB metadata、schema/value index metadata 和源 Excel fingerprint 是否一致；不一致时返回结构化 warning，不会静默回退到 raw Excel/Pandas 执行。
 
-当前默认 domain 是 `domains/admissions/`。招生字段名、字段别名、值别名、规则分类、排序策略、`top_results` 映射、答案模板和 golden cases 都由该 domain pack 提供；Workbench、AttributeGrounder、RuleVerifier 和 DuckDBExecutor 只通过 `DomainConfig` 读取 canonical fields。仓库还包含 `domains/housing/` toy domain 和 20 行 CSV fixture，用单元测试验证同一套符号管线可以切换 domain 运行。项目没有接入 Qwen、BGE 或向量库；结构化招生表继续使用 DuckDB 与 schema/value index。
+当前默认 domain 是 `domains/admissions/`。招生字段名、字段别名、值别名、规则分类、排序策略、`top_results` 映射、答案模板和 golden cases 都由该 domain pack 提供；Workbench、AttributeGrounder、RuleVerifier 和 DuckDBExecutor 只通过 `DomainConfig` 读取 canonical fields。仓库还包含 `domains/housing/` 和 `domains/products/` toy fixture，用单元测试验证同一套符号管线可以切换 domain 运行。项目没有接入 Qwen、BGE 或向量库；结构化招生表继续使用 DuckDB 与 schema/value index。
+
+可以用 auto-generator 从 CSV/Excel 生成 draft domain pack：
+
+```bash
+source .venv/bin/activate
+python scripts/generate_domain_pack.py path/to/source.csv products
+```
+
+生成器会在 `domains/<domain>/` 下输出 `domain.yaml`、`schema_mapping.yaml`、`rule_taxonomy.seed.yaml`、`extraction_aliases.seed.json`、`top_result_mapping.yaml`、`sort_policy.seed.yaml`、`answer_templates.seed.md`、`golden_cases.seed.yaml`，并复用 warehouse ingestion 生成 `<domain>.duckdb`、`schema_profile.json`、`schema_value_index.json` 和 `ingestion_summary.json`。所有自动配置都是 `draft` 或 `needs_review`，默认不会给字段写入可执行 `allowed_ops`。`--llm off` 是默认值；`--llm deepseek` 只发送 schema profile 和少量脱敏样例，输出也只能作为候选 aliases/templates，不能直接进入 hard rules。
 
 Workbench API 响应已经固定为 `WorkbenchResponse` contract。前端应依赖 `status`、`answer`、`top_results`、`result_count`、`executed_filters`、`candidates_to_confirm`、`confirmed_rules`、`unconfirmed_candidates`、`unexecuted_preferences`、`no_schema_field_preferences`、`rejected_confirmations`、`warnings`、`evidence_pack` 和 `debug_trace`。`status` 只能是 `ok`、`needs_confirmation`、`no_results`、`blocked`、`error`；`top_results` 只使用英文 key，EvidencePack 内部保留中文原始字段用于追溯。详见 [Workbench API 响应契约](docs/api_contract.md)。
 

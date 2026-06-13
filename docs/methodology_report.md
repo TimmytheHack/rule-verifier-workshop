@@ -16,12 +16,22 @@
 `domains/admissions/`，其中配置 schema mapping、字段别名、值别名、rule taxonomy、
 排序策略、answer templates、`top_results` 字段映射和 golden cases。核心 Workbench、
 AttributeGrounder、RuleVerifier 与 DuckDBExecutor 不直接硬编码招生源列名，只读取
-domain pack 中的 canonical fields。`domains/housing/` 提供一个 20 行 CSV 的 toy domain，
-用于验证同一套 grounding -> verification -> DuckDB execution -> EvidencePack -> template
-answer pipeline 可以替换 domain 运行。
+domain pack 中的 canonical fields。`domains/housing/` 和 `domains/products/` 提供 20 行 CSV
+toy fixture，用于验证同一套 grounding -> verification -> DuckDB execution -> EvidencePack ->
+template answer pipeline 可以替换 domain 运行。
+
+现在还提供 `scripts/generate_domain_pack.py`，可从 CSV/Excel 根据 schema profile 自动生成
+draft domain pack：`domain.yaml`、`schema_mapping.yaml`、seed aliases、seed taxonomy、seed
+sort policy、seed answer templates、seed golden cases，以及 `<domain>.duckdb`、
+`schema_profile.json`、`schema_value_index.json` 和 `ingestion_summary.json`。自动生成结果只
+标记为 `draft` 或 `needs_review`，默认不给字段写入可执行 `allowed_ops`；人工 approve 后才
+能进入 RuleVerifier hard rules。`domains/products/fixtures/products.csv` 和 housing fixture
+一起覆盖了同一套 generator -> DomainConfig -> DuckDB smoke query。
 
 这次抽象仍然坚持结构化存储优先：招生主数据使用 DuckDB 和 schema/value index；toy
-domain 使用 CSV fixture。系统没有接入 Qwen、BGE、向量库或全文表格 embedding。
+domain 使用 CSV fixture。系统没有接入 Qwen、BGE、向量库或全文表格 embedding。可选
+`--llm deepseek` 只接收 schema profile 和少量脱敏样例，输出只能作为候选 aliases/templates，
+不能直接提升为可执行规则。
 
 系统不应该直接给出推荐列表，除非它能解释：
 

@@ -9,3 +9,5 @@ outputs/eval/fuzzy_quick_*.json
 outputs/eval/fuzzy_deepseek_extractor_results.json
 outputs/data/*.duckdb
 outputs/data/*.duckdb.wal
+domains/**/*.duckdb
+domains/**/*.duckdb.wal

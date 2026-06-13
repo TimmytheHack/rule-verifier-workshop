@@ -26,6 +26,24 @@ class DomainConfig:
     def load(cls, domain_id: str = DEFAULT_DOMAIN_ID) -> "DomainConfig":
         return _load_domain(domain_id)
 
+    @classmethod
+    def from_path(
+        cls,
+        root: str | Path,
+        domain_id: str | None = None,
+    ) -> "DomainConfig":
+        """从指定目录读取 domain pack，供生成器和测试使用。"""
+
+        root_path = Path(root)
+        path = root_path / "domain.json"
+        if not path.exists():
+            raise FileNotFoundError(f"Domain pack not found: {path}")
+        payload = json.loads(path.read_text(encoding="utf-8"))
+        resolved_domain_id = domain_id or str(
+            payload.get("domain_id") or root_path.name
+        )
+        return cls(domain_id=resolved_domain_id, root=root_path, payload=payload)
+
     @property
     def schema_path(self) -> Path:
         return self._path("schema")

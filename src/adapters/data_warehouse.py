@@ -62,12 +62,33 @@ def build_structured_store(
     """把 Excel 离线落到 DuckDB，并生成 schema/value index。"""
 
     dataset = ExcelAdapter(workbook_path, required_columns).load()
+    return build_structured_store_from_dataset(
+        dataset=dataset,
+        schema_path=schema_path,
+        database_path=database_path,
+        index_path=index_path,
+        table_name=table_name,
+        source_path=workbook_path,
+    )
+
+
+def build_structured_store_from_dataset(
+    dataset: ExcelDataSet,
+    schema_path: str | Path,
+    database_path: str | Path,
+    index_path: str | Path,
+    table_name: str = DEFAULT_TABLE_NAME,
+    source_path: str | Path | None = None,
+) -> WarehouseBuildResult:
+    """把已读取的结构化数据落到 DuckDB，并复用 schema/value index 构建。"""
+
     database_path = Path(database_path)
     index_path = Path(index_path)
     database_path.parent.mkdir(parents=True, exist_ok=True)
     index_path.parent.mkdir(parents=True, exist_ok=True)
     created_at = _utc_timestamp()
-    source_fingerprint = _file_fingerprint(Path(workbook_path))
+    source_path = Path(source_path or dataset.workbook_path)
+    source_fingerprint = _file_fingerprint(source_path)
 
     with duckdb.connect(str(database_path)) as connection:
         connection.register("source_dataframe", dataset.dataframe)
@@ -99,7 +120,7 @@ def build_structured_store(
         database_path=database_path,
         index_path=index_path,
         table_name=table_name,
-        source_path=Path(workbook_path),
+        source_path=source_path,
         row_count=len(dataset.dataframe),
         column_count=len(dataset.dataframe.columns),
         source_fingerprint=source_fingerprint,
