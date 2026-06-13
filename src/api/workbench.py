@@ -25,6 +25,7 @@ from src.executors.duckdb_executor import (
     ExecutionResult,
     hard_filter_rules,
 )
+from src.api.admissions_query_planner import AdmissionsQueryPlanner
 from src.extractors.deepseek_extractor import (
     DeepSeekClient,
     DeepSeekExtractor,
@@ -110,10 +111,12 @@ class WorkbenchResponse:
     domain_version: str
     domain_pack_status: str
     status: str
+    query_type: str
     query: dict[str, Any]
     answer: str
     items: list[dict[str, Any]]
     top_results: list[dict[str, Any]]
+    result_sections: dict[str, Any]
     result_count: int
     executed_filters: list[dict[str, Any]]
     candidates_to_confirm: list[dict[str, Any]]
@@ -146,10 +149,12 @@ class WorkbenchResponse:
             "domain_version": self.domain_version,
             "domain_pack_status": self.domain_pack_status,
             "status": self.status,
+            "query_type": self.query_type,
             "query": self.query,
             "answer": self.answer,
             "items": self.items,
             "top_results": self.top_results,
+            "result_sections": self.result_sections,
             "result_count": self.result_count,
             "executed_filters": self.executed_filters,
             "candidates_to_confirm": self.candidates_to_confirm,
@@ -217,6 +222,14 @@ def _run_workbench(config: WorkbenchConfig) -> dict[str, Any]:
     warehouse_audit = _data_warehouse_audit(domain_config)
     if not warehouse_audit["ok"]:
         return _data_warehouse_warning_payload(config, warehouse_audit)
+    planned_result = _run_admissions_planned_query(config, domain_config)
+    if planned_result is not None:
+        return _planned_query_payload(
+            config=config,
+            domain_config=domain_config,
+            warehouse_audit=warehouse_audit,
+            planned_result=planned_result,
+        )
 
     dataset = _load_dataset(domain_config)
     schema_registry = _load_schema_registry(tuple(dataset.headers), domain_config)
@@ -381,6 +394,170 @@ def _run_workbench(config: WorkbenchConfig) -> dict[str, Any]:
     )
 
 
+def _run_admissions_planned_query(
+    config: WorkbenchConfig,
+    domain_config: DomainConfig,
+) -> Any | None:
+    if domain_config.domain_id != ADMISSIONS_DOMAIN.domain_id:
+        return None
+    return AdmissionsQueryPlanner(
+        domain_config=domain_config,
+        database_path=_warehouse_database_path(domain_config),
+    ).run(config, _compose_user_request(config))
+
+
+def _planned_query_payload(
+    *,
+    config: WorkbenchConfig,
+    domain_config: DomainConfig,
+    warehouse_audit: dict[str, Any],
+    planned_result: Any,
+) -> dict[str, Any]:
+    hard_rules = list(planned_result.executed_rules)
+    top_results = [
+        _top_result(rank, row, domain_config)
+        for rank, row in enumerate(planned_result.rows[:EVIDENCE_TOP_K], start=1)
+    ]
+    items = [
+        _item_card(rank, row, hard_rules, domain_config)
+        for rank, row in enumerate(planned_result.rows[:EVIDENCE_TOP_K], start=1)
+    ]
+    result_count = len(planned_result.rows)
+    evidence_pack = {
+        "user_request": _compose_user_request(config),
+        "query_type": planned_result.query_type,
+        "executed_rules": hard_rules,
+        "candidate_confirmations": planned_result.candidates_to_confirm,
+        "not_executed_preferences": planned_result.no_schema_field_preferences,
+        "result_count": result_count,
+        "top_k_results": top_results,
+        "result_sections": planned_result.result_sections,
+        "trace_summary": {
+            "top_k": EVIDENCE_TOP_K,
+            "query_type": planned_result.query_type,
+            "result_count": result_count,
+        },
+        "extracted_preferences": planned_result.extracted_preferences,
+        "attribute_grounding_summary": {},
+        "proposed_rule_audit": [],
+        "execution_summary": planned_result.execution_summary,
+        "attribute_explanations": [],
+        "confirmed_rules": [],
+        "confirmation_source": [],
+        "executed_after_confirmation": [],
+        "unconfirmed_candidates": planned_result.candidates_to_confirm,
+        "no_schema_field_preferences": planned_result.no_schema_field_preferences,
+        "rejected_confirmations": [],
+    }
+    legacy_payload = {
+        "mode": "api",
+        "status": planned_result.status,
+        "query_type": planned_result.query_type,
+        "user_input": _compose_user_request(config),
+        "data_warehouse": warehouse_audit,
+        "hard_filters": _display_hard_filters_for_domain(config, domain_config),
+        "soft_preferences": _display_soft_preferences_for_domain(
+            config,
+            domain_config,
+        ),
+        "selected_options": _selected_options(config),
+        "extracted_preferences": planned_result.extracted_preferences,
+        "extracted_slots": {},
+        "attribute_grounding": {"summary": {}, "attributes": []},
+        "confirmation_candidates": planned_result.candidates_to_confirm,
+        "confirmation_state": {
+            "requested_candidate_ids": list(config.confirmed_candidates),
+            "accepted_candidate_ids": [],
+            "rejected_candidates": [],
+            "confirmed_rules": [],
+            "confirmation_source": [],
+            "executed_after_confirmation": [],
+            "unconfirmed_candidates": planned_result.candidates_to_confirm,
+            "no_schema_field_preferences": planned_result.no_schema_field_preferences,
+        },
+        "proposed_rules": [],
+        "deterministic_rules": [_display_rule(rule) for rule in hard_rules],
+        "candidate_rules": planned_result.candidates_to_confirm,
+        "not_executed_preferences": [
+            _planned_not_executed_preference(index, item)
+            for index, item in enumerate(
+                planned_result.no_schema_field_preferences,
+                start=1,
+            )
+        ],
+        "simulated_confirmations": {},
+        "executable_rules": [_executable_rule(rule) for rule in hard_rules],
+        "execution": _display_execution_summary(planned_result.execution_summary),
+        "result_count": result_count,
+        "items": items,
+        "top_results": top_results,
+        "result_sections": planned_result.result_sections,
+        "trace": {},
+        "evidence_pack": evidence_pack,
+        "natural_language_report": {
+            "title": "Admissions query planner 结果",
+            "summary": planned_result.answer,
+            "full_text": planned_result.answer,
+            "result_count_text": f"当前返回 {result_count} 条结果。",
+            "executed_rules": [_rule_label(rule) for rule in hard_rules],
+            "attribute_explanations": [],
+            "top_results": top_results,
+            "warnings": planned_result.warnings,
+            "disclaimer": "推荐分组基于历史最低分/最低位次，不代表录取概率。",
+        },
+        "token_usage": {
+            "extractor": None,
+            "generator": None,
+            "total": {"prompt_tokens": 0, "completion_tokens": 0, "total_tokens": 0},
+        },
+    }
+    response = WorkbenchResponse(
+        schema_version=WORKBENCH_SCHEMA_VERSION,
+        domain=domain_config.domain_id,
+        domain_version=domain_config.domain_version,
+        domain_pack_status=domain_config.pack_status,
+        status=planned_result.status,
+        query_type=planned_result.query_type,
+        query=_contract_query(config),
+        answer=planned_result.answer,
+        items=items,
+        top_results=top_results,
+        result_sections=planned_result.result_sections,
+        result_count=result_count,
+        executed_filters=[_display_rule(rule) for rule in hard_rules],
+        candidates_to_confirm=planned_result.candidates_to_confirm,
+        confirmed_rules=[],
+        unconfirmed_candidates=planned_result.candidates_to_confirm,
+        unexecuted_preferences=legacy_payload["not_executed_preferences"],
+        no_schema_field_preferences=planned_result.no_schema_field_preferences,
+        rejected_confirmations=[],
+        warnings=_contract_warnings(
+            planned_result.warnings,
+            status=planned_result.status,
+            confirmation_state=legacy_payload["confirmation_state"],
+        ),
+        evidence_pack=evidence_pack,
+        debug_trace=_debug_trace(legacy_payload),
+    ).to_dict()
+    return {**legacy_payload, **response}
+
+
+def _planned_not_executed_preference(
+    index: int,
+    item: dict[str, Any],
+) -> dict[str, Any]:
+    source_text = str(item.get("source_text") or "该偏好")
+    reason = str(item.get("reason") or "缺少可执行字段。")
+    return {
+        "id": f"planned_not_exec_{index}",
+        "preference": source_text,
+        "display": f"{source_text}未执行：{reason}",
+        "reason": reason,
+        "missing_field": item.get("field_id") or "缺少已审查数据字段",
+        "source_span": source_text,
+    }
+
+
 def _contract_success_payload(
     legacy_payload: dict[str, Any],
     hard_rules: list[dict[str, Any]],
@@ -395,10 +572,12 @@ def _contract_success_payload(
         domain_version=domain_config.domain_version,
         domain_pack_status=domain_config.pack_status,
         status=status,
+        query_type=str(legacy_payload.get("query_type") or "verified_filter"),
         query=_contract_query(config),
         answer=legacy_payload["natural_language_report"]["full_text"],
         items=legacy_payload["items"],
         top_results=legacy_payload["top_results"],
+        result_sections=legacy_payload.get("result_sections") or {},
         result_count=legacy_payload["result_count"],
         executed_filters=[_display_rule(rule) for rule in hard_rules],
         candidates_to_confirm=confirmation_state.get("unconfirmed_candidates", []),
@@ -513,6 +692,7 @@ def _normalize_warning(item: Any) -> dict[str, Any]:
 def _debug_trace(payload: dict[str, Any]) -> dict[str, Any]:
     keys = [
         "mode",
+        "query_type",
         "user_input",
         "data_warehouse",
         "hard_filters",
@@ -532,6 +712,7 @@ def _debug_trace(payload: dict[str, Any]) -> dict[str, Any]:
         "execution",
         "trace",
         "items",
+        "result_sections",
         "natural_language_report",
         "token_usage",
     ]
@@ -803,10 +984,12 @@ def _contract_blocked_payload(
         domain_version=domain_config.domain_version,
         domain_pack_status=domain_config.pack_status,
         status="blocked",
+        query_type=str(legacy_payload.get("query_type") or "verified_filter"),
         query=_contract_query(config),
         answer=legacy_payload["natural_language_report"]["full_text"],
         items=[],
         top_results=[],
+        result_sections=legacy_payload.get("result_sections") or {},
         result_count=0,
         executed_filters=[],
         candidates_to_confirm=(
@@ -915,10 +1098,12 @@ def _error_payload(config: WorkbenchConfig, exc: Exception) -> dict[str, Any]:
         domain_version="unknown",
         domain_pack_status="blocked",
         status="error",
+        query_type="unknown",
         query=_contract_query(config),
         answer=legacy_payload["natural_language_report"]["full_text"],
         items=[],
         top_results=[],
+        result_sections={},
         result_count=0,
         executed_filters=[],
         candidates_to_confirm=[],
@@ -1053,6 +1238,7 @@ def _contract_query(config: WorkbenchConfig) -> dict[str, Any]:
     return {
         "text": _compose_user_request(config),
         "domain": config.domain_name,
+        "query_type": config.hard_filters.get("query_type"),
         "hard_filters": dict(config.hard_filters),
         "soft_preferences": dict(config.soft_preferences),
         "confirmed_candidates": list(config.confirmed_candidates),
@@ -2101,11 +2287,18 @@ def _display_attribute_grounding(
 def _display_execution_summary(summary: dict[str, Any]) -> dict[str, Any]:
     return {
         "executor": summary.get("executor"),
+        "query_type": summary.get("query_type"),
         "sql": summary.get("sql"),
         "params": summary.get("params", []),
+        "detail_sql": summary.get("detail_sql", ""),
+        "detail_params": summary.get("detail_params", []),
         "input_row_count": summary.get("input_row_count"),
         "filtered_row_count": summary.get("filtered_row_count"),
+        "nested_result_count": summary.get("nested_result_count", 0),
+        "group_by": summary.get("group_by", []),
+        "metric": summary.get("metric"),
         "sort_key": summary.get("sort_key", []),
+        "sort": summary.get("sort", []),
         "top_k": summary.get("top_k"),
         "hard_rule_ids": summary.get("hard_rule_ids", []),
         "skipped_soft_rule_ids": summary.get("skipped_soft_rule_ids", []),

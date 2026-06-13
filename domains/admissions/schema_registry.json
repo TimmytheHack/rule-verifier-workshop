@@ -144,6 +144,15 @@
       "nullable": true,
       "notes": "该字段用于执行用户已确认的安全边际规则。"
     },
+    "group_min_score_2024": {
+      "source_column": "专业组最低分1",
+      "type": "number",
+      "label": "专业组最低分1",
+      "aliases": ["专业组最低分", "专业组最低录取分数", "专业组分数线"],
+      "allowed_ops": ["sort"],
+      "nullable": true,
+      "notes": "AdmissionsQueryPlanner 用于专业组详情报表和 score_margin，不作为自然语言 hard filter。"
+    },
     "tuition_yuan_per_year": {
       "source_column": "学费",
       "type": "number_from_string",
@@ -161,6 +170,24 @@
       "allowed_ops": ["sort"],
       "nullable": true,
       "notes": "展示字段。"
+    },
+    "major_min_score_2024": {
+      "source_column": "最低分1",
+      "type": "number",
+      "label": "最低分1",
+      "aliases": ["专业最低分", "专业最低录取分数", "最低分"],
+      "allowed_ops": ["sort"],
+      "nullable": true,
+      "notes": "AdmissionsQueryPlanner 用于组内专业明细展示。"
+    },
+    "major_max_score_2024": {
+      "source_column": "最高分1",
+      "type": "number",
+      "label": "最高分1",
+      "aliases": ["专业最高分", "最高分"],
+      "allowed_ops": ["sort"],
+      "nullable": true,
+      "notes": "AdmissionsQueryPlanner 用于组内专业明细展示。"
     },
     "school_tags": {
       "source_column": "院校标签",

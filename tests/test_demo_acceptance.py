@@ -14,8 +14,8 @@ class DemoAcceptanceScriptTest(unittest.TestCase):
     def test_case_counts_match_acceptance_scope(self) -> None:
         counts = Counter(case.domain for case in CASES)
 
-        self.assertEqual(len(CASES), 25)
-        self.assertEqual(counts["admissions"], 15)
+        self.assertEqual(len(CASES), 27)
+        self.assertEqual(counts["admissions"], 17)
         self.assertEqual(counts["housing"], 5)
         self.assertEqual(counts["products"], 5)
 
@@ -32,6 +32,7 @@ class DemoAcceptanceScriptTest(unittest.TestCase):
             "domain_version": "1",
             "domain_pack_status": "approved",
             "status": "ok",
+            "query_type": "verified_filter",
             "query": {"text": case.query},
             "answer": "Found products.",
             "result_count": 1,
@@ -47,6 +48,7 @@ class DemoAcceptanceScriptTest(unittest.TestCase):
                 }
             ],
             "top_results": [{"product_name": "Speaker Mini"}],
+            "result_sections": {},
             "executed_filters": [{"id": "e_category"}],
             "candidates_to_confirm": [],
             "confirmed_rules": [],
@@ -73,6 +75,7 @@ class DemoAcceptanceScriptTest(unittest.TestCase):
             "status",
             "items",
             "top_results",
+            "result_sections",
             "executed_filters",
             "candidates_to_confirm",
             "unexecuted_preferences",

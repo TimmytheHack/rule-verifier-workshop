@@ -1,31 +1,31 @@
 # Quality Gate 报告
 
 - 总体状态：`pass`
-- 当前 git commit：`414982c`
+- 当前 git commit：`e847508`
 - 工作区 dirty：`True`
-- 开始时间：`2026-06-13T14:34:51.621621Z`
-- 结束时间：`2026-06-13T14:36:18.662136Z`
-- 耗时秒数：`87.04`
+- 开始时间：`2026-06-13T15:03:33.821385Z`
+- 结束时间：`2026-06-13T15:05:01.000025Z`
+- 耗时秒数：`87.179`
 - regex score：`320/320`
-- unittest：`110 tests`
+- unittest：`121 tests`
 - API contract：`10 tests`
-- demo acceptance：`25` / `25`
+- demo acceptance：`27` / `27`
 
 ## 检查列表
 
 | check | status | exit_code | duration_seconds |
 |---|---|---:|---:|
 | git_state | warning | 0 | 0.0 |
-| python_syntax | pass | 0 | 0.276 |
-| unit_tests | pass | 0 | 35.213 |
-| api_contract_tests | pass | 0 | 14.759 |
-| regex_evaluator | pass | 0 | 0.975 |
-| demo_acceptance | pass | 0 | 20.692 |
-| domain_pack_validate | pass | 0 | 11.234 |
-| domain_review_workflow | pass | 0 | 0.089 |
-| warehouse_fingerprint_guard | pass | 0 | 0.124 |
-| git_diff_check | pass | 0 | 0.136 |
-| frontend_build | warning | 0 | 3.412 |
+| python_syntax | pass | 0 | 0.281 |
+| unit_tests | pass | 0 | 34.937 |
+| api_contract_tests | pass | 0 | 14.64 |
+| regex_evaluator | pass | 0 | 1.117 |
+| demo_acceptance | pass | 0 | 21.154 |
+| domain_pack_validate | pass | 0 | 11.107 |
+| domain_review_workflow | pass | 0 | 0.094 |
+| warehouse_fingerprint_guard | pass | 0 | 0.128 |
+| git_diff_check | pass | 0 | 0.118 |
+| frontend_build | warning | 0 | 3.441 |
 
 ## 失败原因摘要
 

@@ -446,7 +446,8 @@ Workbench API 返回固定的 `WorkbenchResponse` contract：
 
 - `status` 只能是 `ok`、`needs_confirmation`、`no_results`、`blocked`、`error`。
 - 顶层固定包含 `schema_version`、`domain`、`domain_version`、`domain_pack_status`、
-  `query`、`items`、`top_results`、`evidence_pack` 和 `debug_trace` 等字段。
+  `query_type`、`query`、`items`、`top_results`、`result_sections`、`evidence_pack`
+  和 `debug_trace` 等字段。
 - `domain_pack_status` 至少支持 `draft`、`needs_review`、`approved`、`blocked`；
   `draft` / `needs_review` 默认返回 `blocked`，不执行 SQL。
 - `needs_confirmation` 表示存在未确认的 `partial_match` 偏好，这些偏好不能声称已执行；当前结果只能作为已执行规则下的 provisional results。
@@ -457,6 +458,13 @@ Workbench API 返回固定的 `WorkbenchResponse` contract：
   `university_name`、`group_code`、`major_code`、`major_name`、`full_major_name`、
   `city`、`tuition`、`rank_2024`、`plan_count` 等英文 key。
   EvidencePack 内部继续保留中文原始字段用于 trace。
+- admissions 新增 `AdmissionsQueryPlanner`，只在招生 domain 内识别
+  `group_detail_report` 和 `recommendation`。前者按 domain pack 配置的默认
+  `group_min_score_2024` 指标生成专业组聚合和组内专业明细；后者基于历史最低分/
+  最低位次生成 `reach`、`match`、`safety`（冲/稳/保）分组。只有分数没有位次时
+  返回 warning；有位次时优先按 `rank_margin` 排序。`不想去国外`、`不要中外合作`
+  只有在 domain pack 启用对应已审核字段时才执行，否则保留在
+  `no_schema_field_preferences`。
 - 完整字段和 JSON 示例见 `docs/api_contract.md`。
 
 ## 9. LLM 边界

@@ -9,10 +9,12 @@ CONTRACT_KEYS = {
     "domain_version",
     "domain_pack_status",
     "status",
+    "query_type",
     "query",
     "answer",
     "items",
     "top_results",
+    "result_sections",
     "result_count",
     "executed_filters",
     "candidates_to_confirm",
@@ -73,10 +75,12 @@ def assert_workbench_contract(testcase: Any, payload: dict[str, Any]) -> None:
     testcase.assertIsInstance(payload["domain_version"], str)
     testcase.assertIn(payload["domain_pack_status"], DOMAIN_PACK_STATUS_VALUES)
     testcase.assertIn(payload["status"], STATUS_VALUES)
+    testcase.assertIsInstance(payload["query_type"], str)
     testcase.assertIsInstance(payload["query"], dict)
     testcase.assertIsInstance(payload["answer"], str)
     testcase.assertIsInstance(payload["items"], list)
     testcase.assertIsInstance(payload["top_results"], list)
+    testcase.assertIsInstance(payload["result_sections"], dict)
     testcase.assertIsInstance(payload["result_count"], int)
     testcase.assertIsInstance(payload["executed_filters"], list)
     testcase.assertIsInstance(payload["candidates_to_confirm"], list)

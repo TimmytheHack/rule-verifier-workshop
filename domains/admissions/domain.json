@@ -109,6 +109,65 @@
     {"key": "major_min_rank", "field_id": "major_min_rank_2024"},
     {"key": "safety_margin", "computed": "percent:safety_margin_pct"}
   ],
+  "query_planner": {
+    "latest_available_year": 2024,
+    "group_detail_report": {
+      "limit": 5,
+      "default_metric": {
+        "field_id": "group_min_score_2024",
+        "direction": "DESC",
+        "label": "专业组最低分最高"
+      },
+      "fields": {
+        "year": "year",
+        "university_name": "university_name",
+        "group_code": "group_code",
+        "group_title": "group_name",
+        "group_rank": "group_min_rank_2024",
+        "major_code": "major_code",
+        "major_name": "major_name",
+        "full_major_name": "full_major_name",
+        "major_score": "major_min_score_2024",
+        "major_rank": "major_min_rank_2024",
+        "major_max_score": "major_max_score_2024",
+        "plan_count": "plan_count"
+      }
+    },
+    "recommendation": {
+      "limit": 30,
+      "fields": {
+        "year": "year",
+        "university_name": "university_name",
+        "group_code": "group_code",
+        "group_title": "group_name",
+        "major_code": "major_code",
+        "major_name": "major_name",
+        "full_major_name": "full_major_name",
+        "school_province": "school_province",
+        "city": "city",
+        "tuition": "tuition_yuan_per_year",
+        "group_score": "group_min_score_2024",
+        "group_rank": "group_min_rank_2024",
+        "major_score": "major_min_score_2024",
+        "major_rank": "major_min_rank_2024",
+        "plan_count": "plan_count",
+        "cooperation_type": "cooperation_type",
+        "school_country_or_region": "school_country_or_region"
+      },
+      "margin_policy": {
+        "score_margin": {
+          "reach_max_abs": 30,
+          "match_max": 20,
+          "safety_min": 30
+        },
+        "rank_margin": {
+          "reach_max_abs": 8000,
+          "match_max": 15000,
+          "safety_min": 30000
+        }
+      }
+    }
+  },
   "workbench": {
     "slot_labels": {
       "user_context.source_province": "生源地",

@@ -1,21 +1,21 @@
 {
   "mode": "api",
-  "status": "needs_confirmation",
-  "user_input": "广东，物理类，再选科目：化学、生物，排位32000；偏好信息：已确认边界：位次窗口 10%，费用上限 20000 元/年；偏好描述：想学计算机，最好在广州深圳，学校稳一点，不想去太贵的中外合作。",
+  "status": "ok",
+  "user_input": "广东物理，排位32000，想学计算机，广深优先。；偏好信息：偏好描述：广东物理，排位32000，想学计算机，广深优先。",
   "data_warehouse": {
     "status": "ok",
     "ok": true,
     "warnings": [],
     "source": {
-      "path": "广东省2025年志愿填报大数据（24-25）0523.xlsx",
+      "path": "/Users/tz/Desktop/Projects/SZU/广东省2025年志愿填报大数据（24-25）0523.xlsx",
       "exists": true,
       "fingerprint": "38cdba7f2b9f5c05d52f8285df5df4fc622d7cd67e2e179cb0a0912d41dba5b3"
     },
     "duckdb": {
-      "path": "outputs/data/guangdong_admissions.duckdb",
+      "path": "/var/folders/8x/m9y8nxl15rj6986pjlwl_d680000gn/T/tmp7cqowzol/guangdong_admissions.duckdb",
       "exists": true,
       "metadata": {
-        "source_path": "广东省2025年志愿填报大数据（24-25）0523.xlsx",
+        "source_path": "/Users/tz/Desktop/Projects/SZU/广东省2025年志愿填报大数据（24-25）0523.xlsx",
         "sheet_name": "Sheet1",
         "header_row": "3",
         "table_name": "admissions",
@@ -23,7 +23,7 @@
         "column_count": "57",
         "fingerprint": "38cdba7f2b9f5c05d52f8285df5df4fc622d7cd67e2e179cb0a0912d41dba5b3",
         "source_fingerprint": "38cdba7f2b9f5c05d52f8285df5df4fc622d7cd67e2e179cb0a0912d41dba5b3",
-        "created_at": "2026-06-13T00:00:00Z"
+        "created_at": "2026-06-13T15:08:21.966956Z"
       },
       "profile": {
         "table_name": "admissions",
@@ -33,43 +33,40 @@
       "fingerprint": "38cdba7f2b9f5c05d52f8285df5df4fc622d7cd67e2e179cb0a0912d41dba5b3"
     },
     "schema_value_index": {
-      "path": "outputs/data/schema_value_index.json",
+      "path": "/var/folders/8x/m9y8nxl15rj6986pjlwl_d680000gn/T/tmp7cqowzol/schema_value_index.json",
       "exists": true,
       "source": {
-        "source_path": "广东省2025年志愿填报大数据（24-25）0523.xlsx",
-        "workbook_path": "广东省2025年志愿填报大数据（24-25）0523.xlsx",
+        "source_path": "/Users/tz/Desktop/Projects/SZU/广东省2025年志愿填报大数据（24-25）0523.xlsx",
+        "workbook_path": "/Users/tz/Desktop/Projects/SZU/广东省2025年志愿填报大数据（24-25）0523.xlsx",
         "sheet_name": "Sheet1",
         "header_row": 3,
         "fingerprint": "38cdba7f2b9f5c05d52f8285df5df4fc622d7cd67e2e179cb0a0912d41dba5b3",
         "source_fingerprint": "38cdba7f2b9f5c05d52f8285df5df4fc622d7cd67e2e179cb0a0912d41dba5b3",
-        "created_at": "2026-06-13T00:00:00Z"
+        "created_at": "2026-06-13T15:08:21.966956Z"
       },
       "warehouse": {
-        "database_path": "outputs/data/guangdong_admissions.duckdb",
+        "database_path": "/var/folders/8x/m9y8nxl15rj6986pjlwl_d680000gn/T/tmp7cqowzol/guangdong_admissions.duckdb",
         "table_name": "admissions",
         "row_count": 30855,
         "column_count": 57,
-        "created_at": "2026-06-13T00:00:00Z"
+        "created_at": "2026-06-13T15:08:21.966956Z"
       },
       "fingerprint": "38cdba7f2b9f5c05d52f8285df5df4fc622d7cd67e2e179cb0a0912d41dba5b3"
     }
   },
   "hard_filters": {
-    "source_province": "广东",
-    "subject_type": "物理",
-    "reselected_subjects": [
-      "化学",
-      "生物"
-    ],
-    "user_rank": 32000,
+    "source_province": null,
+    "subject_type": null,
+    "reselected_subjects": [],
+    "user_rank": null,
     "major_keyword": null,
     "preferred_cities": [],
     "tuition_cap_yuan": null
   },
   "soft_preferences": {
-    "prompt": "想学计算机，最好在广州深圳，学校稳一点，不想去太贵的中外合作。",
-    "safety_margin_percent": 10,
-    "tuition_cap_yuan": 20000
+    "prompt": "广东物理，排位32000，想学计算机，广深优先。",
+    "safety_margin_percent": null,
+    "tuition_cap_yuan": null
   },
   "selected_options": {
     "extractor": "规则解析软偏好",
@@ -90,16 +87,6 @@
       "slot": "科类",
       "value": "物理",
       "source_span": "物理",
-      "status": "已对齐字段"
-    },
-    {
-      "id": "pref_reselected_subjects",
-      "slot": "再选科目",
-      "value": [
-        "化学",
-        "生物"
-      ],
-      "source_span": "化学、生物",
       "status": "已对齐字段"
     },
     {
@@ -127,38 +114,14 @@
       ],
       "source_span": "广州、深圳",
       "status": "已对齐字段"
-    },
-    {
-      "id": "pref_stable",
-      "slot": "稳一点",
-      "value": "稳一点",
-      "source_span": "稳一点",
-      "status": "待确认"
-    },
-    {
-      "id": "pref_expensive",
-      "slot": "太贵",
-      "value": "太贵",
-      "source_span": "太贵",
-      "status": "待确认"
-    },
-    {
-      "id": "pref_cooperation",
-      "slot": "中外合作",
-      "value": "不想去太贵的中外合作",
-      "source_span": "不想去太贵的中外合作",
-      "status": "不可执行"
     }
   ],
   "extracted_slots": {
-    "input": "广东，物理类，再选科目：化学、生物，排位32000；偏好信息：已确认边界：位次窗口 10%，费用上限 20000 元/年；偏好描述：想学计算机，最好在广州深圳，学校稳一点，不想去太贵的中外合作。",
+    "input": "广东物理，排位32000，想学计算机，广深优先。；偏好信息：偏好描述：广东物理，排位32000，想学计算机，广深优先。",
     "user_context": {
       "source_province": "广东",
       "subject_type": "物理",
-      "reselected_subjects": [
-        "化学",
-        "生物"
-      ],
+      "reselected_subjects": [],
       "user_rank": 32000
     },
     "preferences": {
@@ -171,11 +134,11 @@
         "深圳"
       ],
       "preferred_school_provinces": [],
-      "risk_preference_raw": "稳一点",
-      "tuition_preference_raw": "太贵",
+      "risk_preference_raw": null,
+      "tuition_preference_raw": null,
       "tuition_cap_yuan": null,
       "major_expansion_raw": null,
-      "cooperation_preference_raw": "不想去太贵的中外合作",
+      "cooperation_preference_raw": null,
       "overseas_preference_raw": null,
       "school_ownership_preference_raw": null,
       "recommendation_request_raw": null,
@@ -187,37 +150,25 @@
       ],
       "preferences.major_keyword": "计算机",
       "preferences.preferred_cities": [
-        "广州深圳",
-        "广州",
-        "深圳"
-      ],
-      "preferences.cooperation_preference_raw": "不想去太贵的中外合作"
+        "广深"
+      ]
     },
     "raw_phrases": [
-      "一点",
-      "稳一点",
-      "太贵",
-      "不想去太贵的中外合作",
-      "中外合作",
-      "广州",
-      "深圳",
+      "排位32000",
       "计算机",
-      "广州深圳"
+      "物理",
+      "广深"
     ]
   },
   "attribute_grounding": {
     "summary": {
-      "total_attributes": 10,
+      "total_attributes": 6,
       "status_counts": {
-        "schema_grounded": 6,
-        "context_only": 1,
-        "confirmable": 2,
-        "missing_schema": 1
+        "schema_grounded": 5,
+        "context_only": 1
       },
       "value_index_status_counts": {
-        "matched": 6,
-        "outside_numeric_profile": 2,
-        "field_inactive": 1
+        "matched": 5
       },
       "unsafe_ungrounded_executable_attributes": 0
     },
@@ -256,29 +207,6 @@
           "lookup_complete": true,
           "matched_values": [
             "物理"
-          ],
-          "numeric": null
-        }
-      },
-      {
-        "slot_path": "user_context.reselected_subjects",
-        "slot": "再选科目",
-        "value": [
-          "化学",
-          "生物"
-        ],
-        "field": "选科要求",
-        "status": "已接地到数据字段",
-        "status_type": "success",
-        "reason": "广东 3+1+2 的再选科目需要和数据字段“选科要求”匹配。",
-        "value_index": {
-          "status": "值已在索引中匹配",
-          "status_type": "success",
-          "profile_kind": "text",
-          "lookup_complete": true,
-          "matched_values": [
-            "化学",
-            "生物"
           ],
           "numeric": null
         }
@@ -363,82 +291,10 @@
           ],
           "numeric": null
         }
-      },
-      {
-        "slot_path": "preferences.risk_preference_raw",
-        "slot": "风险偏好",
-        "value": "稳一点",
-        "field": "专业组最低位次1",
-        "status": "字段存在但需要确认",
-        "status_type": "warning",
-        "reason": "该属性有对应字段，但语义或边界需要确认。",
-        "value_index": {
-          "status": "数值超出历史字段范围",
-          "status_type": "danger",
-          "profile_kind": "numeric",
-          "lookup_complete": null,
-          "matched_values": [],
-          "numeric": {
-            "min": 19,
-            "max": 448677
-          }
-        }
-      },
-      {
-        "slot_path": "preferences.tuition_preference_raw",
-        "slot": "费用偏好",
-        "value": "太贵",
-        "field": "学费",
-        "status": "字段存在但需要确认",
-        "status_type": "warning",
-        "reason": "该属性有对应字段，但语义或边界需要确认。",
-        "value_index": {
-          "status": "数值超出历史字段范围",
-          "status_type": "danger",
-          "profile_kind": "numeric",
-          "lookup_complete": null,
-          "matched_values": [],
-          "numeric": {
-            "min": 2200,
-            "max": 160000
-          }
-        }
-      },
-      {
-        "slot_path": "preferences.cooperation_preference_raw",
-        "slot": "中外合作偏好",
-        "value": "不想去太贵的中外合作",
-        "field": "无可执行字段",
-        "status": "缺少可执行字段",
-        "status_type": "danger",
-        "reason": "当前数据中没有可执行字段，不能进入筛表。",
-        "value_index": {
-          "status": "字段未启用",
-          "status_type": "danger",
-          "profile_kind": null,
-          "lookup_complete": null,
-          "matched_values": [],
-          "numeric": null
-        }
       }
     ]
   },
-  "confirmation_candidates": [
-    {
-      "candidate_id": "cand_52adb25590672c64",
-      "source_text": "不想去太贵的中外合作",
-      "slot_path": "preferences.cooperation_preference_raw",
-      "field_id": "cooperation_type",
-      "field": "无可执行字段",
-      "match_type": "no_schema_field",
-      "operator": null,
-      "value": null,
-      "label": "不可执行",
-      "executable": false,
-      "reason": "当前数据中没有可执行字段，不能进入筛表。",
-      "matched_values": []
-    }
-  ],
+  "confirmation_candidates": [],
   "confirmation_state": {
     "requested_candidate_ids": [],
     "accepted_candidate_ids": [],
@@ -447,22 +303,7 @@
     "confirmation_source": [],
     "executed_after_confirmation": [],
     "unconfirmed_candidates": [],
-    "no_schema_field_preferences": [
-      {
-        "candidate_id": "cand_52adb25590672c64",
-        "source_text": "不想去太贵的中外合作",
-        "slot_path": "preferences.cooperation_preference_raw",
-        "field_id": "cooperation_type",
-        "field": "无可执行字段",
-        "match_type": "no_schema_field",
-        "operator": null,
-        "value": null,
-        "label": "不可执行",
-        "executable": false,
-        "reason": "当前数据中没有可执行字段，不能进入筛表。",
-        "matched_values": []
-      }
-    ]
+    "no_schema_field_preferences": []
   },
   "proposed_rules": [],
   "deterministic_rules": [
@@ -481,17 +322,6 @@
       "operator": "eq",
       "value": "物理",
       "source_span": "物理"
-    },
-    {
-      "id": "d_subject_requirement",
-      "label": "选科要求 满足已选再选科目：化学、生物",
-      "field": "选科要求",
-      "operator": "satisfies_subject_requirement",
-      "value": [
-        "化学",
-        "生物"
-      ],
-      "source_span": "化学、生物"
     },
     {
       "id": "d_major_keyword",
@@ -515,52 +345,13 @@
       "source_span": "广州、深圳"
     }
   ],
-  "candidate_rules": [
-    {
-      "id": "c_safety_margin",
-      "preference": "稳一点",
-      "label": "位次窗口候选规则",
-      "reason": "风险边界需要明确位次窗口；用户选择后才可提升为可执行规则。",
-      "options": [
-        "5% 位次窗口",
-        "10% 位次窗口",
-        "15% 位次窗口",
-        "不使用这个规则"
-      ],
-      "simulated_selection": "10% 位次窗口"
-    },
-    {
-      "id": "c_tuition_cap",
-      "preference": "太贵",
-      "label": "学费上限候选规则",
-      "reason": "费用偏好需要明确金额；用户选择后才可提升为可执行规则。",
-      "options": [
-        "不高于 10000 元/年",
-        "不高于 20000 元/年",
-        "不高于 40000 元/年",
-        "不使用学费规则"
-      ],
-      "simulated_selection": "不高于 20000 元/年"
-    }
-  ],
-  "not_executed_preferences": [
-    {
-      "id": "not_exec_1",
-      "preference": "不想去太贵的中外合作",
-      "display": "中外合作未执行：缺少合作办学类型字段",
-      "reason": "当前数据字段定义没有合作办学类型字段，不能验证或执行“排除中外合作”。",
-      "missing_field": "合作办学类型字段",
-      "source_span": "不想去太贵的中外合作"
-    }
-  ],
+  "candidate_rules": [],
+  "not_executed_preferences": [],
   "simulated_confirmations": {
     "recommendation_rank_floor": null,
-    "safety_margin_percent": 10,
-    "safety_rank_cutoff": [
-      28800,
-      35200
-    ],
-    "tuition_cap": 20000,
+    "safety_margin_percent": null,
+    "safety_rank_cutoff": null,
+    "tuition_cap": null,
     "major_expansion": false
   },
   "executable_rules": [
@@ -572,11 +363,6 @@
     {
       "id": "e_subject_type",
       "label": "科类 等于 物理",
-      "origin": "deterministic"
-    },
-    {
-      "id": "e_subject_requirement",
-      "label": "选科要求 满足已选再选科目：化学、生物",
       "origin": "deterministic"
     },
     {
@@ -592,37 +378,36 @@
   ],
   "execution": {
     "executor": "duckdb",
-    "sql": "WITH source AS (\n  SELECT row_number() OVER () AS \"__source_row_number\", *\n  FROM \"admissions\"\n),\nfiltered AS (\n  SELECT\n    source.*,\n    TRY_CAST(regexp_extract(REPLACE(CAST(\"专业组最低位次1\" AS VARCHAR), ',', ''), '\\d+(?:\\.\\d+)?') AS DOUBLE) AS \"__group_rank_num\",\n    TRY_CAST(regexp_extract(REPLACE(CAST(\"学费\" AS VARCHAR), ',', ''), '\\d+(?:\\.\\d+)?') AS DOUBLE) AS \"__tuition_num\",\n    TRY_CAST(regexp_extract(REPLACE(CAST(\"院校排名\" AS VARCHAR), ',', ''), '\\d+(?:\\.\\d+)?') AS DOUBLE) AS \"__school_rank_num\",\n    TRY_CAST(regexp_extract(REPLACE(CAST(\"ID\" AS VARCHAR), ',', ''), '\\d+(?:\\.\\d+)?') AS DOUBLE) AS \"__id_num\"\n  FROM source\n  WHERE CAST(\"生源地\" AS VARCHAR) = ? AND CAST(\"科类\" AS VARCHAR) = ? AND ((REPLACE(REPLACE(CAST(\"选科要求\" AS VARCHAR), '思想政治', '政治'), '生物学', '生物') IS NULL OR TRIM(REPLACE(REPLACE(CAST(\"选科要求\" AS VARCHAR), '思想政治', '政治'), '生物学', '生物')) = '' OR REPLACE(REPLACE(CAST(\"选科要求\" AS VARCHAR), '思想政治', '政治'), '生物学', '生物') = 'nan' OR REPLACE(REPLACE(CAST(\"选科要求\" AS VARCHAR), '思想政治', '政治'), '生物学', '生物') = '无' OR STRPOS(REPLACE(REPLACE(CAST(\"选科要求\" AS VARCHAR), '思想政治', '政治'), '生物学', '生物'), '不限') > 0) OR ((STRPOS(REPLACE(REPLACE(CAST(\"选科要求\" AS VARCHAR), '思想政治', '政治'), '生物学', '生物'), '或') > 0 OR STRPOS(REPLACE(REPLACE(CAST(\"选科要求\" AS VARCHAR), '思想政治', '政治'), '生物学', '生物'), '/') > 0) AND (STRPOS(REPLACE(REPLACE(CAST(\"选科要求\" AS VARCHAR), '思想政治', '政治'), '生物学', '生物'), ?) > 0 OR STRPOS(REPLACE(REPLACE(CAST(\"选科要求\" AS VARCHAR), '思想政治', '政治'), '生物学', '生物'), ?) > 0)) OR ((STRPOS(REPLACE(REPLACE(CAST(\"选科要求\" AS VARCHAR), '思想政治', '政治'), '生物学', '生物'), '或') = 0 AND STRPOS(REPLACE(REPLACE(CAST(\"选科要求\" AS VARCHAR), '思想政治', '政治'), '生物学', '生物'), '/') = 0) AND STRPOS(REPLACE(REPLACE(CAST(\"选科要求\" AS VARCHAR), '思想政治', '政治'), '生物学', '生物'), ?) = 0 AND STRPOS(REPLACE(REPLACE(CAST(\"选科要求\" AS VARCHAR), '思想政治', '政治'), '生物学', '生物'), ?) = 0)) AND (STRPOS(CAST(\"专业名称\" AS VARCHAR), ?) > 0) AND (STRPOS(CAST(\"城市\" AS VARCHAR), ?) > 0 OR STRPOS(CAST(\"城市\" AS VARCHAR), ?) > 0)\n),\nprojectable AS (\n  SELECT *\n  FROM filtered\n  WHERE TRUE\n    AND \"__group_rank_num\" IS NOT NULL\n    AND \"__tuition_num\" IS NOT NULL\n)\nSELECT *\nFROM projectable\nORDER BY\n  \"__group_rank_num\" ASC NULLS LAST,\n  \"__school_rank_num\" ASC NULLS LAST,\n  \"__id_num\" ASC NULLS LAST",
+    "query_type": null,
+    "sql": "WITH source AS (\n  SELECT row_number() OVER () AS \"__source_row_number\", *\n  FROM \"admissions\"\n),\nfiltered AS (\n  SELECT\n    source.*,\n    TRY_CAST(regexp_extract(REPLACE(CAST(\"专业组最低位次1\" AS VARCHAR), ',', ''), '\\d+(?:\\.\\d+)?') AS DOUBLE) AS \"__group_rank_num\",\n    TRY_CAST(regexp_extract(REPLACE(CAST(\"学费\" AS VARCHAR), ',', ''), '\\d+(?:\\.\\d+)?') AS DOUBLE) AS \"__tuition_num\",\n    TRY_CAST(regexp_extract(REPLACE(CAST(\"院校排名\" AS VARCHAR), ',', ''), '\\d+(?:\\.\\d+)?') AS DOUBLE) AS \"__school_rank_num\",\n    TRY_CAST(regexp_extract(REPLACE(CAST(\"ID\" AS VARCHAR), ',', ''), '\\d+(?:\\.\\d+)?') AS DOUBLE) AS \"__id_num\"\n  FROM source\n  WHERE CAST(\"生源地\" AS VARCHAR) = ? AND CAST(\"科类\" AS VARCHAR) = ? AND (STRPOS(CAST(\"专业名称\" AS VARCHAR), ?) > 0) AND (STRPOS(CAST(\"城市\" AS VARCHAR), ?) > 0 OR STRPOS(CAST(\"城市\" AS VARCHAR), ?) > 0)\n),\nprojectable AS (\n  SELECT *\n  FROM filtered\n  WHERE TRUE\n    AND \"__group_rank_num\" IS NOT NULL\n    AND \"__tuition_num\" IS NOT NULL\n)\nSELECT *\nFROM projectable\nORDER BY\n  \"__group_rank_num\" ASC NULLS LAST,\n  \"__school_rank_num\" ASC NULLS LAST,\n  \"__id_num\" ASC NULLS LAST",
     "params": [
       "广东",
       "物理",
-      "化学",
-      "生物",
-      "政治",
-      "地理",
       "计算机",
       "广州",
       "深圳"
     ],
+    "detail_sql": "",
+    "detail_params": [],
     "input_row_count": 30855,
     "filtered_row_count": 149,
+    "nested_result_count": 0,
+    "group_by": [],
+    "metric": null,
     "sort_key": [
       "专业组最低位次1 ASC NULLS LAST",
       "院校排名 ASC NULLS LAST",
       "ID ASC NULLS LAST"
     ],
+    "sort": [],
     "top_k": 5,
     "hard_rule_ids": [
       "e_source_province",
       "e_subject_type",
-      "e_subject_requirement",
       "e_major_keyword",
       "e_city"
     ],
-    "skipped_soft_rule_ids": [
-      "e_safety_margin",
-      "e_tuition_cap"
-    ]
+    "skipped_soft_rule_ids": []
   },
   "result_count": 149,
   "top_results": [
@@ -639,19 +424,11 @@
         },
         {
           "status": "pass",
-          "text": "选科要求 化学；已选再选科目：化学、生物"
-        },
-        {
-          "status": "pass",
           "text": "专业名称 包含任一：计算机；命中 计算机类"
         },
         {
           "status": "pass",
           "text": "城市 包含任一：广州、深圳；命中 广州"
-        },
-        {
-          "status": "not_executed",
-          "text": "中外合作：缺少合作办学类型字段，未执行"
         }
       ],
       "year": 2024,
@@ -687,19 +464,11 @@
         },
         {
           "status": "pass",
-          "text": "选科要求 化学；已选再选科目：化学、生物"
-        },
-        {
-          "status": "pass",
           "text": "专业名称 包含任一：计算机；命中 计算机类"
         },
         {
           "status": "pass",
           "text": "城市 包含任一：广州、深圳；命中 广州"
-        },
-        {
-          "status": "not_executed",
-          "text": "中外合作：缺少合作办学类型字段，未执行"
         }
       ],
       "year": 2024,
@@ -735,19 +504,11 @@
         },
         {
           "status": "pass",
-          "text": "选科要求 化学；已选再选科目：化学、生物"
-        },
-        {
-          "status": "pass",
           "text": "专业名称 包含任一：计算机；命中 计算机科学与技术"
         },
         {
           "status": "pass",
           "text": "城市 包含任一：广州、深圳；命中 广州"
-        },
-        {
-          "status": "not_executed",
-          "text": "中外合作：缺少合作办学类型字段，未执行"
         }
       ],
       "year": 2024,
@@ -783,19 +544,11 @@
         },
         {
           "status": "pass",
-          "text": "选科要求 化学；已选再选科目：化学、生物"
-        },
-        {
-          "status": "pass",
           "text": "专业名称 包含任一：计算机；命中 计算机科学与技术"
         },
         {
           "status": "pass",
           "text": "城市 包含任一：广州、深圳；命中 广州"
-        },
-        {
-          "status": "not_executed",
-          "text": "中外合作：缺少合作办学类型字段，未执行"
         }
       ],
       "year": 2024,
@@ -831,19 +584,11 @@
         },
         {
           "status": "pass",
-          "text": "选科要求 化学；已选再选科目：化学、生物"
-        },
-        {
-          "status": "pass",
           "text": "专业名称 包含任一：计算机；命中 计算机类"
         },
         {
           "status": "pass",
           "text": "城市 包含任一：广州、深圳；命中 广州"
-        },
-        {
-          "status": "not_executed",
-          "text": "中外合作：缺少合作办学类型字段，未执行"
         }
       ],
       "year": 2024,
@@ -982,17 +727,6 @@
           "value": "物理",
           "matched": true,
           "text": "科类 等于 物理"
-        },
-        {
-          "id": "e_subject_requirement",
-          "field": "选科要求",
-          "operator": "satisfies_subject_requirement",
-          "value": [
-            "化学",
-            "生物"
-          ],
-          "matched": true,
-          "text": "选科要求 化学；已选再选科目：化学、生物"
         },
         {
           "id": "e_major_keyword",
@@ -1159,17 +893,6 @@
           "text": "科类 等于 物理"
         },
         {
-          "id": "e_subject_requirement",
-          "field": "选科要求",
-          "operator": "satisfies_subject_requirement",
-          "value": [
-            "化学",
-            "生物"
-          ],
-          "matched": true,
-          "text": "选科要求 化学；已选再选科目：化学、生物"
-        },
-        {
           "id": "e_major_keyword",
           "field": "专业名称",
           "operator": "contains_any",
@@ -1322,17 +1045,6 @@
           "value": "物理",
           "matched": true,
           "text": "科类 等于 物理"
-        },
-        {
-          "id": "e_subject_requirement",
-          "field": "选科要求",
-          "operator": "satisfies_subject_requirement",
-          "value": [
-            "化学",
-            "生物"
-          ],
-          "matched": true,
-          "text": "选科要求 化学；已选再选科目：化学、生物"
         },
         {
           "id": "e_major_keyword",
@@ -1489,17 +1201,6 @@
           "text": "科类 等于 物理"
         },
         {
-          "id": "e_subject_requirement",
-          "field": "选科要求",
-          "operator": "satisfies_subject_requirement",
-          "value": [
-            "化学",
-            "生物"
-          ],
-          "matched": true,
-          "text": "选科要求 化学；已选再选科目：化学、生物"
-        },
-        {
           "id": "e_major_keyword",
           "field": "专业名称",
           "operator": "contains_any",
@@ -1654,17 +1355,6 @@
           "text": "科类 等于 物理"
         },
         {
-          "id": "e_subject_requirement",
-          "field": "选科要求",
-          "operator": "satisfies_subject_requirement",
-          "value": [
-            "化学",
-            "生物"
-          ],
-          "matched": true,
-          "text": "选科要求 化学；已选再选科目：化学、生物"
-        },
-        {
           "id": "e_major_keyword",
           "field": "专业名称",
           "operator": "contains_any",
@@ -1716,7 +1406,7 @@
   ],
   "trace": {},
   "evidence_pack": {
-    "user_request": "广东，物理类，再选科目：化学、生物，排位32000；偏好信息：已确认边界：位次窗口 10%，费用上限 20000 元/年；偏好描述：想学计算机，最好在广州深圳，学校稳一点，不想去太贵的中外合作。",
+    "user_request": "广东物理，排位32000，想学计算机，广深优先。；偏好信息：偏好描述：广东物理，排位32000，想学计算机，广深优先。",
     "executed_rules": [
       {
         "rule_id": "e_source_province",
@@ -1733,17 +1423,6 @@
         "operator": "eq",
         "value": "物理",
         "description": "科类 等于 物理"
-      },
-      {
-        "rule_id": "e_subject_requirement",
-        "derived_from": "d_subject_requirement",
-        "field": "选科要求",
-        "operator": "satisfies_subject_requirement",
-        "value": [
-          "化学",
-          "生物"
-        ],
-        "description": "选科要求 满足已选再选科目：化学、生物"
       },
       {
         "rule_id": "e_major_keyword",
@@ -1767,52 +1446,8 @@
         "description": "城市 包含任一：广州、深圳"
       }
     ],
-    "candidate_confirmations": [
-      {
-        "confirmation_id": "safety_margin",
-        "source_rule_id": "c_safety_margin",
-        "source_text": "学校稳一点",
-        "selected_label": "10% 位次窗口",
-        "selected_option": "10%",
-        "status": "confirmed_not_hard_filter",
-        "field": "专业组最低位次1",
-        "operator": "between",
-        "value": [
-          28800,
-          35200
-        ],
-        "description": "专业组最低位次1 位于 28800-35200 名的窗口内"
-      },
-      {
-        "confirmation_id": "tuition_threshold",
-        "source_rule_id": "c_tuition_cap",
-        "source_text": "太贵",
-        "selected_label": "不高于 20000 元/年",
-        "selected_option": "20000",
-        "status": "confirmed_not_hard_filter",
-        "field": "学费",
-        "operator": "<=",
-        "value": 20000,
-        "description": "学费 不高于 20000"
-      },
-      {
-        "confirmation_id": "cooperation_type",
-        "source_rule_id": null,
-        "source_text": "不想去太贵的中外合作",
-        "selected_label": null,
-        "selected_option": null,
-        "status": "not_executable",
-        "reason": "缺少合作办学类型字段。"
-      }
-    ],
-    "not_executed_preferences": [
-      {
-        "source_text": "不想去太贵的中外合作",
-        "status": "not_executed",
-        "reason": "缺少合作办学类型字段，当前版本不从文本字段推断。",
-        "safety_warning": "不想去太贵的中外合作 未执行：缺少合作办学类型字段，当前版本不从文本字段推断。"
-      }
-    ],
+    "candidate_confirmations": [],
+    "not_executed_preferences": [],
     "result_count": 149,
     "top_k_results": [
       {
@@ -1840,11 +1475,6 @@
             "reason": "科类 等于 物理"
           },
           {
-            "rule_id": "e_subject_requirement",
-            "status": "pass",
-            "reason": "选科要求 化学；已选再选科目：化学、生物"
-          },
-          {
             "rule_id": "e_major_keyword",
             "status": "pass",
             "reason": "专业名称 包含任一：计算机；命中 计算机类"
@@ -1853,11 +1483,6 @@
             "rule_id": "e_city",
             "status": "pass",
             "reason": "城市 包含任一：广州、深圳；命中 广州"
-          },
-          {
-            "rule_id": "l_cooperation_type",
-            "status": "not_executed",
-            "reason": "不想去太贵的中外合作 未执行：缺少合作办学类型字段，当前版本不从文本字段推断。"
           }
         ]
       },
@@ -1886,11 +1511,6 @@
             "reason": "科类 等于 物理"
           },
           {
-            "rule_id": "e_subject_requirement",
-            "status": "pass",
-            "reason": "选科要求 化学；已选再选科目：化学、生物"
-          },
-          {
             "rule_id": "e_major_keyword",
             "status": "pass",
             "reason": "专业名称 包含任一：计算机；命中 计算机类"
@@ -1899,11 +1519,6 @@
             "rule_id": "e_city",
             "status": "pass",
             "reason": "城市 包含任一：广州、深圳；命中 广州"
-          },
-          {
-            "rule_id": "l_cooperation_type",
-            "status": "not_executed",
-            "reason": "不想去太贵的中外合作 未执行：缺少合作办学类型字段，当前版本不从文本字段推断。"
           }
         ]
       },
@@ -1931,11 +1546,6 @@
             "reason": "科类 等于 物理"
           },
           {
-            "rule_id": "e_subject_requirement",
-            "status": "pass",
-            "reason": "选科要求 化学；已选再选科目：化学、生物"
-          },
-          {
             "rule_id": "e_major_keyword",
             "status": "pass",
             "reason": "专业名称 包含任一：计算机；命中 计算机科学与技术"
@@ -1944,11 +1554,6 @@
             "rule_id": "e_city",
             "status": "pass",
             "reason": "城市 包含任一：广州、深圳；命中 广州"
-          },
-          {
-            "rule_id": "l_cooperation_type",
-            "status": "not_executed",
-            "reason": "不想去太贵的中外合作 未执行：缺少合作办学类型字段，当前版本不从文本字段推断。"
           }
         ]
       },
@@ -1976,11 +1581,6 @@
             "reason": "科类 等于 物理"
           },
           {
-            "rule_id": "e_subject_requirement",
-            "status": "pass",
-            "reason": "选科要求 化学；已选再选科目：化学、生物"
-          },
-          {
             "rule_id": "e_major_keyword",
             "status": "pass",
             "reason": "专业名称 包含任一：计算机；命中 计算机科学与技术"
@@ -1989,11 +1589,6 @@
             "rule_id": "e_city",
             "status": "pass",
             "reason": "城市 包含任一：广州、深圳；命中 广州"
-          },
-          {
-            "rule_id": "l_cooperation_type",
-            "status": "not_executed",
-            "reason": "不想去太贵的中外合作 未执行：缺少合作办学类型字段，当前版本不从文本字段推断。"
           }
         ]
       },
@@ -2021,11 +1616,6 @@
             "reason": "科类 等于 物理"
           },
           {
-            "rule_id": "e_subject_requirement",
-            "status": "pass",
-            "reason": "选科要求 化学；已选再选科目：化学、生物"
-          },
-          {
             "rule_id": "e_major_keyword",
             "status": "pass",
             "reason": "专业名称 包含任一：计算机；命中 计算机类"
@@ -2034,11 +1624,6 @@
             "rule_id": "e_city",
             "status": "pass",
             "reason": "城市 包含任一：广州、深圳；命中 广州"
-          },
-          {
-            "rule_id": "l_cooperation_type",
-            "status": "not_executed",
-            "reason": "不想去太贵的中外合作 未执行：缺少合作办学类型字段，当前版本不从文本字段推断。"
           }
         ]
       }
@@ -2047,21 +1632,18 @@
       "executed_rule_ids": [
         "e_source_province",
         "e_subject_type",
-        "e_subject_requirement",
         "e_major_keyword",
         "e_city"
       ],
-      "not_executed_preference_count": 1,
+      "not_executed_preference_count": 0,
       "traced_result_count": 149,
       "top_k": 5,
       "top_k_trace_status_counts": {
-        "pass": 25,
-        "not_executed": 5
+        "pass": 20
       },
       "safety_warnings": [
         "答案只能使用 evidence_pack 中的已验证规则、确认记录、结果摘要和 trace。",
-        "候选偏好在确认或模拟确认之前不得执行。",
-        "不想去太贵的中外合作 未执行：缺少合作办学类型字段，当前版本不从文本字段推断。"
+        "候选偏好在确认或模拟确认之前不得执行。"
       ]
     },
     "extracted_preferences": [
@@ -2077,16 +1659,6 @@
         "slot": "科类",
         "value": "物理",
         "source_span": "物理",
-        "status": "已对齐字段"
-      },
-      {
-        "id": "pref_reselected_subjects",
-        "slot": "再选科目",
-        "value": [
-          "化学",
-          "生物"
-        ],
-        "source_span": "化学、生物",
         "status": "已对齐字段"
       },
       {
@@ -2114,55 +1686,26 @@
         ],
         "source_span": "广州、深圳",
         "status": "已对齐字段"
-      },
-      {
-        "id": "pref_stable",
-        "slot": "稳一点",
-        "value": "稳一点",
-        "source_span": "稳一点",
-        "status": "待确认"
-      },
-      {
-        "id": "pref_expensive",
-        "slot": "太贵",
-        "value": "太贵",
-        "source_span": "太贵",
-        "status": "待确认"
-      },
-      {
-        "id": "pref_cooperation",
-        "slot": "中外合作",
-        "value": "不想去太贵的中外合作",
-        "source_span": "不想去太贵的中外合作",
-        "status": "不可执行"
       }
     ],
     "attribute_grounding_summary": {
-      "total_attributes": 10,
+      "total_attributes": 6,
       "status_counts": {
-        "schema_grounded": 6,
-        "context_only": 1,
-        "confirmable": 2,
-        "missing_schema": 1
+        "schema_grounded": 5,
+        "context_only": 1
       },
       "value_index_status_counts": {
-        "matched": 6,
-        "outside_numeric_profile": 2,
-        "field_inactive": 1
+        "matched": 5
       },
       "unsafe_ungrounded_executable_attributes": 0
     },
     "proposed_rule_audit": [],
     "execution_summary": {
       "executor": "duckdb",
-      "sql": "WITH source AS (\n  SELECT row_number() OVER () AS \"__source_row_number\", *\n  FROM \"admissions\"\n),\nfiltered AS (\n  SELECT\n    source.*,\n    TRY_CAST(regexp_extract(REPLACE(CAST(\"专业组最低位次1\" AS VARCHAR), ',', ''), '\\d+(?:\\.\\d+)?') AS DOUBLE) AS \"__group_rank_num\",\n    TRY_CAST(regexp_extract(REPLACE(CAST(\"学费\" AS VARCHAR), ',', ''), '\\d+(?:\\.\\d+)?') AS DOUBLE) AS \"__tuition_num\",\n    TRY_CAST(regexp_extract(REPLACE(CAST(\"院校排名\" AS VARCHAR), ',', ''), '\\d+(?:\\.\\d+)?') AS DOUBLE) AS \"__school_rank_num\",\n    TRY_CAST(regexp_extract(REPLACE(CAST(\"ID\" AS VARCHAR), ',', ''), '\\d+(?:\\.\\d+)?') AS DOUBLE) AS \"__id_num\"\n  FROM source\n  WHERE CAST(\"生源地\" AS VARCHAR) = ? AND CAST(\"科类\" AS VARCHAR) = ? AND ((REPLACE(REPLACE(CAST(\"选科要求\" AS VARCHAR), '思想政治', '政治'), '生物学', '生物') IS NULL OR TRIM(REPLACE(REPLACE(CAST(\"选科要求\" AS VARCHAR), '思想政治', '政治'), '生物学', '生物')) = '' OR REPLACE(REPLACE(CAST(\"选科要求\" AS VARCHAR), '思想政治', '政治'), '生物学', '生物') = 'nan' OR REPLACE(REPLACE(CAST(\"选科要求\" AS VARCHAR), '思想政治', '政治'), '生物学', '生物') = '无' OR STRPOS(REPLACE(REPLACE(CAST(\"选科要求\" AS VARCHAR), '思想政治', '政治'), '生物学', '生物'), '不限') > 0) OR ((STRPOS(REPLACE(REPLACE(CAST(\"选科要求\" AS VARCHAR), '思想政治', '政治'), '生物学', '生物'), '或') > 0 OR STRPOS(REPLACE(REPLACE(CAST(\"选科要求\" AS VARCHAR), '思想政治', '政治'), '生物学', '生物'), '/') > 0) AND (STRPOS(REPLACE(REPLACE(CAST(\"选科要求\" AS VARCHAR), '思想政治', '政治'), '生物学', '生物'), ?) > 0 OR STRPOS(REPLACE(REPLACE(CAST(\"选科要求\" AS VARCHAR), '思想政治', '政治'), '生物学', '生物'), ?) > 0)) OR ((STRPOS(REPLACE(REPLACE(CAST(\"选科要求\" AS VARCHAR), '思想政治', '政治'), '生物学', '生物'), '或') = 0 AND STRPOS(REPLACE(REPLACE(CAST(\"选科要求\" AS VARCHAR), '思想政治', '政治'), '生物学', '生物'), '/') = 0) AND STRPOS(REPLACE(REPLACE(CAST(\"选科要求\" AS VARCHAR), '思想政治', '政治'), '生物学', '生物'), ?) = 0 AND STRPOS(REPLACE(REPLACE(CAST(\"选科要求\" AS VARCHAR), '思想政治', '政治'), '生物学', '生物'), ?) = 0)) AND (STRPOS(CAST(\"专业名称\" AS VARCHAR), ?) > 0) AND (STRPOS(CAST(\"城市\" AS VARCHAR), ?) > 0 OR STRPOS(CAST(\"城市\" AS VARCHAR), ?) > 0)\n),\nprojectable AS (\n  SELECT *\n  FROM filtered\n  WHERE TRUE\n    AND \"__group_rank_num\" IS NOT NULL\n    AND \"__tuition_num\" IS NOT NULL\n)\nSELECT *\nFROM projectable\nORDER BY\n  \"__group_rank_num\" ASC NULLS LAST,\n  \"__school_rank_num\" ASC NULLS LAST,\n  \"__id_num\" ASC NULLS LAST",
+      "sql": "WITH source AS (\n  SELECT row_number() OVER () AS \"__source_row_number\", *\n  FROM \"admissions\"\n),\nfiltered AS (\n  SELECT\n    source.*,\n    TRY_CAST(regexp_extract(REPLACE(CAST(\"专业组最低位次1\" AS VARCHAR), ',', ''), '\\d+(?:\\.\\d+)?') AS DOUBLE) AS \"__group_rank_num\",\n    TRY_CAST(regexp_extract(REPLACE(CAST(\"学费\" AS VARCHAR), ',', ''), '\\d+(?:\\.\\d+)?') AS DOUBLE) AS \"__tuition_num\",\n    TRY_CAST(regexp_extract(REPLACE(CAST(\"院校排名\" AS VARCHAR), ',', ''), '\\d+(?:\\.\\d+)?') AS DOUBLE) AS \"__school_rank_num\",\n    TRY_CAST(regexp_extract(REPLACE(CAST(\"ID\" AS VARCHAR), ',', ''), '\\d+(?:\\.\\d+)?') AS DOUBLE) AS \"__id_num\"\n  FROM source\n  WHERE CAST(\"生源地\" AS VARCHAR) = ? AND CAST(\"科类\" AS VARCHAR) = ? AND (STRPOS(CAST(\"专业名称\" AS VARCHAR), ?) > 0) AND (STRPOS(CAST(\"城市\" AS VARCHAR), ?) > 0 OR STRPOS(CAST(\"城市\" AS VARCHAR), ?) > 0)\n),\nprojectable AS (\n  SELECT *\n  FROM filtered\n  WHERE TRUE\n    AND \"__group_rank_num\" IS NOT NULL\n    AND \"__tuition_num\" IS NOT NULL\n)\nSELECT *\nFROM projectable\nORDER BY\n  \"__group_rank_num\" ASC NULLS LAST,\n  \"__school_rank_num\" ASC NULLS LAST,\n  \"__id_num\" ASC NULLS LAST",
       "params": [
         "广东",
         "物理",
-        "化学",
-        "生物",
-        "政治",
-        "地理",
         "计算机",
         "广州",
         "深圳"
@@ -2178,14 +1721,10 @@
       "hard_rule_ids": [
         "e_source_province",
         "e_subject_type",
-        "e_subject_requirement",
         "e_major_keyword",
         "e_city"
       ],
-      "skipped_soft_rule_ids": [
-        "e_safety_margin",
-        "e_tuition_cap"
-      ]
+      "skipped_soft_rule_ids": []
     },
     "attribute_explanations": [
       {
@@ -2213,22 +1752,6 @@
         "reason": "已匹配字段“科类”，并已进入 hard filter。"
       },
       {
-        "source_text": "化学、生物",
-        "slot_path": "user_context.reselected_subjects",
-        "field": "选科要求",
-        "value": [
-          "化学",
-          "生物"
-        ],
-        "match_type": "exact_match",
-        "action": "executed",
-        "matched_values": [
-          "化学",
-          "生物"
-        ],
-        "reason": "已匹配字段“选科要求”，并已进入 hard filter。"
-      },
-      {
         "source_text": "计算机",
         "slot_path": "preferences.major_keyword",
         "field": "专业名称",
@@ -2245,7 +1768,7 @@
         "reason": "已匹配字段“专业名称”，并已进入 hard filter。"
       },
       {
-        "source_text": "广州深圳、广州、深圳",
+        "source_text": "广深",
         "slot_path": "preferences.preferred_cities",
         "field": "城市",
         "value": [
@@ -2259,69 +1782,23 @@
           "深圳"
         ],
         "reason": "已匹配字段“城市”，并已进入 hard filter。"
-      },
-      {
-        "source_text": "稳一点",
-        "slot_path": "preferences.risk_preference_raw",
-        "field": "专业组最低位次1",
-        "value": "稳一点",
-        "match_type": "partial_match",
-        "action": "needs_confirmation",
-        "matched_values": [],
-        "reason": "该属性有对应字段，但语义或边界需要确认。未进入 hard filter。"
-      },
-      {
-        "source_text": "太贵",
-        "slot_path": "preferences.tuition_preference_raw",
-        "field": "学费",
-        "value": "太贵",
-        "match_type": "partial_match",
-        "action": "needs_confirmation",
-        "matched_values": [],
-        "reason": "该属性有对应字段，但语义或边界需要确认。未进入 hard filter。"
-      },
-      {
-        "source_text": "不想去太贵的中外合作",
-        "slot_path": "preferences.cooperation_preference_raw",
-        "field": "cooperation_type",
-        "value": "不想去太贵的中外合作",
-        "match_type": "no_schema_field",
-        "action": "not_executed",
-        "matched_values": [],
-        "reason": "当前数据中没有可执行字段，不能进入筛表。原文已保留，未进入 hard filter。"
       }
     ],
     "confirmed_rules": [],
     "confirmation_source": [],
     "executed_after_confirmation": [],
     "unconfirmed_candidates": [],
-    "no_schema_field_preferences": [
-      {
-        "candidate_id": "cand_52adb25590672c64",
-        "source_text": "不想去太贵的中外合作",
-        "slot_path": "preferences.cooperation_preference_raw",
-        "field_id": "cooperation_type",
-        "field": "无可执行字段",
-        "match_type": "no_schema_field",
-        "operator": null,
-        "value": null,
-        "label": "不可执行",
-        "executable": false,
-        "reason": "当前数据中没有可执行字段，不能进入筛表。",
-        "matched_values": []
-      }
-    ],
+    "no_schema_field_preferences": [],
     "rejected_confirmations": []
   },
   "natural_language_report": {
     "title": "规则验证结果（非最终志愿建议）",
     "summary": "系统基于已验证规则完成筛选，共 149 条结果。候选偏好只在确认或模拟确认后执行；未执行偏好会保留为警告。",
-    "full_text": "根据已验证规则生成结果：\n\n用户需求：广东，物理类，再选科目：化学、生物，排位32000；偏好信息：已确认边界：位次窗口 10%，费用上限 20000 元/年；偏好描述：想学计算机，最好在广州深圳，学校稳一点，不想去太贵的中外合作。\n共筛选到 149 条符合已执行规则的结果。\n\n抽取与结构化结果：\n- 生源地：广东；状态：已对齐字段；来源：广东\n- 科类：物理；状态：已对齐字段；来源：物理\n- 再选科目：化学、生物；状态：已对齐字段；来源：化学、生物\n- 排位：32000；状态：已对齐字段；来源：排位32000\n- 专业名称：计算机；状态：已对齐字段；来源：计算机\n- 城市：广州、深圳；状态：已对齐字段；来源：广州、深圳\n- 稳一点：稳一点；状态：待确认；来源：稳一点\n- 太贵：太贵；状态：待确认；来源：太贵\n- 中外合作：不想去太贵的中外合作；状态：不可执行；来源：不想去太贵的中外合作\n\n字段值审计解释：\n- [已执行] 广东 -> 生源地：exact_match；索引命中：广东；已匹配字段“生源地”，并已进入 hard filter。\n- [已执行] 物理 -> 科类：exact_match；索引命中：物理；已匹配字段“科类”，并已进入 hard filter。\n- [已执行] 化学、生物 -> 选科要求：exact_match；索引命中：化学、生物；已匹配字段“选科要求”，并已进入 hard filter。\n- [已执行] 计算机 -> 专业名称：exact_match；索引命中：计算机类、计算机科学与技术、计算机应用技术、电子与计算机工程、计算机网络技术；已匹配字段“专业名称”，并已进入 hard filter。\n- [已执行] 广州深圳、广州、深圳 -> 城市：exact_match；索引命中：广州、深圳；已匹配字段“城市”，并已进入 hard filter。\n- [需确认] 稳一点 -> 专业组最低位次1：partial_match；该属性有对应字段，但语义或边界需要确认。未进入 hard filter。\n- [需确认] 太贵 -> 学费：partial_match；该属性有对应字段，但语义或边界需要确认。未进入 hard filter。\n- [未执行] 不想去太贵的中外合作 -> 合作办学类型字段：no_schema_field；当前数据中没有可执行字段，不能进入筛表。原文已保留，未进入 hard filter。\n\n已执行规则：\n- e_source_province：生源地 等于 广东\n- e_subject_type：科类 等于 物理\n- e_subject_requirement：选科要求 满足已选再选科目：化学、生物\n- e_major_keyword：专业名称 包含任一：计算机\n- e_city：城市 包含任一：广州、深圳\n\n候选偏好确认记录：\n- 学校稳一点：已确认“10% 位次窗口”，但未进入 hard filter，仅作为候选边界记录。\n- 太贵：已确认“不高于 20000 元/年”，但未进入 hard filter，仅作为候选边界记录。\n- 不想去太贵的中外合作：未执行，原因：缺少合作办学类型字段。。\n\n缺少字段，不能确认执行：\n- 不想去太贵的中外合作：当前数据中没有可执行字段，不能进入筛表。；即使提交该 candidate_id 也不能执行。\n\n未执行但已保留的偏好：\n- 不想去太贵的中外合作：未执行，未参与筛选。原因：缺少合作办学类型字段，当前版本不从文本字段推断。\n\n前 5 条结果：\n- 1. 中山大学；专业组代码：10558219；专业代码：077；专业名称：计算机类；专业全称：计算机类(广州，含：计算机科学与技术、信息与计算科学，广州校区，东校园)；选科要求：化学；城市：广州；学费：6850 元/年；专业组最低位次：4019；专业最低位次：2852。\n- 2. 中山大学；专业组代码：10558219；专业代码：099；专业名称：计算机类；专业全称：计算机类(深圳，含：智能科学与技术、智慧交通，深圳校区)；选科要求：化学；城市：广州；学费：6850 元/年；专业组最低位次：4019；专业最低位次：3982。\n- 3. 华南理工大学；专业组代码：10561202；专业代码：072；专业名称：计算机科学与技术；专业全称：计算机科学与技术(全英创新班，广州市)(不招单色识别不全者)；选科要求：化学；城市：广州；学费：6850 元/年；专业组最低位次：5640。\n- 4. 华南理工大学；专业组代码：10561202；专业代码：073；专业名称：计算机科学与技术；专业全称：计算机科学与技术(拔尖基地班，全英文教学，广州市)(不招单色识别不全者)；选科要求：化学；城市：广州；学费：6850 元/年；专业组最低位次：5640。\n- 5. 华南理工大学；专业组代码：10561202；专业代码：074；专业名称：计算机类；专业全称：计算机类(含：计算机科学与技术、网络工程、信息安全，广州市)(不招单色识别不全者)；选科要求：化学；城市：广州；学费：6850 元/年；专业组最低位次：5640。\n\n安全说明：\n- 答案只能使用 证据包 中的已验证规则、确认记录、结果摘要和 trace。\n- 候选偏好在确认或模拟确认之前不得执行。\n- 不想去太贵的中外合作 未执行：缺少合作办学类型字段，当前版本不从文本字段推断。",
+    "full_text": "根据已验证规则生成结果：\n\n用户需求：广东物理，排位32000，想学计算机，广深优先。；偏好信息：偏好描述：广东物理，排位32000，想学计算机，广深优先。\n共筛选到 149 条符合已执行规则的结果。\n\n抽取与结构化结果：\n- 生源地：广东；状态：已对齐字段；来源：广东\n- 科类：物理；状态：已对齐字段；来源：物理\n- 排位：32000；状态：已对齐字段；来源：排位32000\n- 专业名称：计算机；状态：已对齐字段；来源：计算机\n- 城市：广州、深圳；状态：已对齐字段；来源：广州、深圳\n\n字段值审计解释：\n- [已执行] 广东 -> 生源地：exact_match；索引命中：广东；已匹配字段“生源地”，并已进入 hard filter。\n- [已执行] 物理 -> 科类：exact_match；索引命中：物理；已匹配字段“科类”，并已进入 hard filter。\n- [已执行] 计算机 -> 专业名称：exact_match；索引命中：计算机类、计算机科学与技术、计算机应用技术、电子与计算机工程、计算机网络技术；已匹配字段“专业名称”，并已进入 hard filter。\n- [已执行] 广深 -> 城市：exact_match；索引命中：广州、深圳；已匹配字段“城市”，并已进入 hard filter。\n\n已执行规则：\n- e_source_province：生源地 等于 广东\n- e_subject_type：科类 等于 物理\n- e_major_keyword：专业名称 包含任一：计算机\n- e_city：城市 包含任一：广州、深圳\n\n候选偏好确认记录：\n\n未执行但已保留的偏好：\n- 无。\n\n前 5 条结果：\n- 1. 中山大学；专业组代码：10558219；专业代码：077；专业名称：计算机类；专业全称：计算机类(广州，含：计算机科学与技术、信息与计算科学，广州校区，东校园)；选科要求：化学；城市：广州；学费：6850 元/年；专业组最低位次：4019；专业最低位次：2852。\n- 2. 中山大学；专业组代码：10558219；专业代码：099；专业名称：计算机类；专业全称：计算机类(深圳，含：智能科学与技术、智慧交通，深圳校区)；选科要求：化学；城市：广州；学费：6850 元/年；专业组最低位次：4019；专业最低位次：3982。\n- 3. 华南理工大学；专业组代码：10561202；专业代码：072；专业名称：计算机科学与技术；专业全称：计算机科学与技术(全英创新班，广州市)(不招单色识别不全者)；选科要求：化学；城市：广州；学费：6850 元/年；专业组最低位次：5640。\n- 4. 华南理工大学；专业组代码：10561202；专业代码：073；专业名称：计算机科学与技术；专业全称：计算机科学与技术(拔尖基地班，全英文教学，广州市)(不招单色识别不全者)；选科要求：化学；城市：广州；学费：6850 元/年；专业组最低位次：5640。\n- 5. 华南理工大学；专业组代码：10561202；专业代码：074；专业名称：计算机类；专业全称：计算机类(含：计算机科学与技术、网络工程、信息安全，广州市)(不招单色识别不全者)；选科要求：化学；城市：广州；学费：6850 元/年；专业组最低位次：5640。\n\n安全说明：\n- 答案只能使用 证据包 中的已验证规则、确认记录、结果摘要和 trace。\n- 候选偏好在确认或模拟确认之前不得执行。",
     "result_count_text": "当前共有 149 条记录通过已验证规则。",
     "executed_rules": [
       "生源地 等于 广东",
       "科类 等于 物理",
-      "选科要求 满足已选再选科目：化学、生物",
       "专业名称 包含任一：计算机",
       "城市 包含任一：广州、深圳"
     ],
@@ -2351,22 +1828,6 @@
         "reason": "已匹配字段“科类”，并已进入 hard filter。"
       },
       {
-        "source_text": "化学、生物",
-        "slot_path": "user_context.reselected_subjects",
-        "field": "选科要求",
-        "value": [
-          "化学",
-          "生物"
-        ],
-        "match_type": "exact_match",
-        "action": "executed",
-        "matched_values": [
-          "化学",
-          "生物"
-        ],
-        "reason": "已匹配字段“选科要求”，并已进入 hard filter。"
-      },
-      {
         "source_text": "计算机",
         "slot_path": "preferences.major_keyword",
         "field": "专业名称",
@@ -2383,7 +1844,7 @@
         "reason": "已匹配字段“专业名称”，并已进入 hard filter。"
       },
       {
-        "source_text": "广州深圳、广州、深圳",
+        "source_text": "广深",
         "slot_path": "preferences.preferred_cities",
         "field": "城市",
         "value": [
@@ -2397,36 +1858,6 @@
           "深圳"
         ],
         "reason": "已匹配字段“城市”，并已进入 hard filter。"
-      },
-      {
-        "source_text": "稳一点",
-        "slot_path": "preferences.risk_preference_raw",
-        "field": "专业组最低位次1",
-        "value": "稳一点",
-        "match_type": "partial_match",
-        "action": "needs_confirmation",
-        "matched_values": [],
-        "reason": "该属性有对应字段，但语义或边界需要确认。未进入 hard filter。"
-      },
-      {
-        "source_text": "太贵",
-        "slot_path": "preferences.tuition_preference_raw",
-        "field": "学费",
-        "value": "太贵",
-        "match_type": "partial_match",
-        "action": "needs_confirmation",
-        "matched_values": [],
-        "reason": "该属性有对应字段，但语义或边界需要确认。未进入 hard filter。"
-      },
-      {
-        "source_text": "不想去太贵的中外合作",
-        "slot_path": "preferences.cooperation_preference_raw",
-        "field": "cooperation_type",
-        "value": "不想去太贵的中外合作",
-        "match_type": "no_schema_field",
-        "action": "not_executed",
-        "matched_values": [],
-        "reason": "当前数据中没有可执行字段，不能进入筛表。原文已保留，未进入 hard filter。"
       }
     ],
     "top_results": [
@@ -2435,8 +1866,8 @@
       "华南理工大学（专业组 10561202）；专业代码 072；专业名称 计算机科学与技术；专业全称 计算机科学与技术(全英创新班，广州市)(不招单色识别不全者)；选科要求 化学；城市 广州；学费 6850.0；专业组最低位次 None；相对排位差 -82.37%"
     ],
     "warnings": [
-      "不想去太贵的中外合作 未执行：缺少合作办学类型字段，当前版本不从文本字段推断。",
-      "本次没有确认位次窗口规则，结果只表示字段筛选通过，不代表风险已判断。"
+      "本次没有确认位次窗口规则，结果只表示字段筛选通过，不代表风险已判断。",
+      "缺少再选科目（化学/生物/政治/地理四选二），结果未按专业选科要求过滤。"
     ],
     "disclaimer": "以上内容是规则验证结果和证据汇总，不是最终志愿建议。"
   },
@@ -2449,29 +1880,19 @@
   "domain": "admissions",
   "domain_version": "1",
   "domain_pack_status": "approved",
+  "query_type": "verified_filter",
   "query": {
-    "text": "广东，物理类，再选科目：化学、生物，排位32000；偏好信息：已确认边界：位次窗口 10%，费用上限 20000 元/年；偏好描述：想学计算机，最好在广州深圳，学校稳一点，不想去太贵的中外合作。",
+    "text": "广东物理，排位32000，想学计算机，广深优先。；偏好信息：偏好描述：广东物理，排位32000，想学计算机，广深优先。",
     "domain": "admissions",
-    "hard_filters": {
-      "source_province": "广东",
-      "subject_type": "物理",
-      "reselected_subjects": [
-        "化学",
-        "生物"
-      ],
-      "user_rank": 32000,
-      "major_keyword": null,
-      "preferred_cities": [],
-      "tuition_cap_yuan": null
-    },
+    "query_type": null,
+    "hard_filters": {},
     "soft_preferences": {
-      "prompt": "想学计算机，最好在广州深圳，学校稳一点，不想去太贵的中外合作。",
-      "safety_margin_percent": 10,
-      "tuition_cap_yuan": 20000
+      "prompt": "广东物理，排位32000，想学计算机，广深优先。"
     },
     "confirmed_candidates": []
   },
-  "answer": "根据已验证规则生成结果：\n\n用户需求：广东，物理类，再选科目：化学、生物，排位32000；偏好信息：已确认边界：位次窗口 10%，费用上限 20000 元/年；偏好描述：想学计算机，最好在广州深圳，学校稳一点，不想去太贵的中外合作。\n共筛选到 149 条符合已执行规则的结果。\n\n抽取与结构化结果：\n- 生源地：广东；状态：已对齐字段；来源：广东\n- 科类：物理；状态：已对齐字段；来源：物理\n- 再选科目：化学、生物；状态：已对齐字段；来源：化学、生物\n- 排位：32000；状态：已对齐字段；来源：排位32000\n- 专业名称：计算机；状态：已对齐字段；来源：计算机\n- 城市：广州、深圳；状态：已对齐字段；来源：广州、深圳\n- 稳一点：稳一点；状态：待确认；来源：稳一点\n- 太贵：太贵；状态：待确认；来源：太贵\n- 中外合作：不想去太贵的中外合作；状态：不可执行；来源：不想去太贵的中外合作\n\n字段值审计解释：\n- [已执行] 广东 -> 生源地：exact_match；索引命中：广东；已匹配字段“生源地”，并已进入 hard filter。\n- [已执行] 物理 -> 科类：exact_match；索引命中：物理；已匹配字段“科类”，并已进入 hard filter。\n- [已执行] 化学、生物 -> 选科要求：exact_match；索引命中：化学、生物；已匹配字段“选科要求”，并已进入 hard filter。\n- [已执行] 计算机 -> 专业名称：exact_match；索引命中：计算机类、计算机科学与技术、计算机应用技术、电子与计算机工程、计算机网络技术；已匹配字段“专业名称”，并已进入 hard filter。\n- [已执行] 广州深圳、广州、深圳 -> 城市：exact_match；索引命中：广州、深圳；已匹配字段“城市”，并已进入 hard filter。\n- [需确认] 稳一点 -> 专业组最低位次1：partial_match；该属性有对应字段，但语义或边界需要确认。未进入 hard filter。\n- [需确认] 太贵 -> 学费：partial_match；该属性有对应字段，但语义或边界需要确认。未进入 hard filter。\n- [未执行] 不想去太贵的中外合作 -> 合作办学类型字段：no_schema_field；当前数据中没有可执行字段，不能进入筛表。原文已保留，未进入 hard filter。\n\n已执行规则：\n- e_source_province：生源地 等于 广东\n- e_subject_type：科类 等于 物理\n- e_subject_requirement：选科要求 满足已选再选科目：化学、生物\n- e_major_keyword：专业名称 包含任一：计算机\n- e_city：城市 包含任一：广州、深圳\n\n候选偏好确认记录：\n- 学校稳一点：已确认“10% 位次窗口”，但未进入 hard filter，仅作为候选边界记录。\n- 太贵：已确认“不高于 20000 元/年”，但未进入 hard filter，仅作为候选边界记录。\n- 不想去太贵的中外合作：未执行，原因：缺少合作办学类型字段。。\n\n缺少字段，不能确认执行：\n- 不想去太贵的中外合作：当前数据中没有可执行字段，不能进入筛表。；即使提交该 candidate_id 也不能执行。\n\n未执行但已保留的偏好：\n- 不想去太贵的中外合作：未执行，未参与筛选。原因：缺少合作办学类型字段，当前版本不从文本字段推断。\n\n前 5 条结果：\n- 1. 中山大学；专业组代码：10558219；专业代码：077；专业名称：计算机类；专业全称：计算机类(广州，含：计算机科学与技术、信息与计算科学，广州校区，东校园)；选科要求：化学；城市：广州；学费：6850 元/年；专业组最低位次：4019；专业最低位次：2852。\n- 2. 中山大学；专业组代码：10558219；专业代码：099；专业名称：计算机类；专业全称：计算机类(深圳，含：智能科学与技术、智慧交通，深圳校区)；选科要求：化学；城市：广州；学费：6850 元/年；专业组最低位次：4019；专业最低位次：3982。\n- 3. 华南理工大学；专业组代码：10561202；专业代码：072；专业名称：计算机科学与技术；专业全称：计算机科学与技术(全英创新班，广州市)(不招单色识别不全者)；选科要求：化学；城市：广州；学费：6850 元/年；专业组最低位次：5640。\n- 4. 华南理工大学；专业组代码：10561202；专业代码：073；专业名称：计算机科学与技术；专业全称：计算机科学与技术(拔尖基地班，全英文教学，广州市)(不招单色识别不全者)；选科要求：化学；城市：广州；学费：6850 元/年；专业组最低位次：5640。\n- 5. 华南理工大学；专业组代码：10561202；专业代码：074；专业名称：计算机类；专业全称：计算机类(含：计算机科学与技术、网络工程、信息安全，广州市)(不招单色识别不全者)；选科要求：化学；城市：广州；学费：6850 元/年；专业组最低位次：5640。\n\n安全说明：\n- 答案只能使用 证据包 中的已验证规则、确认记录、结果摘要和 trace。\n- 候选偏好在确认或模拟确认之前不得执行。\n- 不想去太贵的中外合作 未执行：缺少合作办学类型字段，当前版本不从文本字段推断。",
+  "answer": "根据已验证规则生成结果：\n\n用户需求：广东物理，排位32000，想学计算机，广深优先。；偏好信息：偏好描述：广东物理，排位32000，想学计算机，广深优先。\n共筛选到 149 条符合已执行规则的结果。\n\n抽取与结构化结果：\n- 生源地：广东；状态：已对齐字段；来源：广东\n- 科类：物理；状态：已对齐字段；来源：物理\n- 排位：32000；状态：已对齐字段；来源：排位32000\n- 专业名称：计算机；状态：已对齐字段；来源：计算机\n- 城市：广州、深圳；状态：已对齐字段；来源：广州、深圳\n\n字段值审计解释：\n- [已执行] 广东 -> 生源地：exact_match；索引命中：广东；已匹配字段“生源地”，并已进入 hard filter。\n- [已执行] 物理 -> 科类：exact_match；索引命中：物理；已匹配字段“科类”，并已进入 hard filter。\n- [已执行] 计算机 -> 专业名称：exact_match；索引命中：计算机类、计算机科学与技术、计算机应用技术、电子与计算机工程、计算机网络技术；已匹配字段“专业名称”，并已进入 hard filter。\n- [已执行] 广深 -> 城市：exact_match；索引命中：广州、深圳；已匹配字段“城市”，并已进入 hard filter。\n\n已执行规则：\n- e_source_province：生源地 等于 广东\n- e_subject_type：科类 等于 物理\n- e_major_keyword：专业名称 包含任一：计算机\n- e_city：城市 包含任一：广州、深圳\n\n候选偏好确认记录：\n\n未执行但已保留的偏好：\n- 无。\n\n前 5 条结果：\n- 1. 中山大学；专业组代码：10558219；专业代码：077；专业名称：计算机类；专业全称：计算机类(广州，含：计算机科学与技术、信息与计算科学，广州校区，东校园)；选科要求：化学；城市：广州；学费：6850 元/年；专业组最低位次：4019；专业最低位次：2852。\n- 2. 中山大学；专业组代码：10558219；专业代码：099；专业名称：计算机类；专业全称：计算机类(深圳，含：智能科学与技术、智慧交通，深圳校区)；选科要求：化学；城市：广州；学费：6850 元/年；专业组最低位次：4019；专业最低位次：3982。\n- 3. 华南理工大学；专业组代码：10561202；专业代码：072；专业名称：计算机科学与技术；专业全称：计算机科学与技术(全英创新班，广州市)(不招单色识别不全者)；选科要求：化学；城市：广州；学费：6850 元/年；专业组最低位次：5640。\n- 4. 华南理工大学；专业组代码：10561202；专业代码：073；专业名称：计算机科学与技术；专业全称：计算机科学与技术(拔尖基地班，全英文教学，广州市)(不招单色识别不全者)；选科要求：化学；城市：广州；学费：6850 元/年；专业组最低位次：5640。\n- 5. 华南理工大学；专业组代码：10561202；专业代码：074；专业名称：计算机类；专业全称：计算机类(含：计算机科学与技术、网络工程、信息安全，广州市)(不招单色识别不全者)；选科要求：化学；城市：广州；学费：6850 元/年；专业组最低位次：5640。\n\n安全说明：\n- 答案只能使用 证据包 中的已验证规则、确认记录、结果摘要和 trace。\n- 候选偏好在确认或模拟确认之前不得执行。",
+  "result_sections": {},
   "executed_filters": [
     {
       "id": "e_source_province",
@@ -2488,17 +1909,6 @@
       "operator": "eq",
       "value": "物理",
       "source_span": "物理"
-    },
-    {
-      "id": "e_subject_requirement",
-      "label": "选科要求 满足已选再选科目：化学、生物",
-      "field": "选科要求",
-      "operator": "satisfies_subject_requirement",
-      "value": [
-        "化学",
-        "生物"
-      ],
-      "source_span": "化学、生物"
     },
     {
       "id": "e_major_keyword",
@@ -2525,67 +1935,38 @@
   "candidates_to_confirm": [],
   "confirmed_rules": [],
   "unconfirmed_candidates": [],
-  "unexecuted_preferences": [
-    {
-      "id": "not_exec_1",
-      "preference": "不想去太贵的中外合作",
-      "display": "中外合作未执行：缺少合作办学类型字段",
-      "reason": "当前数据字段定义没有合作办学类型字段，不能验证或执行“排除中外合作”。",
-      "missing_field": "合作办学类型字段",
-      "source_span": "不想去太贵的中外合作"
-    }
-  ],
-  "no_schema_field_preferences": [
-    {
-      "candidate_id": "cand_52adb25590672c64",
-      "source_text": "不想去太贵的中外合作",
-      "slot_path": "preferences.cooperation_preference_raw",
-      "field_id": "cooperation_type",
-      "field": "无可执行字段",
-      "match_type": "no_schema_field",
-      "operator": null,
-      "value": null,
-      "label": "不可执行",
-      "executable": false,
-      "reason": "当前数据中没有可执行字段，不能进入筛表。",
-      "matched_values": []
-    }
-  ],
+  "unexecuted_preferences": [],
+  "no_schema_field_preferences": [],
   "rejected_confirmations": [],
   "warnings": [
-    {
-      "code": "report_warning",
-      "severity": "warning",
-      "message": "不想去太贵的中外合作 未执行：缺少合作办学类型字段，当前版本不从文本字段推断。"
-    },
     {
       "code": "report_warning",
       "severity": "warning",
       "message": "本次没有确认位次窗口规则，结果只表示字段筛选通过，不代表风险已判断。"
     },
     {
-      "code": "needs_confirmation",
+      "code": "report_warning",
       "severity": "warning",
-      "message": "存在未确认 partial_match candidate，未进入 hard filter。"
+      "message": "缺少再选科目（化学/生物/政治/地理四选二），结果未按专业选科要求过滤。"
     }
   ],
   "debug_trace": {
     "mode": "api",
-    "user_input": "广东，物理类，再选科目：化学、生物，排位32000；偏好信息：已确认边界：位次窗口 10%，费用上限 20000 元/年；偏好描述：想学计算机，最好在广州深圳，学校稳一点，不想去太贵的中外合作。",
+    "user_input": "广东物理，排位32000，想学计算机，广深优先。；偏好信息：偏好描述：广东物理，排位32000，想学计算机，广深优先。",
     "data_warehouse": {
       "status": "ok",
       "ok": true,
       "warnings": [],
       "source": {
-        "path": "广东省2025年志愿填报大数据（24-25）0523.xlsx",
+        "path": "/Users/tz/Desktop/Projects/SZU/广东省2025年志愿填报大数据（24-25）0523.xlsx",
         "exists": true,
         "fingerprint": "38cdba7f2b9f5c05d52f8285df5df4fc622d7cd67e2e179cb0a0912d41dba5b3"
       },
       "duckdb": {
-        "path": "outputs/data/guangdong_admissions.duckdb",
+        "path": "/var/folders/8x/m9y8nxl15rj6986pjlwl_d680000gn/T/tmp7cqowzol/guangdong_admissions.duckdb",
         "exists": true,
         "metadata": {
-          "source_path": "广东省2025年志愿填报大数据（24-25）0523.xlsx",
+          "source_path": "/Users/tz/Desktop/Projects/SZU/广东省2025年志愿填报大数据（24-25）0523.xlsx",
           "sheet_name": "Sheet1",
           "header_row": "3",
           "table_name": "admissions",
@@ -2593,7 +1974,7 @@
           "column_count": "57",
           "fingerprint": "38cdba7f2b9f5c05d52f8285df5df4fc622d7cd67e2e179cb0a0912d41dba5b3",
           "source_fingerprint": "38cdba7f2b9f5c05d52f8285df5df4fc622d7cd67e2e179cb0a0912d41dba5b3",
-          "created_at": "2026-06-13T00:00:00Z"
+          "created_at": "2026-06-13T15:08:21.966956Z"
         },
         "profile": {
           "table_name": "admissions",
@@ -2603,43 +1984,40 @@
         "fingerprint": "38cdba7f2b9f5c05d52f8285df5df4fc622d7cd67e2e179cb0a0912d41dba5b3"
       },
       "schema_value_index": {
-        "path": "outputs/data/schema_value_index.json",
+        "path": "/var/folders/8x/m9y8nxl15rj6986pjlwl_d680000gn/T/tmp7cqowzol/schema_value_index.json",
         "exists": true,
         "source": {
-          "source_path": "广东省2025年志愿填报大数据（24-25）0523.xlsx",
-          "workbook_path": "广东省2025年志愿填报大数据（24-25）0523.xlsx",
+          "source_path": "/Users/tz/Desktop/Projects/SZU/广东省2025年志愿填报大数据（24-25）0523.xlsx",
+          "workbook_path": "/Users/tz/Desktop/Projects/SZU/广东省2025年志愿填报大数据（24-25）0523.xlsx",
           "sheet_name": "Sheet1",
           "header_row": 3,
           "fingerprint": "38cdba7f2b9f5c05d52f8285df5df4fc622d7cd67e2e179cb0a0912d41dba5b3",
           "source_fingerprint": "38cdba7f2b9f5c05d52f8285df5df4fc622d7cd67e2e179cb0a0912d41dba5b3",
-          "created_at": "2026-06-13T00:00:00Z"
+          "created_at": "2026-06-13T15:08:21.966956Z"
         },
         "warehouse": {
-          "database_path": "outputs/data/guangdong_admissions.duckdb",
+          "database_path": "/var/folders/8x/m9y8nxl15rj6986pjlwl_d680000gn/T/tmp7cqowzol/guangdong_admissions.duckdb",
           "table_name": "admissions",
           "row_count": 30855,
           "column_count": 57,
-          "created_at": "2026-06-13T00:00:00Z"
+          "created_at": "2026-06-13T15:08:21.966956Z"
         },
         "fingerprint": "38cdba7f2b9f5c05d52f8285df5df4fc622d7cd67e2e179cb0a0912d41dba5b3"
       }
     },
     "hard_filters": {
-      "source_province": "广东",
-      "subject_type": "物理",
-      "reselected_subjects": [
-        "化学",
-        "生物"
-      ],
-      "user_rank": 32000,
+      "source_province": null,
+      "subject_type": null,
+      "reselected_subjects": [],
+      "user_rank": null,
       "major_keyword": null,
       "preferred_cities": [],
       "tuition_cap_yuan": null
     },
     "soft_preferences": {
-      "prompt": "想学计算机，最好在广州深圳，学校稳一点，不想去太贵的中外合作。",
-      "safety_margin_percent": 10,
-      "tuition_cap_yuan": 20000
+      "prompt": "广东物理，排位32000，想学计算机，广深优先。",
+      "safety_margin_percent": null,
+      "tuition_cap_yuan": null
     },
     "selected_options": {
       "extractor": "规则解析软偏好",
@@ -2660,16 +2038,6 @@
         "slot": "科类",
         "value": "物理",
         "source_span": "物理",
-        "status": "已对齐字段"
-      },
-      {
-        "id": "pref_reselected_subjects",
-        "slot": "再选科目",
-        "value": [
-          "化学",
-          "生物"
-        ],
-        "source_span": "化学、生物",
         "status": "已对齐字段"
       },
       {
@@ -2697,38 +2065,14 @@
         ],
         "source_span": "广州、深圳",
         "status": "已对齐字段"
-      },
-      {
-        "id": "pref_stable",
-        "slot": "稳一点",
-        "value": "稳一点",
-        "source_span": "稳一点",
-        "status": "待确认"
-      },
-      {
-        "id": "pref_expensive",
-        "slot": "太贵",
-        "value": "太贵",
-        "source_span": "太贵",
-        "status": "待确认"
-      },
-      {
-        "id": "pref_cooperation",
-        "slot": "中外合作",
-        "value": "不想去太贵的中外合作",
-        "source_span": "不想去太贵的中外合作",
-        "status": "不可执行"
       }
     ],
     "extracted_slots": {
-      "input": "广东，物理类，再选科目：化学、生物，排位32000；偏好信息：已确认边界：位次窗口 10%，费用上限 20000 元/年；偏好描述：想学计算机，最好在广州深圳，学校稳一点，不想去太贵的中外合作。",
+      "input": "广东物理，排位32000，想学计算机，广深优先。；偏好信息：偏好描述：广东物理，排位32000，想学计算机，广深优先。",
       "user_context": {
         "source_province": "广东",
         "subject_type": "物理",
-        "reselected_subjects": [
-          "化学",
-          "生物"
-        ],
+        "reselected_subjects": [],
         "user_rank": 32000
       },
       "preferences": {
@@ -2741,11 +2085,11 @@
           "深圳"
         ],
         "preferred_school_provinces": [],
-        "risk_preference_raw": "稳一点",
-        "tuition_preference_raw": "太贵",
+        "risk_preference_raw": null,
+        "tuition_preference_raw": null,
         "tuition_cap_yuan": null,
         "major_expansion_raw": null,
-        "cooperation_preference_raw": "不想去太贵的中外合作",
+        "cooperation_preference_raw": null,
         "overseas_preference_raw": null,
         "school_ownership_preference_raw": null,
         "recommendation_request_raw": null,
@@ -2757,37 +2101,25 @@
         ],
         "preferences.major_keyword": "计算机",
         "preferences.preferred_cities": [
-          "广州深圳",
-          "广州",
-          "深圳"
-        ],
-        "preferences.cooperation_preference_raw": "不想去太贵的中外合作"
+          "广深"
+        ]
       },
       "raw_phrases": [
-        "一点",
-        "稳一点",
-        "太贵",
-        "不想去太贵的中外合作",
-        "中外合作",
-        "广州",
-        "深圳",
+        "排位32000",
         "计算机",
-        "广州深圳"
+        "物理",
+        "广深"
       ]
     },
     "attribute_grounding": {
       "summary": {
-        "total_attributes": 10,
+        "total_attributes": 6,
         "status_counts": {
-          "schema_grounded": 6,
-          "context_only": 1,
-          "confirmable": 2,
-          "missing_schema": 1
+          "schema_grounded": 5,
+          "context_only": 1
         },
         "value_index_status_counts": {
-          "matched": 6,
-          "outside_numeric_profile": 2,
-          "field_inactive": 1
+          "matched": 5
         },
         "unsafe_ungrounded_executable_attributes": 0
       },
@@ -2826,29 +2158,6 @@
             "lookup_complete": true,
             "matched_values": [
               "物理"
-            ],
-            "numeric": null
-          }
-        },
-        {
-          "slot_path": "user_context.reselected_subjects",
-          "slot": "再选科目",
-          "value": [
-            "化学",
-            "生物"
-          ],
-          "field": "选科要求",
-          "status": "已接地到数据字段",
-          "status_type": "success",
-          "reason": "广东 3+1+2 的再选科目需要和数据字段“选科要求”匹配。",
-          "value_index": {
-            "status": "值已在索引中匹配",
-            "status_type": "success",
-            "profile_kind": "text",
-            "lookup_complete": true,
-            "matched_values": [
-              "化学",
-              "生物"
             ],
             "numeric": null
           }
@@ -2933,82 +2242,10 @@
             ],
             "numeric": null
           }
-        },
-        {
-          "slot_path": "preferences.risk_preference_raw",
-          "slot": "风险偏好",
-          "value": "稳一点",
-          "field": "专业组最低位次1",
-          "status": "字段存在但需要确认",
-          "status_type": "warning",
-          "reason": "该属性有对应字段，但语义或边界需要确认。",
-          "value_index": {
-            "status": "数值超出历史字段范围",
-            "status_type": "danger",
-            "profile_kind": "numeric",
-            "lookup_complete": null,
-            "matched_values": [],
-            "numeric": {
-              "min": 19,
-              "max": 448677
-            }
-          }
-        },
-        {
-          "slot_path": "preferences.tuition_preference_raw",
-          "slot": "费用偏好",
-          "value": "太贵",
-          "field": "学费",
-          "status": "字段存在但需要确认",
-          "status_type": "warning",
-          "reason": "该属性有对应字段，但语义或边界需要确认。",
-          "value_index": {
-            "status": "数值超出历史字段范围",
-            "status_type": "danger",
-            "profile_kind": "numeric",
-            "lookup_complete": null,
-            "matched_values": [],
-            "numeric": {
-              "min": 2200,
-              "max": 160000
-            }
-          }
-        },
-        {
-          "slot_path": "preferences.cooperation_preference_raw",
-          "slot": "中外合作偏好",
-          "value": "不想去太贵的中外合作",
-          "field": "无可执行字段",
-          "status": "缺少可执行字段",
-          "status_type": "danger",
-          "reason": "当前数据中没有可执行字段，不能进入筛表。",
-          "value_index": {
-            "status": "字段未启用",
-            "status_type": "danger",
-            "profile_kind": null,
-            "lookup_complete": null,
-            "matched_values": [],
-            "numeric": null
-          }
         }
       ]
     },
-    "confirmation_candidates": [
-      {
-        "candidate_id": "cand_52adb25590672c64",
-        "source_text": "不想去太贵的中外合作",
-        "slot_path": "preferences.cooperation_preference_raw",
-        "field_id": "cooperation_type",
-        "field": "无可执行字段",
-        "match_type": "no_schema_field",
-        "operator": null,
-        "value": null,
-        "label": "不可执行",
-        "executable": false,
-        "reason": "当前数据中没有可执行字段，不能进入筛表。",
-        "matched_values": []
-      }
-    ],
+    "confirmation_candidates": [],
     "confirmation_state": {
       "requested_candidate_ids": [],
       "accepted_candidate_ids": [],
@@ -3017,22 +2254,7 @@
       "confirmation_source": [],
       "executed_after_confirmation": [],
       "unconfirmed_candidates": [],
-      "no_schema_field_preferences": [
-        {
-          "candidate_id": "cand_52adb25590672c64",
-          "source_text": "不想去太贵的中外合作",
-          "slot_path": "preferences.cooperation_preference_raw",
-          "field_id": "cooperation_type",
-          "field": "无可执行字段",
-          "match_type": "no_schema_field",
-          "operator": null,
-          "value": null,
-          "label": "不可执行",
-          "executable": false,
-          "reason": "当前数据中没有可执行字段，不能进入筛表。",
-          "matched_values": []
-        }
-      ]
+      "no_schema_field_preferences": []
     },
     "proposed_rules": [],
     "deterministic_rules": [
@@ -3051,17 +2273,6 @@
         "operator": "eq",
         "value": "物理",
         "source_span": "物理"
-      },
-      {
-        "id": "d_subject_requirement",
-        "label": "选科要求 满足已选再选科目：化学、生物",
-        "field": "选科要求",
-        "operator": "satisfies_subject_requirement",
-        "value": [
-          "化学",
-          "生物"
-        ],
-        "source_span": "化学、生物"
       },
       {
         "id": "d_major_keyword",
@@ -3085,52 +2296,13 @@
         "source_span": "广州、深圳"
       }
     ],
-    "candidate_rules": [
-      {
-        "id": "c_safety_margin",
-        "preference": "稳一点",
-        "label": "位次窗口候选规则",
-        "reason": "风险边界需要明确位次窗口；用户选择后才可提升为可执行规则。",
-        "options": [
-          "5% 位次窗口",
-          "10% 位次窗口",
-          "15% 位次窗口",
-          "不使用这个规则"
-        ],
-        "simulated_selection": "10% 位次窗口"
-      },
-      {
-        "id": "c_tuition_cap",
-        "preference": "太贵",
-        "label": "学费上限候选规则",
-        "reason": "费用偏好需要明确金额；用户选择后才可提升为可执行规则。",
-        "options": [
-          "不高于 10000 元/年",
-          "不高于 20000 元/年",
-          "不高于 40000 元/年",
-          "不使用学费规则"
-        ],
-        "simulated_selection": "不高于 20000 元/年"
-      }
-    ],
-    "not_executed_preferences": [
-      {
-        "id": "not_exec_1",
-        "preference": "不想去太贵的中外合作",
-        "display": "中外合作未执行：缺少合作办学类型字段",
-        "reason": "当前数据字段定义没有合作办学类型字段，不能验证或执行“排除中外合作”。",
-        "missing_field": "合作办学类型字段",
-        "source_span": "不想去太贵的中外合作"
-      }
-    ],
+    "candidate_rules": [],
+    "not_executed_preferences": [],
     "simulated_confirmations": {
       "recommendation_rank_floor": null,
-      "safety_margin_percent": 10,
-      "safety_rank_cutoff": [
-        28800,
-        35200
-      ],
-      "tuition_cap": 20000,
+      "safety_margin_percent": null,
+      "safety_rank_cutoff": null,
+      "tuition_cap": null,
       "major_expansion": false
     },
     "executable_rules": [
@@ -3142,11 +2314,6 @@
       {
         "id": "e_subject_type",
         "label": "科类 等于 物理",
-        "origin": "deterministic"
-      },
-      {
-        "id": "e_subject_requirement",
-        "label": "选科要求 满足已选再选科目：化学、生物",
         "origin": "deterministic"
       },
       {
@@ -3162,37 +2329,36 @@
     ],
     "execution": {
       "executor": "duckdb",
-      "sql": "WITH source AS (\n  SELECT row_number() OVER () AS \"__source_row_number\", *\n  FROM \"admissions\"\n),\nfiltered AS (\n  SELECT\n    source.*,\n    TRY_CAST(regexp_extract(REPLACE(CAST(\"专业组最低位次1\" AS VARCHAR), ',', ''), '\\d+(?:\\.\\d+)?') AS DOUBLE) AS \"__group_rank_num\",\n    TRY_CAST(regexp_extract(REPLACE(CAST(\"学费\" AS VARCHAR), ',', ''), '\\d+(?:\\.\\d+)?') AS DOUBLE) AS \"__tuition_num\",\n    TRY_CAST(regexp_extract(REPLACE(CAST(\"院校排名\" AS VARCHAR), ',', ''), '\\d+(?:\\.\\d+)?') AS DOUBLE) AS \"__school_rank_num\",\n    TRY_CAST(regexp_extract(REPLACE(CAST(\"ID\" AS VARCHAR), ',', ''), '\\d+(?:\\.\\d+)?') AS DOUBLE) AS \"__id_num\"\n  FROM source\n  WHERE CAST(\"生源地\" AS VARCHAR) = ? AND CAST(\"科类\" AS VARCHAR) = ? AND ((REPLACE(REPLACE(CAST(\"选科要求\" AS VARCHAR), '思想政治', '政治'), '生物学', '生物') IS NULL OR TRIM(REPLACE(REPLACE(CAST(\"选科要求\" AS VARCHAR), '思想政治', '政治'), '生物学', '生物')) = '' OR REPLACE(REPLACE(CAST(\"选科要求\" AS VARCHAR), '思想政治', '政治'), '生物学', '生物') = 'nan' OR REPLACE(REPLACE(CAST(\"选科要求\" AS VARCHAR), '思想政治', '政治'), '生物学', '生物') = '无' OR STRPOS(REPLACE(REPLACE(CAST(\"选科要求\" AS VARCHAR), '思想政治', '政治'), '生物学', '生物'), '不限') > 0) OR ((STRPOS(REPLACE(REPLACE(CAST(\"选科要求\" AS VARCHAR), '思想政治', '政治'), '生物学', '生物'), '或') > 0 OR STRPOS(REPLACE(REPLACE(CAST(\"选科要求\" AS VARCHAR), '思想政治', '政治'), '生物学', '生物'), '/') > 0) AND (STRPOS(REPLACE(REPLACE(CAST(\"选科要求\" AS VARCHAR), '思想政治', '政治'), '生物学', '生物'), ?) > 0 OR STRPOS(REPLACE(REPLACE(CAST(\"选科要求\" AS VARCHAR), '思想政治', '政治'), '生物学', '生物'), ?) > 0)) OR ((STRPOS(REPLACE(REPLACE(CAST(\"选科要求\" AS VARCHAR), '思想政治', '政治'), '生物学', '生物'), '或') = 0 AND STRPOS(REPLACE(REPLACE(CAST(\"选科要求\" AS VARCHAR), '思想政治', '政治'), '生物学', '生物'), '/') = 0) AND STRPOS(REPLACE(REPLACE(CAST(\"选科要求\" AS VARCHAR), '思想政治', '政治'), '生物学', '生物'), ?) = 0 AND STRPOS(REPLACE(REPLACE(CAST(\"选科要求\" AS VARCHAR), '思想政治', '政治'), '生物学', '生物'), ?) = 0)) AND (STRPOS(CAST(\"专业名称\" AS VARCHAR), ?) > 0) AND (STRPOS(CAST(\"城市\" AS VARCHAR), ?) > 0 OR STRPOS(CAST(\"城市\" AS VARCHAR), ?) > 0)\n),\nprojectable AS (\n  SELECT *\n  FROM filtered\n  WHERE TRUE\n    AND \"__group_rank_num\" IS NOT NULL\n    AND \"__tuition_num\" IS NOT NULL\n)\nSELECT *\nFROM projectable\nORDER BY\n  \"__group_rank_num\" ASC NULLS LAST,\n  \"__school_rank_num\" ASC NULLS LAST,\n  \"__id_num\" ASC NULLS LAST",
+      "query_type": null,
+      "sql": "WITH source AS (\n  SELECT row_number() OVER () AS \"__source_row_number\", *\n  FROM \"admissions\"\n),\nfiltered AS (\n  SELECT\n    source.*,\n    TRY_CAST(regexp_extract(REPLACE(CAST(\"专业组最低位次1\" AS VARCHAR), ',', ''), '\\d+(?:\\.\\d+)?') AS DOUBLE) AS \"__group_rank_num\",\n    TRY_CAST(regexp_extract(REPLACE(CAST(\"学费\" AS VARCHAR), ',', ''), '\\d+(?:\\.\\d+)?') AS DOUBLE) AS \"__tuition_num\",\n    TRY_CAST(regexp_extract(REPLACE(CAST(\"院校排名\" AS VARCHAR), ',', ''), '\\d+(?:\\.\\d+)?') AS DOUBLE) AS \"__school_rank_num\",\n    TRY_CAST(regexp_extract(REPLACE(CAST(\"ID\" AS VARCHAR), ',', ''), '\\d+(?:\\.\\d+)?') AS DOUBLE) AS \"__id_num\"\n  FROM source\n  WHERE CAST(\"生源地\" AS VARCHAR) = ? AND CAST(\"科类\" AS VARCHAR) = ? AND (STRPOS(CAST(\"专业名称\" AS VARCHAR), ?) > 0) AND (STRPOS(CAST(\"城市\" AS VARCHAR), ?) > 0 OR STRPOS(CAST(\"城市\" AS VARCHAR), ?) > 0)\n),\nprojectable AS (\n  SELECT *\n  FROM filtered\n  WHERE TRUE\n    AND \"__group_rank_num\" IS NOT NULL\n    AND \"__tuition_num\" IS NOT NULL\n)\nSELECT *\nFROM projectable\nORDER BY\n  \"__group_rank_num\" ASC NULLS LAST,\n  \"__school_rank_num\" ASC NULLS LAST,\n  \"__id_num\" ASC NULLS LAST",
       "params": [
         "广东",
         "物理",
-        "化学",
-        "生物",
-        "政治",
-        "地理",
         "计算机",
         "广州",
         "深圳"
       ],
+      "detail_sql": "",
+      "detail_params": [],
       "input_row_count": 30855,
       "filtered_row_count": 149,
+      "nested_result_count": 0,
+      "group_by": [],
+      "metric": null,
       "sort_key": [
         "专业组最低位次1 ASC NULLS LAST",
         "院校排名 ASC NULLS LAST",
         "ID ASC NULLS LAST"
       ],
+      "sort": [],
       "top_k": 5,
       "hard_rule_ids": [
         "e_source_province",
         "e_subject_type",
-        "e_subject_requirement",
         "e_major_keyword",
         "e_city"
       ],
-      "skipped_soft_rule_ids": [
-        "e_safety_margin",
-        "e_tuition_cap"
-      ]
+      "skipped_soft_rule_ids": []
     },
     "trace": {},
     "items": [
@@ -3310,17 +2476,6 @@
             "value": "物理",
             "matched": true,
             "text": "科类 等于 物理"
-          },
-          {
-            "id": "e_subject_requirement",
-            "field": "选科要求",
-            "operator": "satisfies_subject_requirement",
-            "value": [
-              "化学",
-              "生物"
-            ],
-            "matched": true,
-            "text": "选科要求 化学；已选再选科目：化学、生物"
           },
           {
             "id": "e_major_keyword",
@@ -3487,17 +2642,6 @@
             "text": "科类 等于 物理"
           },
           {
-            "id": "e_subject_requirement",
-            "field": "选科要求",
-            "operator": "satisfies_subject_requirement",
-            "value": [
-              "化学",
-              "生物"
-            ],
-            "matched": true,
-            "text": "选科要求 化学；已选再选科目：化学、生物"
-          },
-          {
             "id": "e_major_keyword",
             "field": "专业名称",
             "operator": "contains_any",
@@ -3650,17 +2794,6 @@
             "value": "物理",
             "matched": true,
             "text": "科类 等于 物理"
-          },
-          {
-            "id": "e_subject_requirement",
-            "field": "选科要求",
-            "operator": "satisfies_subject_requirement",
-            "value": [
-              "化学",
-              "生物"
-            ],
-            "matched": true,
-            "text": "选科要求 化学；已选再选科目：化学、生物"
           },
           {
             "id": "e_major_keyword",
@@ -3817,17 +2950,6 @@
             "text": "科类 等于 物理"
           },
           {
-            "id": "e_subject_requirement",
-            "field": "选科要求",
-            "operator": "satisfies_subject_requirement",
-            "value": [
-              "化学",
-              "生物"
-            ],
-            "matched": true,
-            "text": "选科要求 化学；已选再选科目：化学、生物"
-          },
-          {
             "id": "e_major_keyword",
             "field": "专业名称",
             "operator": "contains_any",
@@ -3982,17 +3104,6 @@
             "text": "科类 等于 物理"
           },
           {
-            "id": "e_subject_requirement",
-            "field": "选科要求",
-            "operator": "satisfies_subject_requirement",
-            "value": [
-              "化学",
-              "生物"
-            ],
-            "matched": true,
-            "text": "选科要求 化学；已选再选科目：化学、生物"
-          },
-          {
             "id": "e_major_keyword",
             "field": "专业名称",
             "operator": "contains_any",
@@ -4045,12 +3156,11 @@
     "natural_language_report": {
       "title": "规则验证结果（非最终志愿建议）",
       "summary": "系统基于已验证规则完成筛选，共 149 条结果。候选偏好只在确认或模拟确认后执行；未执行偏好会保留为警告。",
-      "full_text": "根据已验证规则生成结果：\n\n用户需求：广东，物理类，再选科目：化学、生物，排位32000；偏好信息：已确认边界：位次窗口 10%，费用上限 20000 元/年；偏好描述：想学计算机，最好在广州深圳，学校稳一点，不想去太贵的中外合作。\n共筛选到 149 条符合已执行规则的结果。\n\n抽取与结构化结果：\n- 生源地：广东；状态：已对齐字段；来源：广东\n- 科类：物理；状态：已对齐字段；来源：物理\n- 再选科目：化学、生物；状态：已对齐字段；来源：化学、生物\n- 排位：32000；状态：已对齐字段；来源：排位32000\n- 专业名称：计算机；状态：已对齐字段；来源：计算机\n- 城市：广州、深圳；状态：已对齐字段；来源：广州、深圳\n- 稳一点：稳一点；状态：待确认；来源：稳一点\n- 太贵：太贵；状态：待确认；来源：太贵\n- 中外合作：不想去太贵的中外合作；状态：不可执行；来源：不想去太贵的中外合作\n\n字段值审计解释：\n- [已执行] 广东 -> 生源地：exact_match；索引命中：广东；已匹配字段“生源地”，并已进入 hard filter。\n- [已执行] 物理 -> 科类：exact_match；索引命中：物理；已匹配字段“科类”，并已进入 hard filter。\n- [已执行] 化学、生物 -> 选科要求：exact_match；索引命中：化学、生物；已匹配字段“选科要求”，并已进入 hard filter。\n- [已执行] 计算机 -> 专业名称：exact_match；索引命中：计算机类、计算机科学与技术、计算机应用技术、电子与计算机工程、计算机网络技术；已匹配字段“专业名称”，并已进入 hard filter。\n- [已执行] 广州深圳、广州、深圳 -> 城市：exact_match；索引命中：广州、深圳；已匹配字段“城市”，并已进入 hard filter。\n- [需确认] 稳一点 -> 专业组最低位次1：partial_match；该属性有对应字段，但语义或边界需要确认。未进入 hard filter。\n- [需确认] 太贵 -> 学费：partial_match；该属性有对应字段，但语义或边界需要确认。未进入 hard filter。\n- [未执行] 不想去太贵的中外合作 -> 合作办学类型字段：no_schema_field；当前数据中没有可执行字段，不能进入筛表。原文已保留，未进入 hard filter。\n\n已执行规则：\n- e_source_province：生源地 等于 广东\n- e_subject_type：科类 等于 物理\n- e_subject_requirement：选科要求 满足已选再选科目：化学、生物\n- e_major_keyword：专业名称 包含任一：计算机\n- e_city：城市 包含任一：广州、深圳\n\n候选偏好确认记录：\n- 学校稳一点：已确认“10% 位次窗口”，但未进入 hard filter，仅作为候选边界记录。\n- 太贵：已确认“不高于 20000 元/年”，但未进入 hard filter，仅作为候选边界记录。\n- 不想去太贵的中外合作：未执行，原因：缺少合作办学类型字段。。\n\n缺少字段，不能确认执行：\n- 不想去太贵的中外合作：当前数据中没有可执行字段，不能进入筛表。；即使提交该 candidate_id 也不能执行。\n\n未执行但已保留的偏好：\n- 不想去太贵的中外合作：未执行，未参与筛选。原因：缺少合作办学类型字段，当前版本不从文本字段推断。\n\n前 5 条结果：\n- 1. 中山大学；专业组代码：10558219；专业代码：077；专业名称：计算机类；专业全称：计算机类(广州，含：计算机科学与技术、信息与计算科学，广州校区，东校园)；选科要求：化学；城市：广州；学费：6850 元/年；专业组最低位次：4019；专业最低位次：2852。\n- 2. 中山大学；专业组代码：10558219；专业代码：099；专业名称：计算机类；专业全称：计算机类(深圳，含：智能科学与技术、智慧交通，深圳校区)；选科要求：化学；城市：广州；学费：6850 元/年；专业组最低位次：4019；专业最低位次：3982。\n- 3. 华南理工大学；专业组代码：10561202；专业代码：072；专业名称：计算机科学与技术；专业全称：计算机科学与技术(全英创新班，广州市)(不招单色识别不全者)；选科要求：化学；城市：广州；学费：6850 元/年；专业组最低位次：5640。\n- 4. 华南理工大学；专业组代码：10561202；专业代码：073；专业名称：计算机科学与技术；专业全称：计算机科学与技术(拔尖基地班，全英文教学，广州市)(不招单色识别不全者)；选科要求：化学；城市：广州；学费：6850 元/年；专业组最低位次：5640。\n- 5. 华南理工大学；专业组代码：10561202；专业代码：074；专业名称：计算机类；专业全称：计算机类(含：计算机科学与技术、网络工程、信息安全，广州市)(不招单色识别不全者)；选科要求：化学；城市：广州；学费：6850 元/年；专业组最低位次：5640。\n\n安全说明：\n- 答案只能使用 证据包 中的已验证规则、确认记录、结果摘要和 trace。\n- 候选偏好在确认或模拟确认之前不得执行。\n- 不想去太贵的中外合作 未执行：缺少合作办学类型字段，当前版本不从文本字段推断。",
+      "full_text": "根据已验证规则生成结果：\n\n用户需求：广东物理，排位32000，想学计算机，广深优先。；偏好信息：偏好描述：广东物理，排位32000，想学计算机，广深优先。\n共筛选到 149 条符合已执行规则的结果。\n\n抽取与结构化结果：\n- 生源地：广东；状态：已对齐字段；来源：广东\n- 科类：物理；状态：已对齐字段；来源：物理\n- 排位：32000；状态：已对齐字段；来源：排位32000\n- 专业名称：计算机；状态：已对齐字段；来源：计算机\n- 城市：广州、深圳；状态：已对齐字段；来源：广州、深圳\n\n字段值审计解释：\n- [已执行] 广东 -> 生源地：exact_match；索引命中：广东；已匹配字段“生源地”，并已进入 hard filter。\n- [已执行] 物理 -> 科类：exact_match；索引命中：物理；已匹配字段“科类”，并已进入 hard filter。\n- [已执行] 计算机 -> 专业名称：exact_match；索引命中：计算机类、计算机科学与技术、计算机应用技术、电子与计算机工程、计算机网络技术；已匹配字段“专业名称”，并已进入 hard filter。\n- [已执行] 广深 -> 城市：exact_match；索引命中：广州、深圳；已匹配字段“城市”，并已进入 hard filter。\n\n已执行规则：\n- e_source_province：生源地 等于 广东\n- e_subject_type：科类 等于 物理\n- e_major_keyword：专业名称 包含任一：计算机\n- e_city：城市 包含任一：广州、深圳\n\n候选偏好确认记录：\n\n未执行但已保留的偏好：\n- 无。\n\n前 5 条结果：\n- 1. 中山大学；专业组代码：10558219；专业代码：077；专业名称：计算机类；专业全称：计算机类(广州，含：计算机科学与技术、信息与计算科学，广州校区，东校园)；选科要求：化学；城市：广州；学费：6850 元/年；专业组最低位次：4019；专业最低位次：2852。\n- 2. 中山大学；专业组代码：10558219；专业代码：099；专业名称：计算机类；专业全称：计算机类(深圳，含：智能科学与技术、智慧交通，深圳校区)；选科要求：化学；城市：广州；学费：6850 元/年；专业组最低位次：4019；专业最低位次：3982。\n- 3. 华南理工大学；专业组代码：10561202；专业代码：072；专业名称：计算机科学与技术；专业全称：计算机科学与技术(全英创新班，广州市)(不招单色识别不全者)；选科要求：化学；城市：广州；学费：6850 元/年；专业组最低位次：5640。\n- 4. 华南理工大学；专业组代码：10561202；专业代码：073；专业名称：计算机科学与技术；专业全称：计算机科学与技术(拔尖基地班，全英文教学，广州市)(不招单色识别不全者)；选科要求：化学；城市：广州；学费：6850 元/年；专业组最低位次：5640。\n- 5. 华南理工大学；专业组代码：10561202；专业代码：074；专业名称：计算机类；专业全称：计算机类(含：计算机科学与技术、网络工程、信息安全，广州市)(不招单色识别不全者)；选科要求：化学；城市：广州；学费：6850 元/年；专业组最低位次：5640。\n\n安全说明：\n- 答案只能使用 证据包 中的已验证规则、确认记录、结果摘要和 trace。\n- 候选偏好在确认或模拟确认之前不得执行。",
       "result_count_text": "当前共有 149 条记录通过已验证规则。",
       "executed_rules": [
         "生源地 等于 广东",
         "科类 等于 物理",
-        "选科要求 满足已选再选科目：化学、生物",
         "专业名称 包含任一：计算机",
         "城市 包含任一：广州、深圳"
       ],
@@ -4080,22 +3190,6 @@
           "reason": "已匹配字段“科类”，并已进入 hard filter。"
         },
         {
-          "source_text": "化学、生物",
-          "slot_path": "user_context.reselected_subjects",
-          "field": "选科要求",
-          "value": [
-            "化学",
-            "生物"
-          ],
-          "match_type": "exact_match",
-          "action": "executed",
-          "matched_values": [
-            "化学",
-            "生物"
-          ],
-          "reason": "已匹配字段“选科要求”，并已进入 hard filter。"
-        },
-        {
           "source_text": "计算机",
           "slot_path": "preferences.major_keyword",
           "field": "专业名称",
@@ -4112,7 +3206,7 @@
           "reason": "已匹配字段“专业名称”，并已进入 hard filter。"
         },
         {
-          "source_text": "广州深圳、广州、深圳",
+          "source_text": "广深",
           "slot_path": "preferences.preferred_cities",
           "field": "城市",
           "value": [
@@ -4126,36 +3220,6 @@
             "深圳"
           ],
           "reason": "已匹配字段“城市”，并已进入 hard filter。"
-        },
-        {
-          "source_text": "稳一点",
-          "slot_path": "preferences.risk_preference_raw",
-          "field": "专业组最低位次1",
-          "value": "稳一点",
-          "match_type": "partial_match",
-          "action": "needs_confirmation",
-          "matched_values": [],
-          "reason": "该属性有对应字段，但语义或边界需要确认。未进入 hard filter。"
-        },
-        {
-          "source_text": "太贵",
-          "slot_path": "preferences.tuition_preference_raw",
-          "field": "学费",
-          "value": "太贵",
-          "match_type": "partial_match",
-          "action": "needs_confirmation",
-          "matched_values": [],
-          "reason": "该属性有对应字段，但语义或边界需要确认。未进入 hard filter。"
-        },
-        {
-          "source_text": "不想去太贵的中外合作",
-          "slot_path": "preferences.cooperation_preference_raw",
-          "field": "cooperation_type",
-          "value": "不想去太贵的中外合作",
-          "match_type": "no_schema_field",
-          "action": "not_executed",
-          "matched_values": [],
-          "reason": "当前数据中没有可执行字段，不能进入筛表。原文已保留，未进入 hard filter。"
         }
       ],
       "top_results": [
@@ -4164,8 +3228,8 @@
         "华南理工大学（专业组 10561202）；专业代码 072；专业名称 计算机科学与技术；专业全称 计算机科学与技术(全英创新班，广州市)(不招单色识别不全者)；选科要求 化学；城市 广州；学费 6850.0；专业组最低位次 None；相对排位差 -82.37%"
       ],
       "warnings": [
-        "不想去太贵的中外合作 未执行：缺少合作办学类型字段，当前版本不从文本字段推断。",
-        "本次没有确认位次窗口规则，结果只表示字段筛选通过，不代表风险已判断。"
+        "本次没有确认位次窗口规则，结果只表示字段筛选通过，不代表风险已判断。",
+        "缺少再选科目（化学/生物/政治/地理四选二），结果未按专业选科要求过滤。"
       ],
       "disclaimer": "以上内容是规则验证结果和证据汇总，不是最终志愿建议。"
     },

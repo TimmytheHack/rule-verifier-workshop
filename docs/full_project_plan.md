@@ -115,7 +115,7 @@ deterministic over-promotion rate
 |---|---|---|
 | P0 | confirmation loop：`partial_match` 通过 `candidate_id` 确认后才可进入 hard filter | 已实现基础闭环 |
 | P1 | API response contract freeze + snapshot tests | 已实现基础 contract |
-| P2 | demo acceptance script，导出多领域 Markdown/JSON 验收报告 | 已实现，当前覆盖 admissions 15 条、housing 5 条、products 5 条 |
+| P2 | demo acceptance script，导出多领域 Markdown/JSON 验收报告 | 已实现，当前覆盖 admissions 17 条、housing 5 条、products 5 条 |
 | P3 | 多数据源 ingestion 规范，支持新 Excel / CSV 进入同一 warehouse schema | 已实现 draft generator 和 Domain Pack Review / Approval workflow |
 | P4 | 统一 Quality Gate，交付前运行测试、评估、demo acceptance、domain/warehouse guard 和前端 build | 已实现 |
 | P5 | 非结构化政策/章程小型知识库，只做解释和候选，不进执行 | 待做 |
