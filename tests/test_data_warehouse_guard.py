@@ -13,10 +13,12 @@ from src.adapters.data_warehouse import (
     build_structured_store,
 )
 from src.api.workbench import WorkbenchConfig, run_workbench
+from src.domains import DomainConfig
 
 
 ROOT = Path(__file__).resolve().parents[1]
-SCHEMA_PATH = ROOT / "schemas/schema_registry.json"
+ADMISSIONS_DOMAIN = DomainConfig.load("admissions")
+SCHEMA_PATH = ADMISSIONS_DOMAIN.schema_path
 
 
 def _sample_dataframe(city: str = "广州") -> pd.DataFrame:

@@ -1,0 +1,20 @@
+{
+  "rank_field_id": null,
+  "money_field_ids": ["rent_usd"],
+  "result_line_fields": [
+    {"field_id": "listing_id", "label": "房源编号", "rank_prefix": true},
+    {"field_id": "city", "label": "城市"},
+    {"field_id": "bedrooms", "label": "卧室数"},
+    {"field_id": "rent_usd", "label": "月租", "format": "money"},
+    {"field_id": "property_type", "label": "类型"},
+    {"field_id": "rating", "label": "评分", "optional": true}
+  ],
+  "result_text_fields": [
+    {"field_id": "listing_id", "label": "房源编号"},
+    {"field_id": "city", "label": "城市"},
+    {"field_id": "bedrooms", "label": "卧室数"},
+    {"field_id": "rent_usd", "label": "月租"},
+    {"field_id": "property_type", "label": "类型"},
+    {"field_id": "rating", "label": "评分", "optional": true}
+  ]
+}

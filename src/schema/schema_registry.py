@@ -6,6 +6,8 @@ import json
 from pathlib import Path
 from typing import Any
 
+from src.domains import DomainConfig
+
 
 class SchemaRegistry:
     """根据真实字段过滤 schema 配置。
@@ -28,6 +30,14 @@ class SchemaRegistry:
             if spec.get("source_column") in available and spec.get("status") != "missing"
         }
         return cls(active_fields=active_fields, configured_fields=configured_fields)
+
+    @classmethod
+    def from_domain(
+        cls,
+        domain_config: DomainConfig,
+        available_columns: list[str],
+    ) -> "SchemaRegistry":
+        return cls.from_file(domain_config.schema_path, available_columns)
 
     def has_field(self, field_id: str | None) -> bool:
         return bool(field_id and field_id in self.active_fields)

@@ -125,7 +125,7 @@ deterministic over-promotion rate
 这些方向仍然有价值，但不应被理解为已经完成的能力：
 
 1. Review `docs/excel_schema_profile.md`。
-2. 只将可信 candidate fields promotion 到 `schemas/schema_registry.json`。
+2. 只将可信 candidate fields promotion 到 `domains/admissions/schema_registry.json`。
 3. 为每个 promotion field 增加测试。
 4. 将 40-case benchmark 扩展到 50-100 条更真实的改写表达。
 5. 在更长、更乱、不完整和矛盾输入上 stress-test DeepSeek extraction。

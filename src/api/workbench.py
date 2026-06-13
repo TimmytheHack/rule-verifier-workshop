@@ -13,18 +13,13 @@ from functools import lru_cache
 from pathlib import Path
 from typing import Any
 
-from scripts.run_mvp_demo import (
-    REQUIRED_COLUMNS,
-    SCHEMA_PATH,
-    TAXONOMY_PATH,
-    WORKBOOK_NAME,
-)
 from src.adapters.data_warehouse import (
     SchemaValueIndex,
     audit_data_warehouse_fingerprints,
     load_structured_dataset,
 )
 from src.adapters.excel_adapter import ExcelDataSet
+from src.domains import DomainConfig
 from src.executors.duckdb_executor import (
     DuckDBExecutor,
     ExecutionResult,
@@ -54,6 +49,7 @@ DEFAULT_USER_INPUT = (
     "我是广东物理类，排位32000，想学计算机，最好在广州深圳，"
     "学校稳一点，不想去太贵的中外合作。"
 )
+ADMISSIONS_DOMAIN = DomainConfig.load("admissions")
 
 EXTRACTOR_OPTIONS = {
     "hybrid": "规则优先，LLM 补槽",
@@ -81,31 +77,12 @@ INTERACTIVE_DEEPSEEK_TIMEOUT_SECONDS = 25
 INTERACTIVE_DEEPSEEK_MAX_RETRIES = 1
 EVIDENCE_TOP_K = 5
 
-NOT_EXECUTED_COOPERATION_TEXT = "中外合作未执行：缺少合作办学类型字段"
-NOT_EXECUTED_COOPERATION_REASON = (
-    "当前数据字段定义没有合作办学类型字段，不能验证或执行"
-    "“排除中外合作”。"
-)
 WAREHOUSE_DATABASE_PATH = Path("outputs/data/guangdong_admissions.duckdb")
 WAREHOUSE_VALUE_INDEX_PATH = Path("outputs/data/schema_value_index.json")
-PEARL_RIVER_DELTA_CITIES = [
-    "广州",
-    "深圳",
-    "佛山",
-    "东莞",
-    "珠海",
-    "惠州",
-    "中山",
-    "江门",
-    "肇庆",
-]
-COMPUTER_RELATED_CONFIRMATION_TERMS = [
-    "计算机",
-    "软件工程",
-    "人工智能",
-    "数据科学",
-    "网络空间安全",
-]
+WORKBOOK_NAME = ADMISSIONS_DOMAIN.workbook_path
+SCHEMA_PATH = ADMISSIONS_DOMAIN.schema_path
+TAXONOMY_PATH = ADMISSIONS_DOMAIN.rule_taxonomy_path
+REQUIRED_COLUMNS = ADMISSIONS_DOMAIN.required_columns
 
 
 @dataclass(frozen=True)
@@ -119,6 +96,7 @@ class WorkbenchConfig:
     generator: str = "template_evidence"
     model: str = "deepseek-v4-flash"
     confirmed_candidates: list[str] = field(default_factory=list)
+    domain_name: str = "admissions"
 
 
 @dataclass(frozen=True)
@@ -173,6 +151,28 @@ def available_options() -> dict[str, Any]:
     }
 
 
+def _domain_config(config: WorkbenchConfig) -> DomainConfig:
+    return DomainConfig.load(config.domain_name)
+
+
+def _workbook_path(domain_config: DomainConfig) -> Path:
+    if domain_config.domain_id == ADMISSIONS_DOMAIN.domain_id:
+        return Path(WORKBOOK_NAME)
+    return domain_config.workbook_path
+
+
+def _warehouse_database_path(domain_config: DomainConfig) -> Path:
+    if domain_config.domain_id == ADMISSIONS_DOMAIN.domain_id:
+        return Path(WAREHOUSE_DATABASE_PATH)
+    return domain_config.warehouse_database_path
+
+
+def _warehouse_value_index_path(domain_config: DomainConfig) -> Path:
+    if domain_config.domain_id == ADMISSIONS_DOMAIN.domain_id:
+        return Path(WAREHOUSE_VALUE_INDEX_PATH)
+    return domain_config.value_index_path
+
+
 def run_workbench(config: WorkbenchConfig) -> dict[str, Any]:
     """Run the verified pipeline and return UI-ready artifacts."""
 
@@ -186,22 +186,29 @@ def _run_workbench(config: WorkbenchConfig) -> dict[str, Any]:
     """在 contract 包装下运行已验证 pipeline。"""
 
     _validate_config(config)
-    warehouse_audit = _data_warehouse_audit()
+    domain_config = _domain_config(config)
+    warehouse_audit = _data_warehouse_audit(domain_config)
     if not warehouse_audit["ok"]:
         return _data_warehouse_warning_payload(config, warehouse_audit)
 
-    dataset = _load_dataset()
-    schema_registry = _load_schema_registry(tuple(dataset.headers))
-    value_index = _load_value_index()
-    slots, extractor_usage = _extract_slots(config, schema_registry=schema_registry)
-    verifier = RuleVerifier(schema_registry)
+    dataset = _load_dataset(domain_config)
+    schema_registry = _load_schema_registry(tuple(dataset.headers), domain_config)
+    value_index = _load_value_index(domain_config)
+    slots, extractor_usage = _extract_slots(
+        config,
+        schema_registry=schema_registry,
+        domain_config=domain_config,
+    )
+    verifier = RuleVerifier(schema_registry, domain_config=domain_config)
     attribute_grounding = AttributeGrounder(
         schema_registry,
         value_index=value_index,
+        domain_config=domain_config,
     ).ground(slots)
     confirmation_candidates = _build_confirmation_candidates(
         user_request=_compose_user_request(config),
         attribute_grounding=attribute_grounding,
+        domain_config=domain_config,
     )
     confirmation_state = _resolve_confirmed_candidates(
         confirmed_candidates=config.confirmed_candidates,
@@ -219,19 +226,30 @@ def _run_workbench(config: WorkbenchConfig) -> dict[str, Any]:
             confirmation_state=confirmation_state,
         )
     proposed_rules = verifier.audit_proposed_rules(slots.get("proposed_rules", []))
-    classified_rules = RuleClassifier(TAXONOMY_PATH, verifier).classify(slots)
+    classified_rules = RuleClassifier(
+        domain_config.rule_taxonomy_path,
+        verifier,
+        domain_config=domain_config,
+    ).classify(slots)
     classified_rules = _append_unmapped_preferences(classified_rules, slots)
     classified_rules = _append_grounding_non_executable_preferences(
         classified_rules,
         attribute_grounding,
+        domain_config,
     )
     classified_rules["attribute_grounding"] = attribute_grounding
     classified_rules["proposed_rules"] = proposed_rules
     classified_rules["confirmation_state"] = confirmation_state
-    classified_rules = _apply_soft_confirmations(classified_rules, config, slots)
+    classified_rules = _apply_soft_confirmations(
+        classified_rules,
+        config,
+        slots,
+        domain_config,
+    )
     final_rules = RulePromoter(
-        TAXONOMY_PATH,
+        domain_config.rule_taxonomy_path,
         simulated_confirmation_enabled=True,
+        domain_config=domain_config,
     ).final_executable_rules(classified_rules)
     final_rules.extend(confirmation_state["confirmed_rules"])
     final_rules = _apply_value_index_hard_filter_guard(
@@ -243,6 +261,7 @@ def _run_workbench(config: WorkbenchConfig) -> dict[str, Any]:
         executable_rules=final_rules,
         user_rank=slots.get("user_context", {}).get("user_rank"),
         top_k=EVIDENCE_TOP_K,
+        domain_config=domain_config,
     )
     confirmation_state = _finalize_confirmation_execution(
         confirmation_state,
@@ -254,7 +273,7 @@ def _run_workbench(config: WorkbenchConfig) -> dict[str, Any]:
         executable_rules=hard_rules,
         not_executed_preferences=classified_rules.get("non_executable_preferences", []),
     )
-    extracted_preferences = _extracted_preferences(slots)
+    extracted_preferences = _extracted_preferences(slots, domain_config)
     evidence = EvidencePack.from_verified_pipeline(
         user_request=_compose_user_request(config),
         executed_rules=hard_rules,
@@ -266,11 +285,13 @@ def _run_workbench(config: WorkbenchConfig) -> dict[str, Any]:
         proposed_rules=proposed_rules,
         execution_summary=execution.audit.to_dict(),
         confirmation_state=confirmation_state,
+        domain_config=domain_config,
     )
     report, generator_usage = _generate_report(
         config=config,
         evidence=evidence,
         schema_registry=schema_registry,
+        domain_config=domain_config,
     )
 
     legacy_payload = {
@@ -283,24 +304,34 @@ def _run_workbench(config: WorkbenchConfig) -> dict[str, Any]:
         "selected_options": _selected_options(config),
         "extracted_preferences": extracted_preferences,
         "extracted_slots": slots,
-        "attribute_grounding": _display_attribute_grounding(attribute_grounding),
+        "attribute_grounding": _display_attribute_grounding(
+            attribute_grounding,
+            domain_config,
+        ),
         "confirmation_candidates": confirmation_candidates,
         "confirmation_state": _display_confirmation_state(confirmation_state),
         "proposed_rules": _display_proposed_rules(proposed_rules),
         "deterministic_rules": [_display_rule(rule) for rule in classified_rules["deterministic_rules"]],
         "candidate_rules": _candidate_rules(classified_rules),
-        "not_executed_preferences": _not_executed_preferences(classified_rules),
+        "not_executed_preferences": _not_executed_preferences(
+            classified_rules,
+            domain_config,
+        ),
         "simulated_confirmations": _simulated_confirmations(classified_rules),
         "executable_rules": [_executable_rule(rule) for rule in hard_rules],
         "execution": _display_execution_summary(execution.audit.to_dict()),
         "result_count": len(traced_results),
         "top_results": [
-            _top_result(rank, row)
+            _top_result(rank, row, domain_config)
             for rank, row in enumerate(traced_results[:EVIDENCE_TOP_K], start=1)
         ],
         "trace": {},
         "evidence_pack": evidence.to_dict(),
-        "natural_language_report": _with_context_warnings(report, slots),
+        "natural_language_report": _with_context_warnings(
+            report,
+            slots,
+            domain_config,
+        ),
         "token_usage": {
             "extractor": extractor_usage,
             "generator": generator_usage,
@@ -462,11 +493,12 @@ def _debug_trace(payload: dict[str, Any]) -> dict[str, Any]:
     return {key: payload.get(key) for key in keys if key in payload}
 
 
-def _data_warehouse_audit() -> dict[str, Any]:
+def _data_warehouse_audit(domain_config: DomainConfig) -> dict[str, Any]:
     return audit_data_warehouse_fingerprints(
-        workbook_path=WORKBOOK_NAME,
-        database_path=WAREHOUSE_DATABASE_PATH,
-        index_path=WAREHOUSE_VALUE_INDEX_PATH,
+        workbook_path=_workbook_path(domain_config),
+        database_path=_warehouse_database_path(domain_config),
+        index_path=_warehouse_value_index_path(domain_config),
+        table_name=domain_config.table_name,
     )
 
 
@@ -587,9 +619,12 @@ def _confirmation_blocked_payload(
         "hard_filters": _display_hard_filters(config.hard_filters),
         "soft_preferences": _display_soft_preferences(config.soft_preferences),
         "selected_options": _selected_options(config),
-        "extracted_preferences": _extracted_preferences(slots),
+        "extracted_preferences": _extracted_preferences(slots, _domain_config(config)),
         "extracted_slots": slots,
-        "attribute_grounding": _display_attribute_grounding(attribute_grounding),
+        "attribute_grounding": _display_attribute_grounding(
+            attribute_grounding,
+            _domain_config(config),
+        ),
         "confirmation_candidates": confirmation_candidates,
         "confirmation_state": _display_confirmation_state(confirmation_state),
         "proposed_rules": [],
@@ -749,14 +784,17 @@ def _error_payload(config: WorkbenchConfig, exc: Exception) -> dict[str, Any]:
     return {**legacy_payload, **response}
 
 
-def _load_dataset() -> ExcelDataSet:
-    if not WAREHOUSE_DATABASE_PATH.exists():
+def _load_dataset(domain_config: DomainConfig) -> ExcelDataSet:
+    database_path = _warehouse_database_path(domain_config)
+    if not database_path.exists():
         raise RuntimeError("DuckDB 数据仓库不存在，Workbench 不执行静默 Excel 回退。")
-    stat = WAREHOUSE_DATABASE_PATH.stat()
+    stat = database_path.stat()
     return _load_warehouse_dataset_cached(
-        str(WAREHOUSE_DATABASE_PATH),
+        str(database_path),
         stat.st_mtime_ns,
         stat.st_size,
+        tuple(domain_config.required_columns),
+        domain_config.table_name,
     )
 
 
@@ -765,27 +803,42 @@ def _load_warehouse_dataset_cached(
     database_path: str,
     modified_ns: int,
     file_size: int,
+    required_columns: tuple[str, ...],
+    table_name: str,
 ) -> ExcelDataSet:
     _ = (modified_ns, file_size)
-    return load_structured_dataset(database_path, REQUIRED_COLUMNS)
+    return load_structured_dataset(
+        database_path,
+        list(required_columns),
+        table_name=table_name,
+    )
 
 
 def _execute_verified_hard_rules(
     executable_rules: list[dict[str, Any]],
     user_rank: int | None,
     top_k: int,
+    domain_config: DomainConfig,
 ) -> ExecutionResult:
-    if not WAREHOUSE_DATABASE_PATH.exists():
+    database_path = _warehouse_database_path(domain_config)
+    if not database_path.exists():
         raise RuntimeError("DuckDB 数据仓库不存在，Workbench 不执行静默 Pandas 回退。")
-    return DuckDBExecutor(WAREHOUSE_DATABASE_PATH).execute(
+    return DuckDBExecutor(
+        database_path,
+        table_name=domain_config.table_name,
+        domain_config=domain_config,
+    ).execute(
         executable_rules,
         user_rank=user_rank,
         top_k=top_k,
     )
 
 
-def _load_schema_registry(headers: tuple[str, ...]) -> SchemaRegistry:
-    schema_path = Path(SCHEMA_PATH)
+def _load_schema_registry(
+    headers: tuple[str, ...],
+    domain_config: DomainConfig,
+) -> SchemaRegistry:
+    schema_path = Path(domain_config.schema_path)
     stat = schema_path.stat()
     return _load_schema_registry_cached(
         str(schema_path),
@@ -806,12 +859,13 @@ def _load_schema_registry_cached(
     return SchemaRegistry.from_file(Path(schema_path), list(headers))
 
 
-def _load_value_index() -> SchemaValueIndex | None:
-    if not WAREHOUSE_VALUE_INDEX_PATH.exists():
+def _load_value_index(domain_config: DomainConfig) -> SchemaValueIndex | None:
+    index_path = _warehouse_value_index_path(domain_config)
+    if not index_path.exists():
         return None
-    stat = WAREHOUSE_VALUE_INDEX_PATH.stat()
+    stat = index_path.stat()
     return _load_value_index_cached(
-        str(WAREHOUSE_VALUE_INDEX_PATH),
+        str(index_path),
         stat.st_mtime_ns,
         stat.st_size,
     )
@@ -847,11 +901,15 @@ def _selected_options(config: WorkbenchConfig) -> dict[str, str]:
 def _extract_slots(
     config: WorkbenchConfig,
     schema_registry: SchemaRegistry | None = None,
+    domain_config: DomainConfig | None = None,
 ) -> tuple[dict[str, Any], dict[str, int] | None]:
+    domain_config = domain_config or _domain_config(config)
     soft_prompt = _soft_prompt(config)
     if config.extractor == "regex":
         return _slots_from_inputs(
-            RegexExtractor().extract(soft_prompt),
+            RegexExtractor(alias_path=domain_config.value_aliases_path).extract(
+                soft_prompt
+            ),
             config=config,
         ), None
     if config.extractor == "hybrid":
@@ -862,6 +920,9 @@ def _extract_slots(
         )
         slots = _slots_from_inputs(
             ExtractorFallbackPipeline(
+                deterministic_extractor=RegexExtractor(
+                    alias_path=domain_config.value_aliases_path
+                ),
                 fallback_extractor=(
                     DeepSeekExtractor(client=client) if client is not None else None
                 ),
@@ -901,17 +962,18 @@ def _generate_report(
     config: WorkbenchConfig,
     evidence: EvidencePack,
     schema_registry: SchemaRegistry,
+    domain_config: DomainConfig,
 ) -> tuple[dict[str, Any], dict[str, int] | None]:
     evidence_dict = evidence.to_dict()
 
     if config.generator == "template_evidence":
-        answer = TemplateReportBuilder().build(evidence)
-        return _report_from_answer(answer, evidence_dict), None
+        answer = TemplateReportBuilder(domain_config=domain_config).build(evidence)
+        return _report_from_answer(answer, evidence_dict, domain_config), None
 
     client = _interactive_deepseek_client(config.model)
     payload = DeepSeekAnswerGenerator(client=client).generate(evidence)
     return (
-        _report_from_answer(payload["answer"], evidence_dict),
+        _report_from_answer(payload["answer"], evidence_dict, domain_config),
         payload.get("deepseek_usage"),
     )
 
@@ -995,7 +1057,9 @@ def _apply_soft_confirmations(
     classified_rules: dict[str, Any],
     config: WorkbenchConfig,
     slots: dict[str, Any],
+    domain_config: DomainConfig | None = None,
 ) -> dict[str, Any]:
+    domain_config = domain_config or _domain_config(config)
     updated = dict(classified_rules)
     candidate_rule_ids = {
         rule["rule_id"] for rule in updated.get("candidate_rules", [])
@@ -1010,13 +1074,19 @@ def _apply_soft_confirmations(
 
     safety_percent = _optional_int(soft.get("safety_margin_percent"))
     user_rank = _optional_int(slots.get("user_context", {}).get("user_rank"))
-    if safety_percent in {5, 10, 15} and "c_safety_margin" in candidate_rule_ids and user_rank:
+    rank_field = domain_config.source_column_or_none("group_min_rank_2024")
+    if (
+        safety_percent in {5, 10, 15}
+        and "c_safety_margin" in candidate_rule_ids
+        and user_rank
+        and rank_field
+    ):
         lower_bound = max(1, int(user_rank * (1 - safety_percent / 100)))
         upper_bound = int(user_rank * (1 + safety_percent / 100))
         simulated["safety_margin"] = {
             "selected_option": f"{safety_percent}%",
             "label": f"{safety_percent}% 位次窗口",
-            "field": "专业组最低位次1",
+            "field": rank_field,
             "operator": "between",
             "value": [lower_bound, upper_bound],
             "source_expression": (
@@ -1026,11 +1096,16 @@ def _apply_soft_confirmations(
         }
 
     tuition_cap = _optional_int(soft.get("tuition_cap_yuan"))
-    if tuition_cap in {10000, 20000, 40000} and "c_tuition_cap" in candidate_rule_ids:
+    tuition_field = domain_config.source_column_or_none("tuition_yuan_per_year")
+    if (
+        tuition_cap in {10000, 20000, 40000}
+        and "c_tuition_cap" in candidate_rule_ids
+        and tuition_field
+    ):
         simulated["tuition_threshold"] = {
             "selected_option": str(tuition_cap),
             "label": f"不高于 {tuition_cap} 元/年",
-            "field": "学费",
+            "field": tuition_field,
             "operator": "<=",
             "value": tuition_cap,
         }
@@ -1040,7 +1115,10 @@ def _apply_soft_confirmations(
             simulated["major_expansion"] = {
                 "selected_option": "expand",
                 "label": "扩展到相关专业",
-                "expanded_terms": ["软件工程", "人工智能", "网络空间安全"],
+                "expanded_terms": domain_config.workbench.get(
+                    "major_expansion_terms",
+                    [],
+                ),
                 "reason": "当前 MVP 只展示确认，不新增专业扩展执行规则。",
             }
         else:
@@ -1064,6 +1142,7 @@ def _apply_soft_confirmations(
 def _build_confirmation_candidates(
     user_request: str,
     attribute_grounding: dict[str, Any],
+    domain_config: DomainConfig,
 ) -> list[dict[str, Any]]:
     candidates = []
     seen: set[tuple[str, str, str]] = set()
@@ -1074,7 +1153,7 @@ def _build_confirmation_candidates(
         source_text = _display_record_source_text(record)
         field = record.get("source_column")
         field_id = record.get("field_id")
-        mapping = _reviewed_candidate_mapping(record)
+        mapping = _reviewed_candidate_mapping(record, domain_config)
         if match_type == "partial_match" and not mapping:
             continue
         executable = bool(match_type == "partial_match" and mapping)
@@ -1302,30 +1381,23 @@ def _confirmation_match_type(record: dict[str, Any]) -> str | None:
     return None
 
 
-def _reviewed_candidate_mapping(record: dict[str, Any]) -> dict[str, Any] | None:
+def _reviewed_candidate_mapping(
+    record: dict[str, Any],
+    domain_config: DomainConfig,
+) -> dict[str, Any] | None:
     field_id = record.get("field_id")
     source_text = _display_record_source_text(record)
-    if field_id == "city" and source_text == "珠三角":
-        return {
-            "operator": "in_contains",
-            "value": PEARL_RIVER_DELTA_CITIES,
-            "label": "按珠三角城市集合筛选",
-            "reason": "珠三角是区域集合，必须通过 candidate_id 确认后才执行城市过滤。",
-        }
-    if field_id == "major_name" and source_text == "计科":
-        return {
-            "operator": "contains_any",
-            "value": ["计算机"],
-            "label": "按计算机专业关键词筛选",
-            "reason": "计科是缩写，必须通过 candidate_id 确认后才执行专业过滤。",
-        }
-    if field_id == "major_name" and source_text in {"计算机相关", "相关专业"}:
-        return {
-            "operator": "contains_any",
-            "value": COMPUTER_RELATED_CONFIRMATION_TERMS,
-            "label": "按计算机相关专业集合筛选",
-            "reason": "相关专业是语义扩展，必须通过 candidate_id 确认后才执行专业过滤。",
-        }
+    for mapping in domain_config.workbench.get("reviewed_candidate_mappings") or []:
+        source_texts = set(mapping.get("source_texts") or [])
+        if mapping.get("source_text"):
+            source_texts.add(str(mapping["source_text"]))
+        if mapping.get("field_id") == field_id and source_text in source_texts:
+            return {
+                "operator": mapping.get("operator"),
+                "value": mapping.get("value"),
+                "label": mapping.get("label"),
+                "reason": mapping.get("reason"),
+            }
     return None
 
 
@@ -1419,7 +1491,9 @@ def _append_unmapped_preferences(
 def _append_grounding_non_executable_preferences(
     classified_rules: dict[str, Any],
     attribute_grounding: dict[str, Any],
+    domain_config: DomainConfig | None = None,
 ) -> dict[str, Any]:
+    domain_config = domain_config or DomainConfig.load()
     updated = dict(classified_rules)
     existing = {
         item.get("source_text")
@@ -1430,15 +1504,14 @@ def _append_grounding_non_executable_preferences(
         for item in updated.get("non_executable_preferences", [])
     }
     has_cooperation_warning = any(
-        "中外合作" in str(item.get("source_text"))
-        or item.get("field_id") == "cooperation_type"
+        _matches_not_executed_override(item, domain_config)
         for item in updated.get("non_executable_preferences", [])
     )
     preferences = list(updated.get("non_executable_preferences", []))
     for record in attribute_grounding.get("attributes", []):
         if record.get("status") not in {"missing_schema", "unmapped_attribute"}:
             continue
-        if record.get("field_id") == "cooperation_type" and has_cooperation_warning:
+        if _matches_not_executed_override(record, domain_config) and has_cooperation_warning:
             continue
         value = record.get("value")
         source_text = (
@@ -1463,6 +1536,14 @@ def _append_grounding_non_executable_preferences(
         existing_field_ids.add(record.get("field_id"))
     updated["non_executable_preferences"] = preferences
     return updated
+
+
+def _matches_not_executed_override(
+    item: dict[str, Any],
+    domain_config: DomainConfig,
+) -> bool:
+    source_text = str(item.get("source_text") or item.get("value") or "")
+    return bool(_not_executed_override(item, source_text, domain_config))
 
 
 def _apply_value_index_hard_filter_guard(
@@ -1544,6 +1625,7 @@ def _merge_verified_proposed_rules(
         merge_block_reason = _proposed_rule_merge_block_reason(
             proposed=proposed,
             existing_rules=merged,
+            domain_config=DomainConfig.load(),
         )
         if merge_block_reason:
             proposed["execution_merge_status"] = "not_merged"
@@ -1559,6 +1641,7 @@ def _merge_verified_proposed_rules(
 def _proposed_rule_merge_block_reason(
     proposed: dict[str, Any],
     existing_rules: list[dict[str, Any]],
+    domain_config: DomainConfig,
 ) -> str | None:
     """Decide whether a verified LLM proposal may enter execution.
 
@@ -1576,7 +1659,7 @@ def _proposed_rule_merge_block_reason(
         return "该提议不是明确用户事实，不能越过候选确认流程进入执行层。"
 
     field = proposed.get("field")
-    if field == "专业组最低位次1":
+    if domain_config.is_rank_field(field):
         return "排位安全边界只能由用户排位和已确认边界生成，LLM 提议仅保留审查记录。"
 
     existing_fields = {rule.get("field") for rule in existing_rules}
@@ -1721,64 +1804,41 @@ def _optional_int(value: Any) -> int | None:
     return parsed if parsed > 0 else None
 
 
-def _extracted_preferences(slots: dict[str, Any]) -> list[dict[str, Any]]:
-    context = slots.get("user_context", {})
-    preferences = slots.get("preferences", {})
-    items = [
-        ("pref_origin", "生源地", context.get("source_province"), "已对齐字段"),
-        ("pref_track", "科类", context.get("subject_type"), "已对齐字段"),
-        (
-            "pref_reselected_subjects",
-            "再选科目",
-            context.get("reselected_subjects"),
-            "已对齐字段",
-        ),
-        ("pref_rank", "排位", context.get("user_rank"), "已对齐字段"),
-        (
-            "pref_major",
-            "专业名称",
-            preferences.get("major_exact_terms") or preferences.get("major_keyword"),
-            "已对齐字段",
-        ),
-        ("pref_city", "城市", preferences.get("preferred_cities"), "已对齐字段"),
-        (
-            "pref_school_province",
-            "院校所在地省份",
-            preferences.get("preferred_school_provinces"),
-            "已对齐字段",
-        ),
-        (
-            "pref_recommendation",
-            "推荐请求",
-            preferences.get("recommendation_request_raw"),
-            "待确认",
-        ),
-        ("pref_stable", "稳一点", preferences.get("risk_preference_raw"), "待确认"),
-        ("pref_expensive", "太贵", preferences.get("tuition_preference_raw"), "待确认"),
-        (
-            "pref_cooperation",
-            "中外合作",
-            preferences.get("cooperation_preference_raw"),
-            "不可执行",
-        ),
-        (
-            "pref_overseas",
-            "境外就读",
-            preferences.get("overseas_preference_raw"),
-            "不可执行",
-        ),
-    ]
-    return [
-        {
-            "id": item_id,
-            "slot": slot,
-            "value": value,
-            "source_span": _source_span(slot, value),
-            "status": status,
-        }
-        for item_id, slot, value, status in items
-        if value not in (None, "", [])
-    ]
+def _extracted_preferences(
+    slots: dict[str, Any],
+    domain_config: DomainConfig,
+) -> list[dict[str, Any]]:
+    items = []
+    for spec in domain_config.workbench.get("extracted_preferences") or []:
+        value = None
+        for path in spec.get("paths") or [spec.get("path")]:
+            if not path:
+                continue
+            value = _value_at_path(slots, str(path))
+            if value not in (None, "", []):
+                break
+        if value in (None, "", []):
+            continue
+        slot = spec.get("slot")
+        items.append(
+            {
+                "id": spec.get("id"),
+                "slot": slot,
+                "value": value,
+                "source_span": _source_span(str(slot), value),
+                "status": spec.get("status"),
+            }
+        )
+    return items
+
+
+def _value_at_path(payload: dict[str, Any], dotted_path: str) -> Any:
+    value: Any = payload
+    for key in dotted_path.split("."):
+        if not isinstance(value, dict):
+            return None
+        value = value.get(key)
+    return value
 
 
 def _source_span(slot: str, value: Any) -> str:
@@ -1789,13 +1849,16 @@ def _source_span(slot: str, value: Any) -> str:
     return str(value)
 
 
-def _display_attribute_grounding(grounding: dict[str, Any]) -> dict[str, Any]:
+def _display_attribute_grounding(
+    grounding: dict[str, Any],
+    domain_config: DomainConfig,
+) -> dict[str, Any]:
     return {
         "summary": grounding.get("summary", {}),
         "attributes": [
             {
                 "slot_path": record.get("slot_path"),
-                "slot": _slot_path_label(record.get("slot_path")),
+                "slot": _slot_path_label(record.get("slot_path"), domain_config),
                 "value": record.get("value"),
                 "field": record.get("source_column") or "无可执行字段",
                 "status": _grounding_status_label(record.get("status")),
@@ -1974,7 +2037,10 @@ def _simulated_label(classified_rules: dict[str, Any], rule: dict[str, Any]) -> 
     return ""
 
 
-def _not_executed_preferences(classified_rules: dict[str, Any]) -> list[dict[str, Any]]:
+def _not_executed_preferences(
+    classified_rules: dict[str, Any],
+    domain_config: DomainConfig,
+) -> list[dict[str, Any]]:
     preferences = []
     for index, item in enumerate(
         classified_rules.get("non_executable_preferences", []),
@@ -1982,27 +2048,40 @@ def _not_executed_preferences(classified_rules: dict[str, Any]) -> list[dict[str
     ):
         source_text = item.get("source_text", "该偏好")
         reason = _sanitize_user_text(item.get("reason") or "缺少可验证数据字段。")
-        is_cooperation = (
-            item.get("field_id") == "cooperation_type"
-            or "中外合作" in str(source_text)
-        )
+        override = _not_executed_override(item, source_text, domain_config)
         preferences.append(
             {
                 "id": f"not_exec_{index}",
                 "preference": source_text,
                 "display": (
-                    NOT_EXECUTED_COOPERATION_TEXT
-                    if is_cooperation
+                    override["display"]
+                    if override
                     else f"{source_text}未执行：{reason}"
                 ),
-                "reason": NOT_EXECUTED_COOPERATION_REASON if is_cooperation else reason,
+                "reason": override["reason"] if override else reason,
                 "missing_field": (
-                    "合作办学类型字段" if is_cooperation else "缺少已审查数据字段"
+                    override["missing_field"]
+                    if override
+                    else "缺少已审查数据字段"
                 ),
                 "source_span": source_text,
             }
         )
     return preferences
+
+
+def _not_executed_override(
+    item: dict[str, Any],
+    source_text: Any,
+    domain_config: DomainConfig,
+) -> dict[str, Any] | None:
+    for override in domain_config.workbench.get("not_executed_overrides") or []:
+        if override.get("field_id") and item.get("field_id") == override.get("field_id"):
+            return override
+        contains = override.get("source_text_contains") or []
+        if any(term in str(source_text) for term in contains):
+            return override
+    return None
 
 
 def _simulated_confirmations(classified_rules: dict[str, Any]) -> dict[str, Any]:
@@ -2037,7 +2116,11 @@ def _executable_rule(rule: dict[str, Any]) -> dict[str, Any]:
     }
 
 
-def _top_result(rank: int, row: dict[str, Any]) -> dict[str, Any]:
+def _top_result(
+    rank: int,
+    row: dict[str, Any],
+    domain_config: DomainConfig,
+) -> dict[str, Any]:
     trace = [
         {
             "status": "pass" if item.get("status") == "pass" else "not_executed",
@@ -2045,29 +2128,35 @@ def _top_result(rank: int, row: dict[str, Any]) -> dict[str, Any]:
         }
         for item in row.get("trace", [])
     ]
-    return {
+    result = {
         "id": f"result_{rank:03d}",
-        "year": row.get("年份"),
-        "batch": row.get("批次"),
-        "university_code": row.get("院校代码"),
-        "university_name": row.get("院校名称"),
-        "group_code": row.get("院校专业组代码"),
-        "group_name": row.get("专业组名称"),
-        "major_code": row.get("专业代码"),
-        "major_name": row.get("专业名称"),
-        "full_major_name": row.get("专业全称"),
-        "subject_requirement": row.get("选科要求"),
-        "province": row.get("所在省"),
-        "city": row.get("城市"),
-        "tuition": row.get("学费"),
-        "rank_2024": row.get("专业组最低位次1"),
-        "major_rank_2024": row.get("最低位次1"),
-        "plan_count": row.get("计划人数") or row.get("专业组计划人数"),
-        "group_min_rank": row.get("专业组最低位次1"),
-        "major_min_rank": row.get("最低位次1"),
-        "safety_margin": _percent(row.get("safety_margin_pct")),
         "trace": trace,
     }
+    for item in domain_config.payload.get("top_result_mapping") or []:
+        key = item["key"]
+        if item.get("computed") == "percent:safety_margin_pct":
+            result[key] = _percent(row.get("safety_margin_pct"))
+        elif item.get("field_id"):
+            result[key] = row.get(domain_config.source_column(item["field_id"]))
+        else:
+            result[key] = _first_row_value(
+                row,
+                domain_config,
+                item.get("field_ids") or [],
+            )
+    return result
+
+
+def _first_row_value(
+    row: dict[str, Any],
+    domain_config: DomainConfig,
+    field_ids: list[str],
+) -> Any:
+    for field_id in field_ids:
+        source_column = domain_config.source_column_or_none(field_id)
+        if source_column and row.get(source_column) not in (None, ""):
+            return row.get(source_column)
+    return None
 
 
 def _trace_text(item: dict[str, Any]) -> str:
@@ -2081,10 +2170,14 @@ def _trace_text(item: dict[str, Any]) -> str:
     )
 
 
-def _report_from_answer(answer: str, evidence: dict[str, Any]) -> dict[str, Any]:
+def _report_from_answer(
+    answer: str,
+    evidence: dict[str, Any],
+    domain_config: DomainConfig,
+) -> dict[str, Any]:
     safe_answer = _sanitize_user_text(answer)
     result_count = evidence["result_count"]
-    warnings = _report_warnings(evidence)
+    warnings = _report_warnings(evidence, domain_config)
     return {
         "title": "规则验证结果（非最终志愿建议）",
         "summary": (
@@ -2097,13 +2190,20 @@ def _report_from_answer(answer: str, evidence: dict[str, Any]) -> dict[str, Any]
             rule["description"] for rule in evidence["executed_rules"]
         ],
         "attribute_explanations": evidence.get("attribute_explanations", []),
-        "top_results": [_result_text(row) for row in evidence["top_k_results"][:3]],
+        "top_results": [
+            _result_text(row, domain_config)
+            for row in evidence["top_k_results"][:3]
+        ],
         "warnings": warnings,
         "disclaimer": "以上内容是规则验证结果和证据汇总，不是最终志愿建议。",
     }
 
 
-def _rule_label(rule: dict[str, Any]) -> str:
+def _rule_label(
+    rule: dict[str, Any],
+    domain_config: DomainConfig | None = None,
+) -> str:
+    domain_config = domain_config or DomainConfig.load()
     operator = rule.get("operator")
     field = rule.get("field") or "未映射字段"
     value = _format_value(rule.get("value"))
@@ -2122,15 +2222,15 @@ def _rule_label(rule: dict[str, Any]) -> str:
     if operator == "satisfies_subject_requirement":
         return f"{field} 满足已选再选科目：{value}"
     if operator == "<=":
-        if field == "专业组最低位次1":
+        if domain_config.is_rank_field(field):
             return f"{field} 在 {value} 名以内（数值 <= {value}）"
         return f"{field} 不高于 {value}"
     if operator == ">=":
-        if field == "专业组最低位次1":
+        if domain_config.is_rank_field(field):
             return f"{field} 在 {value} 名及以后（数值 >= {value}）"
         return f"{field} 不低于 {value}"
     if operator == "between":
-        if field == "专业组最低位次1":
+        if domain_config.is_rank_field(field):
             return f"{field} 位于 {_format_rank_window(rule.get('value'))}的窗口内"
         return f"{field} 位于 {value} 之间"
     if operator == "sort":
@@ -2138,26 +2238,8 @@ def _rule_label(rule: dict[str, Any]) -> str:
     return f"{field} {operator} {value}"
 
 
-def _slot_path_label(slot_path: Any) -> str:
-    labels = {
-        "user_context.source_province": "生源地",
-        "user_context.subject_type": "科类",
-        "user_context.reselected_subjects": "再选科目",
-        "user_context.user_rank": "排位",
-        "preferences.major_keyword": "专业关键词",
-        "preferences.major_exact_terms": "专业精确词",
-        "preferences.preferred_cities": "城市偏好",
-        "preferences.preferred_school_provinces": "院校所在地省份偏好",
-        "preferences.risk_preference_raw": "风险偏好",
-        "preferences.tuition_preference_raw": "费用偏好",
-        "preferences.tuition_cap_yuan": "明确费用上限",
-        "preferences.major_expansion_raw": "专业扩展偏好",
-        "preferences.cooperation_preference_raw": "中外合作偏好",
-        "preferences.overseas_preference_raw": "境外就读偏好",
-        "preferences.school_ownership_preference_raw": "办学性质偏好",
-        "preferences.recommendation_request_raw": "推荐请求",
-        "preferences.other_vague_preferences[]": "其他模糊偏好",
-    }
+def _slot_path_label(slot_path: Any, domain_config: DomainConfig) -> str:
+    labels = domain_config.workbench.get("slot_labels") or {}
     return labels.get(str(slot_path), str(slot_path))
 
 
@@ -2334,28 +2416,43 @@ def _percent(value: Any) -> str:
     return f"{float(value):.1%}"
 
 
-def _result_text(row: dict[str, Any]) -> str:
-    parts = [
-        f"{row.get('院校名称')}（专业组 {row.get('院校专业组代码')}）",
-        f"专业代码 {row.get('专业代码')}",
-        f"专业名称 {row.get('专业名称')}",
-    ]
-    if row.get("专业全称"):
-        parts.append(f"专业全称 {row.get('专业全称')}")
-    if row.get("选科要求") not in (None, ""):
-        parts.append(f"选科要求 {row.get('选科要求')}")
-    parts.extend(
-        [
-            f"城市 {row.get('城市')}",
-            f"学费 {row.get('学费')}",
-            f"专业组最低位次 {row.get('专业组最低位次')}",
-        ]
-    )
-    if row.get("专业最低位次") not in (None, ""):
-        parts.append(f"专业最低位次 {row.get('专业最低位次')}")
-    if row.get("safety_margin"):
-        parts.append(f"相对排位差 {row.get('safety_margin')}")
+def _result_text(row: dict[str, Any], domain_config: DomainConfig) -> str:
+    parts = []
+    for spec in domain_config.answer_templates.get("result_text_fields") or []:
+        value = _answer_row_value(row, spec, domain_config)
+        if spec.get("optional") and value in (None, ""):
+            continue
+        if spec.get("format") == "heading_with_group_code":
+            group_code = row.get(domain_config.source_column("group_code"))
+            parts.append(f"{value}（专业组 {group_code}）")
+            continue
+        label = spec.get("label")
+        if label:
+            parts.append(f"{label} {value}")
     return "；".join(parts)
+
+
+def _answer_row_value(
+    row: dict[str, Any],
+    spec: dict[str, Any],
+    domain_config: DomainConfig,
+) -> Any:
+    if spec.get("key"):
+        return row.get(spec["key"])
+    field_id = spec.get("field_id")
+    if not field_id:
+        return None
+    return row.get(domain_config.source_column(field_id))
+
+
+def _present(value: Any) -> bool:
+    if value is None:
+        return False
+    if isinstance(value, str) and not value.strip():
+        return False
+    if isinstance(value, list) and not value:
+        return False
+    return True
 
 
 def _confirmation_percent(label: Any) -> int | None:
@@ -2448,17 +2545,24 @@ def _sanitize_user_text(text: str) -> str:
     return output
 
 
-def _report_warnings(evidence: dict[str, Any]) -> list[str]:
+def _report_warnings(
+    evidence: dict[str, Any],
+    domain_config: DomainConfig,
+) -> list[str]:
     warnings = [
-        preference.get("safety_warning") or NOT_EXECUTED_COOPERATION_TEXT
+        preference.get("safety_warning") or "存在未执行偏好。"
         for preference in evidence.get("not_executed_preferences", [])
     ]
+    rank_field = domain_config.source_column_or_none(
+        str(domain_config.execution.get("rank_field_id") or "")
+    )
     has_safety_rule = any(
-        rule.get("field") == "专业组最低位次1"
+        rank_field
+        and rule.get("field") == rank_field
         and rule.get("operator") in {">=", "between"}
         for rule in evidence.get("executed_rules", [])
     )
-    if not has_safety_rule:
+    if rank_field and not has_safety_rule:
         warnings.append(
             "本次没有确认位次窗口规则，结果只表示字段筛选通过，不代表风险已判断。"
         )
@@ -2468,15 +2572,12 @@ def _report_warnings(evidence: dict[str, Any]) -> list[str]:
 def _with_context_warnings(
     report: dict[str, Any],
     slots: dict[str, Any],
+    domain_config: DomainConfig,
 ) -> dict[str, Any]:
-    user_context = slots.get("user_context", {})
     warnings = list(report.get("warnings", []))
-    if not user_context.get("subject_type"):
-        warnings.append("缺少科类（物理/历史），结果未按科类过滤，请补充后再判断。")
-    if not user_context.get("reselected_subjects"):
-        warnings.append("缺少再选科目（化学/生物/政治/地理四选二），结果未按专业选科要求过滤。")
-    if not user_context.get("user_rank"):
-        warnings.append("缺少省排名/位次，不能判断风险边界。")
+    for item in domain_config.workbench.get("context_warnings") or []:
+        if not _present(_value_at_path(slots, item.get("path") or "")):
+            warnings.append(item.get("message"))
     report = dict(report)
     report["warnings"] = warnings
     return report

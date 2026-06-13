@@ -7,6 +7,7 @@ from pathlib import Path
 import pandas as pd
 
 from src.extractors.regex_extractor import RegexExtractor
+from src.domains import DomainConfig
 from src.api.workbench import (
     WorkbenchConfig,
     _apply_soft_confirmations,
@@ -25,20 +26,25 @@ from src.tracing.trace_generator import TraceGenerator
 
 
 ROOT = Path(__file__).resolve().parents[1]
-SCHEMA_PATH = ROOT / "schemas/schema_registry.json"
-TAXONOMY_PATH = ROOT / "rules/rule_taxonomy.json"
+ADMISSIONS_DOMAIN = DomainConfig.load("admissions")
+SCHEMA_PATH = ADMISSIONS_DOMAIN.schema_path
+TAXONOMY_PATH = ADMISSIONS_DOMAIN.rule_taxonomy_path
 VAGUE_TERMS_PATH = ROOT / "rules/vague_terms.json"
 INFORMATION_REQUIREMENTS_PATH = ROOT / "rules/information_requirements.json"
 DEMO_INPUT = "我是广东物理类，排位32000，想学计算机，最好在广州深圳，学校稳一点，不想去太贵的中外合作。"
-AVAILABLE_COLUMNS = ["生源地", "科类", "选科要求", "专业名称", "城市", "专业组最低位次1", "学费"]
+AVAILABLE_COLUMNS = ADMISSIONS_DOMAIN.required_columns
 
 
 class RuleVerifierTest(unittest.TestCase):
     def setUp(self) -> None:
         self.registry = SchemaRegistry.from_file(SCHEMA_PATH, AVAILABLE_COLUMNS)
-        self.verifier = RuleVerifier(self.registry)
+        self.verifier = RuleVerifier(self.registry, domain_config=ADMISSIONS_DOMAIN)
         self.slots = RegexExtractor().extract(DEMO_INPUT)
-        self.classified = RuleClassifier(TAXONOMY_PATH, self.verifier).classify(self.slots)
+        self.classified = RuleClassifier(
+            TAXONOMY_PATH,
+            self.verifier,
+            domain_config=ADMISSIONS_DOMAIN,
+        ).classify(self.slots)
 
     def test_deterministic_rules_are_executable_when_schema_grounded(self) -> None:
         rules = {rule["rule_id"]: rule for rule in self.classified["deterministic_rules"]}

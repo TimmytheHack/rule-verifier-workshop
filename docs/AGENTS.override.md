@@ -16,7 +16,7 @@ system appear more capable than it is.
   advisor, and this project evaluates rule safety rather than final application
   quality.
 - Do not document unsupported preferences as executable unless the matching
-  field has been promoted into `schemas/schema_registry.json` and tested.
+  field has been promoted into `domains/admissions/schema_registry.json` and tested.
 - When implementation behavior changes, update all related tracked text in the
   same quest: README sections, methodology/evaluation reports, project-plan
   notes, generated summaries, and frontend mock/demo copy when those texts

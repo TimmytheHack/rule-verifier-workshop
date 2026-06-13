@@ -7,6 +7,7 @@ import json
 from pathlib import Path
 from typing import Any
 
+from src.domains import DomainConfig
 from src.rules.rule_verifier import RuleVerifier
 
 
@@ -22,14 +23,21 @@ def _slot_value(slots: dict[str, Any], path: list[str]) -> Any:
 class RuleClassifier:
     """Builds rule classes from extracted slots and taxonomy config."""
 
-    def __init__(self, taxonomy_path: str | Path, verifier: RuleVerifier) -> None:
+    def __init__(
+        self,
+        taxonomy_path: str | Path,
+        verifier: RuleVerifier,
+        domain_config: DomainConfig | None = None,
+    ) -> None:
         self.taxonomy = json.loads(Path(taxonomy_path).read_text(encoding="utf-8"))
         self.verifier = verifier
+        self.domain_config = domain_config or verifier.domain_config
 
     def classify(self, slots: dict[str, Any]) -> dict[str, Any]:
         deterministic_rules = []
         for template in self.taxonomy["deterministic_rules"]:
             rule = copy.deepcopy(template)
+            rule = self.domain_config.canonicalize_rule_field(rule)
             rule["value"] = _slot_value(slots, rule.pop("slot_path"))
             if rule.pop("skip_if_missing", False) and not _value_present(rule["value"]):
                 continue
@@ -38,12 +46,14 @@ class RuleClassifier:
         context_rules = []
         for template in self.taxonomy["context_rules"]:
             rule = copy.deepcopy(template)
+            rule = self.domain_config.canonicalize_rule_field(rule)
             rule["value"] = _slot_value(slots, rule.pop("slot_path"))
             context_rules.append(self.verifier.attach_verification(rule))
 
         candidate_rules = []
         for template in self.taxonomy["candidate_rules"]:
             rule = copy.deepcopy(template)
+            rule = self.domain_config.canonicalize_rule_field(rule)
             slot_path = rule.pop("slot_path", None)
             if slot_path:
                 rule["value"] = _slot_value(slots, slot_path)

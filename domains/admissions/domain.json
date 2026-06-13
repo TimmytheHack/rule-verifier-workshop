@@ -1,0 +1,185 @@
+{
+  "domain_id": "admissions",
+  "display_name": "广东招生志愿",
+  "data": {
+    "workbook_path": "广东省2025年志愿填报大数据（24-25）0523.xlsx",
+    "table_name": "admissions",
+    "warehouse_database_path": "outputs/data/guangdong_admissions.duckdb",
+    "value_index_path": "outputs/data/schema_value_index.json",
+    "required_field_ids": [
+      "source_province",
+      "subject_type",
+      "subject_requirement",
+      "major_name",
+      "city",
+      "group_min_rank_2024",
+      "tuition_yuan_per_year"
+    ]
+  },
+  "paths": {
+    "schema": "schema_registry.json",
+    "attribute_grounding": "attribute_grounding.json",
+    "rule_taxonomy": "rule_taxonomy.json",
+    "value_aliases": "value_aliases.json",
+    "answer_templates": "answer_templates.json",
+    "golden_cases": "golden_cases.json"
+  },
+  "subject_policy": {
+    "subjects": ["化学", "生物", "政治", "地理"],
+    "normalization": {
+      "思想政治": "政治",
+      "生物学": "生物"
+    },
+    "no_requirement_values": ["", "nan", "无", "不限"],
+    "or_markers": ["或", "/"]
+  },
+  "execution": {
+    "rank_field_id": "group_min_rank_2024",
+    "tuition_field_id": "tuition_yuan_per_year",
+    "projectable_required_field_ids": [
+      "group_min_rank_2024",
+      "tuition_yuan_per_year"
+    ],
+    "numeric_helper_fields": [
+      {"name": "__group_rank_num", "field_id": "group_min_rank_2024"},
+      {"name": "__tuition_num", "field_id": "tuition_yuan_per_year"},
+      {"name": "__school_rank_num", "field_id": "school_rank", "optional": true},
+      {"name": "__id_num", "field_id": "row_id", "optional": true}
+    ],
+    "sort_policy": [
+      {"helper": "__group_rank_num", "label_field_id": "group_min_rank_2024", "direction": "ASC", "nulls": "LAST"},
+      {"helper": "__school_rank_num", "label_field_id": "school_rank", "direction": "ASC", "nulls": "LAST", "optional": true},
+      {"helper": "__id_num", "label_field_id": "row_id", "direction": "ASC", "nulls": "LAST", "optional": true}
+    ],
+    "row_number_output_key": "excel_row_number",
+    "row_number_offset": 3,
+    "ranking": {
+      "source_field_id": "group_min_rank_2024",
+      "user_context_key": "user_rank",
+      "ranking_key": "ranking_key",
+      "safety_margin_pct": "safety_margin_pct"
+    },
+    "output_fields": [
+      {"output_key": "ID", "field_id": "row_id", "transform": "clean"},
+      {"output_key": "年份", "field_id": "year", "transform": "clean"},
+      {"output_key": "批次", "field_id": "batch", "transform": "clean"},
+      {"output_key": "院校代码", "field_id": "university_code", "transform": "clean"},
+      {"output_key": "院校名称", "field_id": "university_name", "transform": "clean"},
+      {"output_key": "院校专业组代码", "field_id": "group_code", "transform": "clean"},
+      {"output_key": "专业组名称", "field_id": "group_name", "transform": "clean"},
+      {"output_key": "科类", "field_id": "subject_type", "transform": "clean"},
+      {"output_key": "选科要求", "field_id": "subject_requirement", "transform": "clean"},
+      {"output_key": "专业代码", "field_id": "major_code", "transform": "clean"},
+      {"output_key": "专业名称", "field_id": "major_name", "transform": "text"},
+      {"output_key": "专业全称", "field_id": "full_major_name", "transform": "clean"},
+      {"output_key": "所在省", "field_id": "school_province", "transform": "clean"},
+      {"output_key": "城市", "field_id": "city", "transform": "text"},
+      {"output_key": "学费", "field_id": "tuition_yuan_per_year", "transform": "number", "helper": "__tuition_num"},
+      {"output_key": "专业组最低位次1", "field_id": "group_min_rank_2024", "transform": "int", "helper": "__group_rank_num"},
+      {"output_key": "最低位次1", "field_id": "major_min_rank_2024", "transform": "clean"},
+      {"output_key": "院校标签", "field_id": "school_tags", "transform": "clean"},
+      {"output_key": "院校排名", "field_id": "school_rank", "transform": "clean"}
+    ],
+    "static_output_fields": {
+      "cooperation_filter_status": "not_executed_missing_cooperation_type_field",
+      "中外合作筛选状态": "未执行：缺少合作办学类型字段"
+    }
+  },
+  "top_result_mapping": [
+    {"key": "year", "field_id": "year"},
+    {"key": "batch", "field_id": "batch"},
+    {"key": "university_code", "field_id": "university_code"},
+    {"key": "university_name", "field_id": "university_name"},
+    {"key": "group_code", "field_id": "group_code"},
+    {"key": "group_name", "field_id": "group_name"},
+    {"key": "major_code", "field_id": "major_code"},
+    {"key": "major_name", "field_id": "major_name"},
+    {"key": "full_major_name", "field_id": "full_major_name"},
+    {"key": "subject_requirement", "field_id": "subject_requirement"},
+    {"key": "province", "field_id": "school_province"},
+    {"key": "city", "field_id": "city"},
+    {"key": "tuition", "field_id": "tuition_yuan_per_year"},
+    {"key": "rank_2024", "field_id": "group_min_rank_2024"},
+    {"key": "major_rank_2024", "field_id": "major_min_rank_2024"},
+    {"key": "plan_count", "field_ids": ["plan_count", "group_plan_count"]},
+    {"key": "group_min_rank", "field_id": "group_min_rank_2024"},
+    {"key": "major_min_rank", "field_id": "major_min_rank_2024"},
+    {"key": "safety_margin", "computed": "percent:safety_margin_pct"}
+  ],
+  "workbench": {
+    "slot_labels": {
+      "user_context.source_province": "生源地",
+      "user_context.subject_type": "科类",
+      "user_context.reselected_subjects": "再选科目",
+      "user_context.user_rank": "排位",
+      "preferences.major_keyword": "专业关键词",
+      "preferences.major_exact_terms": "专业精确词",
+      "preferences.preferred_cities": "城市偏好",
+      "preferences.preferred_school_provinces": "院校所在地省份偏好",
+      "preferences.risk_preference_raw": "风险偏好",
+      "preferences.tuition_preference_raw": "费用偏好",
+      "preferences.tuition_cap_yuan": "明确费用上限",
+      "preferences.major_expansion_raw": "专业扩展偏好",
+      "preferences.cooperation_preference_raw": "中外合作偏好",
+      "preferences.overseas_preference_raw": "境外就读偏好",
+      "preferences.school_ownership_preference_raw": "办学性质偏好",
+      "preferences.recommendation_request_raw": "推荐请求",
+      "preferences.other_vague_preferences[]": "其他模糊偏好"
+    },
+    "extracted_preferences": [
+      {"id": "pref_origin", "slot": "生源地", "path": "user_context.source_province", "status": "已对齐字段"},
+      {"id": "pref_track", "slot": "科类", "path": "user_context.subject_type", "status": "已对齐字段"},
+      {"id": "pref_reselected_subjects", "slot": "再选科目", "path": "user_context.reselected_subjects", "status": "已对齐字段"},
+      {"id": "pref_rank", "slot": "排位", "path": "user_context.user_rank", "status": "已对齐字段"},
+      {"id": "pref_major", "slot": "专业名称", "paths": ["preferences.major_exact_terms", "preferences.major_keyword"], "status": "已对齐字段"},
+      {"id": "pref_city", "slot": "城市", "path": "preferences.preferred_cities", "status": "已对齐字段"},
+      {"id": "pref_school_province", "slot": "院校所在地省份", "path": "preferences.preferred_school_provinces", "status": "已对齐字段"},
+      {"id": "pref_recommendation", "slot": "推荐请求", "path": "preferences.recommendation_request_raw", "status": "待确认"},
+      {"id": "pref_stable", "slot": "稳一点", "path": "preferences.risk_preference_raw", "status": "待确认"},
+      {"id": "pref_expensive", "slot": "太贵", "path": "preferences.tuition_preference_raw", "status": "待确认"},
+      {"id": "pref_cooperation", "slot": "中外合作", "path": "preferences.cooperation_preference_raw", "status": "不可执行"},
+      {"id": "pref_overseas", "slot": "境外就读", "path": "preferences.overseas_preference_raw", "status": "不可执行"}
+    ],
+    "reviewed_candidate_mappings": [
+      {
+        "field_id": "city",
+        "source_text": "珠三角",
+        "operator": "in_contains",
+        "value": ["广州", "深圳", "佛山", "东莞", "珠海", "惠州", "中山", "江门", "肇庆"],
+        "label": "按珠三角城市集合筛选",
+        "reason": "珠三角是区域集合，必须通过 candidate_id 确认后才执行城市过滤。"
+      },
+      {
+        "field_id": "major_name",
+        "source_text": "计科",
+        "operator": "contains_any",
+        "value": ["计算机"],
+        "label": "按计算机专业关键词筛选",
+        "reason": "计科是缩写，必须通过 candidate_id 确认后才执行专业过滤。"
+      },
+      {
+        "field_id": "major_name",
+        "source_texts": ["计算机相关", "相关专业"],
+        "operator": "contains_any",
+        "value": ["计算机", "软件工程", "人工智能", "数据科学", "网络空间安全"],
+        "label": "按计算机相关专业集合筛选",
+        "reason": "相关专业是语义扩展，必须通过 candidate_id 确认后才执行专业过滤。"
+      }
+    ],
+    "major_expansion_terms": ["软件工程", "人工智能", "网络空间安全"],
+    "not_executed_overrides": [
+      {
+        "field_id": "cooperation_type",
+        "source_text_contains": ["中外合作"],
+        "display": "中外合作未执行：缺少合作办学类型字段",
+        "reason": "当前数据字段定义没有合作办学类型字段，不能验证或执行“排除中外合作”。",
+        "missing_field": "合作办学类型字段"
+      }
+    ],
+    "context_warnings": [
+      {"path": "user_context.subject_type", "message": "缺少科类（物理/历史），结果未按科类过滤，请补充后再判断。"},
+      {"path": "user_context.reselected_subjects", "message": "缺少再选科目（化学/生物/政治/地理四选二），结果未按专业选科要求过滤。"},
+      {"path": "user_context.user_rank", "message": "缺少省排名/位次，不能判断风险边界。"}
+    ]
+  }
+}

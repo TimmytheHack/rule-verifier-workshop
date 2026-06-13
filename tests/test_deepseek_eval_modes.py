@@ -10,6 +10,7 @@ from unittest.mock import patch
 
 from scripts.eval_modes import run_eval
 from src.baselines.llm_only_baseline import SchemaAwareLLMOnlyBaseline
+from src.domains import DomainConfig
 from src.extractors.deepseek_extractor import (
     DeepSeekClient,
     DeepSeekExtractor,
@@ -22,9 +23,10 @@ from src.rules.rule_verifier import RuleVerifier
 from src.schema.schema_registry import SchemaRegistry
 
 
-SCHEMA_PATH = "schemas/schema_registry.json"
-TAXONOMY_PATH = "rules/rule_taxonomy.json"
-AVAILABLE_COLUMNS = ["生源地", "科类", "专业名称", "城市", "专业组最低位次1", "学费"]
+ADMISSIONS_DOMAIN = DomainConfig.load("admissions")
+SCHEMA_PATH = ADMISSIONS_DOMAIN.schema_path
+TAXONOMY_PATH = ADMISSIONS_DOMAIN.rule_taxonomy_path
+AVAILABLE_COLUMNS = ADMISSIONS_DOMAIN.required_columns
 
 
 class FakeDeepSeekClient:
@@ -131,8 +133,12 @@ class DeepSeekEvalModesTest(unittest.TestCase):
         self.assertEqual(slots["unmapped_preferences"][0]["source_text"], "中外合作")
 
         registry = SchemaRegistry.from_file(SCHEMA_PATH, AVAILABLE_COLUMNS)
-        verifier = RuleVerifier(registry)
-        classified = RuleClassifier(TAXONOMY_PATH, verifier).classify(slots)
+        verifier = RuleVerifier(registry, domain_config=ADMISSIONS_DOMAIN)
+        classified = RuleClassifier(
+            TAXONOMY_PATH,
+            verifier,
+            domain_config=ADMISSIONS_DOMAIN,
+        ).classify(slots)
         audited = verifier.audit_proposed_rules(slots["proposed_rules"])
 
         self.assertTrue(all(rule["verification"]["executable"] for rule in classified["deterministic_rules"]))

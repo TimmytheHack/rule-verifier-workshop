@@ -12,13 +12,15 @@ from src.adapters.data_warehouse import (
     build_structured_store,
     load_structured_dataset,
 )
+from src.domains import DomainConfig
 from src.schema.attribute_grounder import AttributeGrounder
 from src.schema.schema_registry import SchemaRegistry
 
 
 ROOT = Path(__file__).resolve().parents[1]
-SCHEMA_PATH = ROOT / "schemas/schema_registry.json"
-REQUIRED_COLUMNS = ["生源地", "科类", "专业名称", "城市", "专业组最低位次1", "学费"]
+ADMISSIONS_DOMAIN = DomainConfig.load("admissions")
+SCHEMA_PATH = ADMISSIONS_DOMAIN.schema_path
+REQUIRED_COLUMNS = ADMISSIONS_DOMAIN.required_columns
 
 
 class DataWarehouseTest(unittest.TestCase):
@@ -33,6 +35,7 @@ class DataWarehouseTest(unittest.TestCase):
                     {
                         "生源地": "广东",
                         "科类": "物理",
+                        "选科要求": "不限",
                         "专业名称": "计算机科学与技术",
                         "城市": "广州",
                         "专业组最低位次1": 32000,
@@ -41,6 +44,7 @@ class DataWarehouseTest(unittest.TestCase):
                     {
                         "生源地": "广东",
                         "科类": "物理",
+                        "选科要求": "不限",
                         "专业名称": "软件工程",
                         "城市": "深圳",
                         "专业组最低位次1": 35000,
@@ -64,6 +68,7 @@ class DataWarehouseTest(unittest.TestCase):
             grounding = AttributeGrounder(
                 registry,
                 value_index=value_index,
+                domain_config=ADMISSIONS_DOMAIN,
             ).ground(
                 {
                     "user_context": {},
@@ -78,12 +83,12 @@ class DataWarehouseTest(unittest.TestCase):
             missing_city_audit = value_index.audit_value("city", "珠海")
 
         self.assertEqual(result.row_count, 2)
-        self.assertEqual(result.column_count, 6)
+        self.assertEqual(result.column_count, 7)
         summary = result.to_dict()
         self.assertEqual(summary["source_path"], str(workbook_path))
         self.assertEqual(summary["fingerprint"], result.source_fingerprint)
         self.assertEqual(summary["row_count"], 2)
-        self.assertEqual(summary["column_count"], 6)
+        self.assertEqual(summary["column_count"], 7)
         self.assertIn("major_name", summary["field_profiles"])
         self.assertIsInstance(summary["created_at"], str)
         self.assertEqual(len(loaded.dataframe), 2)

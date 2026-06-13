@@ -19,6 +19,7 @@ if str(ROOT_DIR) not in sys.path:
 
 from scripts.eval_modes import append_usage
 from src.baselines.llm_only_baseline import LLMOnlyBaseline, SchemaAwareLLMOnlyBaseline
+from src.domains import DomainConfig
 from src.evaluation.scoring import (
     finalize_aggregate,
     score_extractor_case,
@@ -41,8 +42,9 @@ INPUT_PATH = Path("eval_inputs.jsonl")
 OUTPUT_DIR = Path("outputs/eval")
 OUTPUT_PATH = OUTPUT_DIR / "fuzzy_eval_results.json"
 CACHE_PATH = OUTPUT_DIR / "deepseek_fuzzy_cache.json"
-SCHEMA_PATH = Path("schemas/schema_registry.json")
-AVAILABLE_COLUMNS = ["生源地", "科类", "专业名称", "城市", "专业组最低位次1", "学费"]
+ADMISSIONS_DOMAIN = DomainConfig.load("admissions")
+SCHEMA_PATH = ADMISSIONS_DOMAIN.schema_path
+AVAILABLE_COLUMNS = ADMISSIONS_DOMAIN.required_columns
 METHOD_ALIASES = {
     "all": {"regex", "deepseek", "llm_only", "schema_aware"},
     "baselines": {"llm_only", "schema_aware"},
@@ -174,7 +176,10 @@ def evaluate(
     }
     schema_fields = SchemaRegistry.from_file(SCHEMA_PATH, AVAILABLE_COLUMNS).configured_fields
     schema_registry = SchemaRegistry.from_file(SCHEMA_PATH, AVAILABLE_COLUMNS)
-    attribute_grounder = AttributeGrounder(schema_registry)
+    attribute_grounder = AttributeGrounder(
+        schema_registry,
+        domain_config=ADMISSIONS_DOMAIN,
+    )
 
     for index, case in enumerate(cases, start=1):
         if progress:

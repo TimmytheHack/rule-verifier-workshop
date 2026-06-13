@@ -4,11 +4,15 @@ from __future__ import annotations
 
 from typing import Any
 
+from src.domains import DomainConfig
 from src.reporting.evidence_pack import EvidencePack, evidence_to_dict
 
 
 class TemplateReportBuilder:
     """Builds a natural-language answer without calling an LLM."""
+
+    def __init__(self, domain_config: DomainConfig | None = None) -> None:
+        self.domain_config = domain_config or DomainConfig.load()
 
     def build(self, evidence_pack: EvidencePack | dict[str, Any]) -> str:
         evidence = evidence_to_dict(evidence_pack)
@@ -28,7 +32,7 @@ class TemplateReportBuilder:
         if evidence.get("proposed_rule_audit"):
             lines.extend(["", "规则提议审查："])
             lines.extend(
-                _proposed_rule_line(rule)
+                _proposed_rule_line(rule, self.domain_config)
                 for rule in evidence["proposed_rule_audit"]
             )
 
@@ -85,7 +89,10 @@ class TemplateReportBuilder:
             lines.append("- 无。")
 
         lines.extend(["", f"前 {len(evidence['top_k_results'])} 条结果："])
-        lines.extend(_result_line(row) for row in evidence["top_k_results"])
+        lines.extend(
+            _result_line(row, self.domain_config)
+            for row in evidence["top_k_results"]
+        )
 
         safety_warnings = evidence.get("trace_summary", {}).get("safety_warnings", [])
         if safety_warnings:
@@ -165,13 +172,16 @@ def _extracted_preference_line(preference: dict[str, Any]) -> str:
     )
 
 
-def _proposed_rule_line(rule: dict[str, Any]) -> str:
+def _proposed_rule_line(
+    rule: dict[str, Any],
+    domain_config: DomainConfig,
+) -> str:
     value = rule.get("value")
     if isinstance(value, list):
         value = "、".join(str(item) for item in value)
     return (
         f"- {rule.get('rule_id')}："
-        f"{_rule_text(rule.get('field'), rule.get('operator'), value)}；"
+        f"{_rule_text(rule.get('field'), rule.get('operator'), value, domain_config)}；"
         f"审查状态：{_status_text(rule.get('terminal_status'))}"
     )
 
@@ -199,22 +209,20 @@ def _not_executed_line(preference: dict[str, Any]) -> str:
     return f"- {source_text}：未执行，未参与筛选。原因：{reason}"
 
 
-def _result_line(row: dict[str, Any]) -> str:
-    parts = [
-        f"{row['rank']}. {row.get('院校名称')}",
-        f"专业组代码：{row.get('院校专业组代码')}",
-        f"专业代码：{row.get('专业代码')}",
-        f"专业名称：{row.get('专业名称')}",
-        f"专业全称：{row.get('专业全称')}",
-        f"选科要求：{row.get('选科要求')}",
-        f"城市：{row.get('城市')}",
-        f"学费：{_money(row.get('学费'))}",
-        f"专业组最低位次：{row.get('专业组最低位次')}",
-    ]
-    if row.get("专业最低位次") not in (None, ""):
-        parts.append(f"专业最低位次：{row.get('专业最低位次')}")
-    if row.get("safety_margin"):
-        parts.append(f"相对排位差：{row['safety_margin']}")
+def _result_line(row: dict[str, Any], domain_config: DomainConfig) -> str:
+    parts = []
+    for spec in domain_config.answer_templates.get("result_line_fields") or []:
+        key = spec.get("evidence_key") or spec.get("label") or spec.get("key")
+        value = row.get(str(key))
+        if spec.get("optional") and value in (None, ""):
+            continue
+        if spec.get("rank_prefix"):
+            parts.append(f"{row['rank']}. {value}")
+            continue
+        label = spec.get("label") or key
+        if spec.get("format") == "money":
+            value = _money(value)
+        parts.append(f"{label}：{value}")
     return "- " + "；".join(parts) + "。"
 
 
@@ -243,12 +251,18 @@ def _operator_text(operator: Any) -> str:
     return labels.get(str(operator), str(operator))
 
 
-def _rule_text(field: Any, operator: Any, value: Any) -> str:
-    if field == "专业组最低位次1" and operator == ">=":
+def _rule_text(
+    field: Any,
+    operator: Any,
+    value: Any,
+    domain_config: DomainConfig | None = None,
+) -> str:
+    domain_config = domain_config or DomainConfig.load()
+    if domain_config.is_rank_field(field) and operator == ">=":
         return f"{field} 在 {value} 名及以后（数值 >= {value}）"
-    if field == "专业组最低位次1" and operator == "<=":
+    if domain_config.is_rank_field(field) and operator == "<=":
         return f"{field} 在 {value} 名以内（数值 <= {value}）"
-    if field == "专业组最低位次1" and operator == "between":
+    if domain_config.is_rank_field(field) and operator == "between":
         return f"{field} 位于 {_format_rank_window(value)}的窗口内"
     return f"{field} {_operator_text(operator)} {value}"
 

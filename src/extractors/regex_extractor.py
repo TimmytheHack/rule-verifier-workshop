@@ -14,10 +14,9 @@ from typing import Any
 
 import cn2an
 
+from src.domains import DomainConfig
 
-DEFAULT_ALIAS_PATH = (
-    Path(__file__).resolve().parents[2] / "rules" / "extraction_aliases.json"
-)
+DEFAULT_ALIAS_PATH = DomainConfig.load("admissions").value_aliases_path
 NUMBER_TEXT_PATTERN = (
     r"\d+(?:\.\d+)?\s*(?:万|w|W)?|[零〇一二两三四五六七八九十百千万点]+"
 )

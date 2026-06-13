@@ -1,0 +1,73 @@
+{
+  "domain_id": "housing",
+  "display_name": "租房筛选",
+  "data": {
+    "workbook_path": "fixtures/housing.csv",
+    "fixture_path": "fixtures/housing.csv",
+    "table_name": "housing",
+    "warehouse_database_path": "outputs/data/housing.duckdb",
+    "value_index_path": "outputs/data/housing_schema_value_index.json",
+    "required_field_ids": ["listing_id", "city", "bedrooms", "rent_usd", "property_type"]
+  },
+  "paths": {
+    "schema": "schema_registry.json",
+    "attribute_grounding": "attribute_grounding.json",
+    "rule_taxonomy": "rule_taxonomy.json",
+    "value_aliases": "value_aliases.json",
+    "answer_templates": "answer_templates.json",
+    "golden_cases": "golden_cases.json"
+  },
+  "execution": {
+    "rank_field_id": null,
+    "tuition_field_id": "rent_usd",
+    "projectable_required_field_ids": ["rent_usd"],
+    "numeric_helper_fields": [
+      {"name": "__rent_num", "field_id": "rent_usd"},
+      {"name": "__rating_num", "field_id": "rating", "optional": true},
+      {"name": "__listing_id_num", "field_id": "listing_id", "optional": true}
+    ],
+    "sort_policy": [
+      {"helper": "__rent_num", "label_field_id": "rent_usd", "direction": "ASC", "nulls": "LAST"},
+      {"helper": "__rating_num", "label_field_id": "rating", "direction": "DESC", "nulls": "LAST", "optional": true},
+      {"helper": "__listing_id_num", "label_field_id": "listing_id", "direction": "ASC", "nulls": "LAST", "optional": true}
+    ],
+    "row_number_output_key": "source_row_number",
+    "row_number_offset": 1,
+    "output_fields": [
+      {"output_key": "listing_id", "field_id": "listing_id", "transform": "clean"},
+      {"output_key": "city", "field_id": "city", "transform": "text"},
+      {"output_key": "bedrooms", "field_id": "bedrooms", "transform": "int"},
+      {"output_key": "rent_usd", "field_id": "rent_usd", "transform": "number", "helper": "__rent_num"},
+      {"output_key": "property_type", "field_id": "property_type", "transform": "text"},
+      {"output_key": "pet_policy", "field_id": "pet_policy", "transform": "text"},
+      {"output_key": "rating", "field_id": "rating", "transform": "number", "helper": "__rating_num"}
+    ],
+    "static_output_fields": {}
+  },
+  "top_result_mapping": [
+    {"key": "listing_id", "field_id": "listing_id"},
+    {"key": "city", "field_id": "city"},
+    {"key": "bedrooms", "field_id": "bedrooms"},
+    {"key": "rent_usd", "field_id": "rent_usd"},
+    {"key": "property_type", "field_id": "property_type"},
+    {"key": "pet_policy", "field_id": "pet_policy"},
+    {"key": "rating", "field_id": "rating"}
+  ],
+  "workbench": {
+    "slot_labels": {
+      "preferences.city": "城市",
+      "preferences.bedrooms_min": "最少卧室数",
+      "preferences.rent_cap": "租金上限",
+      "preferences.property_types": "房源类型"
+    },
+    "extracted_preferences": [
+      {"id": "pref_city", "slot": "城市", "path": "preferences.city", "status": "已对齐字段"},
+      {"id": "pref_bedrooms", "slot": "最少卧室数", "path": "preferences.bedrooms_min", "status": "已对齐字段"},
+      {"id": "pref_rent", "slot": "租金上限", "path": "preferences.rent_cap", "status": "已对齐字段"},
+      {"id": "pref_property_type", "slot": "房源类型", "path": "preferences.property_types", "status": "已对齐字段"}
+    ],
+    "reviewed_candidate_mappings": [],
+    "not_executed_overrides": [],
+    "context_warnings": []
+  }
+}

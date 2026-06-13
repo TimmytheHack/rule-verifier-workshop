@@ -9,6 +9,8 @@ from __future__ import annotations
 from dataclasses import asdict, dataclass, field
 from typing import Any
 
+from src.domains import DomainConfig
+
 
 @dataclass(frozen=True)
 class EvidencePack:
@@ -46,16 +48,22 @@ class EvidencePack:
         proposed_rules: list[dict[str, Any]] | None = None,
         execution_summary: dict[str, Any] | None = None,
         confirmation_state: dict[str, Any] | None = None,
+        domain_config: DomainConfig | None = None,
     ) -> "EvidencePack":
         """Build an answer-safe evidence pack from post-execution artifacts."""
 
-        compact_rules = [_compact_rule(rule) for rule in executed_rules]
+        domain_config = domain_config or DomainConfig.load()
+        compact_rules = [_compact_rule(rule, domain_config) for rule in executed_rules]
         execution = execution_summary or {}
         confirmation = confirmation_state or classified_rules.get("confirmation_state") or {}
-        confirmations = _candidate_confirmations(classified_rules, execution)
+        confirmations = _candidate_confirmations(
+            classified_rules,
+            execution,
+            domain_config,
+        )
         not_executed = _not_executed_preferences(classified_rules)
         top_results = [
-            _compact_result(rank, row)
+            _compact_result(rank, row, domain_config)
             for rank, row in enumerate(traced_results[:top_k], start=1)
         ]
         trace_summary = _trace_summary(
@@ -83,7 +91,7 @@ class EvidencePack:
             execution_summary=execution,
             attribute_explanations=explanations,
             confirmed_rules=[
-                _compact_rule(rule)
+                _compact_rule(rule, domain_config)
                 for rule in confirmation.get("confirmed_rules", [])
             ],
             confirmation_source=confirmation.get("confirmation_source", []),
@@ -111,7 +119,11 @@ def evidence_to_dict(evidence_pack: EvidencePack | dict[str, Any]) -> dict[str, 
     return dict(evidence_pack)
 
 
-def _compact_rule(rule: dict[str, Any]) -> dict[str, Any]:
+def _compact_rule(
+    rule: dict[str, Any],
+    domain_config: DomainConfig | None = None,
+) -> dict[str, Any]:
+    domain_config = domain_config or DomainConfig.load()
     compact = {
         "rule_id": rule.get("rule_id"),
         "derived_from": rule.get("derived_from"),
@@ -122,7 +134,7 @@ def _compact_rule(rule: dict[str, Any]) -> dict[str, Any]:
     for optional_key in ["confirmation", "confirmation_source", "normalization"]:
         if optional_key in rule:
             compact[optional_key] = rule[optional_key]
-    compact["description"] = _rule_description(compact)
+    compact["description"] = _rule_description(compact, domain_config)
     return compact
 
 
@@ -284,6 +296,7 @@ def _stable_value(value: Any) -> str:
 def _candidate_confirmations(
     classified_rules: dict[str, Any],
     execution_summary: dict[str, Any],
+    domain_config: DomainConfig,
 ) -> list[dict[str, Any]]:
     candidate_by_id = {
         rule["rule_id"]: rule for rule in classified_rules.get("candidate_rules", [])
@@ -330,7 +343,7 @@ def _candidate_confirmations(
             record["field"] = confirmation["field"]
             record["operator"] = confirmation.get("operator")
             record["value"] = confirmation.get("value")
-            record["description"] = _rule_description(record)
+            record["description"] = _rule_description(record, domain_config)
         if confirmation.get("expanded_terms") is not None:
             record["expanded_terms"] = confirmation["expanded_terms"]
         if confirmation.get("reason"):
@@ -462,22 +475,25 @@ def _user_facing_reason(reason: Any) -> str | None:
     return text
 
 
-def _compact_result(rank: int, row: dict[str, Any]) -> dict[str, Any]:
-    return {
-        "rank": rank,
-        "院校名称": row.get("院校名称"),
-        "院校专业组代码": row.get("院校专业组代码"),
-        "专业代码": row.get("专业代码"),
-        "专业名称": row.get("专业名称"),
-        "专业全称": row.get("专业全称"),
-        "选科要求": row.get("选科要求"),
-        "城市": row.get("城市"),
-        "学费": row.get("学费"),
-        "专业组最低位次": row.get("专业组最低位次1"),
-        "专业最低位次": row.get("最低位次1"),
-        "safety_margin": _format_percent(row.get("safety_margin_pct")),
-        "trace": row.get("trace", []),
-    }
+def _compact_result(
+    rank: int,
+    row: dict[str, Any],
+    domain_config: DomainConfig,
+) -> dict[str, Any]:
+    compact = {"rank": rank}
+    for spec in domain_config.answer_templates.get("result_line_fields") or []:
+        key = spec.get("evidence_key") or spec.get("label") or spec.get("key")
+        if spec.get("key"):
+            value = row.get(spec["key"])
+        else:
+            value = row.get(domain_config.source_column(spec["field_id"]))
+        if spec.get("optional") and value in (None, ""):
+            continue
+        compact[str(key)] = value
+    if "safety_margin" not in compact:
+        compact["safety_margin"] = _format_percent(row.get("safety_margin_pct"))
+    compact["trace"] = row.get("trace", [])
+    return compact
 
 
 def _trace_summary(
@@ -515,7 +531,11 @@ def _trace_summary(
     }
 
 
-def _rule_description(rule: dict[str, Any]) -> str:
+def _rule_description(
+    rule: dict[str, Any],
+    domain_config: DomainConfig | None = None,
+) -> str:
+    domain_config = domain_config or DomainConfig.load()
     field = rule.get("field")
     operator = rule.get("operator")
     value = rule.get("value")
@@ -534,21 +554,21 @@ def _rule_description(rule: dict[str, Any]) -> str:
     if operator == "satisfies_subject_requirement":
         return f"{field} 满足已选再选科目：{_format_value(value)}"
     if operator == ">=":
-        if field == "专业组最低位次1":
+        if domain_config.is_rank_field(field):
             return (
                 f"{field} 在 {_format_value(value)} 名及以后"
                 f"（数值 >= {_format_value(value)}）"
             )
         return f"{field} 不低于 {_format_value(value)}"
     if operator == "<=":
-        if field == "专业组最低位次1":
+        if domain_config.is_rank_field(field):
             return (
                 f"{field} 在 {_format_value(value)} 名以内"
                 f"（数值 <= {_format_value(value)}）"
             )
         return f"{field} 不高于 {_format_value(value)}"
     if operator == "between":
-        if field == "专业组最低位次1":
+        if domain_config.is_rank_field(field):
             return f"{field} 位于 {_format_rank_window(value)}的窗口内"
         return f"{field} 位于 {_format_value(value)} 之间"
     return f"{field} {operator} {_format_value(value)}"

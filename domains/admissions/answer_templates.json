@@ -1,0 +1,29 @@
+{
+  "rank_field_id": "group_min_rank_2024",
+  "money_field_ids": ["tuition_yuan_per_year"],
+  "result_line_fields": [
+    {"field_id": "university_name", "label": "院校名称", "evidence_key": "院校名称", "rank_prefix": true},
+    {"field_id": "group_code", "label": "专业组代码", "evidence_key": "院校专业组代码"},
+    {"field_id": "major_code", "label": "专业代码", "evidence_key": "专业代码"},
+    {"field_id": "major_name", "label": "专业名称", "evidence_key": "专业名称"},
+    {"field_id": "full_major_name", "label": "专业全称", "evidence_key": "专业全称"},
+    {"field_id": "subject_requirement", "label": "选科要求", "evidence_key": "选科要求"},
+    {"field_id": "city", "label": "城市", "evidence_key": "城市"},
+    {"field_id": "tuition_yuan_per_year", "label": "学费", "evidence_key": "学费", "format": "money"},
+    {"field_id": "group_min_rank_2024", "label": "专业组最低位次", "evidence_key": "专业组最低位次"},
+    {"field_id": "major_min_rank_2024", "label": "专业最低位次", "evidence_key": "专业最低位次", "optional": true},
+    {"key": "safety_margin", "label": "相对排位差", "optional": true}
+  ],
+  "result_text_fields": [
+    {"field_id": "university_name", "format": "heading_with_group_code"},
+    {"field_id": "major_code", "label": "专业代码"},
+    {"field_id": "major_name", "label": "专业名称"},
+    {"field_id": "full_major_name", "label": "专业全称", "optional": true},
+    {"field_id": "subject_requirement", "label": "选科要求", "optional": true},
+    {"field_id": "city", "label": "城市"},
+    {"field_id": "tuition_yuan_per_year", "label": "学费"},
+    {"field_id": "group_min_rank_2024", "label": "专业组最低位次"},
+    {"field_id": "major_min_rank_2024", "label": "专业最低位次", "optional": true},
+    {"key": "safety_margin", "label": "相对排位差", "optional": true}
+  ]
+}

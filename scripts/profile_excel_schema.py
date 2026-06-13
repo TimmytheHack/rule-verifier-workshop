@@ -11,11 +11,13 @@ if str(ROOT_DIR) not in sys.path:
     sys.path.insert(0, str(ROOT_DIR))
 
 from src.adapters.excel_adapter import ExcelAdapter
+from src.domains import DomainConfig
 from src.schema.schema_profiler import SchemaProfiler, build_markdown_report
 
 
-WORKBOOK_NAME = "广东省2025年志愿填报大数据（24-25）0523.xlsx"
-REQUIRED_COLUMNS = ["生源地", "科类", "专业名称", "城市", "专业组最低位次1", "学费"]
+ADMISSIONS_DOMAIN = DomainConfig.load("admissions")
+WORKBOOK_NAME = ADMISSIONS_DOMAIN.workbook_path
+REQUIRED_COLUMNS = ADMISSIONS_DOMAIN.required_columns
 JSON_OUTPUT = Path("schemas/excel_schema_profile.json")
 MD_OUTPUT = Path("docs/excel_schema_profile.md")
 

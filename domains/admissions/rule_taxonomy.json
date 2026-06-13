@@ -1,0 +1,327 @@
+{
+  "deterministic_rules": [
+    {
+      "rule_id": "d_source_province",
+      "source_text": "广东",
+      "category": "deterministic",
+      "field_id": "source_province",
+      "field": "生源地",
+      "operator": "eq",
+      "slot_path": ["user_context", "source_province"],
+      "skip_if_missing": true,
+      "confidence": 1.0,
+      "requires_human_confirmation": false,
+      "trace_reason": "用户明确给出生源地为广东，且数据字段“生源地”存在。"
+    },
+    {
+      "rule_id": "d_subject_type",
+      "source_text": "物理类",
+      "category": "deterministic",
+      "field_id": "subject_type",
+      "field": "科类",
+      "operator": "eq",
+      "slot_path": ["user_context", "subject_type"],
+      "skip_if_missing": true,
+      "confidence": 1.0,
+      "requires_human_confirmation": false,
+      "trace_reason": "用户明确给出科类为物理，且数据字段“科类”存在。"
+    },
+    {
+      "rule_id": "d_subject_requirement",
+      "source_text": "再选科目",
+      "category": "deterministic",
+      "field_id": "subject_requirement",
+      "field": "选科要求",
+      "operator": "satisfies_subject_requirement",
+      "slot_path": ["user_context", "reselected_subjects"],
+      "skip_if_missing": true,
+      "confidence": 1.0,
+      "requires_human_confirmation": false,
+      "trace_reason": "用户选择的再选科目必须满足数据字段“选科要求”。"
+    },
+    {
+      "rule_id": "d_major_keyword",
+      "source_text": "想学计算机",
+      "category": "deterministic",
+      "field_id": "major_name",
+      "field": "专业名称",
+      "operator": "contains_any",
+      "slot_path": ["preferences", "major_exact_terms"],
+      "skip_if_missing": true,
+      "confidence": 1.0,
+      "requires_human_confirmation": false,
+      "trace_reason": "明确专业关键词列表允许作为确定性 OR 匹配规则。"
+    },
+    {
+      "rule_id": "d_school_province",
+      "source_text": "留在广东省",
+      "category": "deterministic",
+      "field_id": "school_province",
+      "field": "所在省",
+      "operator": "in",
+      "slot_path": ["preferences", "preferred_school_provinces"],
+      "skip_if_missing": true,
+      "confidence": 1.0,
+      "requires_human_confirmation": false,
+      "trace_reason": "用户明确要求院校所在地留在广东省，且数据字段“所在省”存在。"
+    },
+    {
+      "rule_id": "d_city",
+      "source_text": "最好在广州深圳",
+      "category": "deterministic",
+      "field_id": "city",
+      "field": "城市",
+      "operator": "in_contains",
+      "slot_path": ["preferences", "preferred_cities"],
+      "skip_if_missing": true,
+      "confidence": 1.0,
+      "requires_human_confirmation": false,
+      "trace_reason": "数据字段“城市”存在，可用于匹配用户明确给出的城市。"
+    },
+    {
+      "rule_id": "d_tuition_cap_explicit",
+      "source_text": "明确学费上限",
+      "category": "deterministic",
+      "field_id": "tuition_yuan_per_year",
+      "field": "学费",
+      "operator": "<=",
+      "slot_path": ["preferences", "tuition_cap_yuan"],
+      "skip_if_missing": true,
+      "confidence": 1.0,
+      "requires_human_confirmation": false,
+      "trace_reason": "明确数字费用上限在“学费”字段存在且数值规范化后可以执行。"
+    }
+  ],
+  "context_rules": [
+    {
+      "rule_id": "ctx_user_rank",
+      "source_text": "排位32000",
+      "category": "context",
+      "field_id": "user_rank",
+      "field": "用户排位",
+      "operator": "set_context",
+      "slot_path": ["user_context", "user_rank"],
+      "confidence": 1.0,
+      "requires_human_confirmation": false,
+      "trace_reason": "用户排位只作为候选规则计算上下文，不直接作为筛表字段。"
+    }
+  ],
+  "candidate_rules": [
+    {
+      "rule_id": "c_recommendation_rank_floor",
+      "source_text": "请给出推荐",
+      "category": "candidate",
+      "status": "pending_confirmation",
+      "field_id": "group_min_rank_2024",
+      "field": "专业组最低位次1",
+      "operator": ">=",
+      "slot_path": ["preferences", "recommendation_request_raw"],
+      "skip_if_missing": true,
+      "confidence": 0.8,
+      "requires_human_confirmation": true,
+      "trace_reason": "推荐请求会使用用户位次生成基本可达边界，需确认后才执行。"
+    },
+    {
+      "rule_id": "c_safety_margin",
+      "source_text": "学校稳一点",
+      "category": "candidate",
+      "status": "pending_confirmation",
+      "field_id": "group_min_rank_2024",
+      "field": "专业组最低位次1",
+      "operator": "between",
+      "slot_path": ["preferences", "risk_preference_raw"],
+      "skip_if_missing": true,
+      "value_expression_options": [
+        "32000 * 0.95 到 32000 * 1.05",
+        "32000 * 0.90 到 32000 * 1.10",
+        "32000 * 0.85 到 32000 * 1.15"
+      ],
+      "confidence": 0.8,
+      "requires_human_confirmation": true,
+      "trace_reason": "“稳一点”是模糊风险偏好，必须确认位次窗口后才能执行。"
+    },
+    {
+      "rule_id": "c_tuition_cap",
+      "source_text": "太贵",
+      "category": "candidate",
+      "status": "pending_confirmation",
+      "field_id": "tuition_yuan_per_year",
+      "field": "学费",
+      "operator": "<=",
+      "slot_path": ["preferences", "tuition_preference_raw"],
+      "skip_if_missing": true,
+      "value_options": [10000, 20000, 40000],
+      "confidence": 0.8,
+      "requires_human_confirmation": true,
+      "trace_reason": "“太贵”是模糊费用偏好，必须确认具体费用上限后才能执行。"
+    },
+    {
+      "rule_id": "c_major_expansion",
+      "source_text": "计算机相关扩展",
+      "category": "candidate",
+      "status": "pending_confirmation",
+      "field_id": "major_name",
+      "field": "专业名称",
+      "operator": "contains_any",
+      "slot_path": ["preferences", "major_expansion_raw"],
+      "skip_if_missing": true,
+      "value_options": ["软件工程", "人工智能", "数据科学", "网络空间安全"],
+      "confidence": 0.7,
+      "requires_human_confirmation": true,
+      "trace_reason": "超出明确专业关键词的语义扩展需要用户确认。"
+    }
+  ],
+  "llm_needed_parts": [
+    {
+      "part_id": "l_cooperation_type",
+      "source_text": "不想去太贵的中外合作",
+      "category": "llm_needed",
+      "status": "not_executable_in_mvp",
+      "field_id": "cooperation_type",
+      "field": "合作办学类型字段",
+      "reason": "当前数据字段定义没有专门的合作办学类型字段。",
+      "allowed_behavior": "当前版本不得从文本字段推断合作办学类型。",
+      "trace_reason": "缺少专门的合作办学类型字段，因此该偏好保留但不执行。"
+    },
+    {
+      "part_id": "l_overseas_scope",
+      "source_text": "不想去国外",
+      "category": "llm_needed",
+      "status": "not_executable_in_mvp",
+      "field_id": "school_country_or_region",
+      "field": "国家或境外办学字段",
+      "reason": "当前数据字段定义没有专门的国家或境外办学字段。",
+      "allowed_behavior": "当前版本不得从院校名称、专业全称或备注推断是否需要去国外。",
+      "trace_reason": "缺少专门的国家或境外办学字段，因此该偏好保留但不执行。"
+    }
+  ],
+  "confirmation_questions": [
+    {
+      "question_id": "q_recommendation_rank_floor",
+      "source_text": "请给出推荐",
+      "options": [
+        {"label": "按我的位次做基本可达筛选", "value": "use_user_rank"},
+        {"label": "暂不使用位次筛选", "value": null}
+      ]
+    },
+    {
+      "question_id": "q_safety_margin",
+      "source_text": "学校稳一点",
+      "options": [
+        {
+          "label": "5% 位次窗口",
+          "value": [30400, 33600],
+          "expression": "32000 * 0.95 到 32000 * 1.05"
+        },
+        {
+          "label": "10% 位次窗口",
+          "value": [28800, 35200],
+          "expression": "32000 * 0.90 到 32000 * 1.10"
+        },
+        {
+          "label": "15% 位次窗口",
+          "value": [27200, 36800],
+          "expression": "32000 * 0.85 到 32000 * 1.15"
+        },
+        {"label": "不使用这个规则", "value": null}
+      ]
+    },
+    {
+      "question_id": "q_tuition_cap",
+      "source_text": "太贵",
+      "options": [
+        {"label": "不高于 10000 元/年", "value": 10000},
+        {"label": "不高于 20000 元/年", "value": 20000},
+        {"label": "不高于 40000 元/年", "value": 40000},
+        {"label": "不使用学费规则", "value": null}
+      ]
+    },
+    {
+      "question_id": "q_major_expansion",
+      "source_text": "想学计算机",
+      "options": [
+        {"label": "不扩展，只匹配“计算机”", "value": []},
+        {"label": "扩展到相关专业", "value": ["软件工程", "人工智能", "数据科学", "网络空间安全"]}
+      ]
+    }
+  ],
+  "simulated_confirmations": {
+    "recommendation_rank_floor": {
+      "selected_option": "use_user_rank",
+      "label": "按用户位次做基本可达筛选",
+      "field": "专业组最低位次1",
+      "operator": ">=",
+      "value": null,
+      "source_expression": "用户排位"
+    },
+    "safety_margin": {
+      "selected_option": "B",
+      "label": "适中稳妥",
+      "field": "专业组最低位次1",
+      "operator": "between",
+      "value": [28800, 35200],
+      "source_expression": "32000 * 0.90 到 32000 * 1.10"
+    },
+    "tuition_threshold": {
+      "selected_option": "B",
+      "label": "不高于 20000 元/年",
+      "field": "学费",
+      "operator": "<=",
+      "value": 20000
+    },
+    "major_expansion": {
+      "selected_option": "A",
+      "label": "不扩展，只匹配“计算机”",
+      "expanded_terms": []
+    },
+    "cooperation_type": {
+      "selected_option": null,
+      "status": "not_executable",
+      "reason": "缺少合作办学类型字段。"
+    }
+  },
+  "confirmed_candidate_rules": [
+    {
+      "rule_id": "e_recommendation_rank_floor",
+      "derived_from": "c_recommendation_rank_floor",
+      "field_id": "group_min_rank_2024",
+      "field": "专业组最低位次1",
+      "operator": ">=",
+      "value": null,
+      "confirmation": "基本可达边界已确认"
+    },
+    {
+      "rule_id": "e_safety_margin",
+      "derived_from": "c_safety_margin",
+      "field_id": "group_min_rank_2024",
+      "field": "专业组最低位次1",
+      "operator": "between",
+      "value": [28800, 35200],
+      "confirmation": "位次窗口已确认"
+    },
+    {
+      "rule_id": "e_tuition_cap",
+      "derived_from": "c_tuition_cap",
+      "field_id": "tuition_yuan_per_year",
+      "field": "学费",
+      "operator": "<=",
+      "value": 20000,
+      "normalization": "从单元格文本解析数字学费",
+      "confirmation": "费用上限已确认"
+    }
+  ],
+  "non_executable_preferences": [
+    {
+      "part_id": "l_cooperation_type",
+      "source_text": "不想去太贵的中外合作",
+      "status": "not_executed",
+      "reason": "缺少合作办学类型字段，当前版本不从文本字段推断。"
+    },
+    {
+      "part_id": "l_overseas_scope",
+      "source_text": "不想去国外",
+      "status": "not_executed",
+      "reason": "缺少国家或境外办学字段，当前版本不从院校名称、专业全称或备注推断。"
+    }
+  ]
+}

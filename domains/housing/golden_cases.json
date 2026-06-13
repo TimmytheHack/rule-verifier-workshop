@@ -1,0 +1,24 @@
+{
+  "cases": [
+    {
+      "case_id": "h01_austin_two_bed_under_1900",
+      "slots": {
+        "preferences": {
+          "city": ["Austin"],
+          "bedrooms_min": 2,
+          "rent_cap": 1900,
+          "property_types": ["apartment", "townhouse"]
+        }
+      },
+      "hard_rule_ids": ["e_city", "e_bedrooms_min", "e_rent_cap", "e_property_type"],
+      "result_count": 3,
+      "top": {
+        "listing_id": 14,
+        "city": "Austin",
+        "bedrooms": 2,
+        "rent_usd": 1650,
+        "property_type": "townhouse"
+      }
+    }
+  ]
+}

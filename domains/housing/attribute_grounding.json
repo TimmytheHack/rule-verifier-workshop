@@ -1,0 +1,28 @@
+{
+  "description": "Housing toy domain attribute grounding policy.",
+  "slot_policies": {
+    "preferences.city": {
+      "field_id": "city",
+      "attribute_class": "deterministic_candidate"
+    },
+    "preferences.bedrooms_min": {
+      "field_id": "bedrooms",
+      "attribute_class": "deterministic_candidate"
+    },
+    "preferences.rent_cap": {
+      "field_id": "rent_usd",
+      "attribute_class": "deterministic_candidate"
+    },
+    "preferences.property_types": {
+      "field_id": "property_type",
+      "attribute_class": "deterministic_candidate"
+    },
+    "preferences.pet_policy_raw": {
+      "field_id": "pet_policy",
+      "attribute_class": "candidate",
+      "requires_human_confirmation": true,
+      "reason": "宠物偏好需要确认具体允许范围。"
+    }
+  },
+  "other_vague_policies": {}
+}

@@ -1,0 +1,14 @@
+{
+  "description": "Toy housing aliases for fixture-only tests.",
+  "city_aliases": {
+    "Austin": ["Austin"],
+    "Dallas": ["Dallas"],
+    "Houston": ["Houston"]
+  },
+  "property_type_aliases": {
+    "apartment": ["apartment", "公寓"],
+    "townhouse": ["townhouse"],
+    "condo": ["condo"],
+    "house": ["house"]
+  }
+}

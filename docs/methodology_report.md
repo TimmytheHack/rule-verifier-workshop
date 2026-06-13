@@ -12,6 +12,17 @@
 
 主要贡献是防止把模糊自然语言偏好不安全地提升为确定性可执行规则。
 
+实现层已把招生场景抽象为 `DomainConfig` + domain pack。默认 domain pack 位于
+`domains/admissions/`，其中配置 schema mapping、字段别名、值别名、rule taxonomy、
+排序策略、answer templates、`top_results` 字段映射和 golden cases。核心 Workbench、
+AttributeGrounder、RuleVerifier 与 DuckDBExecutor 不直接硬编码招生源列名，只读取
+domain pack 中的 canonical fields。`domains/housing/` 提供一个 20 行 CSV 的 toy domain，
+用于验证同一套 grounding -> verification -> DuckDB execution -> EvidencePack -> template
+answer pipeline 可以替换 domain 运行。
+
+这次抽象仍然坚持结构化存储优先：招生主数据使用 DuckDB 和 schema/value index；toy
+domain 使用 CSV fixture。系统没有接入 Qwen、BGE、向量库或全文表格 embedding。
+
 系统不应该直接给出推荐列表，除非它能解释：
 
 - 哪些用户偏好变成了可执行规则；

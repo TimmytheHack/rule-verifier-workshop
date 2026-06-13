@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from typing import Any
 
+from src.domains import DomainConfig
 from src.schema.schema_registry import SchemaRegistry
 
 
@@ -14,14 +15,17 @@ AMBIGUOUS_SEMANTIC_TYPES = {
     "unsupported_structured_preference",
     "inferred_proxy",
 }
-RESELECTED_SUBJECTS = {"化学", "生物", "政治", "地理"}
-
 
 class RuleVerifier:
     """Verifies whether a rule is executable without using an LLM."""
 
-    def __init__(self, schema_registry: SchemaRegistry) -> None:
+    def __init__(
+        self,
+        schema_registry: SchemaRegistry,
+        domain_config: DomainConfig | None = None,
+    ) -> None:
         self.schema_registry = schema_registry
+        self.domain_config = domain_config or DomainConfig.load()
 
     def verify(self, rule: dict[str, Any]) -> dict[str, Any]:
         rule = self._canonical_rule(rule)
@@ -303,9 +307,14 @@ class RuleVerifier:
     def _normalized_subjects(self, value: Any) -> list[str]:
         values = value if isinstance(value, list) else [value]
         normalized = []
+        policy = self.domain_config.subject_policy
+        subjects = policy.get("subjects") or []
+        replacements = policy.get("normalization") or {}
         for item in values:
-            text = str(item).replace("思想政治", "政治").replace("生物学", "生物")
-            for subject in RESELECTED_SUBJECTS:
+            text = str(item)
+            for source, target in replacements.items():
+                text = text.replace(source, target)
+            for subject in subjects:
                 if subject in text and subject not in normalized:
                     normalized.append(subject)
         return normalized[:2]

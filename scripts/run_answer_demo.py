@@ -12,6 +12,7 @@ if str(ROOT_DIR) not in sys.path:
     sys.path.insert(0, str(ROOT_DIR))
 
 from src.adapters.excel_adapter import ExcelAdapter, ExcelDataSet
+from src.domains import DomainConfig
 from src.evaluation.scoring import score_answer_against_evidence
 from src.executors.pandas_executor import PandasExecutor
 from src.extractors.deepseek_extractor import has_deepseek_api_key
@@ -29,23 +30,17 @@ from src.schema.schema_registry import SchemaRegistry
 from src.tracing.trace_generator import TraceGenerator
 
 
-WORKBOOK_NAME = "广东省2025年志愿填报大数据（24-25）0523.xlsx"
+ADMISSIONS_DOMAIN = DomainConfig.load("admissions")
+WORKBOOK_NAME = ADMISSIONS_DOMAIN.workbook_path
 OUTPUT_DIR = Path("outputs/answer_demo")
-SCHEMA_PATH = Path("schemas/schema_registry.json")
-TAXONOMY_PATH = Path("rules/rule_taxonomy.json")
+SCHEMA_PATH = ADMISSIONS_DOMAIN.schema_path
+TAXONOMY_PATH = ADMISSIONS_DOMAIN.rule_taxonomy_path
 
 DEMO_INPUT = (
     "我是广东物理类，排位32000，想学计算机，最好在广州深圳，"
     "学校稳一点，不想去太贵的中外合作。"
 )
-REQUIRED_COLUMNS = [
-    "生源地",
-    "科类",
-    "专业名称",
-    "城市",
-    "专业组最低位次1",
-    "学费",
-]
+REQUIRED_COLUMNS = ADMISSIONS_DOMAIN.required_columns
 
 
 def build_demo_evidence(top_k: int = 5) -> tuple[EvidencePack, SchemaRegistry]:
@@ -58,6 +53,7 @@ def build_demo_evidence(top_k: int = 5) -> tuple[EvidencePack, SchemaRegistry]:
         classified_rules=rules_payload["classified_rules"],
         traced_results=rules_payload["results"],
         top_k=top_k,
+        domain_config=ADMISSIONS_DOMAIN,
     )
     return evidence, registry
 
@@ -141,11 +137,16 @@ def _run_verified_pipeline(
     registry: SchemaRegistry,
 ) -> dict[str, Any]:
     slots = RegexExtractor().extract(DEMO_INPUT)
-    verifier = RuleVerifier(registry)
-    classified_rules = RuleClassifier(TAXONOMY_PATH, verifier).classify(slots)
+    verifier = RuleVerifier(registry, domain_config=ADMISSIONS_DOMAIN)
+    classified_rules = RuleClassifier(
+        TAXONOMY_PATH,
+        verifier,
+        domain_config=ADMISSIONS_DOMAIN,
+    ).classify(slots)
     final_rules = RulePromoter(
         TAXONOMY_PATH,
         simulated_confirmation_enabled=True,
+        domain_config=ADMISSIONS_DOMAIN,
     ).final_executable_rules(classified_rules)
     raw_results = PandasExecutor().execute(
         dataset.dataframe,
@@ -165,7 +166,7 @@ def _run_verified_pipeline(
 
 
 def _template_answer(evidence_dict: dict[str, Any]) -> dict[str, Any]:
-    answer = TemplateReportBuilder().build(evidence_dict)
+    answer = TemplateReportBuilder(domain_config=ADMISSIONS_DOMAIN).build(evidence_dict)
     return {
         "status": "ok",
         "answer_source": "pipeline_template_from_evidence_pack",

@@ -1,0 +1,112 @@
+{
+  "description": "属性级字段接地策略。该文件用于把抽取器输出和可执行字段映射关系从 Python 代码中分离出来。",
+  "slot_policies": {
+    "user_context.source_province": {
+      "field_id": "source_province",
+      "attribute_class": "deterministic_candidate"
+    },
+    "user_context.subject_type": {
+      "field_id": "subject_type",
+      "attribute_class": "deterministic_candidate"
+    },
+    "user_context.reselected_subjects": {
+      "field_id": "subject_requirement",
+      "attribute_class": "deterministic_candidate",
+      "reason": "广东 3+1+2 的再选科目需要和数据字段“选科要求”匹配。"
+    },
+    "user_context.user_rank": {
+      "field_id": null,
+      "attribute_class": "context_only",
+      "status": "context_only",
+      "reason": "用户排位用于计算候选规则边界，不是直接筛表的数据源列。"
+    },
+    "preferences.major_keyword": {
+      "field_id": "major_name",
+      "attribute_class": "deterministic_candidate"
+    },
+    "preferences.major_exact_terms": {
+      "field_id": "major_name",
+      "attribute_class": "deterministic_candidate",
+      "reason": "明确专业词可以作为列表抽取，但仍需经过规则构造和验证后才能执行。"
+    },
+    "preferences.preferred_cities": {
+      "field_id": "city",
+      "attribute_class": "deterministic_candidate"
+    },
+    "preferences.preferred_school_provinces": {
+      "field_id": "school_province",
+      "attribute_class": "deterministic_candidate",
+      "reason": "院校所在地省份偏好可以映射到数据字段“所在省”，仍需经过规则验证。"
+    },
+    "preferences.risk_preference_raw": {
+      "field_id": "group_min_rank_2024",
+      "attribute_class": "candidate",
+      "requires_human_confirmation": true
+    },
+    "preferences.tuition_preference_raw": {
+      "field_id": "tuition_yuan_per_year",
+      "attribute_class": "candidate",
+      "requires_human_confirmation": true
+    },
+    "preferences.tuition_cap_yuan": {
+      "field_id": "tuition_yuan_per_year",
+      "attribute_class": "deterministic_candidate",
+      "reason": "“学费两万以内”等明确数字费用上限，在规则构造和验证通过后可以执行。"
+    },
+    "preferences.major_expansion_raw": {
+      "field_id": "major_name",
+      "attribute_class": "candidate",
+      "requires_human_confirmation": true
+    },
+    "preferences.cooperation_preference_raw": {
+      "field_id": "cooperation_type",
+      "attribute_class": "unsupported_structured_preference"
+    },
+    "preferences.overseas_preference_raw": {
+      "field_id": "school_country_or_region",
+      "attribute_class": "unsupported_structured_preference",
+      "status": "missing_schema",
+      "reason": "当前数据中没有已审查的国家或境外办学字段，不能从院校名称、专业全称或备注推断。"
+    },
+    "preferences.school_ownership_preference_raw": {
+      "field_id": "school_ownership",
+      "attribute_class": "unsupported_structured_preference",
+      "status": "missing_schema",
+      "reason": "字段画像中存在候选办学性质列，但该字段尚未进入当前可执行字段定义。"
+    },
+    "preferences.recommendation_request_raw": {
+      "field_id": "group_min_rank_2024",
+      "attribute_class": "candidate",
+      "requires_human_confirmation": true,
+      "reason": "推荐请求需要结合用户位次生成基本可达边界，确认后才能执行。"
+    }
+  },
+  "other_vague_policies": {
+    "一线城市": {"field_id": "city", "status": "confirmable", "reason": "需要确认具体城市集合。"},
+    "大城市": {"field_id": "city", "status": "confirmable", "reason": "需要确认具体城市集合。"},
+    "发达城市": {"field_id": "city", "status": "confirmable", "reason": "需要确认具体城市集合。"},
+    "珠三角": {"field_id": "city", "status": "confirmable", "reason": "需要确认珠三角城市集合。"},
+    "城市不要太差": {"field_id": "city", "status": "confirmable", "reason": "需要确认城市质量代理字段或具体城市集合。"},
+    "城市不限": {"field_id": "city", "status": "confirmable", "reason": "与其他城市偏好可能冲突，需要确认。"},
+    "公办": {"field_id": "school_ownership", "status": "missing_schema", "reason": "当前数据中没有已审查的办学性质字段。"},
+    "公办本科": {"field_id": "school_ownership", "status": "missing_schema", "reason": "当前数据中没有已审查的办学性质字段。"},
+    "优先公办": {"field_id": "school_ownership", "status": "missing_schema", "reason": "当前数据中没有已审查的办学性质字段。"},
+    "学校好一点": {"field_id": "school_reputation", "status": "missing_schema", "reason": "当前数据中没有已审查的学校声誉字段。"},
+    "学校别太差": {"field_id": "school_reputation", "status": "missing_schema", "reason": "当前数据中没有已审查的学校声誉字段。"},
+    "学校尽量好一点": {"field_id": "school_reputation", "status": "missing_schema", "reason": "当前数据中没有已审查的学校声誉字段。"},
+    "学校名气": {"field_id": "school_reputation", "status": "missing_schema", "reason": "当前数据中没有已审查的学校声誉字段。"},
+    "名气重要": {"field_id": "school_reputation", "status": "missing_schema", "reason": "当前数据中没有已审查的学校声誉字段。"},
+    "口碑好": {"field_id": "school_reputation", "status": "missing_schema", "reason": "当前数据中没有已审查的学校声誉字段。"},
+    "排名靠前": {"field_id": "school_reputation", "status": "missing_schema", "reason": "当前数据中没有已审查的学校排名字段。"},
+    "好学校": {"field_id": "school_reputation", "status": "missing_schema", "reason": "当前数据中没有已审查的学校质量字段。"},
+    "就业前景好": {"field_id": "employment_outlook", "status": "missing_schema", "reason": "当前数据中没有就业结果字段。"},
+    "好就业": {"field_id": "employment_outlook", "status": "missing_schema", "reason": "当前数据中没有就业结果字段。"},
+    "离家近一点": {"field_id": "distance_from_home", "status": "missing_schema", "reason": "当前数据中没有家庭位置或距离字段。"},
+    "离家近": {"field_id": "distance_from_home", "status": "missing_schema", "reason": "当前数据中没有家庭位置或距离字段。"},
+    "偏远": {"field_id": "city_remoteness", "status": "missing_schema", "reason": "当前数据中没有已审查的偏远程度字段。"},
+    "太偏远": {"field_id": "city_remoteness", "status": "missing_schema", "reason": "当前数据中没有已审查的偏远程度字段。"},
+    "专业不要太冷门": {"field_id": "major_popularity", "status": "missing_schema", "reason": "当前数据中没有专业热度字段。"},
+    "冷门": {"field_id": "major_popularity", "status": "missing_schema", "reason": "当前数据中没有专业热度字段。"},
+    "录取概率高": {"field_id": "admission_probability", "status": "missing_schema", "reason": "当前数据中没有录取概率字段。"}
+  }
+}

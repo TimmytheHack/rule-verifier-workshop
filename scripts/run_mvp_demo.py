@@ -21,6 +21,7 @@ if str(ROOT_DIR) not in sys.path:
     sys.path.insert(0, str(ROOT_DIR))
 
 from src.adapters.excel_adapter import ExcelAdapter, ExcelDataSet
+from src.domains import DomainConfig
 from src.executors.pandas_executor import PandasExecutor
 from src.extractors.regex_extractor import RegexExtractor
 from src.rules.rule_classifier import RuleClassifier
@@ -30,22 +31,15 @@ from src.schema.schema_registry import SchemaRegistry
 from src.tracing.trace_generator import TraceGenerator
 
 
-WORKBOOK_NAME = "广东省2025年志愿填报大数据（24-25）0523.xlsx"
+ADMISSIONS_DOMAIN = DomainConfig.load("admissions")
+WORKBOOK_NAME = ADMISSIONS_DOMAIN.workbook_path
 OUTPUT_DIR = Path("outputs/mvp_demo")
-SCHEMA_PATH = Path("schemas/schema_registry.json")
-TAXONOMY_PATH = Path("rules/rule_taxonomy.json")
+SCHEMA_PATH = ADMISSIONS_DOMAIN.schema_path
+TAXONOMY_PATH = ADMISSIONS_DOMAIN.rule_taxonomy_path
 
 DEMO_INPUT = "我是广东物理类，排位32000，想学计算机，最好在广州深圳，学校稳一点，不想去太贵的中外合作。"
 
-REQUIRED_COLUMNS = [
-    "生源地",
-    "科类",
-    "选科要求",
-    "专业名称",
-    "城市",
-    "专业组最低位次1",
-    "学费",
-]
+REQUIRED_COLUMNS = ADMISSIONS_DOMAIN.required_columns
 
 
 def data_coverage(dataset: ExcelDataSet, columns: list[str]) -> dict[str, Any]:
@@ -277,11 +271,16 @@ def main() -> None:
 
     schema_registry = SchemaRegistry.from_file(SCHEMA_PATH, dataset.headers)
     slots = RegexExtractor().extract(DEMO_INPUT)
-    verifier = RuleVerifier(schema_registry)
-    classified_rules = RuleClassifier(TAXONOMY_PATH, verifier).classify(slots)
+    verifier = RuleVerifier(schema_registry, domain_config=ADMISSIONS_DOMAIN)
+    classified_rules = RuleClassifier(
+        TAXONOMY_PATH,
+        verifier,
+        domain_config=ADMISSIONS_DOMAIN,
+    ).classify(slots)
     final_executable_rules = RulePromoter(
         TAXONOMY_PATH,
         simulated_confirmation_enabled=True,
+        domain_config=ADMISSIONS_DOMAIN,
     ).final_executable_rules(classified_rules)
 
     raw_results = PandasExecutor().execute(

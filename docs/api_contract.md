@@ -50,6 +50,8 @@
 
 缺失字段使用 `null`，不要回退到中文 key。`evidence_pack.top_k_results` 可以继续保留中文原始字段，用于证据追溯。
 
+这些 key 的来源列由 `domains/admissions/domain.json` 中的 `top_result_mapping` 配置。前端契约仍保持固定英文 key；后端不得为了语言一致性改名，也不得绕过 domain pack 直接读取招生源列名。
+
 ## 示例：ok
 
 ```json

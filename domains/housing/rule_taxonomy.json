@@ -1,0 +1,79 @@
+{
+  "deterministic_rules": [
+    {
+      "rule_id": "d_city",
+      "source_text": "city",
+      "category": "deterministic",
+      "field_id": "city",
+      "field": "city",
+      "operator": "in",
+      "slot_path": ["preferences", "city"],
+      "skip_if_missing": true,
+      "confidence": 1.0,
+      "requires_human_confirmation": false,
+      "trace_reason": "明确城市可以作为确定性筛选。"
+    },
+    {
+      "rule_id": "d_bedrooms_min",
+      "source_text": "bedrooms",
+      "category": "deterministic",
+      "field_id": "bedrooms",
+      "field": "bedrooms",
+      "operator": ">=",
+      "slot_path": ["preferences", "bedrooms_min"],
+      "skip_if_missing": true,
+      "confidence": 1.0,
+      "requires_human_confirmation": false,
+      "trace_reason": "明确最少卧室数可以作为确定性筛选。"
+    },
+    {
+      "rule_id": "d_rent_cap",
+      "source_text": "rent cap",
+      "category": "deterministic",
+      "field_id": "rent_usd",
+      "field": "rent_usd",
+      "operator": "<=",
+      "slot_path": ["preferences", "rent_cap"],
+      "skip_if_missing": true,
+      "confidence": 1.0,
+      "requires_human_confirmation": false,
+      "trace_reason": "明确租金上限可以作为确定性筛选。"
+    },
+    {
+      "rule_id": "d_property_type",
+      "source_text": "property type",
+      "category": "deterministic",
+      "field_id": "property_type",
+      "field": "property_type",
+      "operator": "in",
+      "slot_path": ["preferences", "property_types"],
+      "skip_if_missing": true,
+      "confidence": 1.0,
+      "requires_human_confirmation": false,
+      "trace_reason": "明确房源类型可以作为确定性筛选。"
+    }
+  ],
+  "context_rules": [],
+  "candidate_rules": [
+    {
+      "rule_id": "c_pet_policy",
+      "source_text": "pets",
+      "category": "candidate",
+      "status": "pending_confirmation",
+      "field_id": "pet_policy",
+      "field": "pet_policy",
+      "operator": "in",
+      "slot_path": ["preferences", "pet_policy_raw"],
+      "skip_if_missing": true,
+      "value_options": [["allowed"], ["allowed", "cats_only"]],
+      "confidence": 0.8,
+      "requires_human_confirmation": true,
+      "trace_reason": "宠物偏好需要确认允许范围。"
+    }
+  ],
+  "llm_needed_parts": [],
+  "confirmation_questions": [],
+  "simulated_confirmations": {},
+  "confirmed_candidate_rules": [],
+  "non_executable_preferences": []
+}

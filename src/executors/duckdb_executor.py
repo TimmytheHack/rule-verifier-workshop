@@ -9,15 +9,11 @@ from typing import Any
 import duckdb
 
 from src.adapters.data_warehouse import DEFAULT_TABLE_NAME
+from src.domains import DomainConfig
 from src.executors.pandas_executor import clean_value, parse_number, cell_text
 
 
 NUMERIC_PATTERN = r"\d+(?:\.\d+)?"
-SORT_KEY = [
-    "专业组最低位次1 ASC NULLS LAST",
-    "院校排名 ASC NULLS LAST",
-    "ID ASC NULLS LAST",
-]
 
 
 @dataclass(frozen=True)
@@ -62,10 +58,12 @@ class DuckDBExecutor:
     def __init__(
         self,
         database_path: str | Path,
-        table_name: str = DEFAULT_TABLE_NAME,
+        table_name: str | None = None,
+        domain_config: DomainConfig | None = None,
     ) -> None:
+        self.domain_config = domain_config or DomainConfig.load()
         self.database_path = Path(database_path)
-        self.table_name = table_name
+        self.table_name = table_name or self.domain_config.table_name or DEFAULT_TABLE_NAME
 
     def execute(
         self,
@@ -80,6 +78,7 @@ class DuckDBExecutor:
                 table_name=self.table_name,
                 columns=columns,
                 hard_rules=hard_rules,
+                domain_config=self.domain_config,
             )
             input_row_count = _input_row_count(connection, self.table_name)
             filtered_row_count = int(
@@ -94,7 +93,11 @@ class DuckDBExecutor:
             ).fetchdf()
 
         rows = [
-            _project_row(row.to_dict(), user_rank=user_rank)
+            _project_row(
+                row.to_dict(),
+                user_rank=user_rank,
+                domain_config=self.domain_config,
+            )
             for _, row in dataframe.iterrows()
         ]
         return ExecutionResult(
@@ -105,7 +108,7 @@ class DuckDBExecutor:
                 params=list(compiled.params),
                 input_row_count=input_row_count,
                 filtered_row_count=filtered_row_count,
-                sort_key=list(SORT_KEY),
+                sort_key=_sort_key_labels(self.domain_config, columns),
                 top_k=top_k,
                 hard_rule_ids=[str(rule.get("rule_id")) for rule in hard_rules],
                 skipped_soft_rule_ids=[
@@ -149,26 +152,38 @@ def _compile_select_sql(
     table_name: str,
     columns: set[str],
     hard_rules: list[dict[str, Any]],
+    domain_config: DomainConfig,
 ) -> _CompiledSQL:
-    for required in ["专业组最低位次1", "学费"]:
+    helper_fields = _numeric_helper_fields(domain_config, columns)
+    required_helpers = []
+    for field_id in domain_config.execution.get("projectable_required_field_ids") or []:
+        required = domain_config.source_column(field_id)
         if required not in columns:
             raise ValueError(f"DuckDBExecutor missing required output column: {required}")
+        helper_name = _helper_name_for_field(helper_fields, field_id)
+        if helper_name:
+            required_helpers.append(helper_name)
 
     params: list[Any] = []
     conditions = []
     for rule in hard_rules:
-        condition, condition_params = _compile_rule(rule, columns)
+        condition, condition_params = _compile_rule(rule, columns, domain_config)
         conditions.append(condition)
         params.extend(condition_params)
 
     where_clause = " AND ".join(conditions) if conditions else "TRUE"
     table_sql = _quote_identifier(table_name)
-    group_rank_expr = _numeric_expression("专业组最低位次1")
-    tuition_expr = _numeric_expression("学费")
-    school_rank_expr = (
-        _numeric_expression("院校排名") if "院校排名" in columns else "NULL"
-    )
-    id_expr = _numeric_expression("ID") if "ID" in columns else "NULL"
+    helper_selects = [
+        f"    {helper.expression} AS {_quote_identifier(helper.name)}"
+        for helper in helper_fields
+    ]
+    helper_sql = ",\n" + ",\n".join(helper_selects) if helper_selects else ""
+    projectable_conditions = [
+        f"    AND {_quote_identifier(helper_name)} IS NOT NULL"
+        for helper_name in required_helpers
+    ]
+    projectable_sql = "\n".join(projectable_conditions)
+    order_clause = _order_clause(domain_config, columns)
     cte = f"""
 WITH source AS (
   SELECT row_number() OVER () AS "__source_row_number", *
@@ -176,29 +191,22 @@ WITH source AS (
 ),
 filtered AS (
   SELECT
-    source.*,
-    {group_rank_expr} AS "__group_rank_num",
-    {tuition_expr} AS "__tuition_num",
-    {school_rank_expr} AS "__school_rank_num",
-    {id_expr} AS "__id_num"
+    source.*{helper_sql}
   FROM source
   WHERE {where_clause}
 ),
 projectable AS (
   SELECT *
   FROM filtered
-  WHERE "__group_rank_num" IS NOT NULL
-    AND "__tuition_num" IS NOT NULL
+  WHERE TRUE
+{projectable_sql}
 )
 """.strip()
     select_sql = f"""
 {cte}
 SELECT *
 FROM projectable
-ORDER BY
-  "__group_rank_num" ASC NULLS LAST,
-  "__school_rank_num" ASC NULLS LAST,
-  "__id_num" ASC NULLS LAST
+{order_clause}
 """.strip()
     count_sql = f"{cte}\nSELECT count(*) FROM projectable"
     return _CompiledSQL(select_sql=select_sql, count_sql=count_sql, params=params)
@@ -207,6 +215,7 @@ ORDER BY
 def _compile_rule(
     rule: dict[str, Any],
     columns: set[str],
+    domain_config: DomainConfig,
 ) -> tuple[str, list[Any]]:
     field = str(rule.get("field") or "")
     if field not in columns:
@@ -257,29 +266,32 @@ def _compile_rule(
         numeric = _numeric_expression(field)
         return f"({numeric} >= ? AND {numeric} <= ?)", [lower, upper]
     if operator == "satisfies_subject_requirement":
-        return _compile_subject_requirement(column, value)
+        return _compile_subject_requirement(column, value, domain_config)
     raise ValueError(f"DuckDBExecutor cannot compile operator: {operator}")
 
 
 def _compile_subject_requirement(
     column: str,
     selected_subjects: Any,
+    domain_config: DomainConfig,
 ) -> tuple[str, list[Any]]:
+    policy = domain_config.subject_policy
+    subjects = policy.get("subjects") or []
+    replacements = policy.get("normalization") or {}
     selected = {
-        _normalize_subject(subject)
+        _normalize_subject(subject, domain_config)
         for subject in _value_list(selected_subjects)
-        if _normalize_subject(subject)
+        if _normalize_subject(subject, domain_config)
     }
     if not selected:
         text_expr = f"CAST({column} AS VARCHAR)"
-        return _no_subject_requirement_condition(text_expr), []
+        return _no_subject_requirement_condition(text_expr, domain_config), []
 
-    unselected = [subject for subject in ["化学", "生物", "政治", "地理"] if subject not in selected]
-    text_expr = (
-        f"REPLACE(REPLACE(CAST({column} AS VARCHAR), '思想政治', '政治'), "
-        "'生物学', '生物')"
-    )
-    no_requirement = _no_subject_requirement_condition(text_expr)
+    unselected = [subject for subject in subjects if subject not in selected]
+    text_expr = f"CAST({column} AS VARCHAR)"
+    for source, target in replacements.items():
+        text_expr = f"REPLACE({text_expr}, {_sql_string(source)}, {_sql_string(target)})"
+    no_requirement = _no_subject_requirement_condition(text_expr, domain_config)
     or_condition = (
         "("
         + " OR ".join([f"STRPOS({text_expr}, ?) > 0"] * len(selected))
@@ -298,55 +310,69 @@ def _compile_subject_requirement(
     )
 
 
-def _no_subject_requirement_condition(text_expr: str) -> str:
-    return (
-        f"({text_expr} IS NULL OR TRIM({text_expr}) = '' OR {text_expr} = 'nan' "
-        f"OR {text_expr} = '无' OR STRPOS({text_expr}, '不限') > 0)"
-    )
+def _no_subject_requirement_condition(
+    text_expr: str,
+    domain_config: DomainConfig,
+) -> str:
+    values = domain_config.subject_policy.get("no_requirement_values") or []
+    exact_checks = [
+        f"{text_expr} = {_sql_string(value)}"
+        for value in values
+        if str(value) and str(value) != "不限"
+    ]
+    contains_checks = [
+        f"STRPOS({text_expr}, {_sql_string(value)}) > 0"
+        for value in values
+        if str(value) == "不限"
+    ]
+    checks = [f"{text_expr} IS NULL", f"TRIM({text_expr}) = ''"]
+    checks.extend(exact_checks)
+    checks.extend(contains_checks)
+    return "(" + " OR ".join(checks) + ")"
 
 
 def _project_row(
     row: dict[str, Any],
     user_rank: int | None,
+    domain_config: DomainConfig,
 ) -> dict[str, Any] | None:
-    group_rank = parse_number(row.get("__group_rank_num"))
-    tuition = parse_number(row.get("__tuition_num"))
-    if group_rank is None or tuition is None:
-        return None
-    ranking_key = int(group_rank - user_rank) if user_rank else None
-    safety_margin_pct = (
-        round((group_rank - user_rank) / user_rank, 4)
-        if user_rank
-        else None
-    )
     source_row_number = parse_number(row.get("__source_row_number"))
-    excel_row_number = int(source_row_number) + 3 if source_row_number else None
-    return {
-        "excel_row_number": excel_row_number,
-        "ID": clean_value(row.get("ID")),
-        "年份": clean_value(row.get("年份")),
-        "批次": clean_value(row.get("批次")),
-        "院校代码": clean_value(row.get("院校代码")),
-        "院校名称": clean_value(row.get("院校名称")),
-        "院校专业组代码": clean_value(row.get("院校专业组代码")),
-        "专业组名称": clean_value(row.get("专业组名称")),
-        "科类": clean_value(row.get("科类")),
-        "选科要求": clean_value(row.get("选科要求")),
-        "专业代码": clean_value(row.get("专业代码")),
-        "专业名称": cell_text(row.get("专业名称")),
-        "专业全称": clean_value(row.get("专业全称")),
-        "所在省": clean_value(row.get("所在省")),
-        "城市": cell_text(row.get("城市")),
-        "学费": tuition,
-        "专业组最低位次1": int(group_rank),
-        "最低位次1": clean_value(row.get("最低位次1")),
-        "院校标签": clean_value(row.get("院校标签")),
-        "院校排名": clean_value(row.get("院校排名")),
-        "ranking_key": ranking_key,
-        "safety_margin_pct": safety_margin_pct,
-        "cooperation_filter_status": "not_executed_missing_cooperation_type_field",
-        "中外合作筛选状态": "未执行：缺少合作办学类型字段",
-    }
+    output: dict[str, Any] = {}
+    row_number_key = domain_config.execution.get("row_number_output_key")
+    if row_number_key:
+        offset = int(domain_config.execution.get("row_number_offset") or 0)
+        output[row_number_key] = (
+            int(source_row_number) + offset if source_row_number else None
+        )
+
+    for spec in domain_config.execution.get("output_fields") or []:
+        output_key = spec["output_key"]
+        field_id = spec["field_id"]
+        source_column = domain_config.source_column(field_id)
+        helper = spec.get("helper")
+        raw_value = row.get(helper) if helper else row.get(source_column)
+        output[output_key] = _project_value(raw_value, spec.get("transform"))
+
+    ranking = domain_config.execution.get("ranking") or {}
+    rank_field_id = ranking.get("source_field_id")
+    if rank_field_id:
+        rank_value = _projected_field_value(output, domain_config, rank_field_id)
+        parsed_rank = parse_number(rank_value)
+        if parsed_rank is None:
+            return None
+        ranking_key = int(parsed_rank - user_rank) if user_rank else None
+        safety_margin_pct = (
+            round((parsed_rank - user_rank) / user_rank, 4)
+            if user_rank
+            else None
+        )
+        if ranking.get("ranking_key"):
+            output[str(ranking["ranking_key"])] = ranking_key
+        if ranking.get("safety_margin_pct"):
+            output[str(ranking["safety_margin_pct"])] = safety_margin_pct
+
+    output.update(domain_config.execution.get("static_output_fields") or {})
+    return output
 
 
 def _table_columns(
@@ -399,13 +425,11 @@ def _numeric_range(value: Any) -> tuple[float | None, float | None]:
     return min(first, second), max(first, second)
 
 
-def _normalize_subject(value: Any) -> str:
+def _normalize_subject(value: Any, domain_config: DomainConfig) -> str:
     text = cell_text(value)
-    if "思想政治" in text:
-        return "政治"
-    if "生物" in text:
-        return "生物"
-    for subject in ["化学", "政治", "地理"]:
+    for source, target in (domain_config.subject_policy.get("normalization") or {}).items():
+        text = text.replace(source, target)
+    for subject in domain_config.subject_policy.get("subjects") or []:
         if subject in text:
             return subject
     return text
@@ -417,3 +441,109 @@ def _placeholders(values: list[Any]) -> str:
 
 def _quote_identifier(identifier: str) -> str:
     return '"' + identifier.replace('"', '""') + '"'
+
+
+@dataclass(frozen=True)
+class _NumericHelperField:
+    name: str
+    field_id: str
+    expression: str
+
+
+def _numeric_helper_fields(
+    domain_config: DomainConfig,
+    columns: set[str],
+) -> list[_NumericHelperField]:
+    helpers = []
+    for spec in domain_config.execution.get("numeric_helper_fields") or []:
+        field_id = spec["field_id"]
+        source_column = domain_config.source_column(field_id)
+        if source_column in columns:
+            expression = _numeric_expression(source_column)
+        elif spec.get("optional"):
+            expression = "NULL"
+        else:
+            raise ValueError(
+                f"DuckDBExecutor missing required output column: {source_column}"
+            )
+        helpers.append(
+            _NumericHelperField(
+                name=str(spec["name"]),
+                field_id=str(field_id),
+                expression=expression,
+            )
+        )
+    return helpers
+
+
+def _helper_name_for_field(
+    helper_fields: list[_NumericHelperField],
+    field_id: str,
+) -> str | None:
+    for helper in helper_fields:
+        if helper.field_id == field_id:
+            return helper.name
+    return None
+
+
+def _order_clause(domain_config: DomainConfig, columns: set[str]) -> str:
+    parts = []
+    for item in domain_config.execution.get("sort_policy") or []:
+        field_id = item.get("label_field_id")
+        if field_id:
+            source_column = domain_config.source_column(field_id)
+            if item.get("optional") and source_column not in columns:
+                continue
+        helper = str(item["helper"])
+        direction = str(item.get("direction") or "ASC").upper()
+        nulls = str(item.get("nulls") or "LAST").upper()
+        parts.append(f"  {_quote_identifier(helper)} {direction} NULLS {nulls}")
+    if not parts:
+        return ""
+    return "ORDER BY\n" + ",\n".join(parts)
+
+
+def _sort_key_labels(domain_config: DomainConfig, columns: set[str]) -> list[str]:
+    labels = []
+    for item in domain_config.execution.get("sort_policy") or []:
+        field_id = item.get("label_field_id")
+        if field_id:
+            source_column = domain_config.source_column(field_id)
+            if item.get("optional") and source_column not in columns:
+                continue
+            label = source_column
+        else:
+            label = str(item.get("helper"))
+        direction = str(item.get("direction") or "ASC").upper()
+        nulls = str(item.get("nulls") or "LAST").upper()
+        labels.append(f"{label} {direction} NULLS {nulls}")
+    return labels
+
+
+def _project_value(value: Any, transform: Any) -> Any:
+    if transform == "text":
+        return cell_text(value)
+    if transform == "clean":
+        return clean_value(value)
+    if transform == "number":
+        return parse_number(value)
+    if transform == "int":
+        parsed = parse_number(value)
+        return int(parsed) if parsed is not None else None
+    return clean_value(value)
+
+
+def _projected_field_value(
+    output: dict[str, Any],
+    domain_config: DomainConfig,
+    field_id: str,
+) -> Any:
+    for spec in domain_config.execution.get("output_fields") or []:
+        if spec.get("field_id") == field_id:
+            return output.get(spec.get("output_key"))
+    source_column = domain_config.source_column(field_id)
+    return output.get(source_column)
+
+
+def _sql_string(value: Any) -> str:
+    return "'" + str(value).replace("'", "''") + "'"

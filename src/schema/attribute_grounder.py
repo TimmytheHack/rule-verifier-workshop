@@ -12,10 +12,11 @@ from pathlib import Path
 from typing import Any
 
 from src.adapters.data_warehouse import SchemaValueIndex
+from src.domains import DomainConfig
 from src.schema.schema_registry import SchemaRegistry
 
 
-DEFAULT_POLICY_PATH = Path("schemas/attribute_grounding.json")
+DEFAULT_POLICY_PATH = DomainConfig.load().attribute_grounding_path
 
 
 def _value_at(payload: dict[str, Any], path: tuple[str, ...]) -> Any:
@@ -43,11 +44,14 @@ class AttributeGrounder:
     def __init__(
         self,
         schema_registry: SchemaRegistry,
-        policy_path: str | Path = DEFAULT_POLICY_PATH,
+        policy_path: str | Path | None = None,
         value_index: SchemaValueIndex | None = None,
+        domain_config: DomainConfig | None = None,
     ) -> None:
         self.schema_registry = schema_registry
         self.value_index = value_index
+        self.domain_config = domain_config or DomainConfig.load()
+        policy_path = policy_path or self.domain_config.attribute_grounding_path
         payload = json.loads(Path(policy_path).read_text(encoding="utf-8"))
         self.slot_policies = {
             tuple(path.split(".")): policy

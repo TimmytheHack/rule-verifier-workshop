@@ -1,0 +1,67 @@
+{
+  "fields": {
+    "listing_id": {
+      "source_column": "listing_id",
+      "type": "number",
+      "label": "房源编号",
+      "aliases": ["listing_id", "房源编号"],
+      "allowed_ops": ["eq", "sort"],
+      "nullable": false,
+      "notes": "房源追溯编号。"
+    },
+    "city": {
+      "source_column": "city",
+      "type": "string",
+      "label": "城市",
+      "aliases": ["city", "城市"],
+      "allowed_ops": ["eq", "in", "in_contains"],
+      "nullable": false,
+      "notes": "房源所在城市。"
+    },
+    "bedrooms": {
+      "source_column": "bedrooms",
+      "type": "number",
+      "label": "卧室数",
+      "aliases": ["bedrooms", "卧室"],
+      "allowed_ops": [">=", "<=", "between"],
+      "nullable": false,
+      "notes": "卧室数量。"
+    },
+    "rent_usd": {
+      "source_column": "rent_usd",
+      "type": "number",
+      "label": "月租",
+      "aliases": ["rent", "rent_usd", "月租"],
+      "allowed_ops": ["<=", ">=", "between", "sort"],
+      "nullable": false,
+      "notes": "月租金，单位美元。"
+    },
+    "property_type": {
+      "source_column": "property_type",
+      "type": "enum",
+      "label": "房源类型",
+      "aliases": ["apartment", "townhouse", "condo", "house"],
+      "allowed_ops": ["eq", "in"],
+      "nullable": false,
+      "notes": "房源类型。"
+    },
+    "pet_policy": {
+      "source_column": "pet_policy",
+      "type": "enum",
+      "label": "宠物政策",
+      "aliases": ["pets", "pet_policy"],
+      "allowed_ops": ["eq", "in"],
+      "nullable": true,
+      "notes": "是否允许宠物。"
+    },
+    "rating": {
+      "source_column": "rating",
+      "type": "number",
+      "label": "评分",
+      "aliases": ["rating", "评分"],
+      "allowed_ops": [">=", "sort"],
+      "nullable": true,
+      "notes": "房源评分。"
+    }
+  }
+}
