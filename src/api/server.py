@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 
@@ -77,18 +77,13 @@ def options() -> dict[str, object]:
 def run(request: WorkbenchRunRequest) -> dict[str, object]:
     """Run the workbench pipeline with controlled frontend options."""
 
-    try:
-        config = WorkbenchConfig(
-            user_input=request.user_input.strip(),
-            hard_filters=request.hard_filters.dict(),
-            soft_preferences=request.soft_preferences.dict(),
-            extractor=request.extractor,
-            generator=request.generator,
-            model=request.model,
-            confirmed_candidates=request.confirmed_candidates,
-        )
-        return run_workbench(config)
-    except ValueError as exc:
-        raise HTTPException(status_code=400, detail=str(exc)) from exc
-    except RuntimeError as exc:
-        raise HTTPException(status_code=502, detail=str(exc)) from exc
+    config = WorkbenchConfig(
+        user_input=request.user_input.strip(),
+        hard_filters=request.hard_filters.dict(),
+        soft_preferences=request.soft_preferences.dict(),
+        extractor=request.extractor,
+        generator=request.generator,
+        model=request.model,
+        confirmed_candidates=request.confirmed_candidates,
+    )
+    return run_workbench(config)

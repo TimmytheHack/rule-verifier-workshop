@@ -114,7 +114,7 @@ deterministic over-promotion rate
 | 优先级 | 任务 | 状态 |
 |---|---|---|
 | P0 | confirmation loop：`partial_match` 通过 `candidate_id` 确认后才可进入 hard filter | 已实现基础闭环 |
-| P1 | API response contract freeze + snapshot tests | 待做 |
+| P1 | API response contract freeze + snapshot tests | 已实现基础 contract |
 | P2 | demo acceptance script，导出 10-20 条真实咨询的 Markdown/JSON 验收报告 | 待做 |
 | P3 | 多数据源 ingestion 规范，支持新 Excel / CSV 进入同一 warehouse schema | 待做 |
 | P4 | 非结构化政策/章程小型知识库，只做解释和候选，不进执行 | 待做 |

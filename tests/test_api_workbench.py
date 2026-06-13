@@ -4,12 +4,14 @@ import unittest
 
 from src.api.workbench import WorkbenchConfig
 from tests.warehouse_test_utils import run_workbench_with_test_warehouse
+from tests.workbench_contract_utils import assert_workbench_contract
 
 
 class ApiWorkbenchTest(unittest.TestCase):
     def test_workbench_top_results_use_frontend_field_names(self) -> None:
         result = run_workbench_with_test_warehouse(WorkbenchConfig())
 
+        assert_workbench_contract(self, result)
         self.assertGreater(result["result_count"], 0)
         top_result = result["top_results"][0]
         self.assertIn("university_name", top_result)

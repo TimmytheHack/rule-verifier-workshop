@@ -394,6 +394,15 @@ Workbench 的 confirmation loop 也属于执行边界：
 - `no_schema_field` 偏好即使被用户确认也不执行，例如当前没有合作办学类型字段时，`校企合作` / `中外合作` 只能保留为未执行偏好。
 - EvidencePack 会记录 `confirmed_rules`、`confirmation_source`、`executed_after_confirmation`、`unconfirmed_candidates` 和 `no_schema_field_preferences`。
 
+Workbench API 返回固定的 `WorkbenchResponse` contract：
+
+- `status` 只能是 `ok`、`needs_confirmation`、`no_results`、`blocked`、`error`。
+- `needs_confirmation` 表示存在未确认的 `partial_match` 偏好，这些偏好不能声称已执行；当前结果只能作为已执行规则下的 provisional results。
+- `blocked` 用于 fingerprint guard、伪造/过期/不属于当前 query 的 `candidate_id` 等安全阻断；此状态下 `execution.sql` 为空，不执行 DuckDB SQL。
+- `no_results` 表示 SQL 正常执行但 `filtered_row_count = 0`；答案不得编造推荐。
+- 前端展示的 `top_results` 只使用英文 key，例如 `university_name`、`group_code`、`major_code`、`major_name`、`full_major_name`、`city`、`tuition`、`rank_2024`、`plan_count`。EvidencePack 内部继续保留中文原始字段用于 trace。
+- 完整字段和 JSON 示例见 `docs/api_contract.md`。
+
 ## 9. LLM 边界
 
 可选 DeepSeek extractor 只用于 preference extraction 和 source spans。

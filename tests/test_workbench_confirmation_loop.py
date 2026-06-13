@@ -32,6 +32,7 @@ class WorkbenchConfirmationLoopTest(unittest.TestCase):
     def test_pearl_river_delta_without_confirmation_does_not_execute(self) -> None:
         result = _run(PRD_PROMPT)
 
+        self.assertEqual(result["status"], "needs_confirmation")
         self.assertIn("珠三角", [c["source_text"] for c in result["confirmation_candidates"]])
         self.assertNotIn("e_city", result["execution"]["hard_rule_ids"])
         self.assertFalse(
@@ -45,6 +46,7 @@ class WorkbenchConfirmationLoopTest(unittest.TestCase):
         candidate_id = _candidate_id(first, "珠三角")
         result = _run(PRD_PROMPT, [candidate_id])
 
+        self.assertEqual(result["status"], "needs_confirmation")
         self.assertIn(candidate_id, result["confirmation_state"]["accepted_candidate_ids"])
         self.assertIn(
             f"e_confirmed_{candidate_id.replace('cand_', '')}",
@@ -61,6 +63,8 @@ class WorkbenchConfirmationLoopTest(unittest.TestCase):
         candidate_id = _candidate_id(first, "计科")
         result = _run(JIKE_PROMPT, [candidate_id])
 
+        self.assertEqual(first["status"], "needs_confirmation")
+        self.assertEqual(result["status"], "ok")
         self.assertNotIn("e_major_keyword", first["execution"]["hard_rule_ids"])
         self.assertEqual(first["result_count"], 3962)
         self.assertIn(candidate_id, result["confirmation_state"]["accepted_candidate_ids"])
@@ -74,6 +78,7 @@ class WorkbenchConfirmationLoopTest(unittest.TestCase):
     def test_unconfirmed_candidate_does_not_execute(self) -> None:
         result = _run(JIKE_PROMPT)
 
+        self.assertEqual(result["status"], "needs_confirmation")
         self.assertEqual(
             result["execution"]["hard_rule_ids"],
             ["e_source_province", "e_subject_type", "e_subject_requirement", "e_city"],
@@ -84,33 +89,41 @@ class WorkbenchConfirmationLoopTest(unittest.TestCase):
     def test_forged_candidate_id_is_rejected(self) -> None:
         result = _run(PRD_PROMPT, ["cand_forged"])
 
+        self.assertEqual(result["status"], "blocked")
         self.assertEqual(result["confirmation_state"]["accepted_candidate_ids"], [])
         self.assertEqual(
             result["confirmation_state"]["rejected_candidates"][0]["candidate_id"],
             "cand_forged",
         )
-        self.assertEqual(result["result_count"], 749)
+        self.assertTrue(
+            result["confirmation_state"]["rejected_candidates"][0]["blocks_execution"]
+        )
+        self.assertEqual(result["result_count"], 0)
+        self.assertEqual(result["execution"]["sql"], "")
 
     def test_candidate_id_from_other_query_is_rejected(self) -> None:
         first = _run(PRD_PROMPT)
         stale_candidate_id = _candidate_id(first, "珠三角")
         result = _run("广东物理，排位32000，想学计算机，广深优先。", [stale_candidate_id])
 
+        self.assertEqual(result["status"], "blocked")
         self.assertEqual(result["confirmation_state"]["accepted_candidate_ids"], [])
         self.assertEqual(
             result["confirmation_state"]["rejected_candidates"][0]["candidate_id"],
             stale_candidate_id,
         )
-        self.assertEqual(
-            result["execution"]["hard_rule_ids"],
-            ["e_source_province", "e_subject_type", "e_major_keyword", "e_city"],
+        self.assertTrue(
+            result["confirmation_state"]["rejected_candidates"][0]["blocks_execution"]
         )
+        self.assertEqual(result["execution"]["hard_rule_ids"], [])
+        self.assertEqual(result["execution"]["sql"], "")
 
     def test_no_schema_candidate_confirmation_never_executes(self) -> None:
         first = _run(PRD_PROMPT)
         candidate_id = _candidate_id(first, "不要校企合作")
         result = _run(PRD_PROMPT, [candidate_id])
 
+        self.assertEqual(result["status"], "needs_confirmation")
         self.assertEqual(result["confirmation_state"]["accepted_candidate_ids"], [])
         self.assertEqual(
             result["confirmation_state"]["rejected_candidates"][0]["candidate_id"],
@@ -131,6 +144,7 @@ class WorkbenchConfirmationLoopTest(unittest.TestCase):
         result = _run(PRD_PROMPT, [candidate_id])
         evidence = result["evidence_pack"]
 
+        self.assertEqual(result["status"], "needs_confirmation")
         self.assertEqual(evidence["confirmation_source"][0]["candidate_id"], candidate_id)
         self.assertEqual(evidence["confirmation_source"][0]["source_text"], "珠三角")
         self.assertEqual(

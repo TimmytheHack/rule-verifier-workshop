@@ -70,6 +70,13 @@ MODEL_OPTIONS = {
     "deepseek-v4-flash": "LLM 快速模型",
     "deepseek-v4-pro": "LLM 高质量模型",
 }
+WORKBENCH_STATUS_VALUES = {
+    "ok",
+    "needs_confirmation",
+    "no_results",
+    "blocked",
+    "error",
+}
 INTERACTIVE_DEEPSEEK_TIMEOUT_SECONDS = 25
 INTERACTIVE_DEEPSEEK_MAX_RETRIES = 1
 EVIDENCE_TOP_K = 5
@@ -114,6 +121,48 @@ class WorkbenchConfig:
     confirmed_candidates: list[str] = field(default_factory=list)
 
 
+@dataclass(frozen=True)
+class WorkbenchResponse:
+    """前端可依赖的 Workbench 固定响应契约。"""
+
+    status: str
+    answer: str
+    top_results: list[dict[str, Any]]
+    result_count: int
+    executed_filters: list[dict[str, Any]]
+    candidates_to_confirm: list[dict[str, Any]]
+    confirmed_rules: list[dict[str, Any]]
+    unconfirmed_candidates: list[dict[str, Any]]
+    unexecuted_preferences: list[dict[str, Any]]
+    no_schema_field_preferences: list[dict[str, Any]]
+    rejected_confirmations: list[dict[str, Any]]
+    warnings: list[dict[str, Any]]
+    evidence_pack: dict[str, Any]
+    debug_trace: dict[str, Any]
+
+    def __post_init__(self) -> None:
+        if self.status not in WORKBENCH_STATUS_VALUES:
+            raise ValueError(f"Unsupported workbench status: {self.status}")
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "status": self.status,
+            "answer": self.answer,
+            "top_results": self.top_results,
+            "result_count": self.result_count,
+            "executed_filters": self.executed_filters,
+            "candidates_to_confirm": self.candidates_to_confirm,
+            "confirmed_rules": self.confirmed_rules,
+            "unconfirmed_candidates": self.unconfirmed_candidates,
+            "unexecuted_preferences": self.unexecuted_preferences,
+            "no_schema_field_preferences": self.no_schema_field_preferences,
+            "rejected_confirmations": self.rejected_confirmations,
+            "warnings": self.warnings,
+            "evidence_pack": self.evidence_pack,
+            "debug_trace": self.debug_trace,
+        }
+
+
 def available_options() -> dict[str, Any]:
     """Return the user-facing option whitelist for API mode."""
 
@@ -126,6 +175,15 @@ def available_options() -> dict[str, Any]:
 
 def run_workbench(config: WorkbenchConfig) -> dict[str, Any]:
     """Run the verified pipeline and return UI-ready artifacts."""
+
+    try:
+        return _run_workbench(config)
+    except Exception as exc:  # noqa: BLE001 - API contract 不暴露内部 traceback。
+        return _error_payload(config, exc)
+
+
+def _run_workbench(config: WorkbenchConfig) -> dict[str, Any]:
+    """在 contract 包装下运行已验证 pipeline。"""
 
     _validate_config(config)
     warehouse_audit = _data_warehouse_audit()
@@ -150,6 +208,16 @@ def run_workbench(config: WorkbenchConfig) -> dict[str, Any]:
         confirmation_candidates=confirmation_candidates,
         verifier=verifier,
     )
+    if _confirmation_blocks_execution(confirmation_state):
+        return _confirmation_blocked_payload(
+            config=config,
+            warehouse_audit=warehouse_audit,
+            slots=slots,
+            extractor_usage=extractor_usage,
+            attribute_grounding=attribute_grounding,
+            confirmation_candidates=confirmation_candidates,
+            confirmation_state=confirmation_state,
+        )
     proposed_rules = verifier.audit_proposed_rules(slots.get("proposed_rules", []))
     classified_rules = RuleClassifier(TAXONOMY_PATH, verifier).classify(slots)
     classified_rules = _append_unmapped_preferences(classified_rules, slots)
@@ -205,18 +273,14 @@ def run_workbench(config: WorkbenchConfig) -> dict[str, Any]:
         schema_registry=schema_registry,
     )
 
-    return {
+    legacy_payload = {
         "mode": "api",
         "status": "ok",
         "user_input": _compose_user_request(config),
         "data_warehouse": warehouse_audit,
         "hard_filters": _display_hard_filters(config.hard_filters),
         "soft_preferences": _display_soft_preferences(config.soft_preferences),
-        "selected_options": {
-            "extractor": EXTRACTOR_OPTIONS[config.extractor],
-            "generator": GENERATOR_OPTIONS[config.generator],
-            "model": MODEL_OPTIONS[config.model],
-        },
+        "selected_options": _selected_options(config),
         "extracted_preferences": extracted_preferences,
         "extracted_slots": slots,
         "attribute_grounding": _display_attribute_grounding(attribute_grounding),
@@ -242,7 +306,160 @@ def run_workbench(config: WorkbenchConfig) -> dict[str, Any]:
             "generator": generator_usage,
             "total": _sum_usage([extractor_usage, generator_usage]),
         },
-}
+    }
+    return _contract_success_payload(
+        legacy_payload=legacy_payload,
+        hard_rules=hard_rules,
+        confirmation_state=confirmation_state,
+    )
+
+
+def _contract_success_payload(
+    legacy_payload: dict[str, Any],
+    hard_rules: list[dict[str, Any]],
+    confirmation_state: dict[str, Any],
+) -> dict[str, Any]:
+    status = _success_status(legacy_payload, confirmation_state)
+    response = WorkbenchResponse(
+        status=status,
+        answer=legacy_payload["natural_language_report"]["full_text"],
+        top_results=legacy_payload["top_results"],
+        result_count=legacy_payload["result_count"],
+        executed_filters=[_display_rule(rule) for rule in hard_rules],
+        candidates_to_confirm=confirmation_state.get("unconfirmed_candidates", []),
+        confirmed_rules=_contract_confirmed_rules(confirmation_state),
+        unconfirmed_candidates=confirmation_state.get("unconfirmed_candidates", []),
+        unexecuted_preferences=legacy_payload["not_executed_preferences"],
+        no_schema_field_preferences=confirmation_state.get(
+            "no_schema_field_preferences",
+            [],
+        ),
+        rejected_confirmations=confirmation_state.get("rejected_candidates", []),
+        warnings=_contract_warnings(
+            legacy_payload.get("natural_language_report", {}).get("warnings", []),
+            status=status,
+            confirmation_state=confirmation_state,
+        ),
+        evidence_pack=legacy_payload["evidence_pack"],
+        debug_trace=_debug_trace(legacy_payload),
+    ).to_dict()
+    return {**legacy_payload, **response}
+
+
+def _success_status(
+    legacy_payload: dict[str, Any],
+    confirmation_state: dict[str, Any],
+) -> str:
+    execution = legacy_payload.get("execution") or {}
+    if (
+        execution.get("executor")
+        and int(execution.get("filtered_row_count") or 0) == 0
+    ):
+        return "no_results"
+    if confirmation_state.get("unconfirmed_candidates"):
+        return "needs_confirmation"
+    evidence = legacy_payload.get("evidence_pack") or {}
+    if any(
+        explanation.get("action") == "needs_confirmation"
+        for explanation in evidence.get("attribute_explanations", [])
+    ):
+        return "needs_confirmation"
+    return "ok"
+
+
+def _contract_confirmed_rules(
+    confirmation_state: dict[str, Any],
+) -> list[dict[str, Any]]:
+    return [
+        {
+            **_display_rule(rule),
+            "candidate_id": rule.get("derived_from"),
+            "executed": rule.get("rule_id")
+            in set(confirmation_state.get("executed_after_confirmation") or []),
+            "confirmation_source": rule.get("confirmation_source"),
+        }
+        for rule in confirmation_state.get("confirmed_rules", [])
+    ]
+
+
+def _contract_warnings(
+    raw_warnings: list[Any],
+    status: str,
+    confirmation_state: dict[str, Any] | None = None,
+) -> list[dict[str, Any]]:
+    warnings = [_normalize_warning(item) for item in raw_warnings]
+    if status == "needs_confirmation":
+        warnings.append(
+            {
+                "code": "needs_confirmation",
+                "severity": "warning",
+                "message": "存在未确认 partial_match candidate，未进入 hard filter。",
+            }
+        )
+    if status == "no_results":
+        warnings.append(
+            {
+                "code": "no_results",
+                "severity": "warning",
+                "message": "SQL 正常执行但 filtered_row_count 为 0，不能生成推荐。",
+            }
+        )
+    for item in (confirmation_state or {}).get("rejected_candidates", []):
+        warnings.append(
+            {
+                "code": item.get("reason_code") or "rejected_confirmation",
+                "severity": "warning",
+                "message": item.get("reason") or "candidate_id 未被接受。",
+                "candidate_id": item.get("candidate_id"),
+            }
+        )
+    return warnings
+
+
+def _normalize_warning(item: Any) -> dict[str, Any]:
+    if isinstance(item, dict):
+        return {
+            "code": item.get("code") or "warning",
+            "severity": item.get("severity") or "warning",
+            "message": item.get("message") or str(item),
+            **{
+                key: value
+                for key, value in item.items()
+                if key not in {"code", "severity", "message"}
+            },
+        }
+    return {
+        "code": "report_warning",
+        "severity": "warning",
+        "message": str(item),
+    }
+
+
+def _debug_trace(payload: dict[str, Any]) -> dict[str, Any]:
+    keys = [
+        "mode",
+        "user_input",
+        "data_warehouse",
+        "hard_filters",
+        "soft_preferences",
+        "selected_options",
+        "extracted_preferences",
+        "extracted_slots",
+        "attribute_grounding",
+        "confirmation_candidates",
+        "confirmation_state",
+        "proposed_rules",
+        "deterministic_rules",
+        "candidate_rules",
+        "not_executed_preferences",
+        "simulated_confirmations",
+        "executable_rules",
+        "execution",
+        "trace",
+        "natural_language_report",
+        "token_usage",
+    ]
+    return {key: payload.get(key) for key in keys if key in payload}
 
 
 def _data_warehouse_audit() -> dict[str, Any]:
@@ -265,7 +482,7 @@ def _data_warehouse_warning_payload(
         ["数据仓库 fingerprint guard 未通过，未执行筛选。"]
         + [f"- {message}" for message in messages]
     )
-    return {
+    legacy_payload = {
         "mode": "api",
         "status": "blocked",
         "warning_type": "data_warehouse_fingerprint_guard",
@@ -275,11 +492,7 @@ def _data_warehouse_warning_payload(
         "warnings": warehouse_audit.get("warnings", []),
         "hard_filters": _display_hard_filters(config.hard_filters),
         "soft_preferences": _display_soft_preferences(config.soft_preferences),
-        "selected_options": {
-            "extractor": EXTRACTOR_OPTIONS[config.extractor],
-            "generator": GENERATOR_OPTIONS[config.generator],
-            "model": MODEL_OPTIONS[config.model],
-        },
+        "selected_options": _selected_options(config),
         "extracted_preferences": [],
         "extracted_slots": {},
         "attribute_grounding": {"summary": {}, "attributes": []},
@@ -321,6 +534,219 @@ def _data_warehouse_warning_payload(
             "total": {"prompt_tokens": 0, "completion_tokens": 0, "total_tokens": 0},
         },
     }
+    return _contract_blocked_payload(legacy_payload)
+
+
+def _confirmation_blocked_payload(
+    config: WorkbenchConfig,
+    warehouse_audit: dict[str, Any],
+    slots: dict[str, Any],
+    extractor_usage: dict[str, int] | None,
+    attribute_grounding: dict[str, Any],
+    confirmation_candidates: list[dict[str, Any]],
+    confirmation_state: dict[str, Any],
+) -> dict[str, Any]:
+    rejected = confirmation_state.get("rejected_candidates", [])
+    messages = [
+        item.get("reason") or "candidate_id 未被接受。"
+        for item in rejected
+        if item.get("blocks_execution")
+    ]
+    full_text = "\n".join(
+        ["candidate_id 确认失败，Workbench 未执行 SQL。"]
+        + [f"- {message}" for message in messages]
+    )
+    legacy_payload = {
+        "mode": "api",
+        "status": "blocked",
+        "warning_type": "candidate_confirmation_guard",
+        "user_input": _compose_user_request(config),
+        "data_warehouse": warehouse_audit,
+        "structured_warnings": [
+            {
+                "code": item.get("reason_code")
+                or "candidate_id_not_current_query",
+                "message": item.get("reason") or "candidate_id 未被接受。",
+                "severity": "error",
+                "candidate_id": item.get("candidate_id"),
+            }
+            for item in rejected
+            if item.get("blocks_execution")
+        ],
+        "warnings": [
+            {
+                "code": item.get("reason_code")
+                or "candidate_id_not_current_query",
+                "message": item.get("reason") or "candidate_id 未被接受。",
+                "severity": "error",
+                "candidate_id": item.get("candidate_id"),
+            }
+            for item in rejected
+            if item.get("blocks_execution")
+        ],
+        "hard_filters": _display_hard_filters(config.hard_filters),
+        "soft_preferences": _display_soft_preferences(config.soft_preferences),
+        "selected_options": _selected_options(config),
+        "extracted_preferences": _extracted_preferences(slots),
+        "extracted_slots": slots,
+        "attribute_grounding": _display_attribute_grounding(attribute_grounding),
+        "confirmation_candidates": confirmation_candidates,
+        "confirmation_state": _display_confirmation_state(confirmation_state),
+        "proposed_rules": [],
+        "deterministic_rules": [],
+        "candidate_rules": [],
+        "not_executed_preferences": [],
+        "simulated_confirmations": {},
+        "executable_rules": [],
+        "execution": _blocked_execution_summary(),
+        "result_count": 0,
+        "top_results": [],
+        "trace": {},
+        "evidence_pack": {},
+        "natural_language_report": {
+            "title": "确认请求被阻断",
+            "summary": "收到伪造、过期或不属于当前 query 的 candidate_id。",
+            "full_text": full_text,
+            "result_count_text": "当前未执行筛选，结果数为 0。",
+            "executed_rules": [],
+            "attribute_explanations": [],
+            "top_results": [],
+            "warnings": messages,
+            "disclaimer": "只能提交上一轮同一 query 由系统生成的 candidate_id。",
+        },
+        "token_usage": {
+            "extractor": extractor_usage,
+            "generator": None,
+            "total": _sum_usage([extractor_usage]),
+        },
+    }
+    return _contract_blocked_payload(legacy_payload)
+
+
+def _contract_blocked_payload(legacy_payload: dict[str, Any]) -> dict[str, Any]:
+    warnings = legacy_payload.get("warnings", [])
+    response = WorkbenchResponse(
+        status="blocked",
+        answer=legacy_payload["natural_language_report"]["full_text"],
+        top_results=[],
+        result_count=0,
+        executed_filters=[],
+        candidates_to_confirm=(
+            legacy_payload.get("confirmation_state", {}) or {}
+        ).get("unconfirmed_candidates", []),
+        confirmed_rules=[],
+        unconfirmed_candidates=(
+            legacy_payload.get("confirmation_state", {}) or {}
+        ).get("unconfirmed_candidates", []),
+        unexecuted_preferences=legacy_payload.get("not_executed_preferences", []),
+        no_schema_field_preferences=(
+            legacy_payload.get("confirmation_state", {}) or {}
+        ).get("no_schema_field_preferences", []),
+        rejected_confirmations=(
+            legacy_payload.get("confirmation_state", {}) or {}
+        ).get("rejected_candidates", []),
+        warnings=_contract_warnings(warnings, status="blocked"),
+        evidence_pack=legacy_payload.get("evidence_pack", {}),
+        debug_trace=_debug_trace(legacy_payload),
+    ).to_dict()
+    return {**legacy_payload, **response}
+
+
+def _blocked_execution_summary() -> dict[str, Any]:
+    return {
+        "executor": None,
+        "sql": "",
+        "params": [],
+        "input_row_count": 0,
+        "filtered_row_count": 0,
+        "sort_key": [],
+        "top_k": EVIDENCE_TOP_K,
+        "hard_rule_ids": [],
+        "skipped_soft_rule_ids": [],
+    }
+
+
+def _error_payload(config: WorkbenchConfig, exc: Exception) -> dict[str, Any]:
+    message = (
+        _sanitize_user_text(str(exc))
+        if isinstance(exc, ValueError)
+        else "Workbench 运行失败，前端不应展示内部异常细节。"
+    )
+    legacy_payload = {
+        "mode": "api",
+        "status": "error",
+        "warning_type": "workbench_error",
+        "user_input": _compose_user_request(config),
+        "data_warehouse": {},
+        "structured_warnings": [
+            {
+                "code": "workbench_error",
+                "message": message,
+                "severity": "error",
+                "error_type": type(exc).__name__,
+            }
+        ],
+        "warnings": [
+            {
+                "code": "workbench_error",
+                "message": message,
+                "severity": "error",
+                "error_type": type(exc).__name__,
+            }
+        ],
+        "hard_filters": _display_hard_filters(config.hard_filters),
+        "soft_preferences": _display_soft_preferences(config.soft_preferences),
+        "selected_options": _selected_options(config),
+        "extracted_preferences": [],
+        "extracted_slots": {},
+        "attribute_grounding": {"summary": {}, "attributes": []},
+        "confirmation_candidates": [],
+        "confirmation_state": _display_confirmation_state({}),
+        "proposed_rules": [],
+        "deterministic_rules": [],
+        "candidate_rules": [],
+        "not_executed_preferences": [],
+        "simulated_confirmations": {},
+        "executable_rules": [],
+        "execution": _blocked_execution_summary(),
+        "result_count": 0,
+        "top_results": [],
+        "trace": {},
+        "evidence_pack": {},
+        "natural_language_report": {
+            "title": "Workbench 运行失败",
+            "summary": "运行过程中出现非预期错误。",
+            "full_text": "Workbench 运行失败，未返回推荐结果。",
+            "result_count_text": "当前未执行筛选，结果数为 0。",
+            "executed_rules": [],
+            "attribute_explanations": [],
+            "top_results": [],
+            "warnings": [message],
+            "disclaimer": "前端不会收到服务端 traceback。",
+        },
+        "token_usage": {
+            "extractor": None,
+            "generator": None,
+            "total": {"prompt_tokens": 0, "completion_tokens": 0, "total_tokens": 0},
+        },
+    }
+    response = WorkbenchResponse(
+        status="error",
+        answer=legacy_payload["natural_language_report"]["full_text"],
+        top_results=[],
+        result_count=0,
+        executed_filters=[],
+        candidates_to_confirm=[],
+        confirmed_rules=[],
+        unconfirmed_candidates=[],
+        unexecuted_preferences=[],
+        no_schema_field_preferences=[],
+        rejected_confirmations=[],
+        warnings=_contract_warnings(legacy_payload["warnings"], status="error"),
+        evidence_pack={},
+        debug_trace=_debug_trace(legacy_payload),
+    ).to_dict()
+    return {**legacy_payload, **response}
 
 
 def _load_dataset() -> ExcelDataSet:
@@ -408,6 +834,14 @@ def _validate_config(config: WorkbenchConfig) -> None:
         raise ValueError(f"不支持的证据回答方式：{config.generator}")
     if config.model not in MODEL_OPTIONS:
         raise ValueError(f"不支持的 LLM 模型：{config.model}")
+
+
+def _selected_options(config: WorkbenchConfig) -> dict[str, str]:
+    return {
+        "extractor": EXTRACTOR_OPTIONS.get(config.extractor, str(config.extractor)),
+        "generator": GENERATOR_OPTIONS.get(config.generator, str(config.generator)),
+        "model": MODEL_OPTIONS.get(config.model, str(config.model)),
+    }
 
 
 def _extract_slots(
@@ -706,6 +1140,8 @@ def _resolve_confirmed_candidates(
             rejected_candidates.append(
                 {
                     "candidate_id": candidate_id,
+                    "reason_code": "candidate_id_not_current_query",
+                    "blocks_execution": True,
                     "reason": "candidate_id 不属于当前 query，或不是系统上一轮生成的候选。",
                 }
             )
@@ -715,6 +1151,8 @@ def _resolve_confirmed_candidates(
                 {
                     "candidate_id": candidate_id,
                     "source_text": candidate.get("source_text"),
+                    "reason_code": "candidate_not_executable",
+                    "blocks_execution": False,
                     "reason": candidate.get("reason") or "该候选不能执行。",
                 }
             )
@@ -734,6 +1172,8 @@ def _resolve_confirmed_candidates(
                 {
                     "candidate_id": candidate_id,
                     "source_text": candidate.get("source_text"),
+                    "reason_code": "candidate_rule_not_verified",
+                    "blocks_execution": False,
                     "reason": "候选规则未通过 RuleVerifier，不能执行。",
                 }
             )
@@ -773,6 +1213,13 @@ def _resolve_confirmed_candidates(
         "unconfirmed_candidates": unconfirmed,
         "no_schema_field_preferences": no_schema,
     }
+
+
+def _confirmation_blocks_execution(confirmation_state: dict[str, Any]) -> bool:
+    return any(
+        bool(item.get("blocks_execution"))
+        for item in confirmation_state.get("rejected_candidates", [])
+    )
 
 
 def _finalize_confirmation_execution(
@@ -1600,14 +2047,22 @@ def _top_result(rank: int, row: dict[str, Any]) -> dict[str, Any]:
     ]
     return {
         "id": f"result_{rank:03d}",
+        "year": row.get("年份"),
+        "batch": row.get("批次"),
+        "university_code": row.get("院校代码"),
         "university_name": row.get("院校名称"),
         "group_code": row.get("院校专业组代码"),
+        "group_name": row.get("专业组名称"),
         "major_code": row.get("专业代码"),
         "major_name": row.get("专业名称"),
         "full_major_name": row.get("专业全称"),
         "subject_requirement": row.get("选科要求"),
+        "province": row.get("所在省"),
         "city": row.get("城市"),
         "tuition": row.get("学费"),
+        "rank_2024": row.get("专业组最低位次1"),
+        "major_rank_2024": row.get("最低位次1"),
+        "plan_count": row.get("计划人数") or row.get("专业组计划人数"),
         "group_min_rank": row.get("专业组最低位次1"),
         "major_min_rank": row.get("最低位次1"),
         "safety_margin": _percent(row.get("safety_margin_pct")),

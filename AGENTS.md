@@ -77,6 +77,9 @@ Keep these boundaries intact:
 - `EvidencePack` must preserve confirmation evidence: confirmed rules,
   confirmation source, executed-after-confirmation rule IDs, unconfirmed
   candidates, and no-schema preferences.
+- `WorkbenchResponse` is the frozen API contract for frontend consumption.
+  Preserve the required top-level fields and status enum unless the API
+  contract docs and snapshot tests are updated in the same quest.
 - `TemplateReportBuilder` is deterministic and uses no LLM.
 - `DeepSeekAnswerGenerator` is optional and evidence-only.
 - `SchemaProfiler` is an offline schema-review tool, not runtime.
@@ -88,6 +91,10 @@ Keep these boundaries intact:
 - The frontend must preserve traceability for executable, confirmation-required,
   and not-executed preferences.
 - Do not change API field names for language consistency.
+- `top_results` must use frontend English keys such as `university_name`,
+  `group_code`, `major_code`, `major_name`, `full_major_name`, `city`,
+  `tuition`, `rank_2024`, and `plan_count`; Chinese source fields may remain
+  inside `EvidencePack`.
 - UI copy may explain that a preference was not executed, but must not imply
   unsupported filters were applied.
 

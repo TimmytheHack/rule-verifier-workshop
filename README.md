@@ -60,9 +60,11 @@ python scripts/build_data_warehouse.py
 
 Workbench API 每次执行前都会校验 DuckDB metadata、schema/value index metadata 和源 Excel fingerprint 是否一致；不一致时返回结构化 warning，不会静默回退到 raw Excel/Pandas 执行。
 
+Workbench API 响应已经固定为 `WorkbenchResponse` contract。前端应依赖 `status`、`answer`、`top_results`、`result_count`、`executed_filters`、`candidates_to_confirm`、`confirmed_rules`、`unconfirmed_candidates`、`unexecuted_preferences`、`no_schema_field_preferences`、`rejected_confirmations`、`warnings`、`evidence_pack` 和 `debug_trace`。`status` 只能是 `ok`、`needs_confirmation`、`no_results`、`blocked`、`error`；`top_results` 只使用英文 key，EvidencePack 内部保留中文原始字段用于追溯。详见 [Workbench API 响应契约](docs/api_contract.md)。
+
 Workbench 还支持 candidate_id confirmation loop：
 
-- 第一次运行时，`partial_match` 偏好只返回 `confirmation_candidates`，不会进入 hard filter。
+- 第一次运行时，`partial_match` 偏好会出现在 contract 字段 `candidates_to_confirm` 中，不会进入 hard filter；旧调试结构中仍保留 `confirmation_candidates`。
 - 用户确认时只能提交上一轮响应里的 `candidate_id`，不能提交新的文本条件。
 - 后端会按当前 query 重新生成候选并校验 `candidate_id`；伪造、过期或不属于当前 query 的 id 会被拒绝。
 - 确认通过后，系统只把该 candidate 对应的已审查字段和值编译成参数化 DuckDB SQL。
@@ -190,6 +192,7 @@ DeepSeek-backed 评估会读取 `.env`，并可能产生 API 延迟和 token 消
 ## 相关文档
 
 - [方法报告](docs/methodology_report.md)
+- [Workbench API 响应契约](docs/api_contract.md)
 - [评估报告](docs/evaluation_report.md)
 - [端到端 demo 用例](docs/end_to_end_demo_cases.md)
 - [Excel schema profile](docs/excel_schema_profile.md)

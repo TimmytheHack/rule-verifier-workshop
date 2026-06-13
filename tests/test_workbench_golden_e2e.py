@@ -5,20 +5,10 @@ from unittest.mock import patch
 
 from src.api.workbench import WorkbenchConfig
 from tests.warehouse_test_utils import run_workbench_with_test_warehouse
-
-
-FRONTEND_TOP_RESULT_KEYS = {
-    "university_name",
-    "group_code",
-    "major_code",
-    "major_name",
-    "full_major_name",
-    "city",
-    "tuition",
-    "group_min_rank",
-    "major_min_rank",
-    "safety_margin",
-}
+from tests.workbench_contract_utils import (
+    FRONTEND_TOP_RESULT_KEYS,
+    assert_workbench_contract,
+)
 
 
 GOLDEN_CASES = [
@@ -51,6 +41,7 @@ GOLDEN_CASES = [
     {
         "case_id": "g02_jike_subject_bundle",
         "input": "广东物理，物化生，排位32000，想学计科，广深优先。",
+        "status": "needs_confirmation",
         "slots": {
             "user_context.reselected_subjects": ["化学", "生物"],
             "preferences.major_exact_terms": [],
@@ -211,6 +202,7 @@ GOLDEN_CASES = [
     {
         "case_id": "g09_network_security_empty",
         "input": "广东物理，排位90000，想学网络安全，深圳。",
+        "status": "no_results",
         "slots": {"preferences.major_exact_terms": ["网络安全"]},
         "hard_rule_ids": [
             "e_source_province",
@@ -285,6 +277,7 @@ GOLDEN_CASES = [
     {
         "case_id": "g13_related_major_prd_cooperation",
         "input": "广东物理，排名3.2万，计算机相关，珠三角优先，不要校企合作。",
+        "status": "needs_confirmation",
         "slots": {
             "user_context.user_rank": 32000,
             "preferences.major_exact_terms": ["计算机"],
@@ -329,6 +322,7 @@ GOLDEN_CASES = [
     {
         "case_id": "g15_stay_guangdong_recommend",
         "input": "排位10000名，想读人工智能，计算机，而且不想去国外，想留在广东省，请给出推荐。",
+        "status": "needs_confirmation",
         "slots": {
             "user_context.source_province": None,
             "preferences.major_exact_terms": ["人工智能", "计算机"],
@@ -461,6 +455,7 @@ GOLDEN_CASES = [
     {
         "case_id": "g21_low_tuition_needs_confirmation",
         "input": "广东物理，排位32000，想学临床医学，深圳，学费1000以内。",
+        "status": "needs_confirmation",
         "slots": {
             "preferences.major_exact_terms": ["临床医学"],
             "preferences.tuition_cap_yuan": 1000,
@@ -511,6 +506,8 @@ class WorkbenchGoldenE2ETest(unittest.TestCase):
             with self.subTest(case=case["case_id"]):
                 result = _run_case(case["input"])
 
+                assert_workbench_contract(self, result)
+                self.assertEqual(result["status"], case.get("status", "ok"))
                 self.assertEqual(result["result_count"], case["result_count"])
                 self.assertEqual(
                     result["execution"]["hard_rule_ids"],
