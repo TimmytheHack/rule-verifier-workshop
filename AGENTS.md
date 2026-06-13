@@ -1,20 +1,41 @@
 # AGENTS.md
 
-## Project Mission
+## Mission
 
 This repository is a research-engineering project for preference-to-rule
 verification in Guangdong college application planning. It is not a generic
 recommendation bot.
 
-The core safety invariant is:
+Core invariant:
 
 ```text
 Natural language may propose structure, but only verified schema-grounded rules may execute.
 ```
 
+## Agent File Convention
+
+- Root agent instructions live in `AGENTS.md`.
+- Path-specific overrides use the singular filename `AGENTS.override.md`.
+- Keep `AGENTS.md` and every `AGENTS.override.md` file in English.
+- Do not rename `AGENTS.override.md` to `AGENTS.overrides.md`.
+- Keep overrides concise and path-specific; do not duplicate the full root
+  policy in every directory.
+
+## Documentation And Comments
+
+- Human-facing README files are Chinese only.
+- Ordinary Markdown docs are Chinese only, except for technology names,
+  commands, file paths, API names, identifiers, and established protocol terms.
+- Project-owned source comments should be Chinese.
+- Do not translate identifiers, function names, class names, JSON keys, API
+  response field names, package names, commands, or protocol terms for language
+  consistency.
+- Generated Markdown should follow the same naming convention when practical:
+  Chinese canonical docs use unsuffixed `*.md` filenames.
+
 ## Architecture Boundary
 
-The runtime path is:
+Runtime flow:
 
 ```text
 Extractor
@@ -35,10 +56,12 @@ Keep these boundaries intact:
 - `RegexExtractor` is a benchmark baseline, not the final extraction strategy.
 - `DeepSeekExtractor` may extract preferences and source spans only.
 - Attribute grounding audits extracted slots before rule construction.
-- Rule verification controls schema existence, operator validity, ambiguity, and
-  execution level.
-- Candidate rules must not execute before confirmation or simulated confirmation.
-- Missing-schema or external-info preferences must be preserved but not executed.
+- Rule verification controls schema existence, operator validity, ambiguity,
+  and execution level.
+- Candidate rules must not execute before confirmation or simulated
+  confirmation.
+- Missing-schema or external-info preferences must be preserved but not
+  executed.
 - LLM-only baselines are evaluation baselines, not production execution paths.
 - `PandasExecutor` is only the MVP executor for Excel/CSV.
 - `EvidencePack` is the only input to answer generation; raw Excel is not.
@@ -46,14 +69,24 @@ Keep these boundaries intact:
 - `DeepSeekAnswerGenerator` is optional and evidence-only.
 - `SchemaProfiler` is an offline schema-review tool, not runtime.
 
+## Frontend Boundary
+
+- Do not invent recommendation logic in the frontend.
+- The frontend visualizes API output or mock output only.
+- The frontend must preserve traceability for executable, confirmation-required,
+  and not-executed preferences.
+- Do not change API field names for language consistency.
+- UI copy may explain that a preference was not executed, but must not imply
+  unsupported filters were applied.
+
 ## Domain Rules
 
-For Guangdong application planning, rank is more important than score. If a user
-gives only score and no rank, ask for province rank rather than estimating risk
-from score alone.
-
-Do not output school-only recommendations when professional-group data is
-available. The minimum useful result shape is:
+- For Guangdong application planning, rank is more important than score. If a
+  user gives only score and no rank, ask for province rank instead of estimating
+  risk from score alone.
+- Do not output school-only recommendations when professional-group data is
+  available.
+- The minimum useful result shape is:
 
 ```text
 院校名称
@@ -66,72 +99,122 @@ available. The minimum useful result shape is:
 safety margin
 ```
 
-Explicit field/value constraints can be deterministic when schema-grounded. For
-example, `学费两万以内` can become `学费 <= 20000` if `学费` exists. Vague
-preferences such as `太贵`, `稳一点`, `学校好一点`, `计算机相关`, or `离家近`
-remain candidate or external-info needs until boundaries are confirmed.
+- Explicit field/value constraints can be deterministic when schema-grounded.
+  For example, `学费两万以内` can become `学费 <= 20000` if `学费` exists.
+- Vague preferences such as `太贵`, `稳一点`, `学校好一点`, `计算机相关`, or
+  `离家近` remain candidate or external-info needs until their boundaries are
+  confirmed.
 
-## Answer Evaluation Guardrails
+## Verification Guardrails
 
-Answer-level evaluation checks:
-
-- correct result count;
-- correct executed rules;
-- correct top results, including professional group code, major code, and full
-  major name;
-- mentions not-executed preferences;
-- no claims unsupported by verified evidence.
-
-`unsupported_claims` means unsupported by the verified evidence pack, not
-necessarily absent from raw Excel. For example, `公私性质` exists as a candidate
-column in the Excel profile, but `中外合作` exclusion remains unsupported until a
-reviewed active schema field and verifier policy are added.
-
-## Editing Policy
-
-- Prefer small, reviewable changes that preserve the methodology boundary.
+- Prefer deterministic execution paths for rule execution.
+- Do not silently execute vague preferences.
 - Do not relax verifier checks to improve benchmark scores.
 - Do not add regex special cases only to chase benchmark results unless the
-  expected behavior is also documented and tested.
+  expected behavior is documented and tested.
 - Do not infer unsupported fields such as `cooperation_type`, employment
   outlook, dorm quality, school atmosphere, or city development potential from
   free text unless a reviewed structured field is added first.
-- Keep generated evaluation artifacts consistent with reports when they are
-  intentionally refreshed.
-- Never print or inspect secrets from `.env`.
+- Answer-level evaluation checks result count, executed rules, top results,
+  not-executed preferences, and claims unsupported by the verified evidence
+  pack.
+- `unsupported_claims` means unsupported by the verified evidence pack, not
+  necessarily absent from raw Excel.
 
-## Common Commands
+## Commands
 
-Fast local safety checks:
+Default Python environment:
+
+- Before running Python commands, prefer the repository-local virtual
+  environment when it exists.
+- In an interactive shell session, activate it with:
 
 ```bash
-python3 -m unittest discover -s tests
-python3 scripts/eval_fuzzy_inputs.py --methods regex
+source .venv/bin/activate
 ```
 
-DeepSeek-backed checks read `.env` automatically:
+- For one-off commands, calling `.venv/bin/python` directly is also acceptable.
+- Fall back to `python3` only when `.venv` is missing or unusable, and mention
+  that fallback in the response if it affects verification.
+- The Python commands below assume the virtual environment is active; use
+  `python` from `.venv` after activation.
+
+Run unit tests:
 
 ```bash
-python3 scripts/eval_modes.py
-python3 scripts/eval_fuzzy_inputs.py --quick --output-path outputs/eval/fuzzy_deepseek_extractor_results.json
-python3 scripts/eval_fuzzy_inputs.py --methods all
+python -m unittest discover -s tests
 ```
 
-Use the full DeepSeek comparison only when API latency and token usage are
-acceptable. The fuzzy evaluator caches API responses in
-`outputs/eval/deepseek_fuzzy_cache.json`, which is ignored by git.
+Run the MVP demo:
+
+```bash
+python scripts/run_mvp_demo.py
+```
+
+Build the local structured data store and schema/value index:
+
+```bash
+python scripts/build_data_warehouse.py
+```
+
+Run the fast regex-only evaluator:
+
+```bash
+python scripts/eval_fuzzy_inputs.py --methods regex
+```
+
+Start the backend API:
+
+```bash
+python -m uvicorn src.api.server:app --reload --port 8001
+```
+
+Start the frontend:
+
+```bash
+cd frontend
+npm run dev
+```
+
+Build the frontend:
+
+```bash
+cd frontend
+npm run build
+```
+
+DeepSeek-backed checks read `.env` automatically and may incur API latency and
+token usage:
+
+```bash
+python scripts/eval_modes.py
+python scripts/eval_fuzzy_inputs.py --quick --output-path outputs/eval/fuzzy_deepseek_extractor_results.json
+python scripts/eval_fuzzy_inputs.py --methods all
+```
+
+Never print or inspect secrets from `.env`.
 
 ## Tests And Artifacts
 
-When changing runtime code, run targeted unit tests plus syntax checks. When
-changing evaluation logic or expected scores, update:
+- When behavior changes, update focused tests and the docs that describe that
+  behavior.
+- When filenames change, update Markdown links, scripts, generated artifact
+  paths, and public docs that mention those filenames.
+- When evaluation logic or expected scores change, update:
+  - `outputs/eval/eval_modes.json`
+  - `outputs/eval/fuzzy_eval_results.json`
+  - `outputs/eval/pipeline_token_budget.json`
+  - `docs/evaluation_report.md`
+  - `docs/methodology_report.md`
+- When schema or rule policy changes, update tests that assert the relevant
+  guardrail.
 
-- `outputs/eval/eval_modes.json`
-- `outputs/eval/fuzzy_eval_results.json`
-- `outputs/eval/pipeline_token_budget.json`
-- `docs/evaluation_report*.md`
-- `docs/methodology_report*.md`
-- public docs that intentionally quote benchmark summaries
+## Commit Hygiene
 
-When changing schema or rule policy, update tests that assert the relevant
-guardrail.
+- After completing and verifying a chat quest, create a git commit with a
+  concise, reasonable commit message.
+- Stage only files that belong to the completed quest. Do not include unrelated
+  user changes, generated scratch files, secrets, virtual environments, or large
+  local database files.
+- If unrelated worktree changes make a clean commit unsafe, explain the blocker
+  instead of mixing unrelated changes into the commit.

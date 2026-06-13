@@ -40,7 +40,7 @@ class WorkbenchRunRequest(BaseModel):
     user_input: str = Field(default=DEFAULT_USER_INPUT, min_length=1)
     hard_filters: HardFiltersRequest = Field(default_factory=HardFiltersRequest)
     soft_preferences: SoftPreferencesRequest = Field(default_factory=SoftPreferencesRequest)
-    extractor: str = "regex"
+    extractor: str = "hybrid"
     generator: str = "template_evidence"
     model: str = "deepseek-v4-flash"
 

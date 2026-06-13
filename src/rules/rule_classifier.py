@@ -56,6 +56,9 @@ class RuleClassifier:
             if not _llm_needed_part_is_relevant(part, slots):
                 continue
             item = copy.deepcopy(part)
+            source_text = _llm_needed_source_text(item, slots)
+            if source_text:
+                item["source_text"] = source_text
             item["verification"] = {
                 "field_exists": self.verifier.schema_registry.has_field(item.get("field_id")),
                 "schema_grounded": False,
@@ -84,6 +87,7 @@ class RuleClassifier:
             "non_executable_preferences": _relevant_non_executable_preferences(
                 self.taxonomy["non_executable_preferences"],
                 llm_needed_part_ids,
+                slots,
             ),
         }
 
@@ -104,6 +108,14 @@ def _llm_needed_part_is_relevant(part: dict[str, Any], slots: dict[str, Any]) ->
     if part.get("part_id") == "l_overseas_scope":
         return _value_present(_slot_value(slots, ["preferences", "overseas_preference_raw"]))
     return True
+
+
+def _llm_needed_source_text(part: dict[str, Any], slots: dict[str, Any]) -> str | None:
+    if part.get("part_id") == "l_cooperation_type":
+        return _slot_value(slots, ["preferences", "cooperation_preference_raw"])
+    if part.get("part_id") == "l_overseas_scope":
+        return _slot_value(slots, ["preferences", "overseas_preference_raw"])
+    return None
 
 
 def _relevant_confirmation_questions(
@@ -166,9 +178,15 @@ def _relevant_simulated_confirmations(
 def _relevant_non_executable_preferences(
     preferences: list[dict[str, Any]],
     llm_needed_part_ids: set[str],
+    slots: dict[str, Any],
 ) -> list[dict[str, Any]]:
-    return [
-        copy.deepcopy(preference)
-        for preference in preferences
-        if preference.get("part_id") in llm_needed_part_ids
-    ]
+    relevant = []
+    for preference in preferences:
+        if preference.get("part_id") not in llm_needed_part_ids:
+            continue
+        item = copy.deepcopy(preference)
+        source_text = _llm_needed_source_text(item, slots)
+        if source_text:
+            item["source_text"] = source_text
+        relevant.append(item)
+    return relevant

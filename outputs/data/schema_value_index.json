@@ -1,0 +1,948 @@
+{
+  "source": {
+    "workbook_path": "广东省2025年志愿填报大数据（24-25）0523.xlsx",
+    "sheet_name": "Sheet1",
+    "header_row": 3,
+    "source_fingerprint": "38cdba7f2b9f5c05d52f8285df5df4fc622d7cd67e2e179cb0a0912d41dba5b3"
+  },
+  "warehouse": {
+    "database_path": "outputs/data/guangdong_admissions.duckdb",
+    "table_name": "admissions",
+    "row_count": 30855,
+    "column_count": 57
+  },
+  "fields": {
+    "source_province": {
+      "source_column": "生源地",
+      "active": true,
+      "type": "string",
+      "allowed_ops": [
+        "eq"
+      ],
+      "aliases": [
+        "广东",
+        "生源地",
+        "考生省份"
+      ],
+      "non_null_count": 30855,
+      "distinct_count": 1,
+      "top_values": [
+        {
+          "value": "广东",
+          "count": 30855
+        }
+      ],
+      "sample_values": [
+        "广东"
+      ]
+    },
+    "subject_type": {
+      "source_column": "科类",
+      "active": true,
+      "type": "enum",
+      "allowed_ops": [
+        "eq"
+      ],
+      "aliases": [
+        "物理类",
+        "历史类",
+        "科类"
+      ],
+      "non_null_count": 30855,
+      "distinct_count": 2,
+      "top_values": [
+        {
+          "value": "物理",
+          "count": 20360
+        },
+        {
+          "value": "历史",
+          "count": 10495
+        }
+      ],
+      "sample_values": [
+        "历史",
+        "物理"
+      ]
+    },
+    "subject_requirement": {
+      "source_column": "选科要求",
+      "active": true,
+      "type": "enum_or_category",
+      "allowed_ops": [
+        "satisfies_subject_requirement"
+      ],
+      "aliases": [
+        "选科要求",
+        "再选科目",
+        "四选二",
+        "化学",
+        "生物",
+        "政治",
+        "地理"
+      ],
+      "non_null_count": 30855,
+      "distinct_count": 12,
+      "top_values": [
+        {
+          "value": "不限",
+          "count": 20338
+        },
+        {
+          "value": "化学",
+          "count": 9449
+        },
+        {
+          "value": "政治",
+          "count": 539
+        },
+        {
+          "value": "化学和生物",
+          "count": 201
+        },
+        {
+          "value": "生物",
+          "count": 165
+        },
+        {
+          "value": "地理",
+          "count": 143
+        },
+        {
+          "value": "政治和地理",
+          "count": 14
+        },
+        {
+          "value": "地理和化学",
+          "count": 2
+        },
+        {
+          "value": "政治和化学",
+          "count": 1
+        },
+        {
+          "value": "政治和生物",
+          "count": 1
+        },
+        {
+          "value": "地理和生物",
+          "count": 1
+        },
+        {
+          "value": "化学 或 生物",
+          "count": 1
+        }
+      ],
+      "sample_values": [
+        "不限",
+        "化学",
+        "政治",
+        "地理",
+        "生物",
+        "化学和生物",
+        "政治和地理",
+        "地理和化学",
+        "政治和化学",
+        "政治和生物"
+      ]
+    },
+    "major_name": {
+      "source_column": "专业名称",
+      "active": true,
+      "type": "string",
+      "allowed_ops": [
+        "contains",
+        "contains_any",
+        "eq"
+      ],
+      "aliases": [
+        "专业",
+        "想学",
+        "计算机"
+      ],
+      "non_null_count": 30855,
+      "distinct_count": 1219,
+      "top_values": [
+        {
+          "value": "电子商务",
+          "count": 493
+        },
+        {
+          "value": "英语",
+          "count": 485
+        },
+        {
+          "value": "国际经济与贸易",
+          "count": 465
+        },
+        {
+          "value": "会计学",
+          "count": 449
+        },
+        {
+          "value": "法学",
+          "count": 432
+        },
+        {
+          "value": "临床医学",
+          "count": 431
+        },
+        {
+          "value": "学前教育",
+          "count": 391
+        },
+        {
+          "value": "计算机科学与技术",
+          "count": 386
+        },
+        {
+          "value": "大数据与会计",
+          "count": 367
+        },
+        {
+          "value": "商务英语",
+          "count": 367
+        },
+        {
+          "value": "市场营销",
+          "count": 349
+        },
+        {
+          "value": "护理",
+          "count": 297
+        },
+        {
+          "value": "金融学",
+          "count": 288
+        },
+        {
+          "value": "中医学",
+          "count": 286
+        },
+        {
+          "value": "汉语言文学",
+          "count": 282
+        },
+        {
+          "value": "旅游管理",
+          "count": 280
+        },
+        {
+          "value": "财务管理",
+          "count": 270
+        },
+        {
+          "value": "软件工程",
+          "count": 268
+        },
+        {
+          "value": "电气工程及其自动化",
+          "count": 263
+        },
+        {
+          "value": "药学",
+          "count": 261
+        },
+        {
+          "value": "工商管理",
+          "count": 249
+        },
+        {
+          "value": "小学教育",
+          "count": 232
+        },
+        {
+          "value": "数据科学与大数据技术",
+          "count": 229
+        },
+        {
+          "value": "软件技术",
+          "count": 227
+        },
+        {
+          "value": "计算机应用技术",
+          "count": 221
+        },
+        {
+          "value": "机械设计制造及其自动化",
+          "count": 221
+        },
+        {
+          "value": "土木工程",
+          "count": 219
+        },
+        {
+          "value": "电子信息工程",
+          "count": 211
+        },
+        {
+          "value": "工程造价",
+          "count": 205
+        },
+        {
+          "value": "现代物流管理",
+          "count": 202
+        }
+      ],
+      "sample_values": [
+        "法语",
+        "德语",
+        "西班牙语",
+        "日语",
+        "俄语",
+        "阿拉伯语",
+        "朝鲜语",
+        "葡萄牙语",
+        "文科试验班类",
+        "中国语言文学类"
+      ]
+    },
+    "school_province": {
+      "source_column": "所在省",
+      "active": true,
+      "type": "enum_or_category",
+      "allowed_ops": [
+        "eq",
+        "in"
+      ],
+      "aliases": [
+        "所在省",
+        "省内",
+        "广东省内",
+        "留在广东省",
+        "不出省"
+      ],
+      "non_null_count": 30848,
+      "distinct_count": 33,
+      "top_values": [
+        {
+          "value": "广东",
+          "count": 11237
+        },
+        {
+          "value": "湖南",
+          "count": 1897
+        },
+        {
+          "value": "江苏",
+          "count": 1545
+        },
+        {
+          "value": "湖北",
+          "count": 1497
+        },
+        {
+          "value": "江西",
+          "count": 1433
+        },
+        {
+          "value": "广西",
+          "count": 1196
+        },
+        {
+          "value": "北京",
+          "count": 1007
+        },
+        {
+          "value": "四川",
+          "count": 1007
+        },
+        {
+          "value": "福建",
+          "count": 775
+        },
+        {
+          "value": "山东",
+          "count": 726
+        },
+        {
+          "value": "黑龙江",
+          "count": 686
+        },
+        {
+          "value": "陕西",
+          "count": 657
+        },
+        {
+          "value": "河北",
+          "count": 643
+        },
+        {
+          "value": "上海",
+          "count": 639
+        },
+        {
+          "value": "浙江",
+          "count": 610
+        },
+        {
+          "value": "河南",
+          "count": 610
+        },
+        {
+          "value": "重庆",
+          "count": 588
+        },
+        {
+          "value": "辽宁",
+          "count": 567
+        },
+        {
+          "value": "天津",
+          "count": 495
+        },
+        {
+          "value": "海南",
+          "count": 477
+        },
+        {
+          "value": "云南",
+          "count": 434
+        },
+        {
+          "value": "吉林",
+          "count": 419
+        },
+        {
+          "value": "安徽",
+          "count": 374
+        },
+        {
+          "value": "新疆",
+          "count": 320
+        },
+        {
+          "value": "山西",
+          "count": 246
+        },
+        {
+          "value": "甘肃",
+          "count": 246
+        },
+        {
+          "value": "贵州",
+          "count": 211
+        },
+        {
+          "value": "内蒙古",
+          "count": 130
+        },
+        {
+          "value": "青海",
+          "count": 57
+        },
+        {
+          "value": "宁夏",
+          "count": 48
+        }
+      ],
+      "sample_values": [
+        "北京",
+        "天津",
+        "河北",
+        "河南",
+        "山西",
+        "内蒙古",
+        "辽宁",
+        "吉林",
+        "黑龙江",
+        "上海"
+      ]
+    },
+    "city": {
+      "source_column": "城市",
+      "active": true,
+      "type": "string",
+      "allowed_ops": [
+        "contains",
+        "in_contains"
+      ],
+      "aliases": [
+        "城市",
+        "广州",
+        "深圳"
+      ],
+      "non_null_count": 30848,
+      "distinct_count": 313,
+      "top_values": [
+        {
+          "value": "广州",
+          "count": 6146
+        },
+        {
+          "value": "武汉",
+          "count": 1175
+        },
+        {
+          "value": "长沙",
+          "count": 926
+        },
+        {
+          "value": "南昌",
+          "count": 808
+        },
+        {
+          "value": "南京",
+          "count": 718
+        },
+        {
+          "value": "深圳",
+          "count": 684
+        },
+        {
+          "value": "成都",
+          "count": 677
+        },
+        {
+          "value": "海淀区",
+          "count": 604
+        },
+        {
+          "value": "湛江",
+          "count": 592
+        },
+        {
+          "value": "西安",
+          "count": 582
+        },
+        {
+          "value": "肇庆",
+          "count": 549
+        },
+        {
+          "value": "东莞",
+          "count": 546
+        },
+        {
+          "value": "哈尔滨",
+          "count": 519
+        },
+        {
+          "value": "南宁",
+          "count": 466
+        },
+        {
+          "value": "佛山",
+          "count": 459
+        },
+        {
+          "value": "杭州",
+          "count": 374
+        },
+        {
+          "value": "昆明",
+          "count": 365
+        },
+        {
+          "value": "长春",
+          "count": 350
+        },
+        {
+          "value": "郑州",
+          "count": 311
+        },
+        {
+          "value": "茂名",
+          "count": 302
+        },
+        {
+          "value": "桂林",
+          "count": 300
+        },
+        {
+          "value": "江门",
+          "count": 285
+        },
+        {
+          "value": "福州",
+          "count": 250
+        },
+        {
+          "value": "济南",
+          "count": 248
+        },
+        {
+          "value": "沈阳",
+          "count": 246
+        },
+        {
+          "value": "惠州",
+          "count": 242
+        },
+        {
+          "value": "珠海",
+          "count": 241
+        },
+        {
+          "value": "青岛",
+          "count": 238
+        },
+        {
+          "value": "大连",
+          "count": 234
+        },
+        {
+          "value": "海口",
+          "count": 222
+        }
+      ],
+      "sample_values": [
+        "海淀区",
+        "朝阳区",
+        "大兴区",
+        "丰台区",
+        "通州区",
+        "昌平区",
+        "西城区",
+        "东城区",
+        "南开区",
+        "河西区"
+      ]
+    },
+    "group_min_rank_2024": {
+      "source_column": "专业组最低位次1",
+      "active": true,
+      "type": "number",
+      "allowed_ops": [
+        ">=",
+        "<=",
+        "between",
+        "sort"
+      ],
+      "aliases": [
+        "专业组最低位次",
+        "2024最低排位",
+        "稳一点"
+      ],
+      "non_null_count": 30490,
+      "distinct_count": 7328,
+      "top_values": [
+        {
+          "value": "244969",
+          "count": 59
+        },
+        {
+          "value": "427439",
+          "count": 59
+        },
+        {
+          "value": "400772",
+          "count": 54
+        },
+        {
+          "value": "71043",
+          "count": 51
+        },
+        {
+          "value": "241404",
+          "count": 51
+        },
+        {
+          "value": "422846",
+          "count": 51
+        },
+        {
+          "value": "235178",
+          "count": 50
+        },
+        {
+          "value": "413417",
+          "count": 50
+        },
+        {
+          "value": "189429",
+          "count": 49
+        },
+        {
+          "value": "225133",
+          "count": 49
+        },
+        {
+          "value": "368071",
+          "count": 49
+        },
+        {
+          "value": "92458",
+          "count": 46
+        },
+        {
+          "value": "394689",
+          "count": 44
+        },
+        {
+          "value": "211694",
+          "count": 44
+        },
+        {
+          "value": "285011",
+          "count": 44
+        },
+        {
+          "value": "318347",
+          "count": 43
+        },
+        {
+          "value": "131548",
+          "count": 43
+        },
+        {
+          "value": "36697",
+          "count": 42
+        },
+        {
+          "value": "176204",
+          "count": 41
+        },
+        {
+          "value": "345794",
+          "count": 41
+        },
+        {
+          "value": "369902",
+          "count": 41
+        },
+        {
+          "value": "390272",
+          "count": 40
+        },
+        {
+          "value": "216061",
+          "count": 40
+        },
+        {
+          "value": "322946",
+          "count": 40
+        },
+        {
+          "value": "116610",
+          "count": 40
+        },
+        {
+          "value": "404260",
+          "count": 39
+        },
+        {
+          "value": "220105",
+          "count": 39
+        },
+        {
+          "value": "303326",
+          "count": 39
+        },
+        {
+          "value": "417595",
+          "count": 39
+        },
+        {
+          "value": "225460",
+          "count": 39
+        }
+      ],
+      "sample_values": [
+        "49",
+        "466",
+        "32",
+        "85",
+        "245",
+        "123",
+        "150",
+        "1215",
+        "831",
+        "53"
+      ],
+      "numeric": {
+        "min": 19,
+        "max": 448677
+      }
+    },
+    "tuition_yuan_per_year": {
+      "source_column": "学费",
+      "active": true,
+      "type": "number_from_string",
+      "allowed_ops": [
+        "<=",
+        ">=",
+        "between"
+      ],
+      "aliases": [
+        "学费",
+        "太贵",
+        "费用"
+      ],
+      "non_null_count": 30855,
+      "distinct_count": 534,
+      "top_values": [
+        {
+          "value": "5000",
+          "count": 1964
+        },
+        {
+          "value": "6410",
+          "count": 1801
+        },
+        {
+          "value": "5250",
+          "count": 1301
+        },
+        {
+          "value": "6000",
+          "count": 1217
+        },
+        {
+          "value": "免费",
+          "count": 826
+        },
+        {
+          "value": "5500",
+          "count": 791
+        },
+        {
+          "value": "4500",
+          "count": 607
+        },
+        {
+          "value": "18000",
+          "count": 578
+        },
+        {
+          "value": "4600",
+          "count": 567
+        },
+        {
+          "value": "5200",
+          "count": 554
+        },
+        {
+          "value": "19800",
+          "count": 488
+        },
+        {
+          "value": "6500",
+          "count": 479
+        },
+        {
+          "value": "6850",
+          "count": 455
+        },
+        {
+          "value": "3500",
+          "count": 407
+        },
+        {
+          "value": "6600",
+          "count": 404
+        },
+        {
+          "value": "5710",
+          "count": 403
+        },
+        {
+          "value": "4590",
+          "count": 375
+        },
+        {
+          "value": "5460",
+          "count": 334
+        },
+        {
+          "value": "4400",
+          "count": 333
+        },
+        {
+          "value": "4000",
+          "count": 333
+        },
+        {
+          "value": "31800",
+          "count": 327
+        },
+        {
+          "value": "4800",
+          "count": 324
+        },
+        {
+          "value": "5050",
+          "count": 320
+        },
+        {
+          "value": "5800",
+          "count": 313
+        },
+        {
+          "value": "5300",
+          "count": 310
+        },
+        {
+          "value": "7500",
+          "count": 308
+        },
+        {
+          "value": "6060",
+          "count": 291
+        },
+        {
+          "value": "5900",
+          "count": 290
+        },
+        {
+          "value": "17800",
+          "count": 272
+        },
+        {
+          "value": "20000",
+          "count": 272
+        }
+      ],
+      "sample_values": [
+        "5000",
+        "5300",
+        "6000",
+        "5500",
+        "60000",
+        "40000",
+        "78000",
+        "50000",
+        "4200",
+        "4600"
+      ],
+      "numeric": {
+        "min": 2200,
+        "max": 160000
+      }
+    },
+    "cooperation_type": {
+      "source_column": null,
+      "active": false,
+      "type": "enum",
+      "allowed_ops": [
+        "eq",
+        "neq",
+        "in",
+        "not_in"
+      ],
+      "aliases": [
+        "中外合作",
+        "合作办学",
+        "国际合作"
+      ]
+    },
+    "school_country_or_region": {
+      "source_column": null,
+      "active": false,
+      "type": "enum",
+      "allowed_ops": [
+        "eq",
+        "neq",
+        "in",
+        "not_in"
+      ],
+      "aliases": [
+        "国外",
+        "境外",
+        "出国",
+        "国内",
+        "不想去国外"
+      ]
+    }
+  }
+}

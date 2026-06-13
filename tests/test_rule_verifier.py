@@ -262,6 +262,46 @@ class RuleVerifierTest(unittest.TestCase):
         self.assertEqual(deterministic["d_tuition_cap_explicit"]["value"], 20000)
         self.assertNotIn("c_tuition_cap", {rule["rule_id"] for rule in classified["candidate_rules"]})
 
+    def test_deterministic_extractor_handles_common_aliases_and_units(self) -> None:
+        slots = RegexExtractor().extract(
+            "广东物理类，全省三万二，想学计科，广深优先，预算2w以内。"
+        )
+
+        self.assertEqual(slots["user_context"]["source_province"], "广东")
+        self.assertEqual(slots["user_context"]["subject_type"], "物理")
+        self.assertEqual(slots["user_context"]["user_rank"], 32000)
+        self.assertEqual(slots["preferences"]["major_exact_terms"], ["计算机"])
+        self.assertEqual(slots["preferences"]["preferred_cities"], ["广州", "深圳"])
+        self.assertEqual(slots["preferences"]["tuition_cap_yuan"], 20000)
+
+    def test_deterministic_extractor_handles_decimal_rank_and_subject_bundle(self) -> None:
+        slots = RegexExtractor().extract(
+            "我是广东考生，物化生，排名3.2万，计算机类/软件方向，不考虑学费超过2万的。"
+        )
+
+        self.assertEqual(slots["user_context"]["subject_type"], "物理")
+        self.assertEqual(slots["user_context"]["reselected_subjects"], ["化学", "生物"])
+        self.assertEqual(slots["user_context"]["user_rank"], 32000)
+        self.assertEqual(
+            slots["preferences"]["major_exact_terms"],
+            ["计算机", "软件工程"],
+        )
+        self.assertEqual(slots["preferences"]["tuition_cap_yuan"], 20000)
+
+    def test_cooperation_alias_preserves_user_source_text_without_execution(self) -> None:
+        slots = RegexExtractor().extract(
+            "广东物理类，排位32000，只给我深圳大学附近的计算机，不要校企合作。"
+        )
+        classified = RuleClassifier(TAXONOMY_PATH, self.verifier).classify(slots)
+
+        self.assertEqual(slots["preferences"]["cooperation_preference_raw"], "不要校企合作")
+        self.assertEqual(classified["llm_needed_parts"][0]["source_text"], "不要校企合作")
+        self.assertEqual(
+            classified["non_executable_preferences"][0]["source_text"],
+            "不要校企合作",
+        )
+        self.assertFalse(classified["llm_needed_parts"][0]["verification"]["executable"])
+
     def test_rule_lifecycle_schema_records_non_llm_execution_boundary(self) -> None:
         lifecycle = json.loads((ROOT / "rules/rule_lifecycle_schema.json").read_text(encoding="utf-8"))
         states = {state["state"]: state for state in lifecycle["states"]}

@@ -17,9 +17,15 @@ from scripts.run_mvp_demo import (
     TAXONOMY_PATH,
     WORKBOOK_NAME,
 )
+from src.adapters.data_warehouse import load_structured_dataset
 from src.adapters.excel_adapter import ExcelAdapter, ExcelDataSet
 from src.executors.pandas_executor import PandasExecutor
-from src.extractors.deepseek_extractor import DeepSeekClient, DeepSeekExtractor
+from src.extractors.deepseek_extractor import (
+    DeepSeekClient,
+    DeepSeekExtractor,
+    has_deepseek_api_key,
+)
+from src.extractors.extractor_pipeline import ExtractorFallbackPipeline
 from src.extractors.regex_extractor import RegexExtractor
 from src.reporting.deepseek_answer_generator import (
     DeepSeekAnswerGenerator,
@@ -40,6 +46,7 @@ DEFAULT_USER_INPUT = (
 )
 
 EXTRACTOR_OPTIONS = {
+    "hybrid": "规则优先，LLM 补槽",
     "regex": "规则解析软偏好",
     "deepseek": "LLM 辅助解析软偏好",
 }
@@ -61,6 +68,7 @@ NOT_EXECUTED_COOPERATION_REASON = (
     "当前数据字段定义没有合作办学类型字段，不能验证或执行"
     "“排除中外合作”。"
 )
+WAREHOUSE_DATABASE_PATH = Path("outputs/data/guangdong_admissions.duckdb")
 
 
 @dataclass(frozen=True)
@@ -70,7 +78,7 @@ class WorkbenchConfig:
     user_input: str = DEFAULT_USER_INPUT
     hard_filters: dict[str, Any] = field(default_factory=dict)
     soft_preferences: dict[str, Any] = field(default_factory=dict)
-    extractor: str = "regex"
+    extractor: str = "hybrid"
     generator: str = "template_evidence"
     model: str = "deepseek-v4-flash"
 
@@ -109,7 +117,6 @@ def run_workbench(config: WorkbenchConfig) -> dict[str, Any]:
         TAXONOMY_PATH,
         simulated_confirmation_enabled=True,
     ).final_executable_rules(classified_rules)
-    final_rules = _merge_verified_proposed_rules(final_rules, proposed_rules)
     raw_results = PandasExecutor().execute(
         dataset.dataframe,
         final_rules,
@@ -171,6 +178,13 @@ def run_workbench(config: WorkbenchConfig) -> dict[str, Any]:
 
 
 def _load_dataset() -> ExcelDataSet:
+    if WAREHOUSE_DATABASE_PATH.exists():
+        stat = WAREHOUSE_DATABASE_PATH.stat()
+        return _load_warehouse_dataset_cached(
+            str(WAREHOUSE_DATABASE_PATH),
+            stat.st_mtime_ns,
+            stat.st_size,
+        )
     workbook_path = Path(WORKBOOK_NAME)
     stat = workbook_path.stat()
     return _load_dataset_cached(
@@ -178,6 +192,16 @@ def _load_dataset() -> ExcelDataSet:
         stat.st_mtime_ns,
         stat.st_size,
     )
+
+
+@lru_cache(maxsize=1)
+def _load_warehouse_dataset_cached(
+    database_path: str,
+    modified_ns: int,
+    file_size: int,
+) -> ExcelDataSet:
+    _ = (modified_ns, file_size)
+    return load_structured_dataset(database_path, REQUIRED_COLUMNS)
 
 
 @lru_cache(maxsize=1)
@@ -231,6 +255,31 @@ def _extract_slots(
             RegexExtractor().extract(soft_prompt),
             config=config,
         ), None
+    if config.extractor == "hybrid":
+        client = (
+            _interactive_deepseek_client(config.model)
+            if has_deepseek_api_key()
+            else None
+        )
+        slots = _slots_from_inputs(
+            ExtractorFallbackPipeline(
+                fallback_extractor=(
+                    DeepSeekExtractor(client=client) if client is not None else None
+                ),
+                fallback_enabled=client is not None,
+            ).extract(
+                soft_prompt,
+                schema_context=(
+                    schema_registry.field_summary_for_llm()
+                    if schema_registry is not None
+                    else []
+                ),
+                hard_context=_display_hard_filters(config.hard_filters),
+                boundary_context=_boundary_context(config.soft_preferences),
+            ),
+            config=config,
+        )
+        return slots, slots.get("deepseek_usage")
 
     client = _interactive_deepseek_client(config.model)
     slots = _slots_from_inputs(
