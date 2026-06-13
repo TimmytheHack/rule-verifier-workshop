@@ -44,6 +44,8 @@ Extractor
 - Rule verifier 是 schema 接地和 executability 的唯一执行门。
 - Candidate rules 需要确认后才能 promotion。
 - Executor 只接收已验证的可执行规则。
+- Workbench hard rules 由 DuckDB executor 执行；pandas executor 只作为 MVP demo、评估对照和测试工具。
+- Workbench 执行前必须通过 DuckDB metadata、schema/value index metadata 和源 Excel fingerprint 一致性校验；校验失败时返回 structured warning，不静默回退。
 
 ## 离线工具
 
@@ -52,8 +54,10 @@ Extractor
 | 工具 | 作用 |
 |---|---|
 | `scripts/profile_excel_schema.py` | 扫描 Excel 列并生成字段目录。 |
+| `scripts/build_data_warehouse.py` | 构建本地 DuckDB 数据仓库、schema/value index 和 ingestion summary。 |
 | `schemas/excel_schema_profile.json` | 供 schema review 使用的机器可读 profile。 |
 | `docs/excel_schema_profile.md` | 供人工阅读的 schema profile。 |
+| `outputs/data/ingestion_summary.json` | 记录数据摄取 source path、fingerprint、行列数、field profiles 和 created_at。 |
 | `scripts/eval_modes.py` | 单条输入的方法对比。 |
 | `scripts/eval_fuzzy_inputs.py` | 40-case benchmark 对比。 |
 | `scripts/eval_pipeline_token_budget.py` | token budget 对比。 |

@@ -17,6 +17,13 @@ system appear more capable than it is.
   quality.
 - Do not document unsupported preferences as executable unless the matching
   field has been promoted into `schemas/schema_registry.json` and tested.
+- When implementation behavior changes, update all related tracked text in the
+  same quest: README sections, methodology/evaluation reports, project-plan
+  notes, generated summaries, and frontend mock/demo copy when those texts
+  describe the changed behavior.
+- Before finishing a quest, search docs and README for stale executor, schema,
+  API payload, artifact path, benchmark, or guardrail descriptions introduced
+  by the change.
 
 ## Verification
 

@@ -149,7 +149,7 @@ schema-aware LLM-only baseline 减少了一些 schema hallucination 和 non-exec
 | 模式 | 输入 | 预期作用 |
 |---|---|---|
 | `llm_only_schema_sample` | 用户请求、schema summary、sample projected rows | 暴露 unsupported natural-language claims 的对照组。 |
-| `pipeline_template` | 只使用 verified `evidence_pack` | 无 LLM 的确定性答案 fallback。 |
+| `pipeline_template` | 只使用 verified `evidence_pack` | 无 LLM 的确定性模板证据回答。 |
 | `pipeline_deepseek_evidence` | 只使用 verified `evidence_pack` | 可选 LLM 文案，并追加确定性证据覆盖清单。 |
 
 答案层 success 由五个维度评分：
@@ -196,7 +196,8 @@ Schema-aware prompting 本身还不够。它改善了 LLM-only baseline，但没
 - 完整 Excel prompting 的 token 估算是基于 tokenizer-free serialization heuristic 的 upper-bound approximation。
 - 目前还没有真实用户研究。
 - 当前 benchmark 评估的是 rule safety 和 traceability，不是最终志愿推荐质量。
-- MVP 只使用一个 Excel dataset 和一个 pandas executor。
+- 当前评估仍只覆盖一个广东招生数据集；Workbench hard rules 通过 DuckDB executor 执行，pandas executor 只作为 MVP demo、评估对照和测试工具。
+- 数据仓库 fingerprint guard 只验证本地 DuckDB、schema/value index 和源 Excel 是否一致，不解决数据本身的年份稳定性或外部事实完整性问题。
 - Answer-level evaluation 当前评估的是 rule/evidence alignment，不是真实用户研究质量或最终填报策略质量。
 
 ## 11. 下一步

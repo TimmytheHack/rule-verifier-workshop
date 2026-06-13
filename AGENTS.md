@@ -63,7 +63,10 @@ Keep these boundaries intact:
 - Missing-schema or external-info preferences must be preserved but not
   executed.
 - LLM-only baselines are evaluation baselines, not production execution paths.
-- `PandasExecutor` is only the MVP executor for Excel/CSV.
+- `DuckDBExecutor` is the primary Workbench executor for verified hard rules.
+- `PandasExecutor` is retained for the legacy MVP demo, evaluation comparison,
+  and focused tests; Workbench must not silently fall back from DuckDB to raw
+  Excel/Pandas execution.
 - `EvidencePack` is the only input to answer generation; raw Excel is not.
 - `TemplateReportBuilder` is deterministic and uses no LLM.
 - `DeepSeekAnswerGenerator` is optional and evidence-only.
@@ -210,6 +213,12 @@ Never print or inspect secrets from `.env`.
 
 ## Tests And Artifacts
 
+- After completing any chat quest, update relevant human-facing text,
+  methodology docs, README sections, generated summaries, and mock/demo text
+  that describe the changed behavior before committing.
+- If a runtime, schema, executor, API payload, or evaluation behavior changes,
+  search for stale public descriptions and update every related tracked text
+  artifact in the same quest.
 - When behavior changes, update focused tests and the docs that describe that
   behavior.
 - When filenames change, update Markdown links, scripts, generated artifact

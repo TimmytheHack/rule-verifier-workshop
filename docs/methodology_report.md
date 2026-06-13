@@ -362,7 +362,7 @@ Excel 只是第一个 case study。方法论将 rule verification 和 data execu
 
 ```text
 DuckDB executor for verified hard rules
-pandas executor for Excel/CSV fallback/testing comparison
+pandas executor for legacy MVP demos, evaluation comparison, and focused tests
 ```
 
 未来 executor 可以包括：
@@ -526,7 +526,8 @@ evidence pack 支持，不等于 raw Excel workbook 中一定不存在。
 - Regex extraction 针对当前 examples 人工整理。
 - DeepSeek extraction 还没有大规模 stress test。
 - Human confirmation 是模拟的。
-- 系统只使用一个 Excel dataset 和 pandas executor。
+- 系统只使用一个广东招生数据集；Workbench hard rules 通过 DuckDB executor 执行，pandas executor 仅保留为 MVP demo、评估对照和测试工具。
+- Workbench 依赖 DuckDB metadata、schema/value index metadata 和源 Excel fingerprint 一致性校验，校验失败时阻断执行并返回 structured warning。
 - 不生成完整志愿表。
 - 不评价学校声誉。
 - 不预测就业结果。

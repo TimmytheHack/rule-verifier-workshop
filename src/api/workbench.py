@@ -25,11 +25,9 @@ from src.adapters.data_warehouse import (
 from src.adapters.excel_adapter import ExcelDataSet
 from src.executors.duckdb_executor import (
     DuckDBExecutor,
-    ExecutionAudit,
     ExecutionResult,
     hard_filter_rules,
 )
-from src.executors.pandas_executor import PandasExecutor
 from src.extractors.deepseek_extractor import (
     DeepSeekClient,
     DeepSeekExtractor,
@@ -142,7 +140,6 @@ def run_workbench(config: WorkbenchConfig) -> dict[str, Any]:
     )
     hard_rules, _ = hard_filter_rules(final_rules)
     execution = _execute_verified_hard_rules(
-        dataset=dataset,
         executable_rules=final_rules,
         user_rank=slots.get("user_context", {}).get("user_rank"),
         top_k=EVIDENCE_TOP_K,
@@ -308,39 +305,16 @@ def _load_warehouse_dataset_cached(
 
 
 def _execute_verified_hard_rules(
-    dataset: ExcelDataSet,
     executable_rules: list[dict[str, Any]],
     user_rank: int | None,
     top_k: int,
 ) -> ExecutionResult:
-    if WAREHOUSE_DATABASE_PATH.exists():
-        return DuckDBExecutor(WAREHOUSE_DATABASE_PATH).execute(
-            executable_rules,
-            user_rank=user_rank,
-            top_k=top_k,
-        )
-
-    hard_rules, skipped_soft_rules = hard_filter_rules(executable_rules)
-    rows = PandasExecutor().execute(dataset.dataframe, hard_rules, user_rank=user_rank)
-    return ExecutionResult(
-        rows=rows,
-        audit=ExecutionAudit(
-            executor="pandas",
-            sql="",
-            params=[],
-            input_row_count=len(dataset.dataframe),
-            filtered_row_count=len(rows),
-            sort_key=[
-                "专业组最低位次1 ASC NULLS LAST",
-                "院校排名 ASC NULLS LAST",
-                "ID ASC NULLS LAST",
-            ],
-            top_k=top_k,
-            hard_rule_ids=[str(rule.get("rule_id")) for rule in hard_rules],
-            skipped_soft_rule_ids=[
-                str(rule.get("rule_id")) for rule in skipped_soft_rules
-            ],
-        ),
+    if not WAREHOUSE_DATABASE_PATH.exists():
+        raise RuntimeError("DuckDB 数据仓库不存在，Workbench 不执行静默 Pandas 回退。")
+    return DuckDBExecutor(WAREHOUSE_DATABASE_PATH).execute(
+        executable_rules,
+        user_rank=user_rank,
+        top_k=top_k,
     )
 
 
