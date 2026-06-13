@@ -72,6 +72,25 @@ python scripts/generate_domain_pack.py path/to/source.csv products
 
 生成器会在 `domains/<domain>/` 下输出 `domain.yaml`、`schema_mapping.yaml`、`rule_taxonomy.seed.yaml`、`extraction_aliases.seed.json`、`top_result_mapping.yaml`、`sort_policy.seed.yaml`、`answer_templates.seed.md`、`golden_cases.seed.yaml`，并复用 warehouse ingestion 生成 `<domain>.duckdb`、`schema_profile.json`、`schema_value_index.json` 和 `ingestion_summary.json`。所有自动配置都是 `draft` 或 `needs_review`，默认不会给字段写入可执行 `allowed_ops`。`--llm off` 是默认值；`--llm deepseek` 只发送 schema profile 和少量脱敏样例，输出也只能作为候选 aliases/templates，不能直接进入 hard rules。
 
+正式接入新 CSV/Excel 必须走 review/approval workflow，不能直接把 generator seed 当作生产配置：
+
+```bash
+python scripts/review_domain_pack.py summarize domains/<domain>
+python scripts/review_domain_pack.py validate domains/<domain>
+python scripts/review_domain_pack.py approve-field domains/<domain> city --write
+python scripts/review_domain_pack.py approve-op domains/<domain> city in --write
+python scripts/review_domain_pack.py approve-domain domains/<domain> \
+  --title-field listing_id \
+  --primary-field city \
+  --primary-field rent_usd \
+  --sort-field rent_usd \
+  --write
+python scripts/review_domain_pack.py report domains/<domain> --write
+python scripts/run_demo_acceptance.py
+```
+
+`review_domain_pack.py` 默认 dry-run，只有显式 `--write` 才会写入 `review.yaml`、runtime schema、rule taxonomy、attribute grounding、`top_result_mapping.yaml` 和 domain status。PII、高基数字段、自由文本 contains/keyword filter、未通过数值范围 sanity check 的字段都不能自动 approve。`draft` / `needs_review` pack 即使已有 seed candidate ops，也会在 Workbench 中返回 `blocked`，不执行 SQL；只有 `approved` pack 才能进入 demo acceptance 和生产使用。
+
 Workbench API 响应已经固定为 multi-domain `WorkbenchResponse` contract。前端应依赖 `schema_version`、`domain`、`domain_version`、`domain_pack_status`、`status`、`query`、`answer`、`items`、`top_results`、`result_count`、`executed_filters`、`candidates_to_confirm`、`confirmed_rules`、`unconfirmed_candidates`、`unexecuted_preferences`、`no_schema_field_preferences`、`rejected_confirmations`、`warnings`、`evidence_pack` 和 `debug_trace`。`status` 只能是 `ok`、`needs_confirmation`、`no_results`、`blocked`、`error`；`items` 是跨领域稳定 item card，`top_results` 只作为 domain-specific 兼容层，由 `domains/<domain>/top_result_mapping.yaml` 生成。draft/needs_review domain pack 默认返回 `blocked`，不执行 SQL。详见 [Workbench API 响应契约](docs/api_contract.md)。
 
 Workbench 还支持 candidate_id confirmation loop：

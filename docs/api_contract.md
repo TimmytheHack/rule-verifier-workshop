@@ -23,6 +23,46 @@
 | `approved` | 已审查并可进入 Workbench 执行。 |
 | `blocked` | pack 配置异常或被安全策略阻断。 |
 
+## Domain Pack Review / Approval
+
+新 CSV/Excel 不能从 auto-generator 直接进入生产执行。正式接入流程固定为：
+
+```text
+generate draft
+-> review
+-> approve
+-> demo acceptance
+-> production use
+```
+
+`scripts/generate_domain_pack.py` 只生成 `draft` / `needs_review` 配置、schema profile、
+schema/value index 和 seed 文件。seed 中的 `candidate_allowed_ops`、候选
+`rule_taxonomy`、候选 `top_result_mapping` 和候选 `sort_policy` 只能作为 review 输入，
+不能直接进入 `RuleVerifier` hard rules。
+
+`scripts/review_domain_pack.py` 负责审查和批准：
+
+- `summarize` 汇总字段、dtype、空值率、唯一值数量、样例、数值范围、PII/高基数风险和 value index 状态。
+- `validate` 校验 `DomainConfig`、`WorkbenchResponse` contract、`top_result_mapping`、`rule_taxonomy` 和 `sort_policy` 结构。
+- `approve-field` / `approve-op` 显式写入被批准的字段和 op。
+- `block-field` / `block-op` 显式阻断字段或 op，并写入审计历史。
+- `approve-domain` 只有在 required checks 通过后，才允许把 `domain_pack_status` 改成 `approved`。
+- `report` 输出 `outputs/domain_review/<domain>_review.md` 和 `<domain>_review.json`。
+
+CLI 默认 dry-run；只有显式 `--write` 才写文件。`review.yaml` 至少记录 domain、
+domain version、pack status、source fingerprint、schema profile fingerprint、reviewed
+fields、blocked fields、approved ops、blocked ops、review notes、reviewed_at、
+reviewed_by 和 approval history。
+
+安全规则：
+
+- `draft` / `needs_review` 仍然返回 `blocked`，不执行 SQL。
+- `approve-domain` 前必须确认至少一个 item title mapping、至少一个 primary attribute mapping，以及非空 sort policy 或明确 `--default-safe-sort`。
+- PII、高基数字段不能默认 approve 为 categorical hard filter。
+- 数值字段必须通过 dtype、空值率和范围 sanity check 后，才能 approve `<=`、`>=`、`between`。
+- categorical 字段必须唯一值数量低于阈值，且 value index 可审查，才能 approve `eq` / `in`。
+- text contains / keyword filter 默认 `needs_review`，不能自动 approve。
+
 ## 固定顶层字段
 
 | 字段 | 类型 | 必选 | 跨领域含义 |

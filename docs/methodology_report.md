@@ -28,6 +28,26 @@ sort policy、seed answer templates、seed golden cases，以及 `<domain>.duckd
 能进入 RuleVerifier hard rules。`domains/products/fixtures/products.csv` 和 housing fixture
 一起覆盖了同一套 generator -> DomainConfig -> DuckDB smoke query。
 
+新增的 `scripts/review_domain_pack.py` 把人工审查显式纳入流程：`summarize` 先读取
+draft 文件、schema profile 和 schema/value index；`validate` 校验 DomainConfig、API
+contract、`top_result_mapping`、`rule_taxonomy` 和 `sort_policy` 结构；`approve-field`、
+`approve-op`、`block-field` 和 `block-op` 都写入审计记录；`approve-domain` 只有在 title
+mapping、primary attributes、sort policy/default safe sort 和字段安全检查都通过后，才会把
+pack 改为 `approved`。CLI 默认 dry-run，只有 `--write` 会写入 `review.yaml` 和 runtime
+配置。正式接入顺序是：
+
+```text
+generate draft
+-> review
+-> approve
+-> demo acceptance
+-> production use
+```
+
+其中 PII、高基数字段、自由文本 contains/keyword filter、未通过数值 sanity check 的字段
+不会自动成为 hard filter。`draft` / `needs_review` 即使包含 seed allowed ops，也仍然在
+Workbench 中返回 `blocked`，不执行 SQL。
+
 这次抽象仍然坚持结构化存储优先：招生主数据使用 DuckDB 和 schema/value index；toy
 domain 使用 CSV fixture。系统没有接入 Qwen、BGE、向量库或全文表格 embedding。可选
 `--llm deepseek` 只接收 schema profile 和少量脱敏样例，输出只能作为候选 aliases/templates，
@@ -423,7 +443,7 @@ Workbench API 返回固定的 `WorkbenchResponse` contract：
 - `domain_pack_status` 至少支持 `draft`、`needs_review`、`approved`、`blocked`；
   `draft` / `needs_review` 默认返回 `blocked`，不执行 SQL。
 - `needs_confirmation` 表示存在未确认的 `partial_match` 偏好，这些偏好不能声称已执行；当前结果只能作为已执行规则下的 provisional results。
-- `blocked` 用于 fingerprint guard、伪造/过期/不属于当前 query 的 `candidate_id` 等安全阻断；此状态下 `execution.sql` 为空，不执行 DuckDB SQL。
+- `blocked` 用于 fingerprint guard、未 approved 的 domain pack、伪造/过期/不属于当前 query 的 `candidate_id` 等安全阻断；此状态下 `execution.sql` 为空，不执行 DuckDB SQL。
 - `no_results` 表示 SQL 正常执行但 `filtered_row_count = 0`；答案不得编造推荐。
 - 前端主列表优先读取跨领域 `items`。`top_results` 只作为 domain-specific 兼容层，
   由 `domains/<domain>/top_result_mapping.yaml` 生成；招生 domain 继续保留
