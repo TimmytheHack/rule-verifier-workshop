@@ -1,0 +1,24121 @@
+# Demo Acceptance 验收报告
+
+- 生成时间：`2026-06-13T13:38:04.068614Z`
+- 总记录数：`25`
+- 通过：`25`
+- 失败：`0`
+- 按 domain 统计：`{"admissions": 15, "housing": 5, "products": 5}`
+- 按 status 统计：`{"needs_confirmation": 8, "no_results": 2, "ok": 15}`
+
+| Case | Domain | Status | Result Count | 是否通过 |
+|---|---|---|---:|---:|
+| admissions_01 | admissions | ok | 149 | 通过 |
+| admissions_02 | admissions | ok | 282 | 通过 |
+| admissions_03 | admissions | ok | 1 | 通过 |
+| admissions_04 | admissions | needs_confirmation | 3962 | 通过 |
+| admissions_05 | admissions | needs_confirmation | 749 | 通过 |
+| admissions_06 | admissions | no_results | 0 | 通过 |
+| admissions_07 | admissions | ok | 19473 | 通过 |
+| admissions_08 | admissions | needs_confirmation | 19473 | 通过 |
+| admissions_09 | admissions | needs_confirmation | 749 | 通过 |
+| admissions_10 | admissions | needs_confirmation | 282 | 通过 |
+| admissions_11 | admissions | ok | 19473 | 通过 |
+| admissions_12 | admissions | ok | 277 | 通过 |
+| admissions_13 | admissions | needs_confirmation | 276 | 通过 |
+| admissions_14 | admissions | needs_confirmation | 61 | 通过 |
+| admissions_15 | admissions | ok | 30 | 通过 |
+| housing_01 | housing | ok | 3 | 通过 |
+| housing_02 | housing | ok | 2 | 通过 |
+| housing_03 | housing | ok | 2 | 通过 |
+| housing_04 | housing | ok | 1 | 通过 |
+| housing_05 | housing | needs_confirmation | 5 | 通过 |
+| products_01 | products | ok | 2 | 通过 |
+| products_02 | products | ok | 1 | 通过 |
+| products_03 | products | ok | 1 | 通过 |
+| products_04 | products | ok | 2 | 通过 |
+| products_05 | products | no_results | 0 | 通过 |
+
+## admissions_01 `通过`
+
+- domain: `admissions`
+- query: 广东物理，排位32000，想学计算机，广深优先。
+- status: `ok`
+- pass/fail：`通过`
+
+### items
+```json
+[
+  {
+    "item_id": "result_001",
+    "title": "中山大学",
+    "subtitle": "计算机类(广州，含：计算机科学与技术、信息与计算科学，广州校区，东校园)",
+    "primary_attributes": [
+      {
+        "key": "year",
+        "label": "year",
+        "value": 2024
+      },
+      {
+        "key": "batch",
+        "label": "batch",
+        "value": "本科批"
+      },
+      {
+        "key": "university_code",
+        "label": "university_code",
+        "value": "10558"
+      },
+      {
+        "key": "university_name",
+        "label": "university_name",
+        "value": "中山大学"
+      }
+    ],
+    "secondary_attributes": [
+      {
+        "key": "group_code",
+        "label": "group_code",
+        "value": "10558219"
+      },
+      {
+        "key": "group_name",
+        "label": "group_name",
+        "value": "219组"
+      },
+      {
+        "key": "major_code",
+        "label": "major_code",
+        "value": "077"
+      },
+      {
+        "key": "major_name",
+        "label": "major_name",
+        "value": "计算机类"
+      },
+      {
+        "key": "full_major_name",
+        "label": "full_major_name",
+        "value": "计算机类(广州，含：计算机科学与技术、信息与计算科学，广州校区，东校园)"
+      },
+      {
+        "key": "subject_requirement",
+        "label": "subject_requirement",
+        "value": "化学"
+      },
+      {
+        "key": "province",
+        "label": "province",
+        "value": "广东"
+      },
+      {
+        "key": "city",
+        "label": "city",
+        "value": "广州"
+      },
+      {
+        "key": "tuition",
+        "label": "tuition",
+        "value": 6850.0
+      },
+      {
+        "key": "rank_2024",
+        "label": "rank_2024",
+        "value": 4019
+      },
+      {
+        "key": "major_rank_2024",
+        "label": "major_rank_2024",
+        "value": 2852
+      },
+      {
+        "key": "group_min_rank",
+        "label": "group_min_rank",
+        "value": 4019
+      },
+      {
+        "key": "major_min_rank",
+        "label": "major_min_rank",
+        "value": 2852
+      },
+      {
+        "key": "safety_margin",
+        "label": "safety_margin",
+        "value": "-87.4%"
+      }
+    ],
+    "matched_filters": [
+      {
+        "id": "e_source_province",
+        "field": "生源地",
+        "operator": "eq",
+        "value": "广东",
+        "matched": true,
+        "text": "生源地 等于 广东"
+      },
+      {
+        "id": "e_subject_type",
+        "field": "科类",
+        "operator": "eq",
+        "value": "物理",
+        "matched": true,
+        "text": "科类 等于 物理"
+      },
+      {
+        "id": "e_major_keyword",
+        "field": "专业名称",
+        "operator": "contains_any",
+        "value": [
+          "计算机"
+        ],
+        "matched": true,
+        "text": "专业名称 包含任一：计算机；命中 计算机类"
+      },
+      {
+        "id": "e_city",
+        "field": "城市",
+        "operator": "in_contains",
+        "value": [
+          "广州",
+          "深圳"
+        ],
+        "matched": true,
+        "text": "城市 包含任一：广州、深圳；命中 广州"
+      }
+    ],
+    "raw": {
+      "excel_row_number": 6934,
+      "ID": 6931,
+      "年份": 2024,
+      "批次": "本科批",
+      "院校代码": "10558",
+      "院校名称": "中山大学",
+      "院校专业组代码": "10558219",
+      "专业组名称": "219组",
+      "科类": "物理",
+      "选科要求": "化学",
+      "专业代码": "077",
+      "专业名称": "计算机类",
+      "专业全称": "计算机类(广州，含：计算机科学与技术、信息与计算科学，广州校区，东校园)",
+      "所在省": "广东",
+      "城市": "广州",
+      "学费": 6850.0,
+      "专业组最低位次1": 4019,
+      "最低位次1": 2852,
+      "院校标签": "985/211/双一流/国重点/保研资格",
+      "院校排名": "11",
+      "ranking_key": -27981,
+      "safety_margin_pct": -0.8744,
+      "cooperation_filter_status": "not_executed_missing_cooperation_type_field",
+      "中外合作筛选状态": "未执行：缺少合作办学类型字段"
+    }
+  },
+  {
+    "item_id": "result_002",
+    "title": "中山大学",
+    "subtitle": "计算机类(深圳，含：智能科学与技术、智慧交通，深圳校区)",
+    "primary_attributes": [
+      {
+        "key": "year",
+        "label": "year",
+        "value": 2024
+      },
+      {
+        "key": "batch",
+        "label": "batch",
+        "value": "本科批"
+      },
+      {
+        "key": "university_code",
+        "label": "university_code",
+        "value": "10558"
+      },
+      {
+        "key": "university_name",
+        "label": "university_name",
+        "value": "中山大学"
+      }
+    ],
+    "secondary_attributes": [
+      {
+        "key": "group_code",
+        "label": "group_code",
+        "value": "10558219"
+      },
+      {
+        "key": "group_name",
+        "label": "group_name",
+        "value": "219组"
+      },
+      {
+        "key": "major_code",
+        "label": "major_code",
+        "value": "099"
+      },
+      {
+        "key": "major_name",
+        "label": "major_name",
+        "value": "计算机类"
+      },
+      {
+        "key": "full_major_name",
+        "label": "full_major_name",
+        "value": "计算机类(深圳，含：智能科学与技术、智慧交通，深圳校区)"
+      },
+      {
+        "key": "subject_requirement",
+        "label": "subject_requirement",
+        "value": "化学"
+      },
+      {
+        "key": "province",
+        "label": "province",
+        "value": "广东"
+      },
+      {
+        "key": "city",
+        "label": "city",
+        "value": "广州"
+      },
+      {
+        "key": "tuition",
+        "label": "tuition",
+        "value": 6850.0
+      },
+      {
+        "key": "rank_2024",
+        "label": "rank_2024",
+        "value": 4019
+      },
+      {
+        "key": "major_rank_2024",
+        "label": "major_rank_2024",
+        "value": 3982
+      },
+      {
+        "key": "group_min_rank",
+        "label": "group_min_rank",
+        "value": 4019
+      },
+      {
+        "key": "major_min_rank",
+        "label": "major_min_rank",
+        "value": 3982
+      },
+      {
+        "key": "safety_margin",
+        "label": "safety_margin",
+        "value": "-87.4%"
+      }
+    ],
+    "matched_filters": [
+      {
+        "id": "e_source_province",
+        "field": "生源地",
+        "operator": "eq",
+        "value": "广东",
+        "matched": true,
+        "text": "生源地 等于 广东"
+      },
+      {
+        "id": "e_subject_type",
+        "field": "科类",
+        "operator": "eq",
+        "value": "物理",
+        "matched": true,
+        "text": "科类 等于 物理"
+      },
+      {
+        "id": "e_major_keyword",
+        "field": "专业名称",
+        "operator": "contains_any",
+        "value": [
+          "计算机"
+        ],
+        "matched": true,
+        "text": "专业名称 包含任一：计算机；命中 计算机类"
+      },
+      {
+        "id": "e_city",
+        "field": "城市",
+        "operator": "in_contains",
+        "value": [
+          "广州",
+          "深圳"
+        ],
+        "matched": true,
+        "text": "城市 包含任一：广州、深圳；命中 广州"
+      }
+    ],
+    "raw": {
+      "excel_row_number": 6937,
+      "ID": 6934,
+      "年份": 2024,
+      "批次": "本科批",
+      "院校代码": "10558",
+      "院校名称": "中山大学",
+      "院校专业组代码": "10558219",
+      "专业组名称": "219组",
+      "科类": "物理",
+      "选科要求": "化学",
+      "专业代码": "099",
+      "专业名称": "计算机类",
+      "专业全称": "计算机类(深圳，含：智能科学与技术、智慧交通，深圳校区)",
+      "所在省": "广东",
+      "城市": "广州",
+      "学费": 6850.0,
+      "专业组最低位次1": 4019,
+      "最低位次1": 3982,
+      "院校标签": "985/211/双一流/国重点/保研资格",
+      "院校排名": "11",
+      "ranking_key": -27981,
+      "safety_margin_pct": -0.8744,
+      "cooperation_filter_status": "not_executed_missing_cooperation_type_field",
+      "中外合作筛选状态": "未执行：缺少合作办学类型字段"
+    }
+  },
+  {
+    "item_id": "result_003",
+    "title": "华南理工大学",
+    "subtitle": "计算机科学与技术(全英创新班，广州市)(不招单色识别不全者)",
+    "primary_attributes": [
+      {
+        "key": "year",
+        "label": "year",
+        "value": 2024
+      },
+      {
+        "key": "batch",
+        "label": "batch",
+        "value": "本科批"
+      },
+      {
+        "key": "university_code",
+        "label": "university_code",
+        "value": "10561"
+      },
+      {
+        "key": "university_name",
+        "label": "university_name",
+        "value": "华南理工大学"
+      }
+    ],
+    "secondary_attributes": [
+      {
+        "key": "group_code",
+        "label": "group_code",
+        "value": "10561202"
+      },
+      {
+        "key": "group_name",
+        "label": "group_name",
+        "value": "202组"
+      },
+      {
+        "key": "major_code",
+        "label": "major_code",
+        "value": "072"
+      },
+      {
+        "key": "major_name",
+        "label": "major_name",
+        "value": "计算机科学与技术"
+      },
+      {
+        "key": "full_major_name",
+        "label": "full_major_name",
+        "value": "计算机科学与技术(全英创新班，广州市)(不招单色识别不全者)"
+      },
+      {
+        "key": "subject_requirement",
+        "label": "subject_requirement",
+        "value": "化学"
+      },
+      {
+        "key": "province",
+        "label": "province",
+        "value": "广东"
+      },
+      {
+        "key": "city",
+        "label": "city",
+        "value": "广州"
+      },
+      {
+        "key": "tuition",
+        "label": "tuition",
+        "value": 6850.0
+      },
+      {
+        "key": "rank_2024",
+        "label": "rank_2024",
+        "value": 5640
+      },
+      {
+        "key": "group_min_rank",
+        "label": "group_min_rank",
+        "value": 5640
+      },
+      {
+        "key": "safety_margin",
+        "label": "safety_margin",
+        "value": "-82.4%"
+      }
+    ],
+    "matched_filters": [
+      {
+        "id": "e_source_province",
+        "field": "生源地",
+        "operator": "eq",
+        "value": "广东",
+        "matched": true,
+        "text": "生源地 等于 广东"
+      },
+      {
+        "id": "e_subject_type",
+        "field": "科类",
+        "operator": "eq",
+        "value": "物理",
+        "matched": true,
+        "text": "科类 等于 物理"
+      },
+      {
+        "id": "e_major_keyword",
+        "field": "专业名称",
+        "operator": "contains_any",
+        "value": [
+          "计算机"
+        ],
+        "matched": true,
+        "text": "专业名称 包含任一：计算机；命中 计算机科学与技术"
+      },
+      {
+        "id": "e_city",
+        "field": "城市",
+        "operator": "in_contains",
+        "value": [
+          "广州",
+          "深圳"
+        ],
+        "matched": true,
+        "text": "城市 包含任一：广州、深圳；命中 广州"
+      }
+    ],
+    "raw": {
+      "excel_row_number": 7189,
+      "ID": 7186,
+      "年份": 2024,
+      "批次": "本科批",
+      "院校代码": "10561",
+      "院校名称": "华南理工大学",
+      "院校专业组代码": "10561202",
+      "专业组名称": "202组",
+      "科类": "物理",
+      "选科要求": "化学",
+      "专业代码": "072",
+      "专业名称": "计算机科学与技术",
+      "专业全称": "计算机科学与技术(全英创新班，广州市)(不招单色识别不全者)",
+      "所在省": "广东",
+      "城市": "广州",
+      "学费": 6850.0,
+      "专业组最低位次1": 5640,
+      "最低位次1": null,
+      "院校标签": "985/211/双一流/国重点/保研资格",
+      "院校排名": "30",
+      "ranking_key": -26360,
+      "safety_margin_pct": -0.8237,
+      "cooperation_filter_status": "not_executed_missing_cooperation_type_field",
+      "中外合作筛选状态": "未执行：缺少合作办学类型字段"
+    }
+  },
+  {
+    "item_id": "result_004",
+    "title": "华南理工大学",
+    "subtitle": "计算机科学与技术(拔尖基地班，全英文教学，广州市)(不招单色识别不全者)",
+    "primary_attributes": [
+      {
+        "key": "year",
+        "label": "year",
+        "value": 2024
+      },
+      {
+        "key": "batch",
+        "label": "batch",
+        "value": "本科批"
+      },
+      {
+        "key": "university_code",
+        "label": "university_code",
+        "value": "10561"
+      },
+      {
+        "key": "university_name",
+        "label": "university_name",
+        "value": "华南理工大学"
+      }
+    ],
+    "secondary_attributes": [
+      {
+        "key": "group_code",
+        "label": "group_code",
+        "value": "10561202"
+      },
+      {
+        "key": "group_name",
+        "label": "group_name",
+        "value": "202组"
+      },
+      {
+        "key": "major_code",
+        "label": "major_code",
+        "value": "073"
+      },
+      {
+        "key": "major_name",
+        "label": "major_name",
+        "value": "计算机科学与技术"
+      },
+      {
+        "key": "full_major_name",
+        "label": "full_major_name",
+        "value": "计算机科学与技术(拔尖基地班，全英文教学，广州市)(不招单色识别不全者)"
+      },
+      {
+        "key": "subject_requirement",
+        "label": "subject_requirement",
+        "value": "化学"
+      },
+      {
+        "key": "province",
+        "label": "province",
+        "value": "广东"
+      },
+      {
+        "key": "city",
+        "label": "city",
+        "value": "广州"
+      },
+      {
+        "key": "tuition",
+        "label": "tuition",
+        "value": 6850.0
+      },
+      {
+        "key": "rank_2024",
+        "label": "rank_2024",
+        "value": 5640
+      },
+      {
+        "key": "group_min_rank",
+        "label": "group_min_rank",
+        "value": 5640
+      },
+      {
+        "key": "safety_margin",
+        "label": "safety_margin",
+        "value": "-82.4%"
+      }
+    ],
+    "matched_filters": [
+      {
+        "id": "e_source_province",
+        "field": "生源地",
+        "operator": "eq",
+        "value": "广东",
+        "matched": true,
+        "text": "生源地 等于 广东"
+      },
+      {
+        "id": "e_subject_type",
+        "field": "科类",
+        "operator": "eq",
+        "value": "物理",
+        "matched": true,
+        "text": "科类 等于 物理"
+      },
+      {
+        "id": "e_major_keyword",
+        "field": "专业名称",
+        "operator": "contains_any",
+        "value": [
+          "计算机"
+        ],
+        "matched": true,
+        "text": "专业名称 包含任一：计算机；命中 计算机科学与技术"
+      },
+      {
+        "id": "e_city",
+        "field": "城市",
+        "operator": "in_contains",
+        "value": [
+          "广州",
+          "深圳"
+        ],
+        "matched": true,
+        "text": "城市 包含任一：广州、深圳；命中 广州"
+      }
+    ],
+    "raw": {
+      "excel_row_number": 7190,
+      "ID": 7187,
+      "年份": 2024,
+      "批次": "本科批",
+      "院校代码": "10561",
+      "院校名称": "华南理工大学",
+      "院校专业组代码": "10561202",
+      "专业组名称": "202组",
+      "科类": "物理",
+      "选科要求": "化学",
+      "专业代码": "073",
+      "专业名称": "计算机科学与技术",
+      "专业全称": "计算机科学与技术(拔尖基地班，全英文教学，广州市)(不招单色识别不全者)",
+      "所在省": "广东",
+      "城市": "广州",
+      "学费": 6850.0,
+      "专业组最低位次1": 5640,
+      "最低位次1": null,
+      "院校标签": "985/211/双一流/国重点/保研资格",
+      "院校排名": "30",
+      "ranking_key": -26360,
+      "safety_margin_pct": -0.8237,
+      "cooperation_filter_status": "not_executed_missing_cooperation_type_field",
+      "中外合作筛选状态": "未执行：缺少合作办学类型字段"
+    }
+  },
+  {
+    "item_id": "result_005",
+    "title": "华南理工大学",
+    "subtitle": "计算机类(含：计算机科学与技术、网络工程、信息安全，广州市)(不招单色识别不全者)",
+    "primary_attributes": [
+      {
+        "key": "year",
+        "label": "year",
+        "value": 2024
+      },
+      {
+        "key": "batch",
+        "label": "batch",
+        "value": "本科批"
+      },
+      {
+        "key": "university_code",
+        "label": "university_code",
+        "value": "10561"
+      },
+      {
+        "key": "university_name",
+        "label": "university_name",
+        "value": "华南理工大学"
+      }
+    ],
+    "secondary_attributes": [
+      {
+        "key": "group_code",
+        "label": "group_code",
+        "value": "10561202"
+      },
+      {
+        "key": "group_name",
+        "label": "group_name",
+        "value": "202组"
+      },
+      {
+        "key": "major_code",
+        "label": "major_code",
+        "value": "074"
+      },
+      {
+        "key": "major_name",
+        "label": "major_name",
+        "value": "计算机类"
+      },
+      {
+        "key": "full_major_name",
+        "label": "full_major_name",
+        "value": "计算机类(含：计算机科学与技术、网络工程、信息安全，广州市)(不招单色识别不全者)"
+      },
+      {
+        "key": "subject_requirement",
+        "label": "subject_requirement",
+        "value": "化学"
+      },
+      {
+        "key": "province",
+        "label": "province",
+        "value": "广东"
+      },
+      {
+        "key": "city",
+        "label": "city",
+        "value": "广州"
+      },
+      {
+        "key": "tuition",
+        "label": "tuition",
+        "value": 6850.0
+      },
+      {
+        "key": "rank_2024",
+        "label": "rank_2024",
+        "value": 5640
+      },
+      {
+        "key": "group_min_rank",
+        "label": "group_min_rank",
+        "value": 5640
+      },
+      {
+        "key": "safety_margin",
+        "label": "safety_margin",
+        "value": "-82.4%"
+      }
+    ],
+    "matched_filters": [
+      {
+        "id": "e_source_province",
+        "field": "生源地",
+        "operator": "eq",
+        "value": "广东",
+        "matched": true,
+        "text": "生源地 等于 广东"
+      },
+      {
+        "id": "e_subject_type",
+        "field": "科类",
+        "operator": "eq",
+        "value": "物理",
+        "matched": true,
+        "text": "科类 等于 物理"
+      },
+      {
+        "id": "e_major_keyword",
+        "field": "专业名称",
+        "operator": "contains_any",
+        "value": [
+          "计算机"
+        ],
+        "matched": true,
+        "text": "专业名称 包含任一：计算机；命中 计算机类"
+      },
+      {
+        "id": "e_city",
+        "field": "城市",
+        "operator": "in_contains",
+        "value": [
+          "广州",
+          "深圳"
+        ],
+        "matched": true,
+        "text": "城市 包含任一：广州、深圳；命中 广州"
+      }
+    ],
+    "raw": {
+      "excel_row_number": 7191,
+      "ID": 7188,
+      "年份": 2024,
+      "批次": "本科批",
+      "院校代码": "10561",
+      "院校名称": "华南理工大学",
+      "院校专业组代码": "10561202",
+      "专业组名称": "202组",
+      "科类": "物理",
+      "选科要求": "化学",
+      "专业代码": "074",
+      "专业名称": "计算机类",
+      "专业全称": "计算机类(含：计算机科学与技术、网络工程、信息安全，广州市)(不招单色识别不全者)",
+      "所在省": "广东",
+      "城市": "广州",
+      "学费": 6850.0,
+      "专业组最低位次1": 5640,
+      "最低位次1": null,
+      "院校标签": "985/211/双一流/国重点/保研资格",
+      "院校排名": "30",
+      "ranking_key": -26360,
+      "safety_margin_pct": -0.8237,
+      "cooperation_filter_status": "not_executed_missing_cooperation_type_field",
+      "中外合作筛选状态": "未执行：缺少合作办学类型字段"
+    }
+  }
+]
+```
+### top_results
+```json
+[
+  {
+    "id": "result_001",
+    "trace": [
+      {
+        "status": "pass",
+        "text": "生源地 等于 广东"
+      },
+      {
+        "status": "pass",
+        "text": "科类 等于 物理"
+      },
+      {
+        "status": "pass",
+        "text": "专业名称 包含任一：计算机；命中 计算机类"
+      },
+      {
+        "status": "pass",
+        "text": "城市 包含任一：广州、深圳；命中 广州"
+      }
+    ],
+    "year": 2024,
+    "batch": "本科批",
+    "university_code": "10558",
+    "university_name": "中山大学",
+    "group_code": "10558219",
+    "group_name": "219组",
+    "major_code": "077",
+    "major_name": "计算机类",
+    "full_major_name": "计算机类(广州，含：计算机科学与技术、信息与计算科学，广州校区，东校园)",
+    "subject_requirement": "化学",
+    "province": "广东",
+    "city": "广州",
+    "tuition": 6850.0,
+    "rank_2024": 4019,
+    "major_rank_2024": 2852,
+    "plan_count": null,
+    "group_min_rank": 4019,
+    "major_min_rank": 2852,
+    "safety_margin": "-87.4%"
+  },
+  {
+    "id": "result_002",
+    "trace": [
+      {
+        "status": "pass",
+        "text": "生源地 等于 广东"
+      },
+      {
+        "status": "pass",
+        "text": "科类 等于 物理"
+      },
+      {
+        "status": "pass",
+        "text": "专业名称 包含任一：计算机；命中 计算机类"
+      },
+      {
+        "status": "pass",
+        "text": "城市 包含任一：广州、深圳；命中 广州"
+      }
+    ],
+    "year": 2024,
+    "batch": "本科批",
+    "university_code": "10558",
+    "university_name": "中山大学",
+    "group_code": "10558219",
+    "group_name": "219组",
+    "major_code": "099",
+    "major_name": "计算机类",
+    "full_major_name": "计算机类(深圳，含：智能科学与技术、智慧交通，深圳校区)",
+    "subject_requirement": "化学",
+    "province": "广东",
+    "city": "广州",
+    "tuition": 6850.0,
+    "rank_2024": 4019,
+    "major_rank_2024": 3982,
+    "plan_count": null,
+    "group_min_rank": 4019,
+    "major_min_rank": 3982,
+    "safety_margin": "-87.4%"
+  },
+  {
+    "id": "result_003",
+    "trace": [
+      {
+        "status": "pass",
+        "text": "生源地 等于 广东"
+      },
+      {
+        "status": "pass",
+        "text": "科类 等于 物理"
+      },
+      {
+        "status": "pass",
+        "text": "专业名称 包含任一：计算机；命中 计算机科学与技术"
+      },
+      {
+        "status": "pass",
+        "text": "城市 包含任一：广州、深圳；命中 广州"
+      }
+    ],
+    "year": 2024,
+    "batch": "本科批",
+    "university_code": "10561",
+    "university_name": "华南理工大学",
+    "group_code": "10561202",
+    "group_name": "202组",
+    "major_code": "072",
+    "major_name": "计算机科学与技术",
+    "full_major_name": "计算机科学与技术(全英创新班，广州市)(不招单色识别不全者)",
+    "subject_requirement": "化学",
+    "province": "广东",
+    "city": "广州",
+    "tuition": 6850.0,
+    "rank_2024": 5640,
+    "major_rank_2024": null,
+    "plan_count": null,
+    "group_min_rank": 5640,
+    "major_min_rank": null,
+    "safety_margin": "-82.4%"
+  },
+  {
+    "id": "result_004",
+    "trace": [
+      {
+        "status": "pass",
+        "text": "生源地 等于 广东"
+      },
+      {
+        "status": "pass",
+        "text": "科类 等于 物理"
+      },
+      {
+        "status": "pass",
+        "text": "专业名称 包含任一：计算机；命中 计算机科学与技术"
+      },
+      {
+        "status": "pass",
+        "text": "城市 包含任一：广州、深圳；命中 广州"
+      }
+    ],
+    "year": 2024,
+    "batch": "本科批",
+    "university_code": "10561",
+    "university_name": "华南理工大学",
+    "group_code": "10561202",
+    "group_name": "202组",
+    "major_code": "073",
+    "major_name": "计算机科学与技术",
+    "full_major_name": "计算机科学与技术(拔尖基地班，全英文教学，广州市)(不招单色识别不全者)",
+    "subject_requirement": "化学",
+    "province": "广东",
+    "city": "广州",
+    "tuition": 6850.0,
+    "rank_2024": 5640,
+    "major_rank_2024": null,
+    "plan_count": null,
+    "group_min_rank": 5640,
+    "major_min_rank": null,
+    "safety_margin": "-82.4%"
+  },
+  {
+    "id": "result_005",
+    "trace": [
+      {
+        "status": "pass",
+        "text": "生源地 等于 广东"
+      },
+      {
+        "status": "pass",
+        "text": "科类 等于 物理"
+      },
+      {
+        "status": "pass",
+        "text": "专业名称 包含任一：计算机；命中 计算机类"
+      },
+      {
+        "status": "pass",
+        "text": "城市 包含任一：广州、深圳；命中 广州"
+      }
+    ],
+    "year": 2024,
+    "batch": "本科批",
+    "university_code": "10561",
+    "university_name": "华南理工大学",
+    "group_code": "10561202",
+    "group_name": "202组",
+    "major_code": "074",
+    "major_name": "计算机类",
+    "full_major_name": "计算机类(含：计算机科学与技术、网络工程、信息安全，广州市)(不招单色识别不全者)",
+    "subject_requirement": "化学",
+    "province": "广东",
+    "city": "广州",
+    "tuition": 6850.0,
+    "rank_2024": 5640,
+    "major_rank_2024": null,
+    "plan_count": null,
+    "group_min_rank": 5640,
+    "major_min_rank": null,
+    "safety_margin": "-82.4%"
+  }
+]
+```
+### executed_filters
+```json
+[
+  {
+    "id": "e_source_province",
+    "label": "生源地 等于 广东",
+    "field": "生源地",
+    "operator": "eq",
+    "value": "广东",
+    "source_span": "广东"
+  },
+  {
+    "id": "e_subject_type",
+    "label": "科类 等于 物理",
+    "field": "科类",
+    "operator": "eq",
+    "value": "物理",
+    "source_span": "物理"
+  },
+  {
+    "id": "e_major_keyword",
+    "label": "专业名称 包含任一：计算机",
+    "field": "专业名称",
+    "operator": "contains_any",
+    "value": [
+      "计算机"
+    ],
+    "source_span": "计算机"
+  },
+  {
+    "id": "e_city",
+    "label": "城市 包含任一：广州、深圳",
+    "field": "城市",
+    "operator": "in_contains",
+    "value": [
+      "广州",
+      "深圳"
+    ],
+    "source_span": "广州、深圳"
+  }
+]
+```
+### candidates_to_confirm
+```json
+[]
+```
+### unexecuted_preferences
+```json
+[]
+```
+### SQL / params
+```json
+{
+  "sql": "WITH source AS (\n  SELECT row_number() OVER () AS \"__source_row_number\", *\n  FROM \"admissions\"\n),\nfiltered AS (\n  SELECT\n    source.*,\n    TRY_CAST(regexp_extract(REPLACE(CAST(\"专业组最低位次1\" AS VARCHAR), ',', ''), '\\d+(?:\\.\\d+)?') AS DOUBLE) AS \"__group_rank_num\",\n    TRY_CAST(regexp_extract(REPLACE(CAST(\"学费\" AS VARCHAR), ',', ''), '\\d+(?:\\.\\d+)?') AS DOUBLE) AS \"__tuition_num\",\n    TRY_CAST(regexp_extract(REPLACE(CAST(\"院校排名\" AS VARCHAR), ',', ''), '\\d+(?:\\.\\d+)?') AS DOUBLE) AS \"__school_rank_num\",\n    TRY_CAST(regexp_extract(REPLACE(CAST(\"ID\" AS VARCHAR), ',', ''), '\\d+(?:\\.\\d+)?') AS DOUBLE) AS \"__id_num\"\n  FROM source\n  WHERE CAST(\"生源地\" AS VARCHAR) = ? AND CAST(\"科类\" AS VARCHAR) = ? AND (STRPOS(CAST(\"专业名称\" AS VARCHAR), ?) > 0) AND (STRPOS(CAST(\"城市\" AS VARCHAR), ?) > 0 OR STRPOS(CAST(\"城市\" AS VARCHAR), ?) > 0)\n),\nprojectable AS (\n  SELECT *\n  FROM filtered\n  WHERE TRUE\n    AND \"__group_rank_num\" IS NOT NULL\n    AND \"__tuition_num\" IS NOT NULL\n)\nSELECT *\nFROM projectable\nORDER BY\n  \"__group_rank_num\" ASC NULLS LAST,\n  \"__school_rank_num\" ASC NULLS LAST,\n  \"__id_num\" ASC NULLS LAST",
+  "params": [
+    "广东",
+    "物理",
+    "计算机",
+    "广州",
+    "深圳"
+  ]
+}
+```
+### EvidencePack
+```json
+{
+  "user_request": "广东物理，排位32000，想学计算机，广深优先。；偏好信息：偏好描述：广东物理，排位32000，想学计算机，广深优先。",
+  "executed_rules": [
+    {
+      "rule_id": "e_source_province",
+      "derived_from": "d_source_province",
+      "field": "生源地",
+      "operator": "eq",
+      "value": "广东",
+      "description": "生源地 等于 广东"
+    },
+    {
+      "rule_id": "e_subject_type",
+      "derived_from": "d_subject_type",
+      "field": "科类",
+      "operator": "eq",
+      "value": "物理",
+      "description": "科类 等于 物理"
+    },
+    {
+      "rule_id": "e_major_keyword",
+      "derived_from": "d_major_keyword",
+      "field": "专业名称",
+      "operator": "contains_any",
+      "value": [
+        "计算机"
+      ],
+      "description": "专业名称 包含任一：计算机"
+    },
+    {
+      "rule_id": "e_city",
+      "derived_from": "d_city",
+      "field": "城市",
+      "operator": "in_contains",
+      "value": [
+        "广州",
+        "深圳"
+      ],
+      "description": "城市 包含任一：广州、深圳"
+    }
+  ],
+  "candidate_confirmations": [],
+  "not_executed_preferences": [],
+  "result_count": 149,
+  "top_k_results": [
+    {
+      "rank": 1,
+      "院校名称": "中山大学",
+      "院校专业组代码": "10558219",
+      "专业代码": "077",
+      "专业名称": "计算机类",
+      "专业全称": "计算机类(广州，含：计算机科学与技术、信息与计算科学，广州校区，东校园)",
+      "选科要求": "化学",
+      "城市": "广州",
+      "学费": 6850.0,
+      "专业组最低位次": 4019,
+      "专业最低位次": 2852,
+      "safety_margin": "-87.44%",
+      "trace": [
+        {
+          "rule_id": "e_source_province",
+          "status": "pass",
+          "reason": "生源地 等于 广东"
+        },
+        {
+          "rule_id": "e_subject_type",
+          "status": "pass",
+          "reason": "科类 等于 物理"
+        },
+        {
+          "rule_id": "e_major_keyword",
+          "status": "pass",
+          "reason": "专业名称 包含任一：计算机；命中 计算机类"
+        },
+        {
+          "rule_id": "e_city",
+          "status": "pass",
+          "reason": "城市 包含任一：广州、深圳；命中 广州"
+        }
+      ]
+    },
+    {
+      "rank": 2,
+      "院校名称": "中山大学",
+      "院校专业组代码": "10558219",
+      "专业代码": "099",
+      "专业名称": "计算机类",
+      "专业全称": "计算机类(深圳，含：智能科学与技术、智慧交通，深圳校区)",
+      "选科要求": "化学",
+      "城市": "广州",
+      "学费": 6850.0,
+      "专业组最低位次": 4019,
+      "专业最低位次": 3982,
+      "safety_margin": "-87.44%",
+      "trace": [
+        {
+          "rule_id": "e_source_province",
+          "status": "pass",
+          "reason": "生源地 等于 广东"
+        },
+        {
+          "rule_id": "e_subject_type",
+          "status": "pass",
+          "reason": "科类 等于 物理"
+        },
+        {
+          "rule_id": "e_major_keyword",
+          "status": "pass",
+          "reason": "专业名称 包含任一：计算机；命中 计算机类"
+        },
+        {
+          "rule_id": "e_city",
+          "status": "pass",
+          "reason": "城市 包含任一：广州、深圳；命中 广州"
+        }
+      ]
+    },
+    {
+      "rank": 3,
+      "院校名称": "华南理工大学",
+      "院校专业组代码": "10561202",
+      "专业代码": "072",
+      "专业名称": "计算机科学与技术",
+      "专业全称": "计算机科学与技术(全英创新班，广州市)(不招单色识别不全者)",
+      "选科要求": "化学",
+      "城市": "广州",
+      "学费": 6850.0,
+      "专业组最低位次": 5640,
+      "safety_margin": "-82.37%",
+      "trace": [
+        {
+          "rule_id": "e_source_province",
+          "status": "pass",
+          "reason": "生源地 等于 广东"
+        },
+        {
+          "rule_id": "e_subject_type",
+          "status": "pass",
+          "reason": "科类 等于 物理"
+        },
+        {
+          "rule_id": "e_major_keyword",
+          "status": "pass",
+          "reason": "专业名称 包含任一：计算机；命中 计算机科学与技术"
+        },
+        {
+          "rule_id": "e_city",
+          "status": "pass",
+          "reason": "城市 包含任一：广州、深圳；命中 广州"
+        }
+      ]
+    },
+    {
+      "rank": 4,
+      "院校名称": "华南理工大学",
+      "院校专业组代码": "10561202",
+      "专业代码": "073",
+      "专业名称": "计算机科学与技术",
+      "专业全称": "计算机科学与技术(拔尖基地班，全英文教学，广州市)(不招单色识别不全者)",
+      "选科要求": "化学",
+      "城市": "广州",
+      "学费": 6850.0,
+      "专业组最低位次": 5640,
+      "safety_margin": "-82.37%",
+      "trace": [
+        {
+          "rule_id": "e_source_province",
+          "status": "pass",
+          "reason": "生源地 等于 广东"
+        },
+        {
+          "rule_id": "e_subject_type",
+          "status": "pass",
+          "reason": "科类 等于 物理"
+        },
+        {
+          "rule_id": "e_major_keyword",
+          "status": "pass",
+          "reason": "专业名称 包含任一：计算机；命中 计算机科学与技术"
+        },
+        {
+          "rule_id": "e_city",
+          "status": "pass",
+          "reason": "城市 包含任一：广州、深圳；命中 广州"
+        }
+      ]
+    },
+    {
+      "rank": 5,
+      "院校名称": "华南理工大学",
+      "院校专业组代码": "10561202",
+      "专业代码": "074",
+      "专业名称": "计算机类",
+      "专业全称": "计算机类(含：计算机科学与技术、网络工程、信息安全，广州市)(不招单色识别不全者)",
+      "选科要求": "化学",
+      "城市": "广州",
+      "学费": 6850.0,
+      "专业组最低位次": 5640,
+      "safety_margin": "-82.37%",
+      "trace": [
+        {
+          "rule_id": "e_source_province",
+          "status": "pass",
+          "reason": "生源地 等于 广东"
+        },
+        {
+          "rule_id": "e_subject_type",
+          "status": "pass",
+          "reason": "科类 等于 物理"
+        },
+        {
+          "rule_id": "e_major_keyword",
+          "status": "pass",
+          "reason": "专业名称 包含任一：计算机；命中 计算机类"
+        },
+        {
+          "rule_id": "e_city",
+          "status": "pass",
+          "reason": "城市 包含任一：广州、深圳；命中 广州"
+        }
+      ]
+    }
+  ],
+  "trace_summary": {
+    "executed_rule_ids": [
+      "e_source_province",
+      "e_subject_type",
+      "e_major_keyword",
+      "e_city"
+    ],
+    "not_executed_preference_count": 0,
+    "traced_result_count": 149,
+    "top_k": 5,
+    "top_k_trace_status_counts": {
+      "pass": 20
+    },
+    "safety_warnings": [
+      "答案只能使用 evidence_pack 中的已验证规则、确认记录、结果摘要和 trace。",
+      "候选偏好在确认或模拟确认之前不得执行。"
+    ]
+  },
+  "extracted_preferences": [
+    {
+      "id": "pref_origin",
+      "slot": "生源地",
+      "value": "广东",
+      "source_span": "广东",
+      "status": "已对齐字段"
+    },
+    {
+      "id": "pref_track",
+      "slot": "科类",
+      "value": "物理",
+      "source_span": "物理",
+      "status": "已对齐字段"
+    },
+    {
+      "id": "pref_rank",
+      "slot": "排位",
+      "value": 32000,
+      "source_span": "排位32000",
+      "status": "已对齐字段"
+    },
+    {
+      "id": "pref_major",
+      "slot": "专业名称",
+      "value": [
+        "计算机"
+      ],
+      "source_span": "计算机",
+      "status": "已对齐字段"
+    },
+    {
+      "id": "pref_city",
+      "slot": "城市",
+      "value": [
+        "广州",
+        "深圳"
+      ],
+      "source_span": "广州、深圳",
+      "status": "已对齐字段"
+    }
+  ],
+  "attribute_grounding_summary": {
+    "total_attributes": 6,
+    "status_counts": {
+      "schema_grounded": 5,
+      "context_only": 1
+    },
+    "value_index_status_counts": {
+      "matched": 5
+    },
+    "unsafe_ungrounded_executable_attributes": 0
+  },
+  "proposed_rule_audit": [],
+  "execution_summary": {
+    "executor": "duckdb",
+    "sql": "WITH source AS (\n  SELECT row_number() OVER () AS \"__source_row_number\", *\n  FROM \"admissions\"\n),\nfiltered AS (\n  SELECT\n    source.*,\n    TRY_CAST(regexp_extract(REPLACE(CAST(\"专业组最低位次1\" AS VARCHAR), ',', ''), '\\d+(?:\\.\\d+)?') AS DOUBLE) AS \"__group_rank_num\",\n    TRY_CAST(regexp_extract(REPLACE(CAST(\"学费\" AS VARCHAR), ',', ''), '\\d+(?:\\.\\d+)?') AS DOUBLE) AS \"__tuition_num\",\n    TRY_CAST(regexp_extract(REPLACE(CAST(\"院校排名\" AS VARCHAR), ',', ''), '\\d+(?:\\.\\d+)?') AS DOUBLE) AS \"__school_rank_num\",\n    TRY_CAST(regexp_extract(REPLACE(CAST(\"ID\" AS VARCHAR), ',', ''), '\\d+(?:\\.\\d+)?') AS DOUBLE) AS \"__id_num\"\n  FROM source\n  WHERE CAST(\"生源地\" AS VARCHAR) = ? AND CAST(\"科类\" AS VARCHAR) = ? AND (STRPOS(CAST(\"专业名称\" AS VARCHAR), ?) > 0) AND (STRPOS(CAST(\"城市\" AS VARCHAR), ?) > 0 OR STRPOS(CAST(\"城市\" AS VARCHAR), ?) > 0)\n),\nprojectable AS (\n  SELECT *\n  FROM filtered\n  WHERE TRUE\n    AND \"__group_rank_num\" IS NOT NULL\n    AND \"__tuition_num\" IS NOT NULL\n)\nSELECT *\nFROM projectable\nORDER BY\n  \"__group_rank_num\" ASC NULLS LAST,\n  \"__school_rank_num\" ASC NULLS LAST,\n  \"__id_num\" ASC NULLS LAST",
+    "params": [
+      "广东",
+      "物理",
+      "计算机",
+      "广州",
+      "深圳"
+    ],
+    "input_row_count": 30855,
+    "filtered_row_count": 149,
+    "sort_key": [
+      "专业组最低位次1 ASC NULLS LAST",
+      "院校排名 ASC NULLS LAST",
+      "ID ASC NULLS LAST"
+    ],
+    "top_k": 5,
+    "hard_rule_ids": [
+      "e_source_province",
+      "e_subject_type",
+      "e_major_keyword",
+      "e_city"
+    ],
+    "skipped_soft_rule_ids": []
+  },
+  "attribute_explanations": [
+    {
+      "source_text": "广东",
+      "slot_path": "user_context.source_province",
+      "field": "生源地",
+      "value": "广东",
+      "match_type": "exact_match",
+      "action": "executed",
+      "matched_values": [
+        "广东"
+      ],
+      "reason": "已匹配字段“生源地”，并已进入 hard filter。"
+    },
+    {
+      "source_text": "物理",
+      "slot_path": "user_context.subject_type",
+      "field": "科类",
+      "value": "物理",
+      "match_type": "exact_match",
+      "action": "executed",
+      "matched_values": [
+        "物理"
+      ],
+      "reason": "已匹配字段“科类”，并已进入 hard filter。"
+    },
+    {
+      "source_text": "计算机",
+      "slot_path": "preferences.major_keyword",
+      "field": "专业名称",
+      "value": "计算机",
+      "match_type": "exact_match",
+      "action": "executed",
+      "matched_values": [
+        "计算机类",
+        "计算机科学与技术",
+        "计算机应用技术",
+        "电子与计算机工程",
+        "计算机网络技术"
+      ],
+      "reason": "已匹配字段“专业名称”，并已进入 hard filter。"
+    },
+    {
+      "source_text": "广深",
+      "slot_path": "preferences.preferred_cities",
+      "field": "城市",
+      "value": [
+        "广州",
+        "深圳"
+      ],
+      "match_type": "exact_match",
+      "action": "executed",
+      "matched_values": [
+        "广州",
+        "深圳"
+      ],
+      "reason": "已匹配字段“城市”，并已进入 hard filter。"
+    }
+  ],
+  "confirmed_rules": [],
+  "confirmation_source": [],
+  "executed_after_confirmation": [],
+  "unconfirmed_candidates": [],
+  "no_schema_field_preferences": [],
+  "rejected_confirmations": []
+}
+```
+### answer
+
+根据已验证规则生成结果：
+
+用户需求：广东物理，排位32000，想学计算机，广深优先。；偏好信息：偏好描述：广东物理，排位32000，想学计算机，广深优先。
+共筛选到 149 条符合已执行规则的结果。
+
+抽取与结构化结果：
+- 生源地：广东；状态：已对齐字段；来源：广东
+- 科类：物理；状态：已对齐字段；来源：物理
+- 排位：32000；状态：已对齐字段；来源：排位32000
+- 专业名称：计算机；状态：已对齐字段；来源：计算机
+- 城市：广州、深圳；状态：已对齐字段；来源：广州、深圳
+
+字段值审计解释：
+- [已执行] 广东 -> 生源地：exact_match；索引命中：广东；已匹配字段“生源地”，并已进入 hard filter。
+- [已执行] 物理 -> 科类：exact_match；索引命中：物理；已匹配字段“科类”，并已进入 hard filter。
+- [已执行] 计算机 -> 专业名称：exact_match；索引命中：计算机类、计算机科学与技术、计算机应用技术、电子与计算机工程、计算机网络技术；已匹配字段“专业名称”，并已进入 hard filter。
+- [已执行] 广深 -> 城市：exact_match；索引命中：广州、深圳；已匹配字段“城市”，并已进入 hard filter。
+
+已执行规则：
+- e_source_province：生源地 等于 广东
+- e_subject_type：科类 等于 物理
+- e_major_keyword：专业名称 包含任一：计算机
+- e_city：城市 包含任一：广州、深圳
+
+候选偏好确认记录：
+
+未执行但已保留的偏好：
+- 无。
+
+前 5 条结果：
+- 1. 中山大学；专业组代码：10558219；专业代码：077；专业名称：计算机类；专业全称：计算机类(广州，含：计算机科学与技术、信息与计算科学，广州校区，东校园)；选科要求：化学；城市：广州；学费：6850 元/年；专业组最低位次：4019；专业最低位次：2852。
+- 2. 中山大学；专业组代码：10558219；专业代码：099；专业名称：计算机类；专业全称：计算机类(深圳，含：智能科学与技术、智慧交通，深圳校区)；选科要求：化学；城市：广州；学费：6850 元/年；专业组最低位次：4019；专业最低位次：3982。
+- 3. 华南理工大学；专业组代码：10561202；专业代码：072；专业名称：计算机科学与技术；专业全称：计算机科学与技术(全英创新班，广州市)(不招单色识别不全者)；选科要求：化学；城市：广州；学费：6850 元/年；专业组最低位次：5640。
+- 4. 华南理工大学；专业组代码：10561202；专业代码：073；专业名称：计算机科学与技术；专业全称：计算机科学与技术(拔尖基地班，全英文教学，广州市)(不招单色识别不全者)；选科要求：化学；城市：广州；学费：6850 元/年；专业组最低位次：5640。
+- 5. 华南理工大学；专业组代码：10561202；专业代码：074；专业名称：计算机类；专业全称：计算机类(含：计算机科学与技术、网络工程、信息安全，广州市)(不招单色识别不全者)；选科要求：化学；城市：广州；学费：6850 元/年；专业组最低位次：5640。
+
+安全说明：
+- 答案只能使用 证据包 中的已验证规则、确认记录、结果摘要和 trace。
+- 候选偏好在确认或模拟确认之前不得执行。
+
+## admissions_02 `通过`
+
+- domain: `admissions`
+- query: 广东历史类，排位20000，想读法学。
+- status: `ok`
+- pass/fail：`通过`
+
+### items
+```json
+[
+  {
+    "item_id": "result_001",
+    "title": "清华大学",
+    "subtitle": "法学类(含：法学、法学(国际班)，北京市)",
+    "primary_attributes": [
+      {
+        "key": "year",
+        "label": "year",
+        "value": 2024
+      },
+      {
+        "key": "batch",
+        "label": "batch",
+        "value": "本科批"
+      },
+      {
+        "key": "university_code",
+        "label": "university_code",
+        "value": "10003"
+      },
+      {
+        "key": "university_name",
+        "label": "university_name",
+        "value": "清华大学"
+      }
+    ],
+    "secondary_attributes": [
+      {
+        "key": "group_code",
+        "label": "group_code",
+        "value": "10003201"
+      },
+      {
+        "key": "group_name",
+        "label": "group_name",
+        "value": "201组"
+      },
+      {
+        "key": "major_code",
+        "label": "major_code",
+        "value": "043"
+      },
+      {
+        "key": "major_name",
+        "label": "major_name",
+        "value": "法学类"
+      },
+      {
+        "key": "full_major_name",
+        "label": "full_major_name",
+        "value": "法学类(含：法学、法学(国际班)，北京市)"
+      },
+      {
+        "key": "subject_requirement",
+        "label": "subject_requirement",
+        "value": "不限"
+      },
+      {
+        "key": "province",
+        "label": "province",
+        "value": "北京"
+      },
+      {
+        "key": "city",
+        "label": "city",
+        "value": "海淀区"
+      },
+      {
+        "key": "tuition",
+        "label": "tuition",
+        "value": 5000.0
+      },
+      {
+        "key": "rank_2024",
+        "label": "rank_2024",
+        "value": 19
+      },
+      {
+        "key": "group_min_rank",
+        "label": "group_min_rank",
+        "value": 19
+      },
+      {
+        "key": "safety_margin",
+        "label": "safety_margin",
+        "value": "-99.9%"
+      }
+    ],
+    "matched_filters": [
+      {
+        "id": "e_source_province",
+        "field": "生源地",
+        "operator": "eq",
+        "value": "广东",
+        "matched": true,
+        "text": "生源地 等于 广东"
+      },
+      {
+        "id": "e_subject_type",
+        "field": "科类",
+        "operator": "eq",
+        "value": "历史",
+        "matched": true,
+        "text": "科类 等于 历史"
+      },
+      {
+        "id": "e_major_keyword",
+        "field": "专业名称",
+        "operator": "contains_any",
+        "value": [
+          "法学"
+        ],
+        "matched": true,
+        "text": "专业名称 包含任一：法学；命中 法学类"
+      }
+    ],
+    "raw": {
+      "excel_row_number": 86,
+      "ID": 83,
+      "年份": 2024,
+      "批次": "本科批",
+      "院校代码": "10003",
+      "院校名称": "清华大学",
+      "院校专业组代码": "10003201",
+      "专业组名称": "201组",
+      "科类": "历史",
+      "选科要求": "不限",
+      "专业代码": "043",
+      "专业名称": "法学类",
+      "专业全称": "法学类(含：法学、法学(国际班)，北京市)",
+      "所在省": "北京",
+      "城市": "海淀区",
+      "学费": 5000.0,
+      "专业组最低位次1": 19,
+      "最低位次1": null,
+      "院校标签": "985/211/双一流/国重点/保研资格",
+      "院校排名": "1",
+      "ranking_key": -19981,
+      "safety_margin_pct": -0.999,
+      "cooperation_filter_status": "not_executed_missing_cooperation_type_field",
+      "中外合作筛选状态": "未执行：缺少合作办学类型字段"
+    }
+  },
+  {
+    "item_id": "result_002",
+    "title": "北京大学",
+    "subtitle": "法学(校本部)",
+    "primary_attributes": [
+      {
+        "key": "year",
+        "label": "year",
+        "value": 2024
+      },
+      {
+        "key": "batch",
+        "label": "batch",
+        "value": "本科批"
+      },
+      {
+        "key": "university_code",
+        "label": "university_code",
+        "value": "10001"
+      },
+      {
+        "key": "university_name",
+        "label": "university_name",
+        "value": "北京大学"
+      }
+    ],
+    "secondary_attributes": [
+      {
+        "key": "group_code",
+        "label": "group_code",
+        "value": "10001201"
+      },
+      {
+        "key": "group_name",
+        "label": "group_name",
+        "value": "201组"
+      },
+      {
+        "key": "major_code",
+        "label": "major_code",
+        "value": "096"
+      },
+      {
+        "key": "major_name",
+        "label": "major_name",
+        "value": "法学"
+      },
+      {
+        "key": "full_major_name",
+        "label": "full_major_name",
+        "value": "法学(校本部)"
+      },
+      {
+        "key": "subject_requirement",
+        "label": "subject_requirement",
+        "value": "不限"
+      },
+      {
+        "key": "province",
+        "label": "province",
+        "value": "北京"
+      },
+      {
+        "key": "city",
+        "label": "city",
+        "value": "海淀区"
+      },
+      {
+        "key": "tuition",
+        "label": "tuition",
+        "value": 5000.0
+      },
+      {
+        "key": "rank_2024",
+        "label": "rank_2024",
+        "value": 32
+      },
+      {
+        "key": "group_min_rank",
+        "label": "group_min_rank",
+        "value": 32
+      },
+      {
+        "key": "safety_margin",
+        "label": "safety_margin",
+        "value": "-99.8%"
+      }
+    ],
+    "matched_filters": [
+      {
+        "id": "e_source_province",
+        "field": "生源地",
+        "operator": "eq",
+        "value": "广东",
+        "matched": true,
+        "text": "生源地 等于 广东"
+      },
+      {
+        "id": "e_subject_type",
+        "field": "科类",
+        "operator": "eq",
+        "value": "历史",
+        "matched": true,
+        "text": "科类 等于 历史"
+      },
+      {
+        "id": "e_major_keyword",
+        "field": "专业名称",
+        "operator": "contains_any",
+        "value": [
+          "法学"
+        ],
+        "matched": true,
+        "text": "专业名称 包含任一：法学；命中 法学"
+      }
+    ],
+    "raw": {
+      "excel_row_number": 22,
+      "ID": 19,
+      "年份": 2024,
+      "批次": "本科批",
+      "院校代码": "10001",
+      "院校名称": "北京大学",
+      "院校专业组代码": "10001201",
+      "专业组名称": "201组",
+      "科类": "历史",
+      "选科要求": "不限",
+      "专业代码": "096",
+      "专业名称": "法学",
+      "专业全称": "法学(校本部)",
+      "所在省": "北京",
+      "城市": "海淀区",
+      "学费": 5000.0,
+      "专业组最低位次1": 32,
+      "最低位次1": null,
+      "院校标签": "985/211/双一流/国重点/保研资格",
+      "院校排名": "2",
+      "ranking_key": -19968,
+      "safety_margin_pct": -0.9984,
+      "cooperation_filter_status": "not_executed_missing_cooperation_type_field",
+      "中外合作筛选状态": "未执行：缺少合作办学类型字段"
+    }
+  },
+  {
+    "item_id": "result_003",
+    "title": "中国人民大学",
+    "subtitle": "法学(含：法学-新闻学工商管理-法学涉外法治双主学位项目，含：法学-劳动关系实验班，含：哈佛大学、新加坡国立大学等免学费交换项目，亚洲校园+项目(中日韩三国政府奖学金支持)、中欧欧洲法国际组织后备人才培养项目(国家留基委资助)等，北京市)",
+    "primary_attributes": [
+      {
+        "key": "year",
+        "label": "year",
+        "value": 2024
+      },
+      {
+        "key": "batch",
+        "label": "batch",
+        "value": "本科批"
+      },
+      {
+        "key": "university_code",
+        "label": "university_code",
+        "value": "10002"
+      },
+      {
+        "key": "university_name",
+        "label": "university_name",
+        "value": "中国人民大学"
+      }
+    ],
+    "secondary_attributes": [
+      {
+        "key": "group_code",
+        "label": "group_code",
+        "value": "10002205"
+      },
+      {
+        "key": "group_name",
+        "label": "group_name",
+        "value": "205组"
+      },
+      {
+        "key": "major_code",
+        "label": "major_code",
+        "value": "013"
+      },
+      {
+        "key": "major_name",
+        "label": "major_name",
+        "value": "法学"
+      },
+      {
+        "key": "full_major_name",
+        "label": "full_major_name",
+        "value": "法学(含：法学-新闻学工商管理-法学涉外法治双主学位项目，含：法学-劳动关系实验班，含：哈佛大学、新加坡国立大学等免学费交换项目，亚洲校园+项目(中日韩三国政府奖学金支持)、中欧欧洲法国际组织后备人才培养项目(国家留基委资助)等，北京市)"
+      },
+      {
+        "key": "subject_requirement",
+        "label": "subject_requirement",
+        "value": "不限"
+      },
+      {
+        "key": "province",
+        "label": "province",
+        "value": "北京"
+      },
+      {
+        "key": "city",
+        "label": "city",
+        "value": "海淀区"
+      },
+      {
+        "key": "tuition",
+        "label": "tuition",
+        "value": 5000.0
+      },
+      {
+        "key": "rank_2024",
+        "label": "rank_2024",
+        "value": 53
+      },
+      {
+        "key": "group_min_rank",
+        "label": "group_min_rank",
+        "value": 53
+      },
+      {
+        "key": "safety_margin",
+        "label": "safety_margin",
+        "value": "-99.7%"
+      }
+    ],
+    "matched_filters": [
+      {
+        "id": "e_source_province",
+        "field": "生源地",
+        "operator": "eq",
+        "value": "广东",
+        "matched": true,
+        "text": "生源地 等于 广东"
+      },
+      {
+        "id": "e_subject_type",
+        "field": "科类",
+        "operator": "eq",
+        "value": "历史",
+        "matched": true,
+        "text": "科类 等于 历史"
+      },
+      {
+        "id": "e_major_keyword",
+        "field": "专业名称",
+        "operator": "contains_any",
+        "value": [
+          "法学"
+        ],
+        "matched": true,
+        "text": "专业名称 包含任一：法学；命中 法学"
+      }
+    ],
+    "raw": {
+      "excel_row_number": 82,
+      "ID": 79,
+      "年份": 2024,
+      "批次": "本科批",
+      "院校代码": "10002",
+      "院校名称": "中国人民大学",
+      "院校专业组代码": "10002205",
+      "专业组名称": "205组",
+      "科类": "历史",
+      "选科要求": "不限",
+      "专业代码": "013",
+      "专业名称": "法学",
+      "专业全称": "法学(含：法学-新闻学工商管理-法学涉外法治双主学位项目，含：法学-劳动关系实验班，含：哈佛大学、新加坡国立大学等免学费交换项目，亚洲校园+项目(中日韩三国政府奖学金支持)、中欧欧洲法国际组织后备人才培养项目(国家留基委资助)等，北京市)",
+      "所在省": "北京",
+      "城市": "海淀区",
+      "学费": 5000.0,
+      "专业组最低位次1": 53,
+      "最低位次1": null,
+      "院校标签": "985/211/双一流/国重点/保研资格",
+      "院校排名": "18",
+      "ranking_key": -19947,
+      "safety_margin_pct": -0.9973,
+      "cooperation_filter_status": "not_executed_missing_cooperation_type_field",
+      "中外合作筛选状态": "未执行：缺少合作办学类型字段"
+    }
+  },
+  {
+    "item_id": "result_004",
+    "title": "上海交通大学",
+    "subtitle": "法学试验班(含：法学，含：法学-经济学双学士学位，校本部)",
+    "primary_attributes": [
+      {
+        "key": "year",
+        "label": "year",
+        "value": 2024
+      },
+      {
+        "key": "batch",
+        "label": "batch",
+        "value": "本科批"
+      },
+      {
+        "key": "university_code",
+        "label": "university_code",
+        "value": "10248"
+      },
+      {
+        "key": "university_name",
+        "label": "university_name",
+        "value": "上海交通大学"
+      }
+    ],
+    "secondary_attributes": [
+      {
+        "key": "group_code",
+        "label": "group_code",
+        "value": "10248201"
+      },
+      {
+        "key": "group_name",
+        "label": "group_name",
+        "value": "201组"
+      },
+      {
+        "key": "major_code",
+        "label": "major_code",
+        "value": "016"
+      },
+      {
+        "key": "major_name",
+        "label": "major_name",
+        "value": "法学试验班"
+      },
+      {
+        "key": "full_major_name",
+        "label": "full_major_name",
+        "value": "法学试验班(含：法学，含：法学-经济学双学士学位，校本部)"
+      },
+      {
+        "key": "subject_requirement",
+        "label": "subject_requirement",
+        "value": "不限"
+      },
+      {
+        "key": "province",
+        "label": "province",
+        "value": "上海"
+      },
+      {
+        "key": "city",
+        "label": "city",
+        "value": "闵行区"
+      },
+      {
+        "key": "tuition",
+        "label": "tuition",
+        "value": 6500.0
+      },
+      {
+        "key": "rank_2024",
+        "label": "rank_2024",
+        "value": 68
+      },
+      {
+        "key": "group_min_rank",
+        "label": "group_min_rank",
+        "value": 68
+      },
+      {
+        "key": "safety_margin",
+        "label": "safety_margin",
+        "value": "-99.7%"
+      }
+    ],
+    "matched_filters": [
+      {
+        "id": "e_source_province",
+        "field": "生源地",
+        "operator": "eq",
+        "value": "广东",
+        "matched": true,
+        "text": "生源地 等于 广东"
+      },
+      {
+        "id": "e_subject_type",
+        "field": "科类",
+        "operator": "eq",
+        "value": "历史",
+        "matched": true,
+        "text": "科类 等于 历史"
+      },
+      {
+        "id": "e_major_keyword",
+        "field": "专业名称",
+        "operator": "contains_any",
+        "value": [
+          "法学"
+        ],
+        "matched": true,
+        "text": "专业名称 包含任一：法学；命中 法学试验班"
+      }
+    ],
+    "raw": {
+      "excel_row_number": 2692,
+      "ID": 2689,
+      "年份": 2024,
+      "批次": "本科批",
+      "院校代码": "10248",
+      "院校名称": "上海交通大学",
+      "院校专业组代码": "10248201",
+      "专业组名称": "201组",
+      "科类": "历史",
+      "选科要求": "不限",
+      "专业代码": "016",
+      "专业名称": "法学试验班",
+      "专业全称": "法学试验班(含：法学，含：法学-经济学双学士学位，校本部)",
+      "所在省": "上海",
+      "城市": "闵行区",
+      "学费": 6500.0,
+      "专业组最低位次1": 68,
+      "最低位次1": null,
+      "院校标签": "985/211/双一流/国重点/保研资格",
+      "院校排名": "4",
+      "ranking_key": -19932,
+      "safety_margin_pct": -0.9966,
+      "cooperation_filter_status": "not_executed_missing_cooperation_type_field",
+      "中外合作筛选状态": "未执行：缺少合作办学类型字段"
+    }
+  },
+  {
+    "item_id": "result_005",
+    "title": "上海交通大学",
+    "subtitle": "法学试验班(涉外法治特班，含：法学，校本部)",
+    "primary_attributes": [
+      {
+        "key": "year",
+        "label": "year",
+        "value": 2024
+      },
+      {
+        "key": "batch",
+        "label": "batch",
+        "value": "本科批"
+      },
+      {
+        "key": "university_code",
+        "label": "university_code",
+        "value": "10248"
+      },
+      {
+        "key": "university_name",
+        "label": "university_name",
+        "value": "上海交通大学"
+      }
+    ],
+    "secondary_attributes": [
+      {
+        "key": "group_code",
+        "label": "group_code",
+        "value": "10248201"
+      },
+      {
+        "key": "group_name",
+        "label": "group_name",
+        "value": "201组"
+      },
+      {
+        "key": "major_code",
+        "label": "major_code",
+        "value": "017"
+      },
+      {
+        "key": "major_name",
+        "label": "major_name",
+        "value": "法学试验班"
+      },
+      {
+        "key": "full_major_name",
+        "label": "full_major_name",
+        "value": "法学试验班(涉外法治特班，含：法学，校本部)"
+      },
+      {
+        "key": "subject_requirement",
+        "label": "subject_requirement",
+        "value": "不限"
+      },
+      {
+        "key": "province",
+        "label": "province",
+        "value": "上海"
+      },
+      {
+        "key": "city",
+        "label": "city",
+        "value": "闵行区"
+      },
+      {
+        "key": "tuition",
+        "label": "tuition",
+        "value": 6500.0
+      },
+      {
+        "key": "rank_2024",
+        "label": "rank_2024",
+        "value": 68
+      },
+      {
+        "key": "group_min_rank",
+        "label": "group_min_rank",
+        "value": 68
+      },
+      {
+        "key": "safety_margin",
+        "label": "safety_margin",
+        "value": "-99.7%"
+      }
+    ],
+    "matched_filters": [
+      {
+        "id": "e_source_province",
+        "field": "生源地",
+        "operator": "eq",
+        "value": "广东",
+        "matched": true,
+        "text": "生源地 等于 广东"
+      },
+      {
+        "id": "e_subject_type",
+        "field": "科类",
+        "operator": "eq",
+        "value": "历史",
+        "matched": true,
+        "text": "科类 等于 历史"
+      },
+      {
+        "id": "e_major_keyword",
+        "field": "专业名称",
+        "operator": "contains_any",
+        "value": [
+          "法学"
+        ],
+        "matched": true,
+        "text": "专业名称 包含任一：法学；命中 法学试验班"
+      }
+    ],
+    "raw": {
+      "excel_row_number": 2693,
+      "ID": 2690,
+      "年份": 2024,
+      "批次": "本科批",
+      "院校代码": "10248",
+      "院校名称": "上海交通大学",
+      "院校专业组代码": "10248201",
+      "专业组名称": "201组",
+      "科类": "历史",
+      "选科要求": "不限",
+      "专业代码": "017",
+      "专业名称": "法学试验班",
+      "专业全称": "法学试验班(涉外法治特班，含：法学，校本部)",
+      "所在省": "上海",
+      "城市": "闵行区",
+      "学费": 6500.0,
+      "专业组最低位次1": 68,
+      "最低位次1": null,
+      "院校标签": "985/211/双一流/国重点/保研资格",
+      "院校排名": "4",
+      "ranking_key": -19932,
+      "safety_margin_pct": -0.9966,
+      "cooperation_filter_status": "not_executed_missing_cooperation_type_field",
+      "中外合作筛选状态": "未执行：缺少合作办学类型字段"
+    }
+  }
+]
+```
+### top_results
+```json
+[
+  {
+    "id": "result_001",
+    "trace": [
+      {
+        "status": "pass",
+        "text": "生源地 等于 广东"
+      },
+      {
+        "status": "pass",
+        "text": "科类 等于 历史"
+      },
+      {
+        "status": "pass",
+        "text": "专业名称 包含任一：法学；命中 法学类"
+      }
+    ],
+    "year": 2024,
+    "batch": "本科批",
+    "university_code": "10003",
+    "university_name": "清华大学",
+    "group_code": "10003201",
+    "group_name": "201组",
+    "major_code": "043",
+    "major_name": "法学类",
+    "full_major_name": "法学类(含：法学、法学(国际班)，北京市)",
+    "subject_requirement": "不限",
+    "province": "北京",
+    "city": "海淀区",
+    "tuition": 5000.0,
+    "rank_2024": 19,
+    "major_rank_2024": null,
+    "plan_count": null,
+    "group_min_rank": 19,
+    "major_min_rank": null,
+    "safety_margin": "-99.9%"
+  },
+  {
+    "id": "result_002",
+    "trace": [
+      {
+        "status": "pass",
+        "text": "生源地 等于 广东"
+      },
+      {
+        "status": "pass",
+        "text": "科类 等于 历史"
+      },
+      {
+        "status": "pass",
+        "text": "专业名称 包含任一：法学；命中 法学"
+      }
+    ],
+    "year": 2024,
+    "batch": "本科批",
+    "university_code": "10001",
+    "university_name": "北京大学",
+    "group_code": "10001201",
+    "group_name": "201组",
+    "major_code": "096",
+    "major_name": "法学",
+    "full_major_name": "法学(校本部)",
+    "subject_requirement": "不限",
+    "province": "北京",
+    "city": "海淀区",
+    "tuition": 5000.0,
+    "rank_2024": 32,
+    "major_rank_2024": null,
+    "plan_count": null,
+    "group_min_rank": 32,
+    "major_min_rank": null,
+    "safety_margin": "-99.8%"
+  },
+  {
+    "id": "result_003",
+    "trace": [
+      {
+        "status": "pass",
+        "text": "生源地 等于 广东"
+      },
+      {
+        "status": "pass",
+        "text": "科类 等于 历史"
+      },
+      {
+        "status": "pass",
+        "text": "专业名称 包含任一：法学；命中 法学"
+      }
+    ],
+    "year": 2024,
+    "batch": "本科批",
+    "university_code": "10002",
+    "university_name": "中国人民大学",
+    "group_code": "10002205",
+    "group_name": "205组",
+    "major_code": "013",
+    "major_name": "法学",
+    "full_major_name": "法学(含：法学-新闻学工商管理-法学涉外法治双主学位项目，含：法学-劳动关系实验班，含：哈佛大学、新加坡国立大学等免学费交换项目，亚洲校园+项目(中日韩三国政府奖学金支持)、中欧欧洲法国际组织后备人才培养项目(国家留基委资助)等，北京市)",
+    "subject_requirement": "不限",
+    "province": "北京",
+    "city": "海淀区",
+    "tuition": 5000.0,
+    "rank_2024": 53,
+    "major_rank_2024": null,
+    "plan_count": null,
+    "group_min_rank": 53,
+    "major_min_rank": null,
+    "safety_margin": "-99.7%"
+  },
+  {
+    "id": "result_004",
+    "trace": [
+      {
+        "status": "pass",
+        "text": "生源地 等于 广东"
+      },
+      {
+        "status": "pass",
+        "text": "科类 等于 历史"
+      },
+      {
+        "status": "pass",
+        "text": "专业名称 包含任一：法学；命中 法学试验班"
+      }
+    ],
+    "year": 2024,
+    "batch": "本科批",
+    "university_code": "10248",
+    "university_name": "上海交通大学",
+    "group_code": "10248201",
+    "group_name": "201组",
+    "major_code": "016",
+    "major_name": "法学试验班",
+    "full_major_name": "法学试验班(含：法学，含：法学-经济学双学士学位，校本部)",
+    "subject_requirement": "不限",
+    "province": "上海",
+    "city": "闵行区",
+    "tuition": 6500.0,
+    "rank_2024": 68,
+    "major_rank_2024": null,
+    "plan_count": null,
+    "group_min_rank": 68,
+    "major_min_rank": null,
+    "safety_margin": "-99.7%"
+  },
+  {
+    "id": "result_005",
+    "trace": [
+      {
+        "status": "pass",
+        "text": "生源地 等于 广东"
+      },
+      {
+        "status": "pass",
+        "text": "科类 等于 历史"
+      },
+      {
+        "status": "pass",
+        "text": "专业名称 包含任一：法学；命中 法学试验班"
+      }
+    ],
+    "year": 2024,
+    "batch": "本科批",
+    "university_code": "10248",
+    "university_name": "上海交通大学",
+    "group_code": "10248201",
+    "group_name": "201组",
+    "major_code": "017",
+    "major_name": "法学试验班",
+    "full_major_name": "法学试验班(涉外法治特班，含：法学，校本部)",
+    "subject_requirement": "不限",
+    "province": "上海",
+    "city": "闵行区",
+    "tuition": 6500.0,
+    "rank_2024": 68,
+    "major_rank_2024": null,
+    "plan_count": null,
+    "group_min_rank": 68,
+    "major_min_rank": null,
+    "safety_margin": "-99.7%"
+  }
+]
+```
+### executed_filters
+```json
+[
+  {
+    "id": "e_source_province",
+    "label": "生源地 等于 广东",
+    "field": "生源地",
+    "operator": "eq",
+    "value": "广东",
+    "source_span": "广东"
+  },
+  {
+    "id": "e_subject_type",
+    "label": "科类 等于 历史",
+    "field": "科类",
+    "operator": "eq",
+    "value": "历史",
+    "source_span": "历史"
+  },
+  {
+    "id": "e_major_keyword",
+    "label": "专业名称 包含任一：法学",
+    "field": "专业名称",
+    "operator": "contains_any",
+    "value": [
+      "法学"
+    ],
+    "source_span": "法学"
+  }
+]
+```
+### candidates_to_confirm
+```json
+[]
+```
+### unexecuted_preferences
+```json
+[]
+```
+### SQL / params
+```json
+{
+  "sql": "WITH source AS (\n  SELECT row_number() OVER () AS \"__source_row_number\", *\n  FROM \"admissions\"\n),\nfiltered AS (\n  SELECT\n    source.*,\n    TRY_CAST(regexp_extract(REPLACE(CAST(\"专业组最低位次1\" AS VARCHAR), ',', ''), '\\d+(?:\\.\\d+)?') AS DOUBLE) AS \"__group_rank_num\",\n    TRY_CAST(regexp_extract(REPLACE(CAST(\"学费\" AS VARCHAR), ',', ''), '\\d+(?:\\.\\d+)?') AS DOUBLE) AS \"__tuition_num\",\n    TRY_CAST(regexp_extract(REPLACE(CAST(\"院校排名\" AS VARCHAR), ',', ''), '\\d+(?:\\.\\d+)?') AS DOUBLE) AS \"__school_rank_num\",\n    TRY_CAST(regexp_extract(REPLACE(CAST(\"ID\" AS VARCHAR), ',', ''), '\\d+(?:\\.\\d+)?') AS DOUBLE) AS \"__id_num\"\n  FROM source\n  WHERE CAST(\"生源地\" AS VARCHAR) = ? AND CAST(\"科类\" AS VARCHAR) = ? AND (STRPOS(CAST(\"专业名称\" AS VARCHAR), ?) > 0)\n),\nprojectable AS (\n  SELECT *\n  FROM filtered\n  WHERE TRUE\n    AND \"__group_rank_num\" IS NOT NULL\n    AND \"__tuition_num\" IS NOT NULL\n)\nSELECT *\nFROM projectable\nORDER BY\n  \"__group_rank_num\" ASC NULLS LAST,\n  \"__school_rank_num\" ASC NULLS LAST,\n  \"__id_num\" ASC NULLS LAST",
+  "params": [
+    "广东",
+    "历史",
+    "法学"
+  ]
+}
+```
+### EvidencePack
+```json
+{
+  "user_request": "广东历史类，排位20000，想读法学。；偏好信息：偏好描述：广东历史类，排位20000，想读法学。",
+  "executed_rules": [
+    {
+      "rule_id": "e_source_province",
+      "derived_from": "d_source_province",
+      "field": "生源地",
+      "operator": "eq",
+      "value": "广东",
+      "description": "生源地 等于 广东"
+    },
+    {
+      "rule_id": "e_subject_type",
+      "derived_from": "d_subject_type",
+      "field": "科类",
+      "operator": "eq",
+      "value": "历史",
+      "description": "科类 等于 历史"
+    },
+    {
+      "rule_id": "e_major_keyword",
+      "derived_from": "d_major_keyword",
+      "field": "专业名称",
+      "operator": "contains_any",
+      "value": [
+        "法学"
+      ],
+      "description": "专业名称 包含任一：法学"
+    }
+  ],
+  "candidate_confirmations": [],
+  "not_executed_preferences": [],
+  "result_count": 282,
+  "top_k_results": [
+    {
+      "rank": 1,
+      "院校名称": "清华大学",
+      "院校专业组代码": "10003201",
+      "专业代码": "043",
+      "专业名称": "法学类",
+      "专业全称": "法学类(含：法学、法学(国际班)，北京市)",
+      "选科要求": "不限",
+      "城市": "海淀区",
+      "学费": 5000.0,
+      "专业组最低位次": 19,
+      "safety_margin": "-99.90%",
+      "trace": [
+        {
+          "rule_id": "e_source_province",
+          "status": "pass",
+          "reason": "生源地 等于 广东"
+        },
+        {
+          "rule_id": "e_subject_type",
+          "status": "pass",
+          "reason": "科类 等于 历史"
+        },
+        {
+          "rule_id": "e_major_keyword",
+          "status": "pass",
+          "reason": "专业名称 包含任一：法学；命中 法学类"
+        }
+      ]
+    },
+    {
+      "rank": 2,
+      "院校名称": "北京大学",
+      "院校专业组代码": "10001201",
+      "专业代码": "096",
+      "专业名称": "法学",
+      "专业全称": "法学(校本部)",
+      "选科要求": "不限",
+      "城市": "海淀区",
+      "学费": 5000.0,
+      "专业组最低位次": 32,
+      "safety_margin": "-99.84%",
+      "trace": [
+        {
+          "rule_id": "e_source_province",
+          "status": "pass",
+          "reason": "生源地 等于 广东"
+        },
+        {
+          "rule_id": "e_subject_type",
+          "status": "pass",
+          "reason": "科类 等于 历史"
+        },
+        {
+          "rule_id": "e_major_keyword",
+          "status": "pass",
+          "reason": "专业名称 包含任一：法学；命中 法学"
+        }
+      ]
+    },
+    {
+      "rank": 3,
+      "院校名称": "中国人民大学",
+      "院校专业组代码": "10002205",
+      "专业代码": "013",
+      "专业名称": "法学",
+      "专业全称": "法学(含：法学-新闻学工商管理-法学涉外法治双主学位项目，含：法学-劳动关系实验班，含：哈佛大学、新加坡国立大学等免学费交换项目，亚洲校园+项目(中日韩三国政府奖学金支持)、中欧欧洲法国际组织后备人才培养项目(国家留基委资助)等，北京市)",
+      "选科要求": "不限",
+      "城市": "海淀区",
+      "学费": 5000.0,
+      "专业组最低位次": 53,
+      "safety_margin": "-99.73%",
+      "trace": [
+        {
+          "rule_id": "e_source_province",
+          "status": "pass",
+          "reason": "生源地 等于 广东"
+        },
+        {
+          "rule_id": "e_subject_type",
+          "status": "pass",
+          "reason": "科类 等于 历史"
+        },
+        {
+          "rule_id": "e_major_keyword",
+          "status": "pass",
+          "reason": "专业名称 包含任一：法学；命中 法学"
+        }
+      ]
+    },
+    {
+      "rank": 4,
+      "院校名称": "上海交通大学",
+      "院校专业组代码": "10248201",
+      "专业代码": "016",
+      "专业名称": "法学试验班",
+      "专业全称": "法学试验班(含：法学，含：法学-经济学双学士学位，校本部)",
+      "选科要求": "不限",
+      "城市": "闵行区",
+      "学费": 6500.0,
+      "专业组最低位次": 68,
+      "safety_margin": "-99.66%",
+      "trace": [
+        {
+          "rule_id": "e_source_province",
+          "status": "pass",
+          "reason": "生源地 等于 广东"
+        },
+        {
+          "rule_id": "e_subject_type",
+          "status": "pass",
+          "reason": "科类 等于 历史"
+        },
+        {
+          "rule_id": "e_major_keyword",
+          "status": "pass",
+          "reason": "专业名称 包含任一：法学；命中 法学试验班"
+        }
+      ]
+    },
+    {
+      "rank": 5,
+      "院校名称": "上海交通大学",
+      "院校专业组代码": "10248201",
+      "专业代码": "017",
+      "专业名称": "法学试验班",
+      "专业全称": "法学试验班(涉外法治特班，含：法学，校本部)",
+      "选科要求": "不限",
+      "城市": "闵行区",
+      "学费": 6500.0,
+      "专业组最低位次": 68,
+      "safety_margin": "-99.66%",
+      "trace": [
+        {
+          "rule_id": "e_source_province",
+          "status": "pass",
+          "reason": "生源地 等于 广东"
+        },
+        {
+          "rule_id": "e_subject_type",
+          "status": "pass",
+          "reason": "科类 等于 历史"
+        },
+        {
+          "rule_id": "e_major_keyword",
+          "status": "pass",
+          "reason": "专业名称 包含任一：法学；命中 法学试验班"
+        }
+      ]
+    }
+  ],
+  "trace_summary": {
+    "executed_rule_ids": [
+      "e_source_province",
+      "e_subject_type",
+      "e_major_keyword"
+    ],
+    "not_executed_preference_count": 0,
+    "traced_result_count": 282,
+    "top_k": 5,
+    "top_k_trace_status_counts": {
+      "pass": 15
+    },
+    "safety_warnings": [
+      "答案只能使用 evidence_pack 中的已验证规则、确认记录、结果摘要和 trace。",
+      "候选偏好在确认或模拟确认之前不得执行。"
+    ]
+  },
+  "extracted_preferences": [
+    {
+      "id": "pref_origin",
+      "slot": "生源地",
+      "value": "广东",
+      "source_span": "广东",
+      "status": "已对齐字段"
+    },
+    {
+      "id": "pref_track",
+      "slot": "科类",
+      "value": "历史",
+      "source_span": "历史",
+      "status": "已对齐字段"
+    },
+    {
+      "id": "pref_rank",
+      "slot": "排位",
+      "value": 20000,
+      "source_span": "排位20000",
+      "status": "已对齐字段"
+    },
+    {
+      "id": "pref_major",
+      "slot": "专业名称",
+      "value": [
+        "法学"
+      ],
+      "source_span": "法学",
+      "status": "已对齐字段"
+    }
+  ],
+  "attribute_grounding_summary": {
+    "total_attributes": 5,
+    "status_counts": {
+      "schema_grounded": 4,
+      "context_only": 1
+    },
+    "value_index_status_counts": {
+      "matched": 4
+    },
+    "unsafe_ungrounded_executable_attributes": 0
+  },
+  "proposed_rule_audit": [],
+  "execution_summary": {
+    "executor": "duckdb",
+    "sql": "WITH source AS (\n  SELECT row_number() OVER () AS \"__source_row_number\", *\n  FROM \"admissions\"\n),\nfiltered AS (\n  SELECT\n    source.*,\n    TRY_CAST(regexp_extract(REPLACE(CAST(\"专业组最低位次1\" AS VARCHAR), ',', ''), '\\d+(?:\\.\\d+)?') AS DOUBLE) AS \"__group_rank_num\",\n    TRY_CAST(regexp_extract(REPLACE(CAST(\"学费\" AS VARCHAR), ',', ''), '\\d+(?:\\.\\d+)?') AS DOUBLE) AS \"__tuition_num\",\n    TRY_CAST(regexp_extract(REPLACE(CAST(\"院校排名\" AS VARCHAR), ',', ''), '\\d+(?:\\.\\d+)?') AS DOUBLE) AS \"__school_rank_num\",\n    TRY_CAST(regexp_extract(REPLACE(CAST(\"ID\" AS VARCHAR), ',', ''), '\\d+(?:\\.\\d+)?') AS DOUBLE) AS \"__id_num\"\n  FROM source\n  WHERE CAST(\"生源地\" AS VARCHAR) = ? AND CAST(\"科类\" AS VARCHAR) = ? AND (STRPOS(CAST(\"专业名称\" AS VARCHAR), ?) > 0)\n),\nprojectable AS (\n  SELECT *\n  FROM filtered\n  WHERE TRUE\n    AND \"__group_rank_num\" IS NOT NULL\n    AND \"__tuition_num\" IS NOT NULL\n)\nSELECT *\nFROM projectable\nORDER BY\n  \"__group_rank_num\" ASC NULLS LAST,\n  \"__school_rank_num\" ASC NULLS LAST,\n  \"__id_num\" ASC NULLS LAST",
+    "params": [
+      "广东",
+      "历史",
+      "法学"
+    ],
+    "input_row_count": 30855,
+    "filtered_row_count": 282,
+    "sort_key": [
+      "专业组最低位次1 ASC NULLS LAST",
+      "院校排名 ASC NULLS LAST",
+      "ID ASC NULLS LAST"
+    ],
+    "top_k": 5,
+    "hard_rule_ids": [
+      "e_source_province",
+      "e_subject_type",
+      "e_major_keyword"
+    ],
+    "skipped_soft_rule_ids": []
+  },
+  "attribute_explanations": [
+    {
+      "source_text": "广东",
+      "slot_path": "user_context.source_province",
+      "field": "生源地",
+      "value": "广东",
+      "match_type": "exact_match",
+      "action": "executed",
+      "matched_values": [
+        "广东"
+      ],
+      "reason": "已匹配字段“生源地”，并已进入 hard filter。"
+    },
+    {
+      "source_text": "历史",
+      "slot_path": "user_context.subject_type",
+      "field": "科类",
+      "value": "历史",
+      "match_type": "exact_match",
+      "action": "executed",
+      "matched_values": [
+        "历史"
+      ],
+      "reason": "已匹配字段“科类”，并已进入 hard filter。"
+    },
+    {
+      "source_text": "法学",
+      "slot_path": "preferences.major_keyword",
+      "field": "专业名称",
+      "value": "法学",
+      "match_type": "exact_match",
+      "action": "executed",
+      "matched_values": [
+        "法学"
+      ],
+      "reason": "已匹配字段“专业名称”，并已进入 hard filter。"
+    }
+  ],
+  "confirmed_rules": [],
+  "confirmation_source": [],
+  "executed_after_confirmation": [],
+  "unconfirmed_candidates": [],
+  "no_schema_field_preferences": [],
+  "rejected_confirmations": []
+}
+```
+### answer
+
+根据已验证规则生成结果：
+
+用户需求：广东历史类，排位20000，想读法学。；偏好信息：偏好描述：广东历史类，排位20000，想读法学。
+共筛选到 282 条符合已执行规则的结果。
+
+抽取与结构化结果：
+- 生源地：广东；状态：已对齐字段；来源：广东
+- 科类：历史；状态：已对齐字段；来源：历史
+- 排位：20000；状态：已对齐字段；来源：排位20000
+- 专业名称：法学；状态：已对齐字段；来源：法学
+
+字段值审计解释：
+- [已执行] 广东 -> 生源地：exact_match；索引命中：广东；已匹配字段“生源地”，并已进入 hard filter。
+- [已执行] 历史 -> 科类：exact_match；索引命中：历史；已匹配字段“科类”，并已进入 hard filter。
+- [已执行] 法学 -> 专业名称：exact_match；索引命中：法学；已匹配字段“专业名称”，并已进入 hard filter。
+
+已执行规则：
+- e_source_province：生源地 等于 广东
+- e_subject_type：科类 等于 历史
+- e_major_keyword：专业名称 包含任一：法学
+
+候选偏好确认记录：
+
+未执行但已保留的偏好：
+- 无。
+
+前 5 条结果：
+- 1. 清华大学；专业组代码：10003201；专业代码：043；专业名称：法学类；专业全称：法学类(含：法学、法学(国际班)，北京市)；选科要求：不限；城市：海淀区；学费：5000 元/年；专业组最低位次：19。
+- 2. 北京大学；专业组代码：10001201；专业代码：096；专业名称：法学；专业全称：法学(校本部)；选科要求：不限；城市：海淀区；学费：5000 元/年；专业组最低位次：32。
+- 3. 中国人民大学；专业组代码：10002205；专业代码：013；专业名称：法学；专业全称：法学(含：法学-新闻学工商管理-法学涉外法治双主学位项目，含：法学-劳动关系实验班，含：哈佛大学、新加坡国立大学等免学费交换项目，亚洲校园+项目(中日韩三国政府奖学金支持)、中欧欧洲法国际组织后备人才培养项目(国家留基委资助)等，北京市)；选科要求：不限；城市：海淀区；学费：5000 元/年；专业组最低位次：53。
+- 4. 上海交通大学；专业组代码：10248201；专业代码：016；专业名称：法学试验班；专业全称：法学试验班(含：法学，含：法学-经济学双学士学位，校本部)；选科要求：不限；城市：闵行区；学费：6500 元/年；专业组最低位次：68。
+- 5. 上海交通大学；专业组代码：10248201；专业代码：017；专业名称：法学试验班；专业全称：法学试验班(涉外法治特班，含：法学，校本部)；选科要求：不限；城市：闵行区；学费：6500 元/年；专业组最低位次：68。
+
+安全说明：
+- 答案只能使用 证据包 中的已验证规则、确认记录、结果摘要和 trace。
+- 候选偏好在确认或模拟确认之前不得执行。
+
+## admissions_03 `通过`
+
+- domain: `admissions`
+- query: 广东物理，排位30000，深圳，软件工程。
+- status: `ok`
+- pass/fail：`通过`
+
+### items
+```json
+[
+  {
+    "item_id": "result_001",
+    "title": "深圳职业技术大学",
+    "subtitle": "软件工程技术(西丽校区)",
+    "primary_attributes": [
+      {
+        "key": "year",
+        "label": "year",
+        "value": 2024
+      },
+      {
+        "key": "batch",
+        "label": "batch",
+        "value": "本科批"
+      },
+      {
+        "key": "university_code",
+        "label": "university_code",
+        "value": "11113"
+      },
+      {
+        "key": "university_name",
+        "label": "university_name",
+        "value": "深圳职业技术大学"
+      }
+    ],
+    "secondary_attributes": [
+      {
+        "key": "group_code",
+        "label": "group_code",
+        "value": "11113202"
+      },
+      {
+        "key": "group_name",
+        "label": "group_name",
+        "value": "202组"
+      },
+      {
+        "key": "major_code",
+        "label": "major_code",
+        "value": "003"
+      },
+      {
+        "key": "major_name",
+        "label": "major_name",
+        "value": "软件工程技术"
+      },
+      {
+        "key": "full_major_name",
+        "label": "full_major_name",
+        "value": "软件工程技术(西丽校区)"
+      },
+      {
+        "key": "subject_requirement",
+        "label": "subject_requirement",
+        "value": "不限"
+      },
+      {
+        "key": "province",
+        "label": "province",
+        "value": "广东"
+      },
+      {
+        "key": "city",
+        "label": "city",
+        "value": "深圳"
+      },
+      {
+        "key": "tuition",
+        "label": "tuition",
+        "value": 6000.0
+      },
+      {
+        "key": "rank_2024",
+        "label": "rank_2024",
+        "value": 54061
+      },
+      {
+        "key": "group_min_rank",
+        "label": "group_min_rank",
+        "value": 54061
+      },
+      {
+        "key": "safety_margin",
+        "label": "safety_margin",
+        "value": "80.2%"
+      }
+    ],
+    "matched_filters": [
+      {
+        "id": "e_source_province",
+        "field": "生源地",
+        "operator": "eq",
+        "value": "广东",
+        "matched": true,
+        "text": "生源地 等于 广东"
+      },
+      {
+        "id": "e_subject_type",
+        "field": "科类",
+        "operator": "eq",
+        "value": "物理",
+        "matched": true,
+        "text": "科类 等于 物理"
+      },
+      {
+        "id": "e_major_keyword",
+        "field": "专业名称",
+        "operator": "contains_any",
+        "value": [
+          "软件工程"
+        ],
+        "matched": true,
+        "text": "专业名称 包含任一：软件工程；命中 软件工程技术"
+      },
+      {
+        "id": "e_city",
+        "field": "城市",
+        "operator": "in_contains",
+        "value": [
+          "深圳"
+        ],
+        "matched": true,
+        "text": "城市 包含任一：深圳；命中 深圳"
+      }
+    ],
+    "raw": {
+      "excel_row_number": 13182,
+      "ID": 13179,
+      "年份": 2024,
+      "批次": "本科批",
+      "院校代码": "11113",
+      "院校名称": "深圳职业技术大学",
+      "院校专业组代码": "11113202",
+      "专业组名称": "202组",
+      "科类": "物理",
+      "选科要求": "不限",
+      "专业代码": "003",
+      "专业名称": "软件工程技术",
+      "专业全称": "软件工程技术(西丽校区)",
+      "所在省": "广东",
+      "城市": "深圳",
+      "学费": 6000.0,
+      "专业组最低位次1": 54061,
+      "最低位次1": null,
+      "院校标签": "国重点/示范高职/双高计划A档",
+      "院校排名": "/",
+      "ranking_key": 24061,
+      "safety_margin_pct": 0.802,
+      "cooperation_filter_status": "not_executed_missing_cooperation_type_field",
+      "中外合作筛选状态": "未执行：缺少合作办学类型字段"
+    }
+  }
+]
+```
+### top_results
+```json
+[
+  {
+    "id": "result_001",
+    "trace": [
+      {
+        "status": "pass",
+        "text": "生源地 等于 广东"
+      },
+      {
+        "status": "pass",
+        "text": "科类 等于 物理"
+      },
+      {
+        "status": "pass",
+        "text": "专业名称 包含任一：软件工程；命中 软件工程技术"
+      },
+      {
+        "status": "pass",
+        "text": "城市 包含任一：深圳；命中 深圳"
+      }
+    ],
+    "year": 2024,
+    "batch": "本科批",
+    "university_code": "11113",
+    "university_name": "深圳职业技术大学",
+    "group_code": "11113202",
+    "group_name": "202组",
+    "major_code": "003",
+    "major_name": "软件工程技术",
+    "full_major_name": "软件工程技术(西丽校区)",
+    "subject_requirement": "不限",
+    "province": "广东",
+    "city": "深圳",
+    "tuition": 6000.0,
+    "rank_2024": 54061,
+    "major_rank_2024": null,
+    "plan_count": null,
+    "group_min_rank": 54061,
+    "major_min_rank": null,
+    "safety_margin": "80.2%"
+  }
+]
+```
+### executed_filters
+```json
+[
+  {
+    "id": "e_source_province",
+    "label": "生源地 等于 广东",
+    "field": "生源地",
+    "operator": "eq",
+    "value": "广东",
+    "source_span": "广东"
+  },
+  {
+    "id": "e_subject_type",
+    "label": "科类 等于 物理",
+    "field": "科类",
+    "operator": "eq",
+    "value": "物理",
+    "source_span": "物理"
+  },
+  {
+    "id": "e_major_keyword",
+    "label": "专业名称 包含任一：软件工程",
+    "field": "专业名称",
+    "operator": "contains_any",
+    "value": [
+      "软件工程"
+    ],
+    "source_span": "软件工程"
+  },
+  {
+    "id": "e_city",
+    "label": "城市 包含任一：深圳",
+    "field": "城市",
+    "operator": "in_contains",
+    "value": [
+      "深圳"
+    ],
+    "source_span": "深圳"
+  }
+]
+```
+### candidates_to_confirm
+```json
+[]
+```
+### unexecuted_preferences
+```json
+[]
+```
+### SQL / params
+```json
+{
+  "sql": "WITH source AS (\n  SELECT row_number() OVER () AS \"__source_row_number\", *\n  FROM \"admissions\"\n),\nfiltered AS (\n  SELECT\n    source.*,\n    TRY_CAST(regexp_extract(REPLACE(CAST(\"专业组最低位次1\" AS VARCHAR), ',', ''), '\\d+(?:\\.\\d+)?') AS DOUBLE) AS \"__group_rank_num\",\n    TRY_CAST(regexp_extract(REPLACE(CAST(\"学费\" AS VARCHAR), ',', ''), '\\d+(?:\\.\\d+)?') AS DOUBLE) AS \"__tuition_num\",\n    TRY_CAST(regexp_extract(REPLACE(CAST(\"院校排名\" AS VARCHAR), ',', ''), '\\d+(?:\\.\\d+)?') AS DOUBLE) AS \"__school_rank_num\",\n    TRY_CAST(regexp_extract(REPLACE(CAST(\"ID\" AS VARCHAR), ',', ''), '\\d+(?:\\.\\d+)?') AS DOUBLE) AS \"__id_num\"\n  FROM source\n  WHERE CAST(\"生源地\" AS VARCHAR) = ? AND CAST(\"科类\" AS VARCHAR) = ? AND (STRPOS(CAST(\"专业名称\" AS VARCHAR), ?) > 0) AND (STRPOS(CAST(\"城市\" AS VARCHAR), ?) > 0)\n),\nprojectable AS (\n  SELECT *\n  FROM filtered\n  WHERE TRUE\n    AND \"__group_rank_num\" IS NOT NULL\n    AND \"__tuition_num\" IS NOT NULL\n)\nSELECT *\nFROM projectable\nORDER BY\n  \"__group_rank_num\" ASC NULLS LAST,\n  \"__school_rank_num\" ASC NULLS LAST,\n  \"__id_num\" ASC NULLS LAST",
+  "params": [
+    "广东",
+    "物理",
+    "软件工程",
+    "深圳"
+  ]
+}
+```
+### EvidencePack
+```json
+{
+  "user_request": "广东物理，排位30000，深圳，软件工程。；偏好信息：偏好描述：广东物理，排位30000，深圳，软件工程。",
+  "executed_rules": [
+    {
+      "rule_id": "e_source_province",
+      "derived_from": "d_source_province",
+      "field": "生源地",
+      "operator": "eq",
+      "value": "广东",
+      "description": "生源地 等于 广东"
+    },
+    {
+      "rule_id": "e_subject_type",
+      "derived_from": "d_subject_type",
+      "field": "科类",
+      "operator": "eq",
+      "value": "物理",
+      "description": "科类 等于 物理"
+    },
+    {
+      "rule_id": "e_major_keyword",
+      "derived_from": "d_major_keyword",
+      "field": "专业名称",
+      "operator": "contains_any",
+      "value": [
+        "软件工程"
+      ],
+      "description": "专业名称 包含任一：软件工程"
+    },
+    {
+      "rule_id": "e_city",
+      "derived_from": "d_city",
+      "field": "城市",
+      "operator": "in_contains",
+      "value": [
+        "深圳"
+      ],
+      "description": "城市 包含任一：深圳"
+    }
+  ],
+  "candidate_confirmations": [],
+  "not_executed_preferences": [],
+  "result_count": 1,
+  "top_k_results": [
+    {
+      "rank": 1,
+      "院校名称": "深圳职业技术大学",
+      "院校专业组代码": "11113202",
+      "专业代码": "003",
+      "专业名称": "软件工程技术",
+      "专业全称": "软件工程技术(西丽校区)",
+      "选科要求": "不限",
+      "城市": "深圳",
+      "学费": 6000.0,
+      "专业组最低位次": 54061,
+      "safety_margin": "80.20%",
+      "trace": [
+        {
+          "rule_id": "e_source_province",
+          "status": "pass",
+          "reason": "生源地 等于 广东"
+        },
+        {
+          "rule_id": "e_subject_type",
+          "status": "pass",
+          "reason": "科类 等于 物理"
+        },
+        {
+          "rule_id": "e_major_keyword",
+          "status": "pass",
+          "reason": "专业名称 包含任一：软件工程；命中 软件工程技术"
+        },
+        {
+          "rule_id": "e_city",
+          "status": "pass",
+          "reason": "城市 包含任一：深圳；命中 深圳"
+        }
+      ]
+    }
+  ],
+  "trace_summary": {
+    "executed_rule_ids": [
+      "e_source_province",
+      "e_subject_type",
+      "e_major_keyword",
+      "e_city"
+    ],
+    "not_executed_preference_count": 0,
+    "traced_result_count": 1,
+    "top_k": 1,
+    "top_k_trace_status_counts": {
+      "pass": 4
+    },
+    "safety_warnings": [
+      "答案只能使用 evidence_pack 中的已验证规则、确认记录、结果摘要和 trace。",
+      "候选偏好在确认或模拟确认之前不得执行。"
+    ]
+  },
+  "extracted_preferences": [
+    {
+      "id": "pref_origin",
+      "slot": "生源地",
+      "value": "广东",
+      "source_span": "广东",
+      "status": "已对齐字段"
+    },
+    {
+      "id": "pref_track",
+      "slot": "科类",
+      "value": "物理",
+      "source_span": "物理",
+      "status": "已对齐字段"
+    },
+    {
+      "id": "pref_rank",
+      "slot": "排位",
+      "value": 30000,
+      "source_span": "排位30000",
+      "status": "已对齐字段"
+    },
+    {
+      "id": "pref_major",
+      "slot": "专业名称",
+      "value": [
+        "软件工程"
+      ],
+      "source_span": "软件工程",
+      "status": "已对齐字段"
+    },
+    {
+      "id": "pref_city",
+      "slot": "城市",
+      "value": [
+        "深圳"
+      ],
+      "source_span": "深圳",
+      "status": "已对齐字段"
+    }
+  ],
+  "attribute_grounding_summary": {
+    "total_attributes": 6,
+    "status_counts": {
+      "schema_grounded": 5,
+      "context_only": 1
+    },
+    "value_index_status_counts": {
+      "matched": 5
+    },
+    "unsafe_ungrounded_executable_attributes": 0
+  },
+  "proposed_rule_audit": [],
+  "execution_summary": {
+    "executor": "duckdb",
+    "sql": "WITH source AS (\n  SELECT row_number() OVER () AS \"__source_row_number\", *\n  FROM \"admissions\"\n),\nfiltered AS (\n  SELECT\n    source.*,\n    TRY_CAST(regexp_extract(REPLACE(CAST(\"专业组最低位次1\" AS VARCHAR), ',', ''), '\\d+(?:\\.\\d+)?') AS DOUBLE) AS \"__group_rank_num\",\n    TRY_CAST(regexp_extract(REPLACE(CAST(\"学费\" AS VARCHAR), ',', ''), '\\d+(?:\\.\\d+)?') AS DOUBLE) AS \"__tuition_num\",\n    TRY_CAST(regexp_extract(REPLACE(CAST(\"院校排名\" AS VARCHAR), ',', ''), '\\d+(?:\\.\\d+)?') AS DOUBLE) AS \"__school_rank_num\",\n    TRY_CAST(regexp_extract(REPLACE(CAST(\"ID\" AS VARCHAR), ',', ''), '\\d+(?:\\.\\d+)?') AS DOUBLE) AS \"__id_num\"\n  FROM source\n  WHERE CAST(\"生源地\" AS VARCHAR) = ? AND CAST(\"科类\" AS VARCHAR) = ? AND (STRPOS(CAST(\"专业名称\" AS VARCHAR), ?) > 0) AND (STRPOS(CAST(\"城市\" AS VARCHAR), ?) > 0)\n),\nprojectable AS (\n  SELECT *\n  FROM filtered\n  WHERE TRUE\n    AND \"__group_rank_num\" IS NOT NULL\n    AND \"__tuition_num\" IS NOT NULL\n)\nSELECT *\nFROM projectable\nORDER BY\n  \"__group_rank_num\" ASC NULLS LAST,\n  \"__school_rank_num\" ASC NULLS LAST,\n  \"__id_num\" ASC NULLS LAST",
+    "params": [
+      "广东",
+      "物理",
+      "软件工程",
+      "深圳"
+    ],
+    "input_row_count": 30855,
+    "filtered_row_count": 1,
+    "sort_key": [
+      "专业组最低位次1 ASC NULLS LAST",
+      "院校排名 ASC NULLS LAST",
+      "ID ASC NULLS LAST"
+    ],
+    "top_k": 5,
+    "hard_rule_ids": [
+      "e_source_province",
+      "e_subject_type",
+      "e_major_keyword",
+      "e_city"
+    ],
+    "skipped_soft_rule_ids": []
+  },
+  "attribute_explanations": [
+    {
+      "source_text": "广东",
+      "slot_path": "user_context.source_province",
+      "field": "生源地",
+      "value": "广东",
+      "match_type": "exact_match",
+      "action": "executed",
+      "matched_values": [
+        "广东"
+      ],
+      "reason": "已匹配字段“生源地”，并已进入 hard filter。"
+    },
+    {
+      "source_text": "物理",
+      "slot_path": "user_context.subject_type",
+      "field": "科类",
+      "value": "物理",
+      "match_type": "exact_match",
+      "action": "executed",
+      "matched_values": [
+        "物理"
+      ],
+      "reason": "已匹配字段“科类”，并已进入 hard filter。"
+    },
+    {
+      "source_text": "软件工程",
+      "slot_path": "preferences.major_keyword",
+      "field": "专业名称",
+      "value": "软件工程",
+      "match_type": "exact_match",
+      "action": "executed",
+      "matched_values": [
+        "软件工程"
+      ],
+      "reason": "已匹配字段“专业名称”，并已进入 hard filter。"
+    },
+    {
+      "source_text": "深圳",
+      "slot_path": "preferences.preferred_cities",
+      "field": "城市",
+      "value": [
+        "深圳"
+      ],
+      "match_type": "exact_match",
+      "action": "executed",
+      "matched_values": [
+        "深圳"
+      ],
+      "reason": "已匹配字段“城市”，并已进入 hard filter。"
+    }
+  ],
+  "confirmed_rules": [],
+  "confirmation_source": [],
+  "executed_after_confirmation": [],
+  "unconfirmed_candidates": [],
+  "no_schema_field_preferences": [],
+  "rejected_confirmations": []
+}
+```
+### answer
+
+根据已验证规则生成结果：
+
+用户需求：广东物理，排位30000，深圳，软件工程。；偏好信息：偏好描述：广东物理，排位30000，深圳，软件工程。
+共筛选到 1 条符合已执行规则的结果。
+
+抽取与结构化结果：
+- 生源地：广东；状态：已对齐字段；来源：广东
+- 科类：物理；状态：已对齐字段；来源：物理
+- 排位：30000；状态：已对齐字段；来源：排位30000
+- 专业名称：软件工程；状态：已对齐字段；来源：软件工程
+- 城市：深圳；状态：已对齐字段；来源：深圳
+
+字段值审计解释：
+- [已执行] 广东 -> 生源地：exact_match；索引命中：广东；已匹配字段“生源地”，并已进入 hard filter。
+- [已执行] 物理 -> 科类：exact_match；索引命中：物理；已匹配字段“科类”，并已进入 hard filter。
+- [已执行] 软件工程 -> 专业名称：exact_match；索引命中：软件工程；已匹配字段“专业名称”，并已进入 hard filter。
+- [已执行] 深圳 -> 城市：exact_match；索引命中：深圳；已匹配字段“城市”，并已进入 hard filter。
+
+已执行规则：
+- e_source_province：生源地 等于 广东
+- e_subject_type：科类 等于 物理
+- e_major_keyword：专业名称 包含任一：软件工程
+- e_city：城市 包含任一：深圳
+
+候选偏好确认记录：
+
+未执行但已保留的偏好：
+- 无。
+
+前 1 条结果：
+- 1. 深圳职业技术大学；专业组代码：11113202；专业代码：003；专业名称：软件工程技术；专业全称：软件工程技术(西丽校区)；选科要求：不限；城市：深圳；学费：6000 元/年；专业组最低位次：54061。
+
+安全说明：
+- 答案只能使用 证据包 中的已验证规则、确认记录、结果摘要和 trace。
+- 候选偏好在确认或模拟确认之前不得执行。
+
+## admissions_04 `通过`
+
+- domain: `admissions`
+- query: 广东物理，物化生，排位32000，想学计科，广深优先。
+- status: `needs_confirmation`
+- pass/fail：`通过`
+
+### items
+```json
+[
+  {
+    "item_id": "result_001",
+    "title": "香港中文大学(深圳)",
+    "subtitle": "理科试验班(含：金融工程、数学与应用数学、物理学、统计学、材料科学与工程、新能源科学与工程、计算机科学与技术、电子与计算机工程、数据科学与大数据技术、生物医学工程，临床医学专业，学制6年，本试验班为经管学院、理工学院、人文社科学院、数据科学学院、医学院及金融工程专业联合招生，具体专业分流情况请查看学校网站，深圳市)(成绩要求：外语≥120)",
+    "primary_attributes": [
+      {
+        "key": "year",
+        "label": "year",
+        "value": 2024
+      },
+      {
+        "key": "batch",
+        "label": "batch",
+        "value": "本科提前批"
+      },
+      {
+        "key": "university_code",
+        "label": "university_code",
+        "value": "16407"
+      },
+      {
+        "key": "university_name",
+        "label": "university_name",
+        "value": "香港中文大学(深圳)"
+      }
+    ],
+    "secondary_attributes": [
+      {
+        "key": "group_code",
+        "label": "group_code",
+        "value": "16407101"
+      },
+      {
+        "key": "group_name",
+        "label": "group_name",
+        "value": "101组"
+      },
+      {
+        "key": "major_code",
+        "label": "major_code",
+        "value": "001"
+      },
+      {
+        "key": "major_name",
+        "label": "major_name",
+        "value": "理科试验班"
+      },
+      {
+        "key": "full_major_name",
+        "label": "full_major_name",
+        "value": "理科试验班(含：金融工程、数学与应用数学、物理学、统计学、材料科学与工程、新能源科学与工程、计算机科学与技术、电子与计算机工程、数据科学与大数据技术、生物医学工程，临床医学专业，学制6年，本试验班为经管学院、理工学院、人文社科学院、数据科学学院、医学院及金融工程专业联合招生，具体专业分流情况请查看学校网站，深圳市)(成绩要求：外语≥120)"
+      },
+      {
+        "key": "subject_requirement",
+        "label": "subject_requirement",
+        "value": "化学"
+      },
+      {
+        "key": "province",
+        "label": "province",
+        "value": "广东"
+      },
+      {
+        "key": "city",
+        "label": "city",
+        "value": "深圳"
+      },
+      {
+        "key": "tuition",
+        "label": "tuition",
+        "value": 115000.0
+      },
+      {
+        "key": "rank_2024",
+        "label": "rank_2024",
+        "value": 968
+      },
+      {
+        "key": "group_min_rank",
+        "label": "group_min_rank",
+        "value": 968
+      },
+      {
+        "key": "safety_margin",
+        "label": "safety_margin",
+        "value": "-97.0%"
+      }
+    ],
+    "matched_filters": [
+      {
+        "id": "e_source_province",
+        "field": "生源地",
+        "operator": "eq",
+        "value": "广东",
+        "matched": true,
+        "text": "生源地 等于 广东"
+      },
+      {
+        "id": "e_subject_type",
+        "field": "科类",
+        "operator": "eq",
+        "value": "物理",
+        "matched": true,
+        "text": "科类 等于 物理"
+      },
+      {
+        "id": "e_subject_requirement",
+        "field": "选科要求",
+        "operator": "satisfies_subject_requirement",
+        "value": [
+          "化学",
+          "生物"
+        ],
+        "matched": true,
+        "text": "选科要求 化学；已选再选科目：化学、生物"
+      },
+      {
+        "id": "e_city",
+        "field": "城市",
+        "operator": "in_contains",
+        "value": [
+          "广州",
+          "深圳"
+        ],
+        "matched": true,
+        "text": "城市 包含任一：广州、深圳；命中 深圳"
+      }
+    ],
+    "raw": {
+      "excel_row_number": 30283,
+      "ID": 30280,
+      "年份": 2024,
+      "批次": "本科提前批",
+      "院校代码": "16407",
+      "院校名称": "香港中文大学(深圳)",
+      "院校专业组代码": "16407101",
+      "专业组名称": "101组",
+      "科类": "物理",
+      "选科要求": "化学",
+      "专业代码": "001",
+      "专业名称": "理科试验班",
+      "专业全称": "理科试验班(含：金融工程、数学与应用数学、物理学、统计学、材料科学与工程、新能源科学与工程、计算机科学与技术、电子与计算机工程、数据科学与大数据技术、生物医学工程，临床医学专业，学制6年，本试验班为经管学院、理工学院、人文社科学院、数据科学学院、医学院及金融工程专业联合招生，具体专业分流情况请查看学校网站，深圳市)(成绩要求：外语≥120)",
+      "所在省": "广东",
+      "城市": "深圳",
+      "学费": 115000.0,
+      "专业组最低位次1": 968,
+      "最低位次1": null,
+      "院校标签": null,
+      "院校排名": "49",
+      "ranking_key": -31032,
+      "safety_margin_pct": -0.9698,
+      "cooperation_filter_status": "not_executed_missing_cooperation_type_field",
+      "中外合作筛选状态": "未执行：缺少合作办学类型字段"
+    }
+  },
+  {
+    "item_id": "result_002",
+    "title": "香港科技大学(广州)",
+    "subtitle": "人工智能(中外合作办学，领军人才班，入学不分专业，大二结束时，可在人工智能、数据科学与大数据技术、智能制造工程中选择，英文授课，具体培养模式和学习费用请查看学校网站，广州市)(请非英语语种的考生慎重报考，成绩要求：外语≥120)",
+    "primary_attributes": [
+      {
+        "key": "year",
+        "label": "year",
+        "value": 2024
+      },
+      {
+        "key": "batch",
+        "label": "batch",
+        "value": "本科提前批"
+      },
+      {
+        "key": "university_code",
+        "label": "university_code",
+        "value": "16412"
+      },
+      {
+        "key": "university_name",
+        "label": "university_name",
+        "value": "香港科技大学(广州)"
+      }
+    ],
+    "secondary_attributes": [
+      {
+        "key": "group_code",
+        "label": "group_code",
+        "value": "16412101"
+      },
+      {
+        "key": "group_name",
+        "label": "group_name",
+        "value": "101组(中外合作)"
+      },
+      {
+        "key": "major_code",
+        "label": "major_code",
+        "value": "001"
+      },
+      {
+        "key": "major_name",
+        "label": "major_name",
+        "value": "人工智能"
+      },
+      {
+        "key": "full_major_name",
+        "label": "full_major_name",
+        "value": "人工智能(中外合作办学，领军人才班，入学不分专业，大二结束时，可在人工智能、数据科学与大数据技术、智能制造工程中选择，英文授课，具体培养模式和学习费用请查看学校网站，广州市)(请非英语语种的考生慎重报考，成绩要求：外语≥120)"
+      },
+      {
+        "key": "subject_requirement",
+        "label": "subject_requirement",
+        "value": "化学"
+      },
+      {
+        "key": "province",
+        "label": "province",
+        "value": "广东"
+      },
+      {
+        "key": "city",
+        "label": "city",
+        "value": "广州"
+      },
+      {
+        "key": "tuition",
+        "label": "tuition",
+        "value": 50000.0
+      },
+      {
+        "key": "rank_2024",
+        "label": "rank_2024",
+        "value": 1424
+      },
+      {
+        "key": "group_min_rank",
+        "label": "group_min_rank",
+        "value": 1424
+      },
+      {
+        "key": "safety_margin",
+        "label": "safety_margin",
+        "value": "-95.5%"
+      }
+    ],
+    "matched_filters": [
+      {
+        "id": "e_source_province",
+        "field": "生源地",
+        "operator": "eq",
+        "value": "广东",
+        "matched": true,
+        "text": "生源地 等于 广东"
+      },
+      {
+        "id": "e_subject_type",
+        "field": "科类",
+        "operator": "eq",
+        "value": "物理",
+        "matched": true,
+        "text": "科类 等于 物理"
+      },
+      {
+        "id": "e_subject_requirement",
+        "field": "选科要求",
+        "operator": "satisfies_subject_requirement",
+        "value": [
+          "化学",
+          "生物"
+        ],
+        "matched": true,
+        "text": "选科要求 化学；已选再选科目：化学、生物"
+      },
+      {
+        "id": "e_city",
+        "field": "城市",
+        "operator": "in_contains",
+        "value": [
+          "广州",
+          "深圳"
+        ],
+        "matched": true,
+        "text": "城市 包含任一：广州、深圳；命中 广州"
+      }
+    ],
+    "raw": {
+      "excel_row_number": 30311,
+      "ID": 30308,
+      "年份": 2024,
+      "批次": "本科提前批",
+      "院校代码": "16412",
+      "院校名称": "香港科技大学(广州)",
+      "院校专业组代码": "16412101",
+      "专业组名称": "101组(中外合作)",
+      "科类": "物理",
+      "选科要求": "化学",
+      "专业代码": "001",
+      "专业名称": "人工智能",
+      "专业全称": "人工智能(中外合作办学，领军人才班，入学不分专业，大二结束时，可在人工智能、数据科学与大数据技术、智能制造工程中选择，英文授课，具体培养模式和学习费用请查看学校网站，广州市)(请非英语语种的考生慎重报考，成绩要求：外语≥120)",
+      "所在省": "广东",
+      "城市": "广州",
+      "学费": 50000.0,
+      "专业组最低位次1": 1424,
+      "最低位次1": null,
+      "院校标签": null,
+      "院校排名": "/",
+      "ranking_key": -30576,
+      "safety_margin_pct": -0.9555,
+      "cooperation_filter_status": "not_executed_missing_cooperation_type_field",
+      "中外合作筛选状态": "未执行：缺少合作办学类型字段"
+    }
+  },
+  {
+    "item_id": "result_003",
+    "title": "哈尔滨工业大学(深圳)",
+    "subtitle": "工科试验班(计算机与电子通信拔尖班，含：计算机科学与技术、数据科学与大数据技术、通信工程、光电信息科学与工程、电子封装技术、集成电路设计与集成系统，第一学年校本部，第二至四学年深圳校区)",
+    "primary_attributes": [
+      {
+        "key": "year",
+        "label": "year",
+        "value": 2024
+      },
+      {
+        "key": "batch",
+        "label": "batch",
+        "value": "本科批"
+      },
+      {
+        "key": "university_code",
+        "label": "university_code",
+        "value": "18213"
+      },
+      {
+        "key": "university_name",
+        "label": "university_name",
+        "value": "哈尔滨工业大学(深圳)"
+      }
+    ],
+    "secondary_attributes": [
+      {
+        "key": "group_code",
+        "label": "group_code",
+        "value": "18213202"
+      },
+      {
+        "key": "group_name",
+        "label": "group_name",
+        "value": "202组"
+      },
+      {
+        "key": "major_code",
+        "label": "major_code",
+        "value": "007"
+      },
+      {
+        "key": "major_name",
+        "label": "major_name",
+        "value": "工科试验班"
+      },
+      {
+        "key": "full_major_name",
+        "label": "full_major_name",
+        "value": "工科试验班(计算机与电子通信拔尖班，含：计算机科学与技术、数据科学与大数据技术、通信工程、光电信息科学与工程、电子封装技术、集成电路设计与集成系统，第一学年校本部，第二至四学年深圳校区)"
+      },
+      {
+        "key": "subject_requirement",
+        "label": "subject_requirement",
+        "value": "化学"
+      },
+      {
+        "key": "province",
+        "label": "province",
+        "value": "广东"
+      },
+      {
+        "key": "city",
+        "label": "city",
+        "value": "深圳"
+      },
+      {
+        "key": "tuition",
+        "label": "tuition",
+        "value": 6230.0
+      },
+      {
+        "key": "rank_2024",
+        "label": "rank_2024",
+        "value": 1860
+      },
+      {
+        "key": "major_rank_2024",
+        "label": "major_rank_2024",
+        "value": 901
+      },
+      {
+        "key": "group_min_rank",
+        "label": "group_min_rank",
+        "value": 1860
+      },
+      {
+        "key": "major_min_rank",
+        "label": "major_min_rank",
+        "value": 901
+      },
+      {
+        "key": "safety_margin",
+        "label": "safety_margin",
+        "value": "-94.2%"
+      }
+    ],
+    "matched_filters": [
+      {
+        "id": "e_source_province",
+        "field": "生源地",
+        "operator": "eq",
+        "value": "广东",
+        "matched": true,
+        "text": "生源地 等于 广东"
+      },
+      {
+        "id": "e_subject_type",
+        "field": "科类",
+        "operator": "eq",
+        "value": "物理",
+        "matched": true,
+        "text": "科类 等于 物理"
+      },
+      {
+        "id": "e_subject_requirement",
+        "field": "选科要求",
+        "operator": "satisfies_subject_requirement",
+        "value": [
+          "化学",
+          "生物"
+        ],
+        "matched": true,
+        "text": "选科要求 化学；已选再选科目：化学、生物"
+      },
+      {
+        "id": "e_city",
+        "field": "城市",
+        "operator": "in_contains",
+        "value": [
+          "广州",
+          "深圳"
+        ],
+        "matched": true,
+        "text": "城市 包含任一：广州、深圳；命中 深圳"
+      }
+    ],
+    "raw": {
+      "excel_row_number": 30316,
+      "ID": 30313,
+      "年份": 2024,
+      "批次": "本科批",
+      "院校代码": "18213",
+      "院校名称": "哈尔滨工业大学(深圳)",
+      "院校专业组代码": "18213202",
+      "专业组名称": "202组",
+      "科类": "物理",
+      "选科要求": "化学",
+      "专业代码": "007",
+      "专业名称": "工科试验班",
+      "专业全称": "工科试验班(计算机与电子通信拔尖班，含：计算机科学与技术、数据科学与大数据技术、通信工程、光电信息科学与工程、电子封装技术、集成电路设计与集成系统，第一学年校本部，第二至四学年深圳校区)",
+      "所在省": "广东",
+      "城市": "深圳",
+      "学费": 6230.0,
+      "专业组最低位次1": 1860,
+      "最低位次1": 901,
+      "院校标签": "985/211/双一流/国重点/保研资格",
+      "院校排名": "16",
+      "ranking_key": -30140,
+      "safety_margin_pct": -0.9419,
+      "cooperation_filter_status": "not_executed_missing_cooperation_type_field",
+      "中外合作筛选状态": "未执行：缺少合作办学类型字段"
+    }
+  },
+  {
+    "item_id": "result_004",
+    "title": "哈尔滨工业大学(深圳)",
+    "subtitle": "工科试验班(计算机与电子通信，含：计算机科学与技术、数据科学与大数据技术、通信工程、光电信息科学与工程、电子封装技术、集成电路设计与集成系统，深圳校区)",
+    "primary_attributes": [
+      {
+        "key": "year",
+        "label": "year",
+        "value": 2024
+      },
+      {
+        "key": "batch",
+        "label": "batch",
+        "value": "本科批"
+      },
+      {
+        "key": "university_code",
+        "label": "university_code",
+        "value": "18213"
+      },
+      {
+        "key": "university_name",
+        "label": "university_name",
+        "value": "哈尔滨工业大学(深圳)"
+      }
+    ],
+    "secondary_attributes": [
+      {
+        "key": "group_code",
+        "label": "group_code",
+        "value": "18213202"
+      },
+      {
+        "key": "group_name",
+        "label": "group_name",
+        "value": "202组"
+      },
+      {
+        "key": "major_code",
+        "label": "major_code",
+        "value": "008"
+      },
+      {
+        "key": "major_name",
+        "label": "major_name",
+        "value": "工科试验班"
+      },
+      {
+        "key": "full_major_name",
+        "label": "full_major_name",
+        "value": "工科试验班(计算机与电子通信，含：计算机科学与技术、数据科学与大数据技术、通信工程、光电信息科学与工程、电子封装技术、集成电路设计与集成系统，深圳校区)"
+      },
+      {
+        "key": "subject_requirement",
+        "label": "subject_requirement",
+        "value": "化学"
+      },
+      {
+        "key": "province",
+        "label": "province",
+        "value": "广东"
+      },
+      {
+        "key": "city",
+        "label": "city",
+        "value": "深圳"
+      },
+      {
+        "key": "tuition",
+        "label": "tuition",
+        "value": 6230.0
+      },
+      {
+        "key": "rank_2024",
+        "label": "rank_2024",
+        "value": 1860
+      },
+      {
+        "key": "major_rank_2024",
+        "label": "major_rank_2024",
+        "value": 1545
+      },
+      {
+        "key": "group_min_rank",
+        "label": "group_min_rank",
+        "value": 1860
+      },
+      {
+        "key": "major_min_rank",
+        "label": "major_min_rank",
+        "value": 1545
+      },
+      {
+        "key": "safety_margin",
+        "label": "safety_margin",
+        "value": "-94.2%"
+      }
+    ],
+    "matched_filters": [
+      {
+        "id": "e_source_province",
+        "field": "生源地",
+        "operator": "eq",
+        "value": "广东",
+        "matched": true,
+        "text": "生源地 等于 广东"
+      },
+      {
+        "id": "e_subject_type",
+        "field": "科类",
+        "operator": "eq",
+        "value": "物理",
+        "matched": true,
+        "text": "科类 等于 物理"
+      },
+      {
+        "id": "e_subject_requirement",
+        "field": "选科要求",
+        "operator": "satisfies_subject_requirement",
+        "value": [
+          "化学",
+          "生物"
+        ],
+        "matched": true,
+        "text": "选科要求 化学；已选再选科目：化学、生物"
+      },
+      {
+        "id": "e_city",
+        "field": "城市",
+        "operator": "in_contains",
+        "value": [
+          "广州",
+          "深圳"
+        ],
+        "matched": true,
+        "text": "城市 包含任一：广州、深圳；命中 深圳"
+      }
+    ],
+    "raw": {
+      "excel_row_number": 30317,
+      "ID": 30314,
+      "年份": 2024,
+      "批次": "本科批",
+      "院校代码": "18213",
+      "院校名称": "哈尔滨工业大学(深圳)",
+      "院校专业组代码": "18213202",
+      "专业组名称": "202组",
+      "科类": "物理",
+      "选科要求": "化学",
+      "专业代码": "008",
+      "专业名称": "工科试验班",
+      "专业全称": "工科试验班(计算机与电子通信，含：计算机科学与技术、数据科学与大数据技术、通信工程、光电信息科学与工程、电子封装技术、集成电路设计与集成系统，深圳校区)",
+      "所在省": "广东",
+      "城市": "深圳",
+      "学费": 6230.0,
+      "专业组最低位次1": 1860,
+      "最低位次1": 1545,
+      "院校标签": "985/211/双一流/国重点/保研资格",
+      "院校排名": "16",
+      "ranking_key": -30140,
+      "safety_margin_pct": -0.9419,
+      "cooperation_filter_status": "not_executed_missing_cooperation_type_field",
+      "中外合作筛选状态": "未执行：缺少合作办学类型字段"
+    }
+  },
+  {
+    "item_id": "result_005",
+    "title": "哈尔滨工业大学(深圳)",
+    "subtitle": "工科试验班(机器人与智能装备，含：自动化、机器人工程，深圳校区)",
+    "primary_attributes": [
+      {
+        "key": "year",
+        "label": "year",
+        "value": 2024
+      },
+      {
+        "key": "batch",
+        "label": "batch",
+        "value": "本科批"
+      },
+      {
+        "key": "university_code",
+        "label": "university_code",
+        "value": "18213"
+      },
+      {
+        "key": "university_name",
+        "label": "university_name",
+        "value": "哈尔滨工业大学(深圳)"
+      }
+    ],
+    "secondary_attributes": [
+      {
+        "key": "group_code",
+        "label": "group_code",
+        "value": "18213202"
+      },
+      {
+        "key": "group_name",
+        "label": "group_name",
+        "value": "202组"
+      },
+      {
+        "key": "major_code",
+        "label": "major_code",
+        "value": "009"
+      },
+      {
+        "key": "major_name",
+        "label": "major_name",
+        "value": "工科试验班"
+      },
+      {
+        "key": "full_major_name",
+        "label": "full_major_name",
+        "value": "工科试验班(机器人与智能装备，含：自动化、机器人工程，深圳校区)"
+      },
+      {
+        "key": "subject_requirement",
+        "label": "subject_requirement",
+        "value": "化学"
+      },
+      {
+        "key": "province",
+        "label": "province",
+        "value": "广东"
+      },
+      {
+        "key": "city",
+        "label": "city",
+        "value": "深圳"
+      },
+      {
+        "key": "tuition",
+        "label": "tuition",
+        "value": 6230.0
+      },
+      {
+        "key": "rank_2024",
+        "label": "rank_2024",
+        "value": 1860
+      },
+      {
+        "key": "major_rank_2024",
+        "label": "major_rank_2024",
+        "value": 1874
+      },
+      {
+        "key": "group_min_rank",
+        "label": "group_min_rank",
+        "value": 1860
+      },
+      {
+        "key": "major_min_rank",
+        "label": "major_min_rank",
+        "value": 1874
+      },
+      {
+        "key": "safety_margin",
+        "label": "safety_margin",
+        "value": "-94.2%"
+      }
+    ],
+    "matched_filters": [
+      {
+        "id": "e_source_province",
+        "field": "生源地",
+        "operator": "eq",
+        "value": "广东",
+        "matched": true,
+        "text": "生源地 等于 广东"
+      },
+      {
+        "id": "e_subject_type",
+        "field": "科类",
+        "operator": "eq",
+        "value": "物理",
+        "matched": true,
+        "text": "科类 等于 物理"
+      },
+      {
+        "id": "e_subject_requirement",
+        "field": "选科要求",
+        "operator": "satisfies_subject_requirement",
+        "value": [
+          "化学",
+          "生物"
+        ],
+        "matched": true,
+        "text": "选科要求 化学；已选再选科目：化学、生物"
+      },
+      {
+        "id": "e_city",
+        "field": "城市",
+        "operator": "in_contains",
+        "value": [
+          "广州",
+          "深圳"
+        ],
+        "matched": true,
+        "text": "城市 包含任一：广州、深圳；命中 深圳"
+      }
+    ],
+    "raw": {
+      "excel_row_number": 30318,
+      "ID": 30315,
+      "年份": 2024,
+      "批次": "本科批",
+      "院校代码": "18213",
+      "院校名称": "哈尔滨工业大学(深圳)",
+      "院校专业组代码": "18213202",
+      "专业组名称": "202组",
+      "科类": "物理",
+      "选科要求": "化学",
+      "专业代码": "009",
+      "专业名称": "工科试验班",
+      "专业全称": "工科试验班(机器人与智能装备，含：自动化、机器人工程，深圳校区)",
+      "所在省": "广东",
+      "城市": "深圳",
+      "学费": 6230.0,
+      "专业组最低位次1": 1860,
+      "最低位次1": 1874,
+      "院校标签": "985/211/双一流/国重点/保研资格",
+      "院校排名": "16",
+      "ranking_key": -30140,
+      "safety_margin_pct": -0.9419,
+      "cooperation_filter_status": "not_executed_missing_cooperation_type_field",
+      "中外合作筛选状态": "未执行：缺少合作办学类型字段"
+    }
+  }
+]
+```
+### top_results
+```json
+[
+  {
+    "id": "result_001",
+    "trace": [
+      {
+        "status": "pass",
+        "text": "生源地 等于 广东"
+      },
+      {
+        "status": "pass",
+        "text": "科类 等于 物理"
+      },
+      {
+        "status": "pass",
+        "text": "选科要求 化学；已选再选科目：化学、生物"
+      },
+      {
+        "status": "pass",
+        "text": "城市 包含任一：广州、深圳；命中 深圳"
+      }
+    ],
+    "year": 2024,
+    "batch": "本科提前批",
+    "university_code": "16407",
+    "university_name": "香港中文大学(深圳)",
+    "group_code": "16407101",
+    "group_name": "101组",
+    "major_code": "001",
+    "major_name": "理科试验班",
+    "full_major_name": "理科试验班(含：金融工程、数学与应用数学、物理学、统计学、材料科学与工程、新能源科学与工程、计算机科学与技术、电子与计算机工程、数据科学与大数据技术、生物医学工程，临床医学专业，学制6年，本试验班为经管学院、理工学院、人文社科学院、数据科学学院、医学院及金融工程专业联合招生，具体专业分流情况请查看学校网站，深圳市)(成绩要求：外语≥120)",
+    "subject_requirement": "化学",
+    "province": "广东",
+    "city": "深圳",
+    "tuition": 115000.0,
+    "rank_2024": 968,
+    "major_rank_2024": null,
+    "plan_count": null,
+    "group_min_rank": 968,
+    "major_min_rank": null,
+    "safety_margin": "-97.0%"
+  },
+  {
+    "id": "result_002",
+    "trace": [
+      {
+        "status": "pass",
+        "text": "生源地 等于 广东"
+      },
+      {
+        "status": "pass",
+        "text": "科类 等于 物理"
+      },
+      {
+        "status": "pass",
+        "text": "选科要求 化学；已选再选科目：化学、生物"
+      },
+      {
+        "status": "pass",
+        "text": "城市 包含任一：广州、深圳；命中 广州"
+      }
+    ],
+    "year": 2024,
+    "batch": "本科提前批",
+    "university_code": "16412",
+    "university_name": "香港科技大学(广州)",
+    "group_code": "16412101",
+    "group_name": "101组(中外合作)",
+    "major_code": "001",
+    "major_name": "人工智能",
+    "full_major_name": "人工智能(中外合作办学，领军人才班，入学不分专业，大二结束时，可在人工智能、数据科学与大数据技术、智能制造工程中选择，英文授课，具体培养模式和学习费用请查看学校网站，广州市)(请非英语语种的考生慎重报考，成绩要求：外语≥120)",
+    "subject_requirement": "化学",
+    "province": "广东",
+    "city": "广州",
+    "tuition": 50000.0,
+    "rank_2024": 1424,
+    "major_rank_2024": null,
+    "plan_count": null,
+    "group_min_rank": 1424,
+    "major_min_rank": null,
+    "safety_margin": "-95.5%"
+  },
+  {
+    "id": "result_003",
+    "trace": [
+      {
+        "status": "pass",
+        "text": "生源地 等于 广东"
+      },
+      {
+        "status": "pass",
+        "text": "科类 等于 物理"
+      },
+      {
+        "status": "pass",
+        "text": "选科要求 化学；已选再选科目：化学、生物"
+      },
+      {
+        "status": "pass",
+        "text": "城市 包含任一：广州、深圳；命中 深圳"
+      }
+    ],
+    "year": 2024,
+    "batch": "本科批",
+    "university_code": "18213",
+    "university_name": "哈尔滨工业大学(深圳)",
+    "group_code": "18213202",
+    "group_name": "202组",
+    "major_code": "007",
+    "major_name": "工科试验班",
+    "full_major_name": "工科试验班(计算机与电子通信拔尖班，含：计算机科学与技术、数据科学与大数据技术、通信工程、光电信息科学与工程、电子封装技术、集成电路设计与集成系统，第一学年校本部，第二至四学年深圳校区)",
+    "subject_requirement": "化学",
+    "province": "广东",
+    "city": "深圳",
+    "tuition": 6230.0,
+    "rank_2024": 1860,
+    "major_rank_2024": 901,
+    "plan_count": null,
+    "group_min_rank": 1860,
+    "major_min_rank": 901,
+    "safety_margin": "-94.2%"
+  },
+  {
+    "id": "result_004",
+    "trace": [
+      {
+        "status": "pass",
+        "text": "生源地 等于 广东"
+      },
+      {
+        "status": "pass",
+        "text": "科类 等于 物理"
+      },
+      {
+        "status": "pass",
+        "text": "选科要求 化学；已选再选科目：化学、生物"
+      },
+      {
+        "status": "pass",
+        "text": "城市 包含任一：广州、深圳；命中 深圳"
+      }
+    ],
+    "year": 2024,
+    "batch": "本科批",
+    "university_code": "18213",
+    "university_name": "哈尔滨工业大学(深圳)",
+    "group_code": "18213202",
+    "group_name": "202组",
+    "major_code": "008",
+    "major_name": "工科试验班",
+    "full_major_name": "工科试验班(计算机与电子通信，含：计算机科学与技术、数据科学与大数据技术、通信工程、光电信息科学与工程、电子封装技术、集成电路设计与集成系统，深圳校区)",
+    "subject_requirement": "化学",
+    "province": "广东",
+    "city": "深圳",
+    "tuition": 6230.0,
+    "rank_2024": 1860,
+    "major_rank_2024": 1545,
+    "plan_count": null,
+    "group_min_rank": 1860,
+    "major_min_rank": 1545,
+    "safety_margin": "-94.2%"
+  },
+  {
+    "id": "result_005",
+    "trace": [
+      {
+        "status": "pass",
+        "text": "生源地 等于 广东"
+      },
+      {
+        "status": "pass",
+        "text": "科类 等于 物理"
+      },
+      {
+        "status": "pass",
+        "text": "选科要求 化学；已选再选科目：化学、生物"
+      },
+      {
+        "status": "pass",
+        "text": "城市 包含任一：广州、深圳；命中 深圳"
+      }
+    ],
+    "year": 2024,
+    "batch": "本科批",
+    "university_code": "18213",
+    "university_name": "哈尔滨工业大学(深圳)",
+    "group_code": "18213202",
+    "group_name": "202组",
+    "major_code": "009",
+    "major_name": "工科试验班",
+    "full_major_name": "工科试验班(机器人与智能装备，含：自动化、机器人工程，深圳校区)",
+    "subject_requirement": "化学",
+    "province": "广东",
+    "city": "深圳",
+    "tuition": 6230.0,
+    "rank_2024": 1860,
+    "major_rank_2024": 1874,
+    "plan_count": null,
+    "group_min_rank": 1860,
+    "major_min_rank": 1874,
+    "safety_margin": "-94.2%"
+  }
+]
+```
+### executed_filters
+```json
+[
+  {
+    "id": "e_source_province",
+    "label": "生源地 等于 广东",
+    "field": "生源地",
+    "operator": "eq",
+    "value": "广东",
+    "source_span": "广东"
+  },
+  {
+    "id": "e_subject_type",
+    "label": "科类 等于 物理",
+    "field": "科类",
+    "operator": "eq",
+    "value": "物理",
+    "source_span": "物理"
+  },
+  {
+    "id": "e_subject_requirement",
+    "label": "选科要求 满足已选再选科目：化学、生物",
+    "field": "选科要求",
+    "operator": "satisfies_subject_requirement",
+    "value": [
+      "化学",
+      "生物"
+    ],
+    "source_span": "化学、生物"
+  },
+  {
+    "id": "e_city",
+    "label": "城市 包含任一：广州、深圳",
+    "field": "城市",
+    "operator": "in_contains",
+    "value": [
+      "广州",
+      "深圳"
+    ],
+    "source_span": "广州、深圳"
+  }
+]
+```
+### candidates_to_confirm
+```json
+[
+  {
+    "candidate_id": "cand_d00fc7406ff415b9",
+    "source_text": "计科",
+    "slot_path": "preferences.major_expansion_raw",
+    "field_id": "major_name",
+    "field": "专业名称",
+    "match_type": "partial_match",
+    "operator": "contains_any",
+    "value": [
+      "计算机"
+    ],
+    "label": "按计算机专业关键词筛选",
+    "executable": true,
+    "reason": "计科是缩写，必须通过 candidate_id 确认后才执行专业过滤。",
+    "matched_values": []
+  }
+]
+```
+### unexecuted_preferences
+```json
+[]
+```
+### SQL / params
+```json
+{
+  "sql": "WITH source AS (\n  SELECT row_number() OVER () AS \"__source_row_number\", *\n  FROM \"admissions\"\n),\nfiltered AS (\n  SELECT\n    source.*,\n    TRY_CAST(regexp_extract(REPLACE(CAST(\"专业组最低位次1\" AS VARCHAR), ',', ''), '\\d+(?:\\.\\d+)?') AS DOUBLE) AS \"__group_rank_num\",\n    TRY_CAST(regexp_extract(REPLACE(CAST(\"学费\" AS VARCHAR), ',', ''), '\\d+(?:\\.\\d+)?') AS DOUBLE) AS \"__tuition_num\",\n    TRY_CAST(regexp_extract(REPLACE(CAST(\"院校排名\" AS VARCHAR), ',', ''), '\\d+(?:\\.\\d+)?') AS DOUBLE) AS \"__school_rank_num\",\n    TRY_CAST(regexp_extract(REPLACE(CAST(\"ID\" AS VARCHAR), ',', ''), '\\d+(?:\\.\\d+)?') AS DOUBLE) AS \"__id_num\"\n  FROM source\n  WHERE CAST(\"生源地\" AS VARCHAR) = ? AND CAST(\"科类\" AS VARCHAR) = ? AND ((REPLACE(REPLACE(CAST(\"选科要求\" AS VARCHAR), '思想政治', '政治'), '生物学', '生物') IS NULL OR TRIM(REPLACE(REPLACE(CAST(\"选科要求\" AS VARCHAR), '思想政治', '政治'), '生物学', '生物')) = '' OR REPLACE(REPLACE(CAST(\"选科要求\" AS VARCHAR), '思想政治', '政治'), '生物学', '生物') = 'nan' OR REPLACE(REPLACE(CAST(\"选科要求\" AS VARCHAR), '思想政治', '政治'), '生物学', '生物') = '无' OR STRPOS(REPLACE(REPLACE(CAST(\"选科要求\" AS VARCHAR), '思想政治', '政治'), '生物学', '生物'), '不限') > 0) OR ((STRPOS(REPLACE(REPLACE(CAST(\"选科要求\" AS VARCHAR), '思想政治', '政治'), '生物学', '生物'), '或') > 0 OR STRPOS(REPLACE(REPLACE(CAST(\"选科要求\" AS VARCHAR), '思想政治', '政治'), '生物学', '生物'), '/') > 0) AND (STRPOS(REPLACE(REPLACE(CAST(\"选科要求\" AS VARCHAR), '思想政治', '政治'), '生物学', '生物'), ?) > 0 OR STRPOS(REPLACE(REPLACE(CAST(\"选科要求\" AS VARCHAR), '思想政治', '政治'), '生物学', '生物'), ?) > 0)) OR ((STRPOS(REPLACE(REPLACE(CAST(\"选科要求\" AS VARCHAR), '思想政治', '政治'), '生物学', '生物'), '或') = 0 AND STRPOS(REPLACE(REPLACE(CAST(\"选科要求\" AS VARCHAR), '思想政治', '政治'), '生物学', '生物'), '/') = 0) AND STRPOS(REPLACE(REPLACE(CAST(\"选科要求\" AS VARCHAR), '思想政治', '政治'), '生物学', '生物'), ?) = 0 AND STRPOS(REPLACE(REPLACE(CAST(\"选科要求\" AS VARCHAR), '思想政治', '政治'), '生物学', '生物'), ?) = 0)) AND (STRPOS(CAST(\"城市\" AS VARCHAR), ?) > 0 OR STRPOS(CAST(\"城市\" AS VARCHAR), ?) > 0)\n),\nprojectable AS (\n  SELECT *\n  FROM filtered\n  WHERE TRUE\n    AND \"__group_rank_num\" IS NOT NULL\n    AND \"__tuition_num\" IS NOT NULL\n)\nSELECT *\nFROM projectable\nORDER BY\n  \"__group_rank_num\" ASC NULLS LAST,\n  \"__school_rank_num\" ASC NULLS LAST,\n  \"__id_num\" ASC NULLS LAST",
+  "params": [
+    "广东",
+    "物理",
+    "化学",
+    "生物",
+    "政治",
+    "地理",
+    "广州",
+    "深圳"
+  ]
+}
+```
+### EvidencePack
+```json
+{
+  "user_request": "广东物理，物化生，排位32000，想学计科，广深优先。；偏好信息：偏好描述：广东物理，物化生，排位32000，想学计科，广深优先。",
+  "executed_rules": [
+    {
+      "rule_id": "e_source_province",
+      "derived_from": "d_source_province",
+      "field": "生源地",
+      "operator": "eq",
+      "value": "广东",
+      "description": "生源地 等于 广东"
+    },
+    {
+      "rule_id": "e_subject_type",
+      "derived_from": "d_subject_type",
+      "field": "科类",
+      "operator": "eq",
+      "value": "物理",
+      "description": "科类 等于 物理"
+    },
+    {
+      "rule_id": "e_subject_requirement",
+      "derived_from": "d_subject_requirement",
+      "field": "选科要求",
+      "operator": "satisfies_subject_requirement",
+      "value": [
+        "化学",
+        "生物"
+      ],
+      "description": "选科要求 满足已选再选科目：化学、生物"
+    },
+    {
+      "rule_id": "e_city",
+      "derived_from": "d_city",
+      "field": "城市",
+      "operator": "in_contains",
+      "value": [
+        "广州",
+        "深圳"
+      ],
+      "description": "城市 包含任一：广州、深圳"
+    }
+  ],
+  "candidate_confirmations": [
+    {
+      "confirmation_id": "major_expansion",
+      "source_rule_id": "c_major_expansion",
+      "source_text": "计算机相关扩展",
+      "selected_label": "不扩展",
+      "selected_option": "none",
+      "status": "confirmed_without_expansion",
+      "expanded_terms": []
+    }
+  ],
+  "not_executed_preferences": [],
+  "result_count": 3962,
+  "top_k_results": [
+    {
+      "rank": 1,
+      "院校名称": "香港中文大学(深圳)",
+      "院校专业组代码": "16407101",
+      "专业代码": "001",
+      "专业名称": "理科试验班",
+      "专业全称": "理科试验班(含：金融工程、数学与应用数学、物理学、统计学、材料科学与工程、新能源科学与工程、计算机科学与技术、电子与计算机工程、数据科学与大数据技术、生物医学工程，临床医学专业，学制6年，本试验班为经管学院、理工学院、人文社科学院、数据科学学院、医学院及金融工程专业联合招生，具体专业分流情况请查看学校网站，深圳市)(成绩要求：外语≥120)",
+      "选科要求": "化学",
+      "城市": "深圳",
+      "学费": 115000.0,
+      "专业组最低位次": 968,
+      "safety_margin": "-96.98%",
+      "trace": [
+        {
+          "rule_id": "e_source_province",
+          "status": "pass",
+          "reason": "生源地 等于 广东"
+        },
+        {
+          "rule_id": "e_subject_type",
+          "status": "pass",
+          "reason": "科类 等于 物理"
+        },
+        {
+          "rule_id": "e_subject_requirement",
+          "status": "pass",
+          "reason": "选科要求 化学；已选再选科目：化学、生物"
+        },
+        {
+          "rule_id": "e_city",
+          "status": "pass",
+          "reason": "城市 包含任一：广州、深圳；命中 深圳"
+        }
+      ]
+    },
+    {
+      "rank": 2,
+      "院校名称": "香港科技大学(广州)",
+      "院校专业组代码": "16412101",
+      "专业代码": "001",
+      "专业名称": "人工智能",
+      "专业全称": "人工智能(中外合作办学，领军人才班，入学不分专业，大二结束时，可在人工智能、数据科学与大数据技术、智能制造工程中选择，英文授课，具体培养模式和学习费用请查看学校网站，广州市)(请非英语语种的考生慎重报考，成绩要求：外语≥120)",
+      "选科要求": "化学",
+      "城市": "广州",
+      "学费": 50000.0,
+      "专业组最低位次": 1424,
+      "safety_margin": "-95.55%",
+      "trace": [
+        {
+          "rule_id": "e_source_province",
+          "status": "pass",
+          "reason": "生源地 等于 广东"
+        },
+        {
+          "rule_id": "e_subject_type",
+          "status": "pass",
+          "reason": "科类 等于 物理"
+        },
+        {
+          "rule_id": "e_subject_requirement",
+          "status": "pass",
+          "reason": "选科要求 化学；已选再选科目：化学、生物"
+        },
+        {
+          "rule_id": "e_city",
+          "status": "pass",
+          "reason": "城市 包含任一：广州、深圳；命中 广州"
+        }
+      ]
+    },
+    {
+      "rank": 3,
+      "院校名称": "哈尔滨工业大学(深圳)",
+      "院校专业组代码": "18213202",
+      "专业代码": "007",
+      "专业名称": "工科试验班",
+      "专业全称": "工科试验班(计算机与电子通信拔尖班，含：计算机科学与技术、数据科学与大数据技术、通信工程、光电信息科学与工程、电子封装技术、集成电路设计与集成系统，第一学年校本部，第二至四学年深圳校区)",
+      "选科要求": "化学",
+      "城市": "深圳",
+      "学费": 6230.0,
+      "专业组最低位次": 1860,
+      "专业最低位次": 901,
+      "safety_margin": "-94.19%",
+      "trace": [
+        {
+          "rule_id": "e_source_province",
+          "status": "pass",
+          "reason": "生源地 等于 广东"
+        },
+        {
+          "rule_id": "e_subject_type",
+          "status": "pass",
+          "reason": "科类 等于 物理"
+        },
+        {
+          "rule_id": "e_subject_requirement",
+          "status": "pass",
+          "reason": "选科要求 化学；已选再选科目：化学、生物"
+        },
+        {
+          "rule_id": "e_city",
+          "status": "pass",
+          "reason": "城市 包含任一：广州、深圳；命中 深圳"
+        }
+      ]
+    },
+    {
+      "rank": 4,
+      "院校名称": "哈尔滨工业大学(深圳)",
+      "院校专业组代码": "18213202",
+      "专业代码": "008",
+      "专业名称": "工科试验班",
+      "专业全称": "工科试验班(计算机与电子通信，含：计算机科学与技术、数据科学与大数据技术、通信工程、光电信息科学与工程、电子封装技术、集成电路设计与集成系统，深圳校区)",
+      "选科要求": "化学",
+      "城市": "深圳",
+      "学费": 6230.0,
+      "专业组最低位次": 1860,
+      "专业最低位次": 1545,
+      "safety_margin": "-94.19%",
+      "trace": [
+        {
+          "rule_id": "e_source_province",
+          "status": "pass",
+          "reason": "生源地 等于 广东"
+        },
+        {
+          "rule_id": "e_subject_type",
+          "status": "pass",
+          "reason": "科类 等于 物理"
+        },
+        {
+          "rule_id": "e_subject_requirement",
+          "status": "pass",
+          "reason": "选科要求 化学；已选再选科目：化学、生物"
+        },
+        {
+          "rule_id": "e_city",
+          "status": "pass",
+          "reason": "城市 包含任一：广州、深圳；命中 深圳"
+        }
+      ]
+    },
+    {
+      "rank": 5,
+      "院校名称": "哈尔滨工业大学(深圳)",
+      "院校专业组代码": "18213202",
+      "专业代码": "009",
+      "专业名称": "工科试验班",
+      "专业全称": "工科试验班(机器人与智能装备，含：自动化、机器人工程，深圳校区)",
+      "选科要求": "化学",
+      "城市": "深圳",
+      "学费": 6230.0,
+      "专业组最低位次": 1860,
+      "专业最低位次": 1874,
+      "safety_margin": "-94.19%",
+      "trace": [
+        {
+          "rule_id": "e_source_province",
+          "status": "pass",
+          "reason": "生源地 等于 广东"
+        },
+        {
+          "rule_id": "e_subject_type",
+          "status": "pass",
+          "reason": "科类 等于 物理"
+        },
+        {
+          "rule_id": "e_subject_requirement",
+          "status": "pass",
+          "reason": "选科要求 化学；已选再选科目：化学、生物"
+        },
+        {
+          "rule_id": "e_city",
+          "status": "pass",
+          "reason": "城市 包含任一：广州、深圳；命中 深圳"
+        }
+      ]
+    }
+  ],
+  "trace_summary": {
+    "executed_rule_ids": [
+      "e_source_province",
+      "e_subject_type",
+      "e_subject_requirement",
+      "e_city"
+    ],
+    "not_executed_preference_count": 0,
+    "traced_result_count": 3962,
+    "top_k": 5,
+    "top_k_trace_status_counts": {
+      "pass": 20
+    },
+    "safety_warnings": [
+      "答案只能使用 evidence_pack 中的已验证规则、确认记录、结果摘要和 trace。",
+      "候选偏好在确认或模拟确认之前不得执行。"
+    ]
+  },
+  "extracted_preferences": [
+    {
+      "id": "pref_origin",
+      "slot": "生源地",
+      "value": "广东",
+      "source_span": "广东",
+      "status": "已对齐字段"
+    },
+    {
+      "id": "pref_track",
+      "slot": "科类",
+      "value": "物理",
+      "source_span": "物理",
+      "status": "已对齐字段"
+    },
+    {
+      "id": "pref_reselected_subjects",
+      "slot": "再选科目",
+      "value": [
+        "化学",
+        "生物"
+      ],
+      "source_span": "化学、生物",
+      "status": "已对齐字段"
+    },
+    {
+      "id": "pref_rank",
+      "slot": "排位",
+      "value": 32000,
+      "source_span": "排位32000",
+      "status": "已对齐字段"
+    },
+    {
+      "id": "pref_city",
+      "slot": "城市",
+      "value": [
+        "广州",
+        "深圳"
+      ],
+      "source_span": "广州、深圳",
+      "status": "已对齐字段"
+    }
+  ],
+  "attribute_grounding_summary": {
+    "total_attributes": 6,
+    "status_counts": {
+      "schema_grounded": 4,
+      "context_only": 1,
+      "confirmable": 1
+    },
+    "value_index_status_counts": {
+      "matched": 4,
+      "not_found": 1
+    },
+    "unsafe_ungrounded_executable_attributes": 0
+  },
+  "proposed_rule_audit": [],
+  "execution_summary": {
+    "executor": "duckdb",
+    "sql": "WITH source AS (\n  SELECT row_number() OVER () AS \"__source_row_number\", *\n  FROM \"admissions\"\n),\nfiltered AS (\n  SELECT\n    source.*,\n    TRY_CAST(regexp_extract(REPLACE(CAST(\"专业组最低位次1\" AS VARCHAR), ',', ''), '\\d+(?:\\.\\d+)?') AS DOUBLE) AS \"__group_rank_num\",\n    TRY_CAST(regexp_extract(REPLACE(CAST(\"学费\" AS VARCHAR), ',', ''), '\\d+(?:\\.\\d+)?') AS DOUBLE) AS \"__tuition_num\",\n    TRY_CAST(regexp_extract(REPLACE(CAST(\"院校排名\" AS VARCHAR), ',', ''), '\\d+(?:\\.\\d+)?') AS DOUBLE) AS \"__school_rank_num\",\n    TRY_CAST(regexp_extract(REPLACE(CAST(\"ID\" AS VARCHAR), ',', ''), '\\d+(?:\\.\\d+)?') AS DOUBLE) AS \"__id_num\"\n  FROM source\n  WHERE CAST(\"生源地\" AS VARCHAR) = ? AND CAST(\"科类\" AS VARCHAR) = ? AND ((REPLACE(REPLACE(CAST(\"选科要求\" AS VARCHAR), '思想政治', '政治'), '生物学', '生物') IS NULL OR TRIM(REPLACE(REPLACE(CAST(\"选科要求\" AS VARCHAR), '思想政治', '政治'), '生物学', '生物')) = '' OR REPLACE(REPLACE(CAST(\"选科要求\" AS VARCHAR), '思想政治', '政治'), '生物学', '生物') = 'nan' OR REPLACE(REPLACE(CAST(\"选科要求\" AS VARCHAR), '思想政治', '政治'), '生物学', '生物') = '无' OR STRPOS(REPLACE(REPLACE(CAST(\"选科要求\" AS VARCHAR), '思想政治', '政治'), '生物学', '生物'), '不限') > 0) OR ((STRPOS(REPLACE(REPLACE(CAST(\"选科要求\" AS VARCHAR), '思想政治', '政治'), '生物学', '生物'), '或') > 0 OR STRPOS(REPLACE(REPLACE(CAST(\"选科要求\" AS VARCHAR), '思想政治', '政治'), '生物学', '生物'), '/') > 0) AND (STRPOS(REPLACE(REPLACE(CAST(\"选科要求\" AS VARCHAR), '思想政治', '政治'), '生物学', '生物'), ?) > 0 OR STRPOS(REPLACE(REPLACE(CAST(\"选科要求\" AS VARCHAR), '思想政治', '政治'), '生物学', '生物'), ?) > 0)) OR ((STRPOS(REPLACE(REPLACE(CAST(\"选科要求\" AS VARCHAR), '思想政治', '政治'), '生物学', '生物'), '或') = 0 AND STRPOS(REPLACE(REPLACE(CAST(\"选科要求\" AS VARCHAR), '思想政治', '政治'), '生物学', '生物'), '/') = 0) AND STRPOS(REPLACE(REPLACE(CAST(\"选科要求\" AS VARCHAR), '思想政治', '政治'), '生物学', '生物'), ?) = 0 AND STRPOS(REPLACE(REPLACE(CAST(\"选科要求\" AS VARCHAR), '思想政治', '政治'), '生物学', '生物'), ?) = 0)) AND (STRPOS(CAST(\"城市\" AS VARCHAR), ?) > 0 OR STRPOS(CAST(\"城市\" AS VARCHAR), ?) > 0)\n),\nprojectable AS (\n  SELECT *\n  FROM filtered\n  WHERE TRUE\n    AND \"__group_rank_num\" IS NOT NULL\n    AND \"__tuition_num\" IS NOT NULL\n)\nSELECT *\nFROM projectable\nORDER BY\n  \"__group_rank_num\" ASC NULLS LAST,\n  \"__school_rank_num\" ASC NULLS LAST,\n  \"__id_num\" ASC NULLS LAST",
+    "params": [
+      "广东",
+      "物理",
+      "化学",
+      "生物",
+      "政治",
+      "地理",
+      "广州",
+      "深圳"
+    ],
+    "input_row_count": 30855,
+    "filtered_row_count": 3962,
+    "sort_key": [
+      "专业组最低位次1 ASC NULLS LAST",
+      "院校排名 ASC NULLS LAST",
+      "ID ASC NULLS LAST"
+    ],
+    "top_k": 5,
+    "hard_rule_ids": [
+      "e_source_province",
+      "e_subject_type",
+      "e_subject_requirement",
+      "e_city"
+    ],
+    "skipped_soft_rule_ids": []
+  },
+  "attribute_explanations": [
+    {
+      "source_text": "广东",
+      "slot_path": "user_context.source_province",
+      "field": "生源地",
+      "value": "广东",
+      "match_type": "exact_match",
+      "action": "executed",
+      "matched_values": [
+        "广东"
+      ],
+      "reason": "已匹配字段“生源地”，并已进入 hard filter。"
+    },
+    {
+      "source_text": "物理",
+      "slot_path": "user_context.subject_type",
+      "field": "科类",
+      "value": "物理",
+      "match_type": "exact_match",
+      "action": "executed",
+      "matched_values": [
+        "物理"
+      ],
+      "reason": "已匹配字段“科类”，并已进入 hard filter。"
+    },
+    {
+      "source_text": "物化生",
+      "slot_path": "user_context.reselected_subjects",
+      "field": "选科要求",
+      "value": [
+        "化学",
+        "生物"
+      ],
+      "match_type": "exact_match",
+      "action": "executed",
+      "matched_values": [
+        "化学",
+        "生物"
+      ],
+      "reason": "已匹配字段“选科要求”，并已进入 hard filter。"
+    },
+    {
+      "source_text": "广深",
+      "slot_path": "preferences.preferred_cities",
+      "field": "城市",
+      "value": [
+        "广州",
+        "深圳"
+      ],
+      "match_type": "exact_match",
+      "action": "executed",
+      "matched_values": [
+        "广州",
+        "深圳"
+      ],
+      "reason": "已匹配字段“城市”，并已进入 hard filter。"
+    },
+    {
+      "source_text": "计科",
+      "slot_path": "preferences.major_expansion_raw",
+      "field": "专业名称",
+      "value": "计科",
+      "match_type": "partial_match",
+      "action": "needs_confirmation",
+      "matched_values": [],
+      "reason": "该属性有对应字段，但语义或边界需要确认。未进入 hard filter。"
+    }
+  ],
+  "confirmed_rules": [],
+  "confirmation_source": [],
+  "executed_after_confirmation": [],
+  "unconfirmed_candidates": [
+    {
+      "candidate_id": "cand_d00fc7406ff415b9",
+      "source_text": "计科",
+      "slot_path": "preferences.major_expansion_raw",
+      "field_id": "major_name",
+      "field": "专业名称",
+      "match_type": "partial_match",
+      "operator": "contains_any",
+      "value": [
+        "计算机"
+      ],
+      "label": "按计算机专业关键词筛选",
+      "executable": true,
+      "reason": "计科是缩写，必须通过 candidate_id 确认后才执行专业过滤。",
+      "matched_values": []
+    }
+  ],
+  "no_schema_field_preferences": [],
+  "rejected_confirmations": []
+}
+```
+### answer
+
+根据已验证规则生成结果：
+
+用户需求：广东物理，物化生，排位32000，想学计科，广深优先。；偏好信息：偏好描述：广东物理，物化生，排位32000，想学计科，广深优先。
+共筛选到 3962 条符合已执行规则的结果。
+
+抽取与结构化结果：
+- 生源地：广东；状态：已对齐字段；来源：广东
+- 科类：物理；状态：已对齐字段；来源：物理
+- 再选科目：化学、生物；状态：已对齐字段；来源：化学、生物
+- 排位：32000；状态：已对齐字段；来源：排位32000
+- 城市：广州、深圳；状态：已对齐字段；来源：广州、深圳
+
+字段值审计解释：
+- [已执行] 广东 -> 生源地：exact_match；索引命中：广东；已匹配字段“生源地”，并已进入 hard filter。
+- [已执行] 物理 -> 科类：exact_match；索引命中：物理；已匹配字段“科类”，并已进入 hard filter。
+- [已执行] 物化生 -> 选科要求：exact_match；索引命中：化学、生物；已匹配字段“选科要求”，并已进入 hard filter。
+- [已执行] 广深 -> 城市：exact_match；索引命中：广州、深圳；已匹配字段“城市”，并已进入 hard filter。
+- [需确认] 计科 -> 专业名称：partial_match；该属性有对应字段，但语义或边界需要确认。未进入 hard filter。
+
+已执行规则：
+- e_source_province：生源地 等于 广东
+- e_subject_type：科类 等于 物理
+- e_subject_requirement：选科要求 满足已选再选科目：化学、生物
+- e_city：城市 包含任一：广州、深圳
+
+候选偏好确认记录：
+- 计算机相关扩展：已确认“不扩展”，未扩展专业关键词。
+
+candidate_id 确认状态：
+- cand_d00fc7406ff415b9：计科 仍待确认，未进入 hard filter；候选为 按计算机专业关键词筛选。
+
+未执行但已保留的偏好：
+- 无。
+
+前 5 条结果：
+- 1. 香港中文大学(深圳)；专业组代码：16407101；专业代码：001；专业名称：理科试验班；专业全称：理科试验班(含：金融工程、数学与应用数学、物理学、统计学、材料科学与工程、新能源科学与工程、计算机科学与技术、电子与计算机工程、数据科学与大数据技术、生物医学工程，临床医学专业，学制6年，本试验班为经管学院、理工学院、人文社科学院、数据科学学院、医学院及金融工程专业联合招生，具体专业分流情况请查看学校网站，深圳市)(成绩要求：外语≥120)；选科要求：化学；城市：深圳；学费：115000 元/年；专业组最低位次：968。
+- 2. 香港科技大学(广州)；专业组代码：16412101；专业代码：001；专业名称：人工智能；专业全称：人工智能(中外合作办学，领军人才班，入学不分专业，大二结束时，可在人工智能、数据科学与大数据技术、智能制造工程中选择，英文授课，具体培养模式和学习费用请查看学校网站，广州市)(请非英语语种的考生慎重报考，成绩要求：外语≥120)；选科要求：化学；城市：广州；学费：50000 元/年；专业组最低位次：1424。
+- 3. 哈尔滨工业大学(深圳)；专业组代码：18213202；专业代码：007；专业名称：工科试验班；专业全称：工科试验班(计算机与电子通信拔尖班，含：计算机科学与技术、数据科学与大数据技术、通信工程、光电信息科学与工程、电子封装技术、集成电路设计与集成系统，第一学年校本部，第二至四学年深圳校区)；选科要求：化学；城市：深圳；学费：6230 元/年；专业组最低位次：1860；专业最低位次：901。
+- 4. 哈尔滨工业大学(深圳)；专业组代码：18213202；专业代码：008；专业名称：工科试验班；专业全称：工科试验班(计算机与电子通信，含：计算机科学与技术、数据科学与大数据技术、通信工程、光电信息科学与工程、电子封装技术、集成电路设计与集成系统，深圳校区)；选科要求：化学；城市：深圳；学费：6230 元/年；专业组最低位次：1860；专业最低位次：1545。
+- 5. 哈尔滨工业大学(深圳)；专业组代码：18213202；专业代码：009；专业名称：工科试验班；专业全称：工科试验班(机器人与智能装备，含：自动化、机器人工程，深圳校区)；选科要求：化学；城市：深圳；学费：6230 元/年；专业组最低位次：1860；专业最低位次：1874。
+
+安全说明：
+- 答案只能使用 证据包 中的已验证规则、确认记录、结果摘要和 trace。
+- 候选偏好在确认或模拟确认之前不得执行。
+
+## admissions_05 `通过`
+
+- domain: `admissions`
+- query: 广东物理，排名3.2万，计算机相关，珠三角优先，不要校企合作。
+- status: `needs_confirmation`
+- pass/fail：`通过`
+
+### items
+```json
+[
+  {
+    "item_id": "result_001",
+    "title": "北京大学",
+    "subtitle": "计算机类(含：计算机科学与技术、智能科学与技术，校本部)",
+    "primary_attributes": [
+      {
+        "key": "year",
+        "label": "year",
+        "value": 2024
+      },
+      {
+        "key": "batch",
+        "label": "batch",
+        "value": "本科批"
+      },
+      {
+        "key": "university_code",
+        "label": "university_code",
+        "value": "10001"
+      },
+      {
+        "key": "university_name",
+        "label": "university_name",
+        "value": "北京大学"
+      }
+    ],
+    "secondary_attributes": [
+      {
+        "key": "group_code",
+        "label": "group_code",
+        "value": "10001203"
+      },
+      {
+        "key": "group_name",
+        "label": "group_name",
+        "value": "203组"
+      },
+      {
+        "key": "major_code",
+        "label": "major_code",
+        "value": "111"
+      },
+      {
+        "key": "major_name",
+        "label": "major_name",
+        "value": "计算机类"
+      },
+      {
+        "key": "full_major_name",
+        "label": "full_major_name",
+        "value": "计算机类(含：计算机科学与技术、智能科学与技术，校本部)"
+      },
+      {
+        "key": "subject_requirement",
+        "label": "subject_requirement",
+        "value": "化学"
+      },
+      {
+        "key": "province",
+        "label": "province",
+        "value": "北京"
+      },
+      {
+        "key": "city",
+        "label": "city",
+        "value": "海淀区"
+      },
+      {
+        "key": "tuition",
+        "label": "tuition",
+        "value": 5300.0
+      },
+      {
+        "key": "rank_2024",
+        "label": "rank_2024",
+        "value": 85
+      },
+      {
+        "key": "group_min_rank",
+        "label": "group_min_rank",
+        "value": 85
+      },
+      {
+        "key": "safety_margin",
+        "label": "safety_margin",
+        "value": "-99.7%"
+      }
+    ],
+    "matched_filters": [
+      {
+        "id": "e_source_province",
+        "field": "生源地",
+        "operator": "eq",
+        "value": "广东",
+        "matched": true,
+        "text": "生源地 等于 广东"
+      },
+      {
+        "id": "e_subject_type",
+        "field": "科类",
+        "operator": "eq",
+        "value": "物理",
+        "matched": true,
+        "text": "科类 等于 物理"
+      },
+      {
+        "id": "e_major_keyword",
+        "field": "专业名称",
+        "operator": "contains_any",
+        "value": [
+          "计算机"
+        ],
+        "matched": true,
+        "text": "专业名称 包含任一：计算机；命中 计算机类"
+      }
+    ],
+    "raw": {
+      "excel_row_number": 37,
+      "ID": 34,
+      "年份": 2024,
+      "批次": "本科批",
+      "院校代码": "10001",
+      "院校名称": "北京大学",
+      "院校专业组代码": "10001203",
+      "专业组名称": "203组",
+      "科类": "物理",
+      "选科要求": "化学",
+      "专业代码": "111",
+      "专业名称": "计算机类",
+      "专业全称": "计算机类(含：计算机科学与技术、智能科学与技术，校本部)",
+      "所在省": "北京",
+      "城市": "海淀区",
+      "学费": 5300.0,
+      "专业组最低位次1": 85,
+      "最低位次1": null,
+      "院校标签": "985/211/双一流/国重点/保研资格",
+      "院校排名": "2",
+      "ranking_key": -31915,
+      "safety_margin_pct": -0.9973,
+      "cooperation_filter_status": "not_executed_missing_cooperation_type_field",
+      "中外合作筛选状态": "未执行：缺少合作办学类型字段"
+    }
+  },
+  {
+    "item_id": "result_002",
+    "title": "清华大学",
+    "subtitle": "计算机类(含：计算机科学与技术、计算机科学与技术(计算机科学实验班)，北京市)",
+    "primary_attributes": [
+      {
+        "key": "year",
+        "label": "year",
+        "value": 2024
+      },
+      {
+        "key": "batch",
+        "label": "batch",
+        "value": "本科批"
+      },
+      {
+        "key": "university_code",
+        "label": "university_code",
+        "value": "10003"
+      },
+      {
+        "key": "university_name",
+        "label": "university_name",
+        "value": "清华大学"
+      }
+    ],
+    "secondary_attributes": [
+      {
+        "key": "group_code",
+        "label": "group_code",
+        "value": "10003203"
+      },
+      {
+        "key": "group_name",
+        "label": "group_name",
+        "value": "203组"
+      },
+      {
+        "key": "major_code",
+        "label": "major_code",
+        "value": "051"
+      },
+      {
+        "key": "major_name",
+        "label": "major_name",
+        "value": "计算机类"
+      },
+      {
+        "key": "full_major_name",
+        "label": "full_major_name",
+        "value": "计算机类(含：计算机科学与技术、计算机科学与技术(计算机科学实验班)，北京市)"
+      },
+      {
+        "key": "subject_requirement",
+        "label": "subject_requirement",
+        "value": "化学"
+      },
+      {
+        "key": "province",
+        "label": "province",
+        "value": "北京"
+      },
+      {
+        "key": "city",
+        "label": "city",
+        "value": "海淀区"
+      },
+      {
+        "key": "tuition",
+        "label": "tuition",
+        "value": 5000.0
+      },
+      {
+        "key": "rank_2024",
+        "label": "rank_2024",
+        "value": 97
+      },
+      {
+        "key": "group_min_rank",
+        "label": "group_min_rank",
+        "value": 97
+      },
+      {
+        "key": "safety_margin",
+        "label": "safety_margin",
+        "value": "-99.7%"
+      }
+    ],
+    "matched_filters": [
+      {
+        "id": "e_source_province",
+        "field": "生源地",
+        "operator": "eq",
+        "value": "广东",
+        "matched": true,
+        "text": "生源地 等于 广东"
+      },
+      {
+        "id": "e_subject_type",
+        "field": "科类",
+        "operator": "eq",
+        "value": "物理",
+        "matched": true,
+        "text": "科类 等于 物理"
+      },
+      {
+        "id": "e_major_keyword",
+        "field": "专业名称",
+        "operator": "contains_any",
+        "value": [
+          "计算机"
+        ],
+        "matched": true,
+        "text": "专业名称 包含任一：计算机；命中 计算机类"
+      }
+    ],
+    "raw": {
+      "excel_row_number": 98,
+      "ID": 95,
+      "年份": 2024,
+      "批次": "本科批",
+      "院校代码": "10003",
+      "院校名称": "清华大学",
+      "院校专业组代码": "10003203",
+      "专业组名称": "203组",
+      "科类": "物理",
+      "选科要求": "化学",
+      "专业代码": "051",
+      "专业名称": "计算机类",
+      "专业全称": "计算机类(含：计算机科学与技术、计算机科学与技术(计算机科学实验班)，北京市)",
+      "所在省": "北京",
+      "城市": "海淀区",
+      "学费": 5000.0,
+      "专业组最低位次1": 97,
+      "最低位次1": null,
+      "院校标签": "985/211/双一流/国重点/保研资格",
+      "院校排名": "1",
+      "ranking_key": -31903,
+      "safety_margin_pct": -0.997,
+      "cooperation_filter_status": "not_executed_missing_cooperation_type_field",
+      "中外合作筛选状态": "未执行：缺少合作办学类型字段"
+    }
+  },
+  {
+    "item_id": "result_003",
+    "title": "复旦大学",
+    "subtitle": "计算机科学与技术(拔尖人才试验班，含：澳大利亚国立大学2+2双学位项目，美国芝加哥大学等校暑期交流项目，校本部)",
+    "primary_attributes": [
+      {
+        "key": "year",
+        "label": "year",
+        "value": 2024
+      },
+      {
+        "key": "batch",
+        "label": "batch",
+        "value": "本科批"
+      },
+      {
+        "key": "university_code",
+        "label": "university_code",
+        "value": "10246"
+      },
+      {
+        "key": "university_name",
+        "label": "university_name",
+        "value": "复旦大学"
+      }
+    ],
+    "secondary_attributes": [
+      {
+        "key": "group_code",
+        "label": "group_code",
+        "value": "10246205"
+      },
+      {
+        "key": "group_name",
+        "label": "group_name",
+        "value": "205组"
+      },
+      {
+        "key": "major_code",
+        "label": "major_code",
+        "value": "043"
+      },
+      {
+        "key": "major_name",
+        "label": "major_name",
+        "value": "计算机科学与技术"
+      },
+      {
+        "key": "full_major_name",
+        "label": "full_major_name",
+        "value": "计算机科学与技术(拔尖人才试验班，含：澳大利亚国立大学2+2双学位项目，美国芝加哥大学等校暑期交流项目，校本部)"
+      },
+      {
+        "key": "subject_requirement",
+        "label": "subject_requirement",
+        "value": "化学"
+      },
+      {
+        "key": "province",
+        "label": "province",
+        "value": "上海"
+      },
+      {
+        "key": "city",
+        "label": "city",
+        "value": "杨浦区"
+      },
+      {
+        "key": "tuition",
+        "label": "tuition",
+        "value": 7000.0
+      },
+      {
+        "key": "rank_2024",
+        "label": "rank_2024",
+        "value": 316
+      },
+      {
+        "key": "group_min_rank",
+        "label": "group_min_rank",
+        "value": 316
+      },
+      {
+        "key": "safety_margin",
+        "label": "safety_margin",
+        "value": "-99.0%"
+      }
+    ],
+    "matched_filters": [
+      {
+        "id": "e_source_province",
+        "field": "生源地",
+        "operator": "eq",
+        "value": "广东",
+        "matched": true,
+        "text": "生源地 等于 广东"
+      },
+      {
+        "id": "e_subject_type",
+        "field": "科类",
+        "operator": "eq",
+        "value": "物理",
+        "matched": true,
+        "text": "科类 等于 物理"
+      },
+      {
+        "id": "e_major_keyword",
+        "field": "专业名称",
+        "operator": "contains_any",
+        "value": [
+          "计算机"
+        ],
+        "matched": true,
+        "text": "专业名称 包含任一：计算机；命中 计算机科学与技术"
+      }
+    ],
+    "raw": {
+      "excel_row_number": 2674,
+      "ID": 2671,
+      "年份": 2024,
+      "批次": "本科批",
+      "院校代码": "10246",
+      "院校名称": "复旦大学",
+      "院校专业组代码": "10246205",
+      "专业组名称": "205组",
+      "科类": "物理",
+      "选科要求": "化学",
+      "专业代码": "043",
+      "专业名称": "计算机科学与技术",
+      "专业全称": "计算机科学与技术(拔尖人才试验班，含：澳大利亚国立大学2+2双学位项目，美国芝加哥大学等校暑期交流项目，校本部)",
+      "所在省": "上海",
+      "城市": "杨浦区",
+      "学费": 7000.0,
+      "专业组最低位次1": 316,
+      "最低位次1": null,
+      "院校标签": "985/211/双一流/国重点/保研资格",
+      "院校排名": "5",
+      "ranking_key": -31684,
+      "safety_margin_pct": -0.9901,
+      "cooperation_filter_status": "not_executed_missing_cooperation_type_field",
+      "中外合作筛选状态": "未执行：缺少合作办学类型字段"
+    }
+  },
+  {
+    "item_id": "result_004",
+    "title": "中国科学技术大学",
+    "subtitle": "计算机类(含：计算机科学与技术，校本部)(不招色盲)",
+    "primary_attributes": [
+      {
+        "key": "year",
+        "label": "year",
+        "value": 2024
+      },
+      {
+        "key": "batch",
+        "label": "batch",
+        "value": "本科批"
+      },
+      {
+        "key": "university_code",
+        "label": "university_code",
+        "value": "10358"
+      },
+      {
+        "key": "university_name",
+        "label": "university_name",
+        "value": "中国科学技术大学"
+      }
+    ],
+    "secondary_attributes": [
+      {
+        "key": "group_code",
+        "label": "group_code",
+        "value": "10358201"
+      },
+      {
+        "key": "group_name",
+        "label": "group_name",
+        "value": "201组"
+      },
+      {
+        "key": "major_code",
+        "label": "major_code",
+        "value": "026"
+      },
+      {
+        "key": "major_name",
+        "label": "major_name",
+        "value": "计算机类"
+      },
+      {
+        "key": "full_major_name",
+        "label": "full_major_name",
+        "value": "计算机类(含：计算机科学与技术，校本部)(不招色盲)"
+      },
+      {
+        "key": "subject_requirement",
+        "label": "subject_requirement",
+        "value": "化学"
+      },
+      {
+        "key": "province",
+        "label": "province",
+        "value": "安徽"
+      },
+      {
+        "key": "city",
+        "label": "city",
+        "value": "合肥"
+      },
+      {
+        "key": "tuition",
+        "label": "tuition",
+        "value": 4800.0
+      },
+      {
+        "key": "rank_2024",
+        "label": "rank_2024",
+        "value": 652
+      },
+      {
+        "key": "group_min_rank",
+        "label": "group_min_rank",
+        "value": 652
+      },
+      {
+        "key": "safety_margin",
+        "label": "safety_margin",
+        "value": "-98.0%"
+      }
+    ],
+    "matched_filters": [
+      {
+        "id": "e_source_province",
+        "field": "生源地",
+        "operator": "eq",
+        "value": "广东",
+        "matched": true,
+        "text": "生源地 等于 广东"
+      },
+      {
+        "id": "e_subject_type",
+        "field": "科类",
+        "operator": "eq",
+        "value": "物理",
+        "matched": true,
+        "text": "科类 等于 物理"
+      },
+      {
+        "id": "e_major_keyword",
+        "field": "专业名称",
+        "operator": "contains_any",
+        "value": [
+          "计算机"
+        ],
+        "matched": true,
+        "text": "专业名称 包含任一：计算机；命中 计算机类"
+      }
+    ],
+    "raw": {
+      "excel_row_number": 3851,
+      "ID": 3848,
+      "年份": 2024,
+      "批次": "本科批",
+      "院校代码": "10358",
+      "院校名称": "中国科学技术大学",
+      "院校专业组代码": "10358201",
+      "专业组名称": "201组",
+      "科类": "物理",
+      "选科要求": "化学",
+      "专业代码": "026",
+      "专业名称": "计算机类",
+      "专业全称": "计算机类(含：计算机科学与技术，校本部)(不招色盲)",
+      "所在省": "安徽",
+      "城市": "合肥",
+      "学费": 4800.0,
+      "专业组最低位次1": 652,
+      "最低位次1": null,
+      "院校标签": "985/211/双一流/国重点/保研资格",
+      "院校排名": "7",
+      "ranking_key": -31348,
+      "safety_margin_pct": -0.9796,
+      "cooperation_filter_status": "not_executed_missing_cooperation_type_field",
+      "中外合作筛选状态": "未执行：缺少合作办学类型字段"
+    }
+  },
+  {
+    "item_id": "result_005",
+    "title": "中国人民大学",
+    "subtitle": "计算机类(英才班，含：计算机科学与技术、软件工程、信息安全、数据科学与大数据技术、信息管理与信息系统，含：图灵实验班、信管拔尖班，金融学-大数据大数据-农林经济管理双学士学位项目，美国纽约州立大学宾汉姆顿分校双学位项目、英国曼彻斯特大学硕士项目等，北京市)",
+    "primary_attributes": [
+      {
+        "key": "year",
+        "label": "year",
+        "value": 2024
+      },
+      {
+        "key": "batch",
+        "label": "batch",
+        "value": "本科批"
+      },
+      {
+        "key": "university_code",
+        "label": "university_code",
+        "value": "10002"
+      },
+      {
+        "key": "university_name",
+        "label": "university_name",
+        "value": "中国人民大学"
+      }
+    ],
+    "secondary_attributes": [
+      {
+        "key": "group_code",
+        "label": "group_code",
+        "value": "10002203"
+      },
+      {
+        "key": "group_name",
+        "label": "group_name",
+        "value": "203组"
+      },
+      {
+        "key": "major_code",
+        "label": "major_code",
+        "value": "033"
+      },
+      {
+        "key": "major_name",
+        "label": "major_name",
+        "value": "计算机类"
+      },
+      {
+        "key": "full_major_name",
+        "label": "full_major_name",
+        "value": "计算机类(英才班，含：计算机科学与技术、软件工程、信息安全、数据科学与大数据技术、信息管理与信息系统，含：图灵实验班、信管拔尖班，金融学-大数据大数据-农林经济管理双学士学位项目，美国纽约州立大学宾汉姆顿分校双学位项目、英国曼彻斯特大学硕士项目等，北京市)"
+      },
+      {
+        "key": "subject_requirement",
+        "label": "subject_requirement",
+        "value": "化学"
+      },
+      {
+        "key": "province",
+        "label": "province",
+        "value": "北京"
+      },
+      {
+        "key": "city",
+        "label": "city",
+        "value": "海淀区"
+      },
+      {
+        "key": "tuition",
+        "label": "tuition",
+        "value": 5000.0
+      },
+      {
+        "key": "rank_2024",
+        "label": "rank_2024",
+        "value": 831
+      },
+      {
+        "key": "group_min_rank",
+        "label": "group_min_rank",
+        "value": 831
+      },
+      {
+        "key": "safety_margin",
+        "label": "safety_margin",
+        "value": "-97.4%"
+      }
+    ],
+    "matched_filters": [
+      {
+        "id": "e_source_province",
+        "field": "生源地",
+        "operator": "eq",
+        "value": "广东",
+        "matched": true,
+        "text": "生源地 等于 广东"
+      },
+      {
+        "id": "e_subject_type",
+        "field": "科类",
+        "operator": "eq",
+        "value": "物理",
+        "matched": true,
+        "text": "科类 等于 物理"
+      },
+      {
+        "id": "e_major_keyword",
+        "field": "专业名称",
+        "operator": "contains_any",
+        "value": [
+          "计算机"
+        ],
+        "matched": true,
+        "text": "专业名称 包含任一：计算机；命中 计算机类"
+      }
+    ],
+    "raw": {
+      "excel_row_number": 79,
+      "ID": 76,
+      "年份": 2024,
+      "批次": "本科批",
+      "院校代码": "10002",
+      "院校名称": "中国人民大学",
+      "院校专业组代码": "10002203",
+      "专业组名称": "203组",
+      "科类": "物理",
+      "选科要求": "化学",
+      "专业代码": "033",
+      "专业名称": "计算机类",
+      "专业全称": "计算机类(英才班，含：计算机科学与技术、软件工程、信息安全、数据科学与大数据技术、信息管理与信息系统，含：图灵实验班、信管拔尖班，金融学-大数据大数据-农林经济管理双学士学位项目，美国纽约州立大学宾汉姆顿分校双学位项目、英国曼彻斯特大学硕士项目等，北京市)",
+      "所在省": "北京",
+      "城市": "海淀区",
+      "学费": 5000.0,
+      "专业组最低位次1": 831,
+      "最低位次1": null,
+      "院校标签": "985/211/双一流/国重点/保研资格",
+      "院校排名": "18",
+      "ranking_key": -31169,
+      "safety_margin_pct": -0.974,
+      "cooperation_filter_status": "not_executed_missing_cooperation_type_field",
+      "中外合作筛选状态": "未执行：缺少合作办学类型字段"
+    }
+  }
+]
+```
+### top_results
+```json
+[
+  {
+    "id": "result_001",
+    "trace": [
+      {
+        "status": "pass",
+        "text": "生源地 等于 广东"
+      },
+      {
+        "status": "pass",
+        "text": "科类 等于 物理"
+      },
+      {
+        "status": "pass",
+        "text": "专业名称 包含任一：计算机；命中 计算机类"
+      },
+      {
+        "status": "not_executed",
+        "text": "中外合作：缺少合作办学类型字段，未执行"
+      }
+    ],
+    "year": 2024,
+    "batch": "本科批",
+    "university_code": "10001",
+    "university_name": "北京大学",
+    "group_code": "10001203",
+    "group_name": "203组",
+    "major_code": "111",
+    "major_name": "计算机类",
+    "full_major_name": "计算机类(含：计算机科学与技术、智能科学与技术，校本部)",
+    "subject_requirement": "化学",
+    "province": "北京",
+    "city": "海淀区",
+    "tuition": 5300.0,
+    "rank_2024": 85,
+    "major_rank_2024": null,
+    "plan_count": null,
+    "group_min_rank": 85,
+    "major_min_rank": null,
+    "safety_margin": "-99.7%"
+  },
+  {
+    "id": "result_002",
+    "trace": [
+      {
+        "status": "pass",
+        "text": "生源地 等于 广东"
+      },
+      {
+        "status": "pass",
+        "text": "科类 等于 物理"
+      },
+      {
+        "status": "pass",
+        "text": "专业名称 包含任一：计算机；命中 计算机类"
+      },
+      {
+        "status": "not_executed",
+        "text": "中外合作：缺少合作办学类型字段，未执行"
+      }
+    ],
+    "year": 2024,
+    "batch": "本科批",
+    "university_code": "10003",
+    "university_name": "清华大学",
+    "group_code": "10003203",
+    "group_name": "203组",
+    "major_code": "051",
+    "major_name": "计算机类",
+    "full_major_name": "计算机类(含：计算机科学与技术、计算机科学与技术(计算机科学实验班)，北京市)",
+    "subject_requirement": "化学",
+    "province": "北京",
+    "city": "海淀区",
+    "tuition": 5000.0,
+    "rank_2024": 97,
+    "major_rank_2024": null,
+    "plan_count": null,
+    "group_min_rank": 97,
+    "major_min_rank": null,
+    "safety_margin": "-99.7%"
+  },
+  {
+    "id": "result_003",
+    "trace": [
+      {
+        "status": "pass",
+        "text": "生源地 等于 广东"
+      },
+      {
+        "status": "pass",
+        "text": "科类 等于 物理"
+      },
+      {
+        "status": "pass",
+        "text": "专业名称 包含任一：计算机；命中 计算机科学与技术"
+      },
+      {
+        "status": "not_executed",
+        "text": "中外合作：缺少合作办学类型字段，未执行"
+      }
+    ],
+    "year": 2024,
+    "batch": "本科批",
+    "university_code": "10246",
+    "university_name": "复旦大学",
+    "group_code": "10246205",
+    "group_name": "205组",
+    "major_code": "043",
+    "major_name": "计算机科学与技术",
+    "full_major_name": "计算机科学与技术(拔尖人才试验班，含：澳大利亚国立大学2+2双学位项目，美国芝加哥大学等校暑期交流项目，校本部)",
+    "subject_requirement": "化学",
+    "province": "上海",
+    "city": "杨浦区",
+    "tuition": 7000.0,
+    "rank_2024": 316,
+    "major_rank_2024": null,
+    "plan_count": null,
+    "group_min_rank": 316,
+    "major_min_rank": null,
+    "safety_margin": "-99.0%"
+  },
+  {
+    "id": "result_004",
+    "trace": [
+      {
+        "status": "pass",
+        "text": "生源地 等于 广东"
+      },
+      {
+        "status": "pass",
+        "text": "科类 等于 物理"
+      },
+      {
+        "status": "pass",
+        "text": "专业名称 包含任一：计算机；命中 计算机类"
+      },
+      {
+        "status": "not_executed",
+        "text": "中外合作：缺少合作办学类型字段，未执行"
+      }
+    ],
+    "year": 2024,
+    "batch": "本科批",
+    "university_code": "10358",
+    "university_name": "中国科学技术大学",
+    "group_code": "10358201",
+    "group_name": "201组",
+    "major_code": "026",
+    "major_name": "计算机类",
+    "full_major_name": "计算机类(含：计算机科学与技术，校本部)(不招色盲)",
+    "subject_requirement": "化学",
+    "province": "安徽",
+    "city": "合肥",
+    "tuition": 4800.0,
+    "rank_2024": 652,
+    "major_rank_2024": null,
+    "plan_count": null,
+    "group_min_rank": 652,
+    "major_min_rank": null,
+    "safety_margin": "-98.0%"
+  },
+  {
+    "id": "result_005",
+    "trace": [
+      {
+        "status": "pass",
+        "text": "生源地 等于 广东"
+      },
+      {
+        "status": "pass",
+        "text": "科类 等于 物理"
+      },
+      {
+        "status": "pass",
+        "text": "专业名称 包含任一：计算机；命中 计算机类"
+      },
+      {
+        "status": "not_executed",
+        "text": "中外合作：缺少合作办学类型字段，未执行"
+      }
+    ],
+    "year": 2024,
+    "batch": "本科批",
+    "university_code": "10002",
+    "university_name": "中国人民大学",
+    "group_code": "10002203",
+    "group_name": "203组",
+    "major_code": "033",
+    "major_name": "计算机类",
+    "full_major_name": "计算机类(英才班，含：计算机科学与技术、软件工程、信息安全、数据科学与大数据技术、信息管理与信息系统，含：图灵实验班、信管拔尖班，金融学-大数据大数据-农林经济管理双学士学位项目，美国纽约州立大学宾汉姆顿分校双学位项目、英国曼彻斯特大学硕士项目等，北京市)",
+    "subject_requirement": "化学",
+    "province": "北京",
+    "city": "海淀区",
+    "tuition": 5000.0,
+    "rank_2024": 831,
+    "major_rank_2024": null,
+    "plan_count": null,
+    "group_min_rank": 831,
+    "major_min_rank": null,
+    "safety_margin": "-97.4%"
+  }
+]
+```
+### executed_filters
+```json
+[
+  {
+    "id": "e_source_province",
+    "label": "生源地 等于 广东",
+    "field": "生源地",
+    "operator": "eq",
+    "value": "广东",
+    "source_span": "广东"
+  },
+  {
+    "id": "e_subject_type",
+    "label": "科类 等于 物理",
+    "field": "科类",
+    "operator": "eq",
+    "value": "物理",
+    "source_span": "物理"
+  },
+  {
+    "id": "e_major_keyword",
+    "label": "专业名称 包含任一：计算机",
+    "field": "专业名称",
+    "operator": "contains_any",
+    "value": [
+      "计算机"
+    ],
+    "source_span": "计算机"
+  }
+]
+```
+### candidates_to_confirm
+```json
+[
+  {
+    "candidate_id": "cand_6a4b468f92644060",
+    "source_text": "计算机相关",
+    "slot_path": "preferences.major_expansion_raw",
+    "field_id": "major_name",
+    "field": "专业名称",
+    "match_type": "partial_match",
+    "operator": "contains_any",
+    "value": [
+      "计算机",
+      "软件工程",
+      "人工智能",
+      "数据科学",
+      "网络空间安全"
+    ],
+    "label": "按计算机相关专业集合筛选",
+    "executable": true,
+    "reason": "相关专业是语义扩展，必须通过 candidate_id 确认后才执行专业过滤。",
+    "matched_values": []
+  },
+  {
+    "candidate_id": "cand_1a6828a9fbdf8dc9",
+    "source_text": "珠三角",
+    "slot_path": "preferences.other_vague_preferences[]",
+    "field_id": "city",
+    "field": "城市",
+    "match_type": "partial_match",
+    "operator": "in_contains",
+    "value": [
+      "广州",
+      "深圳",
+      "佛山",
+      "东莞",
+      "珠海",
+      "惠州",
+      "中山",
+      "江门",
+      "肇庆"
+    ],
+    "label": "按珠三角城市集合筛选",
+    "executable": true,
+    "reason": "珠三角是区域集合，必须通过 candidate_id 确认后才执行城市过滤。",
+    "matched_values": []
+  }
+]
+```
+### unexecuted_preferences
+```json
+[
+  {
+    "id": "not_exec_1",
+    "preference": "不要校企合作",
+    "display": "不要校企合作未执行：缺少合作办学类型字段，当前版本不从文本字段推断。",
+    "reason": "缺少合作办学类型字段，当前版本不从文本字段推断。",
+    "missing_field": "缺少已审查数据字段",
+    "source_span": "不要校企合作"
+  }
+]
+```
+### SQL / params
+```json
+{
+  "sql": "WITH source AS (\n  SELECT row_number() OVER () AS \"__source_row_number\", *\n  FROM \"admissions\"\n),\nfiltered AS (\n  SELECT\n    source.*,\n    TRY_CAST(regexp_extract(REPLACE(CAST(\"专业组最低位次1\" AS VARCHAR), ',', ''), '\\d+(?:\\.\\d+)?') AS DOUBLE) AS \"__group_rank_num\",\n    TRY_CAST(regexp_extract(REPLACE(CAST(\"学费\" AS VARCHAR), ',', ''), '\\d+(?:\\.\\d+)?') AS DOUBLE) AS \"__tuition_num\",\n    TRY_CAST(regexp_extract(REPLACE(CAST(\"院校排名\" AS VARCHAR), ',', ''), '\\d+(?:\\.\\d+)?') AS DOUBLE) AS \"__school_rank_num\",\n    TRY_CAST(regexp_extract(REPLACE(CAST(\"ID\" AS VARCHAR), ',', ''), '\\d+(?:\\.\\d+)?') AS DOUBLE) AS \"__id_num\"\n  FROM source\n  WHERE CAST(\"生源地\" AS VARCHAR) = ? AND CAST(\"科类\" AS VARCHAR) = ? AND (STRPOS(CAST(\"专业名称\" AS VARCHAR), ?) > 0)\n),\nprojectable AS (\n  SELECT *\n  FROM filtered\n  WHERE TRUE\n    AND \"__group_rank_num\" IS NOT NULL\n    AND \"__tuition_num\" IS NOT NULL\n)\nSELECT *\nFROM projectable\nORDER BY\n  \"__group_rank_num\" ASC NULLS LAST,\n  \"__school_rank_num\" ASC NULLS LAST,\n  \"__id_num\" ASC NULLS LAST",
+  "params": [
+    "广东",
+    "物理",
+    "计算机"
+  ]
+}
+```
+### EvidencePack
+```json
+{
+  "user_request": "广东物理，排名3.2万，计算机相关，珠三角优先，不要校企合作。；偏好信息：偏好描述：广东物理，排名3.2万，计算机相关，珠三角优先，不要校企合作。",
+  "executed_rules": [
+    {
+      "rule_id": "e_source_province",
+      "derived_from": "d_source_province",
+      "field": "生源地",
+      "operator": "eq",
+      "value": "广东",
+      "description": "生源地 等于 广东"
+    },
+    {
+      "rule_id": "e_subject_type",
+      "derived_from": "d_subject_type",
+      "field": "科类",
+      "operator": "eq",
+      "value": "物理",
+      "description": "科类 等于 物理"
+    },
+    {
+      "rule_id": "e_major_keyword",
+      "derived_from": "d_major_keyword",
+      "field": "专业名称",
+      "operator": "contains_any",
+      "value": [
+        "计算机"
+      ],
+      "description": "专业名称 包含任一：计算机"
+    }
+  ],
+  "candidate_confirmations": [
+    {
+      "confirmation_id": "major_expansion",
+      "source_rule_id": "c_major_expansion",
+      "source_text": "计算机相关扩展",
+      "selected_label": "不扩展",
+      "selected_option": "none",
+      "status": "confirmed_without_expansion",
+      "expanded_terms": []
+    },
+    {
+      "confirmation_id": "cooperation_type",
+      "source_rule_id": null,
+      "source_text": "不想去太贵的中外合作",
+      "selected_label": null,
+      "selected_option": null,
+      "status": "not_executable",
+      "reason": "缺少合作办学类型字段。"
+    }
+  ],
+  "not_executed_preferences": [
+    {
+      "source_text": "不要校企合作",
+      "status": "not_executed",
+      "reason": "缺少合作办学类型字段，当前版本不从文本字段推断。",
+      "safety_warning": "不要校企合作 未执行：缺少合作办学类型字段，当前版本不从文本字段推断。"
+    }
+  ],
+  "result_count": 749,
+  "top_k_results": [
+    {
+      "rank": 1,
+      "院校名称": "北京大学",
+      "院校专业组代码": "10001203",
+      "专业代码": "111",
+      "专业名称": "计算机类",
+      "专业全称": "计算机类(含：计算机科学与技术、智能科学与技术，校本部)",
+      "选科要求": "化学",
+      "城市": "海淀区",
+      "学费": 5300.0,
+      "专业组最低位次": 85,
+      "safety_margin": "-99.73%",
+      "trace": [
+        {
+          "rule_id": "e_source_province",
+          "status": "pass",
+          "reason": "生源地 等于 广东"
+        },
+        {
+          "rule_id": "e_subject_type",
+          "status": "pass",
+          "reason": "科类 等于 物理"
+        },
+        {
+          "rule_id": "e_major_keyword",
+          "status": "pass",
+          "reason": "专业名称 包含任一：计算机；命中 计算机类"
+        },
+        {
+          "rule_id": "l_cooperation_type",
+          "status": "not_executed",
+          "reason": "不要校企合作 未执行：缺少合作办学类型字段，当前版本不从文本字段推断。"
+        }
+      ]
+    },
+    {
+      "rank": 2,
+      "院校名称": "清华大学",
+      "院校专业组代码": "10003203",
+      "专业代码": "051",
+      "专业名称": "计算机类",
+      "专业全称": "计算机类(含：计算机科学与技术、计算机科学与技术(计算机科学实验班)，北京市)",
+      "选科要求": "化学",
+      "城市": "海淀区",
+      "学费": 5000.0,
+      "专业组最低位次": 97,
+      "safety_margin": "-99.70%",
+      "trace": [
+        {
+          "rule_id": "e_source_province",
+          "status": "pass",
+          "reason": "生源地 等于 广东"
+        },
+        {
+          "rule_id": "e_subject_type",
+          "status": "pass",
+          "reason": "科类 等于 物理"
+        },
+        {
+          "rule_id": "e_major_keyword",
+          "status": "pass",
+          "reason": "专业名称 包含任一：计算机；命中 计算机类"
+        },
+        {
+          "rule_id": "l_cooperation_type",
+          "status": "not_executed",
+          "reason": "不要校企合作 未执行：缺少合作办学类型字段，当前版本不从文本字段推断。"
+        }
+      ]
+    },
+    {
+      "rank": 3,
+      "院校名称": "复旦大学",
+      "院校专业组代码": "10246205",
+      "专业代码": "043",
+      "专业名称": "计算机科学与技术",
+      "专业全称": "计算机科学与技术(拔尖人才试验班，含：澳大利亚国立大学2+2双学位项目，美国芝加哥大学等校暑期交流项目，校本部)",
+      "选科要求": "化学",
+      "城市": "杨浦区",
+      "学费": 7000.0,
+      "专业组最低位次": 316,
+      "safety_margin": "-99.01%",
+      "trace": [
+        {
+          "rule_id": "e_source_province",
+          "status": "pass",
+          "reason": "生源地 等于 广东"
+        },
+        {
+          "rule_id": "e_subject_type",
+          "status": "pass",
+          "reason": "科类 等于 物理"
+        },
+        {
+          "rule_id": "e_major_keyword",
+          "status": "pass",
+          "reason": "专业名称 包含任一：计算机；命中 计算机科学与技术"
+        },
+        {
+          "rule_id": "l_cooperation_type",
+          "status": "not_executed",
+          "reason": "不要校企合作 未执行：缺少合作办学类型字段，当前版本不从文本字段推断。"
+        }
+      ]
+    },
+    {
+      "rank": 4,
+      "院校名称": "中国科学技术大学",
+      "院校专业组代码": "10358201",
+      "专业代码": "026",
+      "专业名称": "计算机类",
+      "专业全称": "计算机类(含：计算机科学与技术，校本部)(不招色盲)",
+      "选科要求": "化学",
+      "城市": "合肥",
+      "学费": 4800.0,
+      "专业组最低位次": 652,
+      "safety_margin": "-97.96%",
+      "trace": [
+        {
+          "rule_id": "e_source_province",
+          "status": "pass",
+          "reason": "生源地 等于 广东"
+        },
+        {
+          "rule_id": "e_subject_type",
+          "status": "pass",
+          "reason": "科类 等于 物理"
+        },
+        {
+          "rule_id": "e_major_keyword",
+          "status": "pass",
+          "reason": "专业名称 包含任一：计算机；命中 计算机类"
+        },
+        {
+          "rule_id": "l_cooperation_type",
+          "status": "not_executed",
+          "reason": "不要校企合作 未执行：缺少合作办学类型字段，当前版本不从文本字段推断。"
+        }
+      ]
+    },
+    {
+      "rank": 5,
+      "院校名称": "中国人民大学",
+      "院校专业组代码": "10002203",
+      "专业代码": "033",
+      "专业名称": "计算机类",
+      "专业全称": "计算机类(英才班，含：计算机科学与技术、软件工程、信息安全、数据科学与大数据技术、信息管理与信息系统，含：图灵实验班、信管拔尖班，金融学-大数据大数据-农林经济管理双学士学位项目，美国纽约州立大学宾汉姆顿分校双学位项目、英国曼彻斯特大学硕士项目等，北京市)",
+      "选科要求": "化学",
+      "城市": "海淀区",
+      "学费": 5000.0,
+      "专业组最低位次": 831,
+      "safety_margin": "-97.40%",
+      "trace": [
+        {
+          "rule_id": "e_source_province",
+          "status": "pass",
+          "reason": "生源地 等于 广东"
+        },
+        {
+          "rule_id": "e_subject_type",
+          "status": "pass",
+          "reason": "科类 等于 物理"
+        },
+        {
+          "rule_id": "e_major_keyword",
+          "status": "pass",
+          "reason": "专业名称 包含任一：计算机；命中 计算机类"
+        },
+        {
+          "rule_id": "l_cooperation_type",
+          "status": "not_executed",
+          "reason": "不要校企合作 未执行：缺少合作办学类型字段，当前版本不从文本字段推断。"
+        }
+      ]
+    }
+  ],
+  "trace_summary": {
+    "executed_rule_ids": [
+      "e_source_province",
+      "e_subject_type",
+      "e_major_keyword"
+    ],
+    "not_executed_preference_count": 1,
+    "traced_result_count": 749,
+    "top_k": 5,
+    "top_k_trace_status_counts": {
+      "pass": 15,
+      "not_executed": 5
+    },
+    "safety_warnings": [
+      "答案只能使用 evidence_pack 中的已验证规则、确认记录、结果摘要和 trace。",
+      "候选偏好在确认或模拟确认之前不得执行。",
+      "不要校企合作 未执行：缺少合作办学类型字段，当前版本不从文本字段推断。"
+    ]
+  },
+  "extracted_preferences": [
+    {
+      "id": "pref_origin",
+      "slot": "生源地",
+      "value": "广东",
+      "source_span": "广东",
+      "status": "已对齐字段"
+    },
+    {
+      "id": "pref_track",
+      "slot": "科类",
+      "value": "物理",
+      "source_span": "物理",
+      "status": "已对齐字段"
+    },
+    {
+      "id": "pref_rank",
+      "slot": "排位",
+      "value": 32000,
+      "source_span": "排位32000",
+      "status": "已对齐字段"
+    },
+    {
+      "id": "pref_major",
+      "slot": "专业名称",
+      "value": [
+        "计算机"
+      ],
+      "source_span": "计算机",
+      "status": "已对齐字段"
+    },
+    {
+      "id": "pref_cooperation",
+      "slot": "中外合作",
+      "value": "不要校企合作",
+      "source_span": "不要校企合作",
+      "status": "不可执行"
+    }
+  ],
+  "attribute_grounding_summary": {
+    "total_attributes": 8,
+    "status_counts": {
+      "schema_grounded": 4,
+      "context_only": 1,
+      "confirmable": 2,
+      "missing_schema": 1
+    },
+    "value_index_status_counts": {
+      "matched": 4,
+      "not_found": 2,
+      "field_inactive": 1
+    },
+    "unsafe_ungrounded_executable_attributes": 0
+  },
+  "proposed_rule_audit": [],
+  "execution_summary": {
+    "executor": "duckdb",
+    "sql": "WITH source AS (\n  SELECT row_number() OVER () AS \"__source_row_number\", *\n  FROM \"admissions\"\n),\nfiltered AS (\n  SELECT\n    source.*,\n    TRY_CAST(regexp_extract(REPLACE(CAST(\"专业组最低位次1\" AS VARCHAR), ',', ''), '\\d+(?:\\.\\d+)?') AS DOUBLE) AS \"__group_rank_num\",\n    TRY_CAST(regexp_extract(REPLACE(CAST(\"学费\" AS VARCHAR), ',', ''), '\\d+(?:\\.\\d+)?') AS DOUBLE) AS \"__tuition_num\",\n    TRY_CAST(regexp_extract(REPLACE(CAST(\"院校排名\" AS VARCHAR), ',', ''), '\\d+(?:\\.\\d+)?') AS DOUBLE) AS \"__school_rank_num\",\n    TRY_CAST(regexp_extract(REPLACE(CAST(\"ID\" AS VARCHAR), ',', ''), '\\d+(?:\\.\\d+)?') AS DOUBLE) AS \"__id_num\"\n  FROM source\n  WHERE CAST(\"生源地\" AS VARCHAR) = ? AND CAST(\"科类\" AS VARCHAR) = ? AND (STRPOS(CAST(\"专业名称\" AS VARCHAR), ?) > 0)\n),\nprojectable AS (\n  SELECT *\n  FROM filtered\n  WHERE TRUE\n    AND \"__group_rank_num\" IS NOT NULL\n    AND \"__tuition_num\" IS NOT NULL\n)\nSELECT *\nFROM projectable\nORDER BY\n  \"__group_rank_num\" ASC NULLS LAST,\n  \"__school_rank_num\" ASC NULLS LAST,\n  \"__id_num\" ASC NULLS LAST",
+    "params": [
+      "广东",
+      "物理",
+      "计算机"
+    ],
+    "input_row_count": 30855,
+    "filtered_row_count": 749,
+    "sort_key": [
+      "专业组最低位次1 ASC NULLS LAST",
+      "院校排名 ASC NULLS LAST",
+      "ID ASC NULLS LAST"
+    ],
+    "top_k": 5,
+    "hard_rule_ids": [
+      "e_source_province",
+      "e_subject_type",
+      "e_major_keyword"
+    ],
+    "skipped_soft_rule_ids": []
+  },
+  "attribute_explanations": [
+    {
+      "source_text": "广东",
+      "slot_path": "user_context.source_province",
+      "field": "生源地",
+      "value": "广东",
+      "match_type": "exact_match",
+      "action": "executed",
+      "matched_values": [
+        "广东"
+      ],
+      "reason": "已匹配字段“生源地”，并已进入 hard filter。"
+    },
+    {
+      "source_text": "物理",
+      "slot_path": "user_context.subject_type",
+      "field": "科类",
+      "value": "物理",
+      "match_type": "exact_match",
+      "action": "executed",
+      "matched_values": [
+        "物理"
+      ],
+      "reason": "已匹配字段“科类”，并已进入 hard filter。"
+    },
+    {
+      "source_text": "计算机",
+      "slot_path": "preferences.major_keyword",
+      "field": "专业名称",
+      "value": "计算机",
+      "match_type": "exact_match",
+      "action": "executed",
+      "matched_values": [
+        "计算机类",
+        "计算机科学与技术",
+        "计算机应用技术",
+        "电子与计算机工程",
+        "计算机网络技术"
+      ],
+      "reason": "已匹配字段“专业名称”，并已进入 hard filter。"
+    },
+    {
+      "source_text": "计算机相关",
+      "slot_path": "preferences.major_expansion_raw",
+      "field": "专业名称",
+      "value": "计算机相关",
+      "match_type": "partial_match",
+      "action": "needs_confirmation",
+      "matched_values": [],
+      "reason": "该属性有对应字段，但语义或边界需要确认。未进入 hard filter。"
+    },
+    {
+      "source_text": "不要校企合作",
+      "slot_path": "preferences.cooperation_preference_raw",
+      "field": "cooperation_type",
+      "value": "不要校企合作",
+      "match_type": "no_schema_field",
+      "action": "not_executed",
+      "matched_values": [],
+      "reason": "当前数据中没有可执行字段，不能进入筛表。原文已保留，未进入 hard filter。"
+    },
+    {
+      "source_text": "珠三角",
+      "slot_path": "preferences.other_vague_preferences[]",
+      "field": "城市",
+      "value": "珠三角",
+      "match_type": "partial_match",
+      "action": "needs_confirmation",
+      "matched_values": [],
+      "reason": "需要确认珠三角城市集合。未进入 hard filter。"
+    }
+  ],
+  "confirmed_rules": [],
+  "confirmation_source": [],
+  "executed_after_confirmation": [],
+  "unconfirmed_candidates": [
+    {
+      "candidate_id": "cand_6a4b468f92644060",
+      "source_text": "计算机相关",
+      "slot_path": "preferences.major_expansion_raw",
+      "field_id": "major_name",
+      "field": "专业名称",
+      "match_type": "partial_match",
+      "operator": "contains_any",
+      "value": [
+        "计算机",
+        "软件工程",
+        "人工智能",
+        "数据科学",
+        "网络空间安全"
+      ],
+      "label": "按计算机相关专业集合筛选",
+      "executable": true,
+      "reason": "相关专业是语义扩展，必须通过 candidate_id 确认后才执行专业过滤。",
+      "matched_values": []
+    },
+    {
+      "candidate_id": "cand_1a6828a9fbdf8dc9",
+      "source_text": "珠三角",
+      "slot_path": "preferences.other_vague_preferences[]",
+      "field_id": "city",
+      "field": "城市",
+      "match_type": "partial_match",
+      "operator": "in_contains",
+      "value": [
+        "广州",
+        "深圳",
+        "佛山",
+        "东莞",
+        "珠海",
+        "惠州",
+        "中山",
+        "江门",
+        "肇庆"
+      ],
+      "label": "按珠三角城市集合筛选",
+      "executable": true,
+      "reason": "珠三角是区域集合，必须通过 candidate_id 确认后才执行城市过滤。",
+      "matched_values": []
+    }
+  ],
+  "no_schema_field_preferences": [
+    {
+      "candidate_id": "cand_97be25c1b01134c7",
+      "source_text": "不要校企合作",
+      "slot_path": "preferences.cooperation_preference_raw",
+      "field_id": "cooperation_type",
+      "field": "无可执行字段",
+      "match_type": "no_schema_field",
+      "operator": null,
+      "value": null,
+      "label": "不可执行",
+      "executable": false,
+      "reason": "当前数据中没有可执行字段，不能进入筛表。",
+      "matched_values": []
+    }
+  ],
+  "rejected_confirmations": []
+}
+```
+### answer
+
+根据已验证规则生成结果：
+
+用户需求：广东物理，排名3.2万，计算机相关，珠三角优先，不要校企合作。；偏好信息：偏好描述：广东物理，排名3.2万，计算机相关，珠三角优先，不要校企合作。
+共筛选到 749 条符合已执行规则的结果。
+
+抽取与结构化结果：
+- 生源地：广东；状态：已对齐字段；来源：广东
+- 科类：物理；状态：已对齐字段；来源：物理
+- 排位：32000；状态：已对齐字段；来源：排位32000
+- 专业名称：计算机；状态：已对齐字段；来源：计算机
+- 中外合作：不要校企合作；状态：不可执行；来源：不要校企合作
+
+字段值审计解释：
+- [已执行] 广东 -> 生源地：exact_match；索引命中：广东；已匹配字段“生源地”，并已进入 hard filter。
+- [已执行] 物理 -> 科类：exact_match；索引命中：物理；已匹配字段“科类”，并已进入 hard filter。
+- [已执行] 计算机 -> 专业名称：exact_match；索引命中：计算机类、计算机科学与技术、计算机应用技术、电子与计算机工程、计算机网络技术；已匹配字段“专业名称”，并已进入 hard filter。
+- [需确认] 计算机相关 -> 专业名称：partial_match；该属性有对应字段，但语义或边界需要确认。未进入 hard filter。
+- [未执行] 不要校企合作 -> 合作办学类型字段：no_schema_field；当前数据中没有可执行字段，不能进入筛表。原文已保留，未进入 hard filter。
+- [需确认] 珠三角 -> 城市：partial_match；需要确认珠三角城市集合。未进入 hard filter。
+
+已执行规则：
+- e_source_province：生源地 等于 广东
+- e_subject_type：科类 等于 物理
+- e_major_keyword：专业名称 包含任一：计算机
+
+候选偏好确认记录：
+- 计算机相关扩展：已确认“不扩展”，未扩展专业关键词。
+- 不想去太贵的中外合作：未执行，原因：缺少合作办学类型字段。。
+
+candidate_id 确认状态：
+- cand_6a4b468f92644060：计算机相关 仍待确认，未进入 hard filter；候选为 按计算机相关专业集合筛选。
+- cand_1a6828a9fbdf8dc9：珠三角 仍待确认，未进入 hard filter；候选为 按珠三角城市集合筛选。
+
+缺少字段，不能确认执行：
+- 不要校企合作：当前数据中没有可执行字段，不能进入筛表。；即使提交该 candidate_id 也不能执行。
+
+未执行但已保留的偏好：
+- 不要校企合作：未执行，未参与筛选。原因：缺少合作办学类型字段，当前版本不从文本字段推断。
+
+前 5 条结果：
+- 1. 北京大学；专业组代码：10001203；专业代码：111；专业名称：计算机类；专业全称：计算机类(含：计算机科学与技术、智能科学与技术，校本部)；选科要求：化学；城市：海淀区；学费：5300 元/年；专业组最低位次：85。
+- 2. 清华大学；专业组代码：10003203；专业代码：051；专业名称：计算机类；专业全称：计算机类(含：计算机科学与技术、计算机科学与技术(计算机科学实验班)，北京市)；选科要求：化学；城市：海淀区；学费：5000 元/年；专业组最低位次：97。
+- 3. 复旦大学；专业组代码：10246205；专业代码：043；专业名称：计算机科学与技术；专业全称：计算机科学与技术(拔尖人才试验班，含：澳大利亚国立大学2+2双学位项目，美国芝加哥大学等校暑期交流项目，校本部)；选科要求：化学；城市：杨浦区；学费：7000 元/年；专业组最低位次：316。
+- 4. 中国科学技术大学；专业组代码：10358201；专业代码：026；专业名称：计算机类；专业全称：计算机类(含：计算机科学与技术，校本部)(不招色盲)；选科要求：化学；城市：合肥；学费：4800 元/年；专业组最低位次：652。
+- 5. 中国人民大学；专业组代码：10002203；专业代码：033；专业名称：计算机类；专业全称：计算机类(英才班，含：计算机科学与技术、软件工程、信息安全、数据科学与大数据技术、信息管理与信息系统，含：图灵实验班、信管拔尖班，金融学-大数据大数据-农林经济管理双学士学位项目，美国纽约州立大学宾汉姆顿分校双学位项目、英国曼彻斯特大学硕士项目等，北京市)；选科要求：化学；城市：海淀区；学费：5000 元/年；专业组最低位次：831。
+
+安全说明：
+- 答案只能使用 证据包 中的已验证规则、确认记录、结果摘要和 trace。
+- 候选偏好在确认或模拟确认之前不得执行。
+- 不要校企合作 未执行：缺少合作办学类型字段，当前版本不从文本字段推断。
+
+## admissions_06 `通过`
+
+- domain: `admissions`
+- query: 广东物理，排位90000，想学网络安全，深圳。
+- status: `no_results`
+- pass/fail：`通过`
+
+### items
+```json
+[]
+```
+### top_results
+```json
+[]
+```
+### executed_filters
+```json
+[
+  {
+    "id": "e_source_province",
+    "label": "生源地 等于 广东",
+    "field": "生源地",
+    "operator": "eq",
+    "value": "广东",
+    "source_span": "广东"
+  },
+  {
+    "id": "e_subject_type",
+    "label": "科类 等于 物理",
+    "field": "科类",
+    "operator": "eq",
+    "value": "物理",
+    "source_span": "物理"
+  },
+  {
+    "id": "e_major_keyword",
+    "label": "专业名称 包含任一：网络安全",
+    "field": "专业名称",
+    "operator": "contains_any",
+    "value": [
+      "网络安全"
+    ],
+    "source_span": "网络安全"
+  },
+  {
+    "id": "e_city",
+    "label": "城市 包含任一：深圳",
+    "field": "城市",
+    "operator": "in_contains",
+    "value": [
+      "深圳"
+    ],
+    "source_span": "深圳"
+  }
+]
+```
+### candidates_to_confirm
+```json
+[]
+```
+### unexecuted_preferences
+```json
+[]
+```
+### SQL / params
+```json
+{
+  "sql": "WITH source AS (\n  SELECT row_number() OVER () AS \"__source_row_number\", *\n  FROM \"admissions\"\n),\nfiltered AS (\n  SELECT\n    source.*,\n    TRY_CAST(regexp_extract(REPLACE(CAST(\"专业组最低位次1\" AS VARCHAR), ',', ''), '\\d+(?:\\.\\d+)?') AS DOUBLE) AS \"__group_rank_num\",\n    TRY_CAST(regexp_extract(REPLACE(CAST(\"学费\" AS VARCHAR), ',', ''), '\\d+(?:\\.\\d+)?') AS DOUBLE) AS \"__tuition_num\",\n    TRY_CAST(regexp_extract(REPLACE(CAST(\"院校排名\" AS VARCHAR), ',', ''), '\\d+(?:\\.\\d+)?') AS DOUBLE) AS \"__school_rank_num\",\n    TRY_CAST(regexp_extract(REPLACE(CAST(\"ID\" AS VARCHAR), ',', ''), '\\d+(?:\\.\\d+)?') AS DOUBLE) AS \"__id_num\"\n  FROM source\n  WHERE CAST(\"生源地\" AS VARCHAR) = ? AND CAST(\"科类\" AS VARCHAR) = ? AND (STRPOS(CAST(\"专业名称\" AS VARCHAR), ?) > 0) AND (STRPOS(CAST(\"城市\" AS VARCHAR), ?) > 0)\n),\nprojectable AS (\n  SELECT *\n  FROM filtered\n  WHERE TRUE\n    AND \"__group_rank_num\" IS NOT NULL\n    AND \"__tuition_num\" IS NOT NULL\n)\nSELECT *\nFROM projectable\nORDER BY\n  \"__group_rank_num\" ASC NULLS LAST,\n  \"__school_rank_num\" ASC NULLS LAST,\n  \"__id_num\" ASC NULLS LAST",
+  "params": [
+    "广东",
+    "物理",
+    "网络安全",
+    "深圳"
+  ]
+}
+```
+### EvidencePack
+```json
+{
+  "user_request": "广东物理，排位90000，想学网络安全，深圳。；偏好信息：偏好描述：广东物理，排位90000，想学网络安全，深圳。",
+  "executed_rules": [
+    {
+      "rule_id": "e_source_province",
+      "derived_from": "d_source_province",
+      "field": "生源地",
+      "operator": "eq",
+      "value": "广东",
+      "description": "生源地 等于 广东"
+    },
+    {
+      "rule_id": "e_subject_type",
+      "derived_from": "d_subject_type",
+      "field": "科类",
+      "operator": "eq",
+      "value": "物理",
+      "description": "科类 等于 物理"
+    },
+    {
+      "rule_id": "e_major_keyword",
+      "derived_from": "d_major_keyword",
+      "field": "专业名称",
+      "operator": "contains_any",
+      "value": [
+        "网络安全"
+      ],
+      "description": "专业名称 包含任一：网络安全"
+    },
+    {
+      "rule_id": "e_city",
+      "derived_from": "d_city",
+      "field": "城市",
+      "operator": "in_contains",
+      "value": [
+        "深圳"
+      ],
+      "description": "城市 包含任一：深圳"
+    }
+  ],
+  "candidate_confirmations": [],
+  "not_executed_preferences": [],
+  "result_count": 0,
+  "top_k_results": [],
+  "trace_summary": {
+    "executed_rule_ids": [
+      "e_source_province",
+      "e_subject_type",
+      "e_major_keyword",
+      "e_city"
+    ],
+    "not_executed_preference_count": 0,
+    "traced_result_count": 0,
+    "top_k": 0,
+    "top_k_trace_status_counts": {},
+    "safety_warnings": [
+      "答案只能使用 evidence_pack 中的已验证规则、确认记录、结果摘要和 trace。",
+      "候选偏好在确认或模拟确认之前不得执行。"
+    ]
+  },
+  "extracted_preferences": [
+    {
+      "id": "pref_origin",
+      "slot": "生源地",
+      "value": "广东",
+      "source_span": "广东",
+      "status": "已对齐字段"
+    },
+    {
+      "id": "pref_track",
+      "slot": "科类",
+      "value": "物理",
+      "source_span": "物理",
+      "status": "已对齐字段"
+    },
+    {
+      "id": "pref_rank",
+      "slot": "排位",
+      "value": 90000,
+      "source_span": "排位90000",
+      "status": "已对齐字段"
+    },
+    {
+      "id": "pref_major",
+      "slot": "专业名称",
+      "value": [
+        "网络安全"
+      ],
+      "source_span": "网络安全",
+      "status": "已对齐字段"
+    },
+    {
+      "id": "pref_city",
+      "slot": "城市",
+      "value": [
+        "深圳"
+      ],
+      "source_span": "深圳",
+      "status": "已对齐字段"
+    }
+  ],
+  "attribute_grounding_summary": {
+    "total_attributes": 6,
+    "status_counts": {
+      "schema_grounded": 5,
+      "context_only": 1
+    },
+    "value_index_status_counts": {
+      "matched": 5
+    },
+    "unsafe_ungrounded_executable_attributes": 0
+  },
+  "proposed_rule_audit": [],
+  "execution_summary": {
+    "executor": "duckdb",
+    "sql": "WITH source AS (\n  SELECT row_number() OVER () AS \"__source_row_number\", *\n  FROM \"admissions\"\n),\nfiltered AS (\n  SELECT\n    source.*,\n    TRY_CAST(regexp_extract(REPLACE(CAST(\"专业组最低位次1\" AS VARCHAR), ',', ''), '\\d+(?:\\.\\d+)?') AS DOUBLE) AS \"__group_rank_num\",\n    TRY_CAST(regexp_extract(REPLACE(CAST(\"学费\" AS VARCHAR), ',', ''), '\\d+(?:\\.\\d+)?') AS DOUBLE) AS \"__tuition_num\",\n    TRY_CAST(regexp_extract(REPLACE(CAST(\"院校排名\" AS VARCHAR), ',', ''), '\\d+(?:\\.\\d+)?') AS DOUBLE) AS \"__school_rank_num\",\n    TRY_CAST(regexp_extract(REPLACE(CAST(\"ID\" AS VARCHAR), ',', ''), '\\d+(?:\\.\\d+)?') AS DOUBLE) AS \"__id_num\"\n  FROM source\n  WHERE CAST(\"生源地\" AS VARCHAR) = ? AND CAST(\"科类\" AS VARCHAR) = ? AND (STRPOS(CAST(\"专业名称\" AS VARCHAR), ?) > 0) AND (STRPOS(CAST(\"城市\" AS VARCHAR), ?) > 0)\n),\nprojectable AS (\n  SELECT *\n  FROM filtered\n  WHERE TRUE\n    AND \"__group_rank_num\" IS NOT NULL\n    AND \"__tuition_num\" IS NOT NULL\n)\nSELECT *\nFROM projectable\nORDER BY\n  \"__group_rank_num\" ASC NULLS LAST,\n  \"__school_rank_num\" ASC NULLS LAST,\n  \"__id_num\" ASC NULLS LAST",
+    "params": [
+      "广东",
+      "物理",
+      "网络安全",
+      "深圳"
+    ],
+    "input_row_count": 30855,
+    "filtered_row_count": 0,
+    "sort_key": [
+      "专业组最低位次1 ASC NULLS LAST",
+      "院校排名 ASC NULLS LAST",
+      "ID ASC NULLS LAST"
+    ],
+    "top_k": 5,
+    "hard_rule_ids": [
+      "e_source_province",
+      "e_subject_type",
+      "e_major_keyword",
+      "e_city"
+    ],
+    "skipped_soft_rule_ids": []
+  },
+  "attribute_explanations": [
+    {
+      "source_text": "广东",
+      "slot_path": "user_context.source_province",
+      "field": "生源地",
+      "value": "广东",
+      "match_type": "exact_match",
+      "action": "executed",
+      "matched_values": [
+        "广东"
+      ],
+      "reason": "已匹配字段“生源地”，并已进入 hard filter。"
+    },
+    {
+      "source_text": "物理",
+      "slot_path": "user_context.subject_type",
+      "field": "科类",
+      "value": "物理",
+      "match_type": "exact_match",
+      "action": "executed",
+      "matched_values": [
+        "物理"
+      ],
+      "reason": "已匹配字段“科类”，并已进入 hard filter。"
+    },
+    {
+      "source_text": "网络安全",
+      "slot_path": "preferences.major_keyword",
+      "field": "专业名称",
+      "value": "网络安全",
+      "match_type": "exact_match",
+      "action": "executed",
+      "matched_values": [
+        "网络安全与执法"
+      ],
+      "reason": "已匹配字段“专业名称”，并已进入 hard filter。"
+    },
+    {
+      "source_text": "深圳",
+      "slot_path": "preferences.preferred_cities",
+      "field": "城市",
+      "value": [
+        "深圳"
+      ],
+      "match_type": "exact_match",
+      "action": "executed",
+      "matched_values": [
+        "深圳"
+      ],
+      "reason": "已匹配字段“城市”，并已进入 hard filter。"
+    }
+  ],
+  "confirmed_rules": [],
+  "confirmation_source": [],
+  "executed_after_confirmation": [],
+  "unconfirmed_candidates": [],
+  "no_schema_field_preferences": [],
+  "rejected_confirmations": []
+}
+```
+### answer
+
+根据已验证规则生成结果：
+
+用户需求：广东物理，排位90000，想学网络安全，深圳。；偏好信息：偏好描述：广东物理，排位90000，想学网络安全，深圳。
+共筛选到 0 条符合已执行规则的结果。
+
+抽取与结构化结果：
+- 生源地：广东；状态：已对齐字段；来源：广东
+- 科类：物理；状态：已对齐字段；来源：物理
+- 排位：90000；状态：已对齐字段；来源：排位90000
+- 专业名称：网络安全；状态：已对齐字段；来源：网络安全
+- 城市：深圳；状态：已对齐字段；来源：深圳
+
+字段值审计解释：
+- [已执行] 广东 -> 生源地：exact_match；索引命中：广东；已匹配字段“生源地”，并已进入 hard filter。
+- [已执行] 物理 -> 科类：exact_match；索引命中：物理；已匹配字段“科类”，并已进入 hard filter。
+- [已执行] 网络安全 -> 专业名称：exact_match；索引命中：网络安全与执法；已匹配字段“专业名称”，并已进入 hard filter。
+- [已执行] 深圳 -> 城市：exact_match；索引命中：深圳；已匹配字段“城市”，并已进入 hard filter。
+
+已执行规则：
+- e_source_province：生源地 等于 广东
+- e_subject_type：科类 等于 物理
+- e_major_keyword：专业名称 包含任一：网络安全
+- e_city：城市 包含任一：深圳
+
+候选偏好确认记录：
+
+未执行但已保留的偏好：
+- 无。
+
+前 0 条结果：
+
+安全说明：
+- 答案只能使用 证据包 中的已验证规则、确认记录、结果摘要和 trace。
+- 候选偏好在确认或模拟确认之前不得执行。
+
+## admissions_07 `通过`
+
+- domain: `admissions`
+- query: 广东物理，排位32000，不要中外合作。
+- status: `ok`
+- pass/fail：`通过`
+
+### items
+```json
+[
+  {
+    "item_id": "result_001",
+    "title": "清华大学",
+    "subtitle": "建筑类(含：建筑学、城乡规划、风景园林，北京市)",
+    "primary_attributes": [
+      {
+        "key": "year",
+        "label": "year",
+        "value": 2024
+      },
+      {
+        "key": "batch",
+        "label": "batch",
+        "value": "本科批"
+      },
+      {
+        "key": "university_code",
+        "label": "university_code",
+        "value": "10003"
+      },
+      {
+        "key": "university_name",
+        "label": "university_name",
+        "value": "清华大学"
+      }
+    ],
+    "secondary_attributes": [
+      {
+        "key": "group_code",
+        "label": "group_code",
+        "value": "10003202"
+      },
+      {
+        "key": "group_name",
+        "label": "group_name",
+        "value": "202组"
+      },
+      {
+        "key": "major_code",
+        "label": "major_code",
+        "value": "046"
+      },
+      {
+        "key": "major_name",
+        "label": "major_name",
+        "value": "建筑类"
+      },
+      {
+        "key": "full_major_name",
+        "label": "full_major_name",
+        "value": "建筑类(含：建筑学、城乡规划、风景园林，北京市)"
+      },
+      {
+        "key": "subject_requirement",
+        "label": "subject_requirement",
+        "value": "不限"
+      },
+      {
+        "key": "province",
+        "label": "province",
+        "value": "北京"
+      },
+      {
+        "key": "city",
+        "label": "city",
+        "value": "海淀区"
+      },
+      {
+        "key": "tuition",
+        "label": "tuition",
+        "value": 5000.0
+      },
+      {
+        "key": "rank_2024",
+        "label": "rank_2024",
+        "value": 53
+      },
+      {
+        "key": "group_min_rank",
+        "label": "group_min_rank",
+        "value": 53
+      },
+      {
+        "key": "safety_margin",
+        "label": "safety_margin",
+        "value": "-99.8%"
+      }
+    ],
+    "matched_filters": [
+      {
+        "id": "e_source_province",
+        "field": "生源地",
+        "operator": "eq",
+        "value": "广东",
+        "matched": true,
+        "text": "生源地 等于 广东"
+      },
+      {
+        "id": "e_subject_type",
+        "field": "科类",
+        "operator": "eq",
+        "value": "物理",
+        "matched": true,
+        "text": "科类 等于 物理"
+      }
+    ],
+    "raw": {
+      "excel_row_number": 89,
+      "ID": 86,
+      "年份": 2024,
+      "批次": "本科批",
+      "院校代码": "10003",
+      "院校名称": "清华大学",
+      "院校专业组代码": "10003202",
+      "专业组名称": "202组",
+      "科类": "物理",
+      "选科要求": "不限",
+      "专业代码": "046",
+      "专业名称": "建筑类",
+      "专业全称": "建筑类(含：建筑学、城乡规划、风景园林，北京市)",
+      "所在省": "北京",
+      "城市": "海淀区",
+      "学费": 5000.0,
+      "专业组最低位次1": 53,
+      "最低位次1": null,
+      "院校标签": "985/211/双一流/国重点/保研资格",
+      "院校排名": "1",
+      "ranking_key": -31947,
+      "safety_margin_pct": -0.9983,
+      "cooperation_filter_status": "not_executed_missing_cooperation_type_field",
+      "中外合作筛选状态": "未执行：缺少合作办学类型字段"
+    }
+  },
+  {
+    "item_id": "result_002",
+    "title": "清华大学",
+    "subtitle": "理科试验班类(经济、金融与管理，含：信息管理与信息系统、金融学(经济金融国际班)，北京市)",
+    "primary_attributes": [
+      {
+        "key": "year",
+        "label": "year",
+        "value": 2024
+      },
+      {
+        "key": "batch",
+        "label": "batch",
+        "value": "本科批"
+      },
+      {
+        "key": "university_code",
+        "label": "university_code",
+        "value": "10003"
+      },
+      {
+        "key": "university_name",
+        "label": "university_name",
+        "value": "清华大学"
+      }
+    ],
+    "secondary_attributes": [
+      {
+        "key": "group_code",
+        "label": "group_code",
+        "value": "10003202"
+      },
+      {
+        "key": "group_name",
+        "label": "group_name",
+        "value": "202组"
+      },
+      {
+        "key": "major_code",
+        "label": "major_code",
+        "value": "055"
+      },
+      {
+        "key": "major_name",
+        "label": "major_name",
+        "value": "理科试验班类"
+      },
+      {
+        "key": "full_major_name",
+        "label": "full_major_name",
+        "value": "理科试验班类(经济、金融与管理，含：信息管理与信息系统、金融学(经济金融国际班)，北京市)"
+      },
+      {
+        "key": "subject_requirement",
+        "label": "subject_requirement",
+        "value": "不限"
+      },
+      {
+        "key": "province",
+        "label": "province",
+        "value": "北京"
+      },
+      {
+        "key": "city",
+        "label": "city",
+        "value": "海淀区"
+      },
+      {
+        "key": "tuition",
+        "label": "tuition",
+        "value": 5000.0
+      },
+      {
+        "key": "rank_2024",
+        "label": "rank_2024",
+        "value": 53
+      },
+      {
+        "key": "group_min_rank",
+        "label": "group_min_rank",
+        "value": 53
+      },
+      {
+        "key": "safety_margin",
+        "label": "safety_margin",
+        "value": "-99.8%"
+      }
+    ],
+    "matched_filters": [
+      {
+        "id": "e_source_province",
+        "field": "生源地",
+        "operator": "eq",
+        "value": "广东",
+        "matched": true,
+        "text": "生源地 等于 广东"
+      },
+      {
+        "id": "e_subject_type",
+        "field": "科类",
+        "operator": "eq",
+        "value": "物理",
+        "matched": true,
+        "text": "科类 等于 物理"
+      }
+    ],
+    "raw": {
+      "excel_row_number": 90,
+      "ID": 87,
+      "年份": 2024,
+      "批次": "本科批",
+      "院校代码": "10003",
+      "院校名称": "清华大学",
+      "院校专业组代码": "10003202",
+      "专业组名称": "202组",
+      "科类": "物理",
+      "选科要求": "不限",
+      "专业代码": "055",
+      "专业名称": "理科试验班类",
+      "专业全称": "理科试验班类(经济、金融与管理，含：信息管理与信息系统、金融学(经济金融国际班)，北京市)",
+      "所在省": "北京",
+      "城市": "海淀区",
+      "学费": 5000.0,
+      "专业组最低位次1": 53,
+      "最低位次1": null,
+      "院校标签": "985/211/双一流/国重点/保研资格",
+      "院校排名": "1",
+      "ranking_key": -31947,
+      "safety_margin_pct": -0.9983,
+      "cooperation_filter_status": "not_executed_missing_cooperation_type_field",
+      "中外合作筛选状态": "未执行：缺少合作办学类型字段"
+    }
+  },
+  {
+    "item_id": "result_003",
+    "title": "清华大学",
+    "subtitle": "法学类(含：法学、法学(国际班)，北京市)",
+    "primary_attributes": [
+      {
+        "key": "year",
+        "label": "year",
+        "value": 2024
+      },
+      {
+        "key": "batch",
+        "label": "batch",
+        "value": "本科批"
+      },
+      {
+        "key": "university_code",
+        "label": "university_code",
+        "value": "10003"
+      },
+      {
+        "key": "university_name",
+        "label": "university_name",
+        "value": "清华大学"
+      }
+    ],
+    "secondary_attributes": [
+      {
+        "key": "group_code",
+        "label": "group_code",
+        "value": "10003202"
+      },
+      {
+        "key": "group_name",
+        "label": "group_name",
+        "value": "202组"
+      },
+      {
+        "key": "major_code",
+        "label": "major_code",
+        "value": "056"
+      },
+      {
+        "key": "major_name",
+        "label": "major_name",
+        "value": "法学类"
+      },
+      {
+        "key": "full_major_name",
+        "label": "full_major_name",
+        "value": "法学类(含：法学、法学(国际班)，北京市)"
+      },
+      {
+        "key": "subject_requirement",
+        "label": "subject_requirement",
+        "value": "不限"
+      },
+      {
+        "key": "province",
+        "label": "province",
+        "value": "北京"
+      },
+      {
+        "key": "city",
+        "label": "city",
+        "value": "海淀区"
+      },
+      {
+        "key": "tuition",
+        "label": "tuition",
+        "value": 5000.0
+      },
+      {
+        "key": "rank_2024",
+        "label": "rank_2024",
+        "value": 53
+      },
+      {
+        "key": "group_min_rank",
+        "label": "group_min_rank",
+        "value": 53
+      },
+      {
+        "key": "safety_margin",
+        "label": "safety_margin",
+        "value": "-99.8%"
+      }
+    ],
+    "matched_filters": [
+      {
+        "id": "e_source_province",
+        "field": "生源地",
+        "operator": "eq",
+        "value": "广东",
+        "matched": true,
+        "text": "生源地 等于 广东"
+      },
+      {
+        "id": "e_subject_type",
+        "field": "科类",
+        "operator": "eq",
+        "value": "物理",
+        "matched": true,
+        "text": "科类 等于 物理"
+      }
+    ],
+    "raw": {
+      "excel_row_number": 91,
+      "ID": 88,
+      "年份": 2024,
+      "批次": "本科批",
+      "院校代码": "10003",
+      "院校名称": "清华大学",
+      "院校专业组代码": "10003202",
+      "专业组名称": "202组",
+      "科类": "物理",
+      "选科要求": "不限",
+      "专业代码": "056",
+      "专业名称": "法学类",
+      "专业全称": "法学类(含：法学、法学(国际班)，北京市)",
+      "所在省": "北京",
+      "城市": "海淀区",
+      "学费": 5000.0,
+      "专业组最低位次1": 53,
+      "最低位次1": null,
+      "院校标签": "985/211/双一流/国重点/保研资格",
+      "院校排名": "1",
+      "ranking_key": -31947,
+      "safety_margin_pct": -0.9983,
+      "cooperation_filter_status": "not_executed_missing_cooperation_type_field",
+      "中外合作筛选状态": "未执行：缺少合作办学类型字段"
+    }
+  },
+  {
+    "item_id": "result_004",
+    "title": "清华大学",
+    "subtitle": "社会科学试验班(至善书院，含：经济学、社会学，北京市)",
+    "primary_attributes": [
+      {
+        "key": "year",
+        "label": "year",
+        "value": 2024
+      },
+      {
+        "key": "batch",
+        "label": "batch",
+        "value": "本科批"
+      },
+      {
+        "key": "university_code",
+        "label": "university_code",
+        "value": "10003"
+      },
+      {
+        "key": "university_name",
+        "label": "university_name",
+        "value": "清华大学"
+      }
+    ],
+    "secondary_attributes": [
+      {
+        "key": "group_code",
+        "label": "group_code",
+        "value": "10003202"
+      },
+      {
+        "key": "group_name",
+        "label": "group_name",
+        "value": "202组"
+      },
+      {
+        "key": "major_code",
+        "label": "major_code",
+        "value": "060"
+      },
+      {
+        "key": "major_name",
+        "label": "major_name",
+        "value": "社会科学试验班"
+      },
+      {
+        "key": "full_major_name",
+        "label": "full_major_name",
+        "value": "社会科学试验班(至善书院，含：经济学、社会学，北京市)"
+      },
+      {
+        "key": "subject_requirement",
+        "label": "subject_requirement",
+        "value": "不限"
+      },
+      {
+        "key": "province",
+        "label": "province",
+        "value": "北京"
+      },
+      {
+        "key": "city",
+        "label": "city",
+        "value": "海淀区"
+      },
+      {
+        "key": "tuition",
+        "label": "tuition",
+        "value": 5000.0
+      },
+      {
+        "key": "rank_2024",
+        "label": "rank_2024",
+        "value": 53
+      },
+      {
+        "key": "group_min_rank",
+        "label": "group_min_rank",
+        "value": 53
+      },
+      {
+        "key": "safety_margin",
+        "label": "safety_margin",
+        "value": "-99.8%"
+      }
+    ],
+    "matched_filters": [
+      {
+        "id": "e_source_province",
+        "field": "生源地",
+        "operator": "eq",
+        "value": "广东",
+        "matched": true,
+        "text": "生源地 等于 广东"
+      },
+      {
+        "id": "e_subject_type",
+        "field": "科类",
+        "operator": "eq",
+        "value": "物理",
+        "matched": true,
+        "text": "科类 等于 物理"
+      }
+    ],
+    "raw": {
+      "excel_row_number": 92,
+      "ID": 89,
+      "年份": 2024,
+      "批次": "本科批",
+      "院校代码": "10003",
+      "院校名称": "清华大学",
+      "院校专业组代码": "10003202",
+      "专业组名称": "202组",
+      "科类": "物理",
+      "选科要求": "不限",
+      "专业代码": "060",
+      "专业名称": "社会科学试验班",
+      "专业全称": "社会科学试验班(至善书院，含：经济学、社会学，北京市)",
+      "所在省": "北京",
+      "城市": "海淀区",
+      "学费": 5000.0,
+      "专业组最低位次1": 53,
+      "最低位次1": null,
+      "院校标签": "985/211/双一流/国重点/保研资格",
+      "院校排名": "1",
+      "ranking_key": -31947,
+      "safety_margin_pct": -0.9983,
+      "cooperation_filter_status": "not_executed_missing_cooperation_type_field",
+      "中外合作筛选状态": "未执行：缺少合作办学类型字段"
+    }
+  },
+  {
+    "item_id": "result_005",
+    "title": "清华大学",
+    "subtitle": "理科试验班类(新雅书院，含：工程管理(等全校各专业)，北京市)",
+    "primary_attributes": [
+      {
+        "key": "year",
+        "label": "year",
+        "value": 2024
+      },
+      {
+        "key": "batch",
+        "label": "batch",
+        "value": "本科批"
+      },
+      {
+        "key": "university_code",
+        "label": "university_code",
+        "value": "10003"
+      },
+      {
+        "key": "university_name",
+        "label": "university_name",
+        "value": "清华大学"
+      }
+    ],
+    "secondary_attributes": [
+      {
+        "key": "group_code",
+        "label": "group_code",
+        "value": "10003202"
+      },
+      {
+        "key": "group_name",
+        "label": "group_name",
+        "value": "202组"
+      },
+      {
+        "key": "major_code",
+        "label": "major_code",
+        "value": "061"
+      },
+      {
+        "key": "major_name",
+        "label": "major_name",
+        "value": "理科试验班类"
+      },
+      {
+        "key": "full_major_name",
+        "label": "full_major_name",
+        "value": "理科试验班类(新雅书院，含：工程管理(等全校各专业)，北京市)"
+      },
+      {
+        "key": "subject_requirement",
+        "label": "subject_requirement",
+        "value": "不限"
+      },
+      {
+        "key": "province",
+        "label": "province",
+        "value": "北京"
+      },
+      {
+        "key": "city",
+        "label": "city",
+        "value": "海淀区"
+      },
+      {
+        "key": "tuition",
+        "label": "tuition",
+        "value": 5000.0
+      },
+      {
+        "key": "rank_2024",
+        "label": "rank_2024",
+        "value": 53
+      },
+      {
+        "key": "group_min_rank",
+        "label": "group_min_rank",
+        "value": 53
+      },
+      {
+        "key": "safety_margin",
+        "label": "safety_margin",
+        "value": "-99.8%"
+      }
+    ],
+    "matched_filters": [
+      {
+        "id": "e_source_province",
+        "field": "生源地",
+        "operator": "eq",
+        "value": "广东",
+        "matched": true,
+        "text": "生源地 等于 广东"
+      },
+      {
+        "id": "e_subject_type",
+        "field": "科类",
+        "operator": "eq",
+        "value": "物理",
+        "matched": true,
+        "text": "科类 等于 物理"
+      }
+    ],
+    "raw": {
+      "excel_row_number": 93,
+      "ID": 90,
+      "年份": 2024,
+      "批次": "本科批",
+      "院校代码": "10003",
+      "院校名称": "清华大学",
+      "院校专业组代码": "10003202",
+      "专业组名称": "202组",
+      "科类": "物理",
+      "选科要求": "不限",
+      "专业代码": "061",
+      "专业名称": "理科试验班类",
+      "专业全称": "理科试验班类(新雅书院，含：工程管理(等全校各专业)，北京市)",
+      "所在省": "北京",
+      "城市": "海淀区",
+      "学费": 5000.0,
+      "专业组最低位次1": 53,
+      "最低位次1": null,
+      "院校标签": "985/211/双一流/国重点/保研资格",
+      "院校排名": "1",
+      "ranking_key": -31947,
+      "safety_margin_pct": -0.9983,
+      "cooperation_filter_status": "not_executed_missing_cooperation_type_field",
+      "中外合作筛选状态": "未执行：缺少合作办学类型字段"
+    }
+  }
+]
+```
+### top_results
+```json
+[
+  {
+    "id": "result_001",
+    "trace": [
+      {
+        "status": "pass",
+        "text": "生源地 等于 广东"
+      },
+      {
+        "status": "pass",
+        "text": "科类 等于 物理"
+      },
+      {
+        "status": "not_executed",
+        "text": "中外合作：缺少合作办学类型字段，未执行"
+      }
+    ],
+    "year": 2024,
+    "batch": "本科批",
+    "university_code": "10003",
+    "university_name": "清华大学",
+    "group_code": "10003202",
+    "group_name": "202组",
+    "major_code": "046",
+    "major_name": "建筑类",
+    "full_major_name": "建筑类(含：建筑学、城乡规划、风景园林，北京市)",
+    "subject_requirement": "不限",
+    "province": "北京",
+    "city": "海淀区",
+    "tuition": 5000.0,
+    "rank_2024": 53,
+    "major_rank_2024": null,
+    "plan_count": null,
+    "group_min_rank": 53,
+    "major_min_rank": null,
+    "safety_margin": "-99.8%"
+  },
+  {
+    "id": "result_002",
+    "trace": [
+      {
+        "status": "pass",
+        "text": "生源地 等于 广东"
+      },
+      {
+        "status": "pass",
+        "text": "科类 等于 物理"
+      },
+      {
+        "status": "not_executed",
+        "text": "中外合作：缺少合作办学类型字段，未执行"
+      }
+    ],
+    "year": 2024,
+    "batch": "本科批",
+    "university_code": "10003",
+    "university_name": "清华大学",
+    "group_code": "10003202",
+    "group_name": "202组",
+    "major_code": "055",
+    "major_name": "理科试验班类",
+    "full_major_name": "理科试验班类(经济、金融与管理，含：信息管理与信息系统、金融学(经济金融国际班)，北京市)",
+    "subject_requirement": "不限",
+    "province": "北京",
+    "city": "海淀区",
+    "tuition": 5000.0,
+    "rank_2024": 53,
+    "major_rank_2024": null,
+    "plan_count": null,
+    "group_min_rank": 53,
+    "major_min_rank": null,
+    "safety_margin": "-99.8%"
+  },
+  {
+    "id": "result_003",
+    "trace": [
+      {
+        "status": "pass",
+        "text": "生源地 等于 广东"
+      },
+      {
+        "status": "pass",
+        "text": "科类 等于 物理"
+      },
+      {
+        "status": "not_executed",
+        "text": "中外合作：缺少合作办学类型字段，未执行"
+      }
+    ],
+    "year": 2024,
+    "batch": "本科批",
+    "university_code": "10003",
+    "university_name": "清华大学",
+    "group_code": "10003202",
+    "group_name": "202组",
+    "major_code": "056",
+    "major_name": "法学类",
+    "full_major_name": "法学类(含：法学、法学(国际班)，北京市)",
+    "subject_requirement": "不限",
+    "province": "北京",
+    "city": "海淀区",
+    "tuition": 5000.0,
+    "rank_2024": 53,
+    "major_rank_2024": null,
+    "plan_count": null,
+    "group_min_rank": 53,
+    "major_min_rank": null,
+    "safety_margin": "-99.8%"
+  },
+  {
+    "id": "result_004",
+    "trace": [
+      {
+        "status": "pass",
+        "text": "生源地 等于 广东"
+      },
+      {
+        "status": "pass",
+        "text": "科类 等于 物理"
+      },
+      {
+        "status": "not_executed",
+        "text": "中外合作：缺少合作办学类型字段，未执行"
+      }
+    ],
+    "year": 2024,
+    "batch": "本科批",
+    "university_code": "10003",
+    "university_name": "清华大学",
+    "group_code": "10003202",
+    "group_name": "202组",
+    "major_code": "060",
+    "major_name": "社会科学试验班",
+    "full_major_name": "社会科学试验班(至善书院，含：经济学、社会学，北京市)",
+    "subject_requirement": "不限",
+    "province": "北京",
+    "city": "海淀区",
+    "tuition": 5000.0,
+    "rank_2024": 53,
+    "major_rank_2024": null,
+    "plan_count": null,
+    "group_min_rank": 53,
+    "major_min_rank": null,
+    "safety_margin": "-99.8%"
+  },
+  {
+    "id": "result_005",
+    "trace": [
+      {
+        "status": "pass",
+        "text": "生源地 等于 广东"
+      },
+      {
+        "status": "pass",
+        "text": "科类 等于 物理"
+      },
+      {
+        "status": "not_executed",
+        "text": "中外合作：缺少合作办学类型字段，未执行"
+      }
+    ],
+    "year": 2024,
+    "batch": "本科批",
+    "university_code": "10003",
+    "university_name": "清华大学",
+    "group_code": "10003202",
+    "group_name": "202组",
+    "major_code": "061",
+    "major_name": "理科试验班类",
+    "full_major_name": "理科试验班类(新雅书院，含：工程管理(等全校各专业)，北京市)",
+    "subject_requirement": "不限",
+    "province": "北京",
+    "city": "海淀区",
+    "tuition": 5000.0,
+    "rank_2024": 53,
+    "major_rank_2024": null,
+    "plan_count": null,
+    "group_min_rank": 53,
+    "major_min_rank": null,
+    "safety_margin": "-99.8%"
+  }
+]
+```
+### executed_filters
+```json
+[
+  {
+    "id": "e_source_province",
+    "label": "生源地 等于 广东",
+    "field": "生源地",
+    "operator": "eq",
+    "value": "广东",
+    "source_span": "广东"
+  },
+  {
+    "id": "e_subject_type",
+    "label": "科类 等于 物理",
+    "field": "科类",
+    "operator": "eq",
+    "value": "物理",
+    "source_span": "物理"
+  }
+]
+```
+### candidates_to_confirm
+```json
+[]
+```
+### unexecuted_preferences
+```json
+[
+  {
+    "id": "not_exec_1",
+    "preference": "不要中外合作",
+    "display": "中外合作未执行：缺少合作办学类型字段",
+    "reason": "当前数据字段定义没有合作办学类型字段，不能验证或执行“排除中外合作”。",
+    "missing_field": "合作办学类型字段",
+    "source_span": "不要中外合作"
+  }
+]
+```
+### SQL / params
+```json
+{
+  "sql": "WITH source AS (\n  SELECT row_number() OVER () AS \"__source_row_number\", *\n  FROM \"admissions\"\n),\nfiltered AS (\n  SELECT\n    source.*,\n    TRY_CAST(regexp_extract(REPLACE(CAST(\"专业组最低位次1\" AS VARCHAR), ',', ''), '\\d+(?:\\.\\d+)?') AS DOUBLE) AS \"__group_rank_num\",\n    TRY_CAST(regexp_extract(REPLACE(CAST(\"学费\" AS VARCHAR), ',', ''), '\\d+(?:\\.\\d+)?') AS DOUBLE) AS \"__tuition_num\",\n    TRY_CAST(regexp_extract(REPLACE(CAST(\"院校排名\" AS VARCHAR), ',', ''), '\\d+(?:\\.\\d+)?') AS DOUBLE) AS \"__school_rank_num\",\n    TRY_CAST(regexp_extract(REPLACE(CAST(\"ID\" AS VARCHAR), ',', ''), '\\d+(?:\\.\\d+)?') AS DOUBLE) AS \"__id_num\"\n  FROM source\n  WHERE CAST(\"生源地\" AS VARCHAR) = ? AND CAST(\"科类\" AS VARCHAR) = ?\n),\nprojectable AS (\n  SELECT *\n  FROM filtered\n  WHERE TRUE\n    AND \"__group_rank_num\" IS NOT NULL\n    AND \"__tuition_num\" IS NOT NULL\n)\nSELECT *\nFROM projectable\nORDER BY\n  \"__group_rank_num\" ASC NULLS LAST,\n  \"__school_rank_num\" ASC NULLS LAST,\n  \"__id_num\" ASC NULLS LAST",
+  "params": [
+    "广东",
+    "物理"
+  ]
+}
+```
+### EvidencePack
+```json
+{
+  "user_request": "广东物理，排位32000，不要中外合作。；偏好信息：偏好描述：广东物理，排位32000，不要中外合作。",
+  "executed_rules": [
+    {
+      "rule_id": "e_source_province",
+      "derived_from": "d_source_province",
+      "field": "生源地",
+      "operator": "eq",
+      "value": "广东",
+      "description": "生源地 等于 广东"
+    },
+    {
+      "rule_id": "e_subject_type",
+      "derived_from": "d_subject_type",
+      "field": "科类",
+      "operator": "eq",
+      "value": "物理",
+      "description": "科类 等于 物理"
+    }
+  ],
+  "candidate_confirmations": [
+    {
+      "confirmation_id": "cooperation_type",
+      "source_rule_id": null,
+      "source_text": "不想去太贵的中外合作",
+      "selected_label": null,
+      "selected_option": null,
+      "status": "not_executable",
+      "reason": "缺少合作办学类型字段。"
+    }
+  ],
+  "not_executed_preferences": [
+    {
+      "source_text": "不要中外合作",
+      "status": "not_executed",
+      "reason": "缺少合作办学类型字段，当前版本不从文本字段推断。",
+      "safety_warning": "不要中外合作 未执行：缺少合作办学类型字段，当前版本不从文本字段推断。"
+    }
+  ],
+  "result_count": 19473,
+  "top_k_results": [
+    {
+      "rank": 1,
+      "院校名称": "清华大学",
+      "院校专业组代码": "10003202",
+      "专业代码": "046",
+      "专业名称": "建筑类",
+      "专业全称": "建筑类(含：建筑学、城乡规划、风景园林，北京市)",
+      "选科要求": "不限",
+      "城市": "海淀区",
+      "学费": 5000.0,
+      "专业组最低位次": 53,
+      "safety_margin": "-99.83%",
+      "trace": [
+        {
+          "rule_id": "e_source_province",
+          "status": "pass",
+          "reason": "生源地 等于 广东"
+        },
+        {
+          "rule_id": "e_subject_type",
+          "status": "pass",
+          "reason": "科类 等于 物理"
+        },
+        {
+          "rule_id": "l_cooperation_type",
+          "status": "not_executed",
+          "reason": "不要中外合作 未执行：缺少合作办学类型字段，当前版本不从文本字段推断。"
+        }
+      ]
+    },
+    {
+      "rank": 2,
+      "院校名称": "清华大学",
+      "院校专业组代码": "10003202",
+      "专业代码": "055",
+      "专业名称": "理科试验班类",
+      "专业全称": "理科试验班类(经济、金融与管理，含：信息管理与信息系统、金融学(经济金融国际班)，北京市)",
+      "选科要求": "不限",
+      "城市": "海淀区",
+      "学费": 5000.0,
+      "专业组最低位次": 53,
+      "safety_margin": "-99.83%",
+      "trace": [
+        {
+          "rule_id": "e_source_province",
+          "status": "pass",
+          "reason": "生源地 等于 广东"
+        },
+        {
+          "rule_id": "e_subject_type",
+          "status": "pass",
+          "reason": "科类 等于 物理"
+        },
+        {
+          "rule_id": "l_cooperation_type",
+          "status": "not_executed",
+          "reason": "不要中外合作 未执行：缺少合作办学类型字段，当前版本不从文本字段推断。"
+        }
+      ]
+    },
+    {
+      "rank": 3,
+      "院校名称": "清华大学",
+      "院校专业组代码": "10003202",
+      "专业代码": "056",
+      "专业名称": "法学类",
+      "专业全称": "法学类(含：法学、法学(国际班)，北京市)",
+      "选科要求": "不限",
+      "城市": "海淀区",
+      "学费": 5000.0,
+      "专业组最低位次": 53,
+      "safety_margin": "-99.83%",
+      "trace": [
+        {
+          "rule_id": "e_source_province",
+          "status": "pass",
+          "reason": "生源地 等于 广东"
+        },
+        {
+          "rule_id": "e_subject_type",
+          "status": "pass",
+          "reason": "科类 等于 物理"
+        },
+        {
+          "rule_id": "l_cooperation_type",
+          "status": "not_executed",
+          "reason": "不要中外合作 未执行：缺少合作办学类型字段，当前版本不从文本字段推断。"
+        }
+      ]
+    },
+    {
+      "rank": 4,
+      "院校名称": "清华大学",
+      "院校专业组代码": "10003202",
+      "专业代码": "060",
+      "专业名称": "社会科学试验班",
+      "专业全称": "社会科学试验班(至善书院，含：经济学、社会学，北京市)",
+      "选科要求": "不限",
+      "城市": "海淀区",
+      "学费": 5000.0,
+      "专业组最低位次": 53,
+      "safety_margin": "-99.83%",
+      "trace": [
+        {
+          "rule_id": "e_source_province",
+          "status": "pass",
+          "reason": "生源地 等于 广东"
+        },
+        {
+          "rule_id": "e_subject_type",
+          "status": "pass",
+          "reason": "科类 等于 物理"
+        },
+        {
+          "rule_id": "l_cooperation_type",
+          "status": "not_executed",
+          "reason": "不要中外合作 未执行：缺少合作办学类型字段，当前版本不从文本字段推断。"
+        }
+      ]
+    },
+    {
+      "rank": 5,
+      "院校名称": "清华大学",
+      "院校专业组代码": "10003202",
+      "专业代码": "061",
+      "专业名称": "理科试验班类",
+      "专业全称": "理科试验班类(新雅书院，含：工程管理(等全校各专业)，北京市)",
+      "选科要求": "不限",
+      "城市": "海淀区",
+      "学费": 5000.0,
+      "专业组最低位次": 53,
+      "safety_margin": "-99.83%",
+      "trace": [
+        {
+          "rule_id": "e_source_province",
+          "status": "pass",
+          "reason": "生源地 等于 广东"
+        },
+        {
+          "rule_id": "e_subject_type",
+          "status": "pass",
+          "reason": "科类 等于 物理"
+        },
+        {
+          "rule_id": "l_cooperation_type",
+          "status": "not_executed",
+          "reason": "不要中外合作 未执行：缺少合作办学类型字段，当前版本不从文本字段推断。"
+        }
+      ]
+    }
+  ],
+  "trace_summary": {
+    "executed_rule_ids": [
+      "e_source_province",
+      "e_subject_type"
+    ],
+    "not_executed_preference_count": 1,
+    "traced_result_count": 19473,
+    "top_k": 5,
+    "top_k_trace_status_counts": {
+      "pass": 10,
+      "not_executed": 5
+    },
+    "safety_warnings": [
+      "答案只能使用 evidence_pack 中的已验证规则、确认记录、结果摘要和 trace。",
+      "候选偏好在确认或模拟确认之前不得执行。",
+      "不要中外合作 未执行：缺少合作办学类型字段，当前版本不从文本字段推断。"
+    ]
+  },
+  "extracted_preferences": [
+    {
+      "id": "pref_origin",
+      "slot": "生源地",
+      "value": "广东",
+      "source_span": "广东",
+      "status": "已对齐字段"
+    },
+    {
+      "id": "pref_track",
+      "slot": "科类",
+      "value": "物理",
+      "source_span": "物理",
+      "status": "已对齐字段"
+    },
+    {
+      "id": "pref_rank",
+      "slot": "排位",
+      "value": 32000,
+      "source_span": "排位32000",
+      "status": "已对齐字段"
+    },
+    {
+      "id": "pref_cooperation",
+      "slot": "中外合作",
+      "value": "不要中外合作",
+      "source_span": "不要中外合作",
+      "status": "不可执行"
+    }
+  ],
+  "attribute_grounding_summary": {
+    "total_attributes": 4,
+    "status_counts": {
+      "schema_grounded": 2,
+      "context_only": 1,
+      "missing_schema": 1
+    },
+    "value_index_status_counts": {
+      "matched": 2,
+      "field_inactive": 1
+    },
+    "unsafe_ungrounded_executable_attributes": 0
+  },
+  "proposed_rule_audit": [],
+  "execution_summary": {
+    "executor": "duckdb",
+    "sql": "WITH source AS (\n  SELECT row_number() OVER () AS \"__source_row_number\", *\n  FROM \"admissions\"\n),\nfiltered AS (\n  SELECT\n    source.*,\n    TRY_CAST(regexp_extract(REPLACE(CAST(\"专业组最低位次1\" AS VARCHAR), ',', ''), '\\d+(?:\\.\\d+)?') AS DOUBLE) AS \"__group_rank_num\",\n    TRY_CAST(regexp_extract(REPLACE(CAST(\"学费\" AS VARCHAR), ',', ''), '\\d+(?:\\.\\d+)?') AS DOUBLE) AS \"__tuition_num\",\n    TRY_CAST(regexp_extract(REPLACE(CAST(\"院校排名\" AS VARCHAR), ',', ''), '\\d+(?:\\.\\d+)?') AS DOUBLE) AS \"__school_rank_num\",\n    TRY_CAST(regexp_extract(REPLACE(CAST(\"ID\" AS VARCHAR), ',', ''), '\\d+(?:\\.\\d+)?') AS DOUBLE) AS \"__id_num\"\n  FROM source\n  WHERE CAST(\"生源地\" AS VARCHAR) = ? AND CAST(\"科类\" AS VARCHAR) = ?\n),\nprojectable AS (\n  SELECT *\n  FROM filtered\n  WHERE TRUE\n    AND \"__group_rank_num\" IS NOT NULL\n    AND \"__tuition_num\" IS NOT NULL\n)\nSELECT *\nFROM projectable\nORDER BY\n  \"__group_rank_num\" ASC NULLS LAST,\n  \"__school_rank_num\" ASC NULLS LAST,\n  \"__id_num\" ASC NULLS LAST",
+    "params": [
+      "广东",
+      "物理"
+    ],
+    "input_row_count": 30855,
+    "filtered_row_count": 19473,
+    "sort_key": [
+      "专业组最低位次1 ASC NULLS LAST",
+      "院校排名 ASC NULLS LAST",
+      "ID ASC NULLS LAST"
+    ],
+    "top_k": 5,
+    "hard_rule_ids": [
+      "e_source_province",
+      "e_subject_type"
+    ],
+    "skipped_soft_rule_ids": []
+  },
+  "attribute_explanations": [
+    {
+      "source_text": "广东",
+      "slot_path": "user_context.source_province",
+      "field": "生源地",
+      "value": "广东",
+      "match_type": "exact_match",
+      "action": "executed",
+      "matched_values": [
+        "广东"
+      ],
+      "reason": "已匹配字段“生源地”，并已进入 hard filter。"
+    },
+    {
+      "source_text": "物理",
+      "slot_path": "user_context.subject_type",
+      "field": "科类",
+      "value": "物理",
+      "match_type": "exact_match",
+      "action": "executed",
+      "matched_values": [
+        "物理"
+      ],
+      "reason": "已匹配字段“科类”，并已进入 hard filter。"
+    },
+    {
+      "source_text": "不要中外合作",
+      "slot_path": "preferences.cooperation_preference_raw",
+      "field": "cooperation_type",
+      "value": "不要中外合作",
+      "match_type": "no_schema_field",
+      "action": "not_executed",
+      "matched_values": [],
+      "reason": "当前数据中没有可执行字段，不能进入筛表。原文已保留，未进入 hard filter。"
+    }
+  ],
+  "confirmed_rules": [],
+  "confirmation_source": [],
+  "executed_after_confirmation": [],
+  "unconfirmed_candidates": [],
+  "no_schema_field_preferences": [
+    {
+      "candidate_id": "cand_f9f4ed9f50eb7005",
+      "source_text": "不要中外合作",
+      "slot_path": "preferences.cooperation_preference_raw",
+      "field_id": "cooperation_type",
+      "field": "无可执行字段",
+      "match_type": "no_schema_field",
+      "operator": null,
+      "value": null,
+      "label": "不可执行",
+      "executable": false,
+      "reason": "当前数据中没有可执行字段，不能进入筛表。",
+      "matched_values": []
+    }
+  ],
+  "rejected_confirmations": []
+}
+```
+### answer
+
+根据已验证规则生成结果：
+
+用户需求：广东物理，排位32000，不要中外合作。；偏好信息：偏好描述：广东物理，排位32000，不要中外合作。
+共筛选到 19473 条符合已执行规则的结果。
+
+抽取与结构化结果：
+- 生源地：广东；状态：已对齐字段；来源：广东
+- 科类：物理；状态：已对齐字段；来源：物理
+- 排位：32000；状态：已对齐字段；来源：排位32000
+- 中外合作：不要中外合作；状态：不可执行；来源：不要中外合作
+
+字段值审计解释：
+- [已执行] 广东 -> 生源地：exact_match；索引命中：广东；已匹配字段“生源地”，并已进入 hard filter。
+- [已执行] 物理 -> 科类：exact_match；索引命中：物理；已匹配字段“科类”，并已进入 hard filter。
+- [未执行] 不要中外合作 -> 合作办学类型字段：no_schema_field；当前数据中没有可执行字段，不能进入筛表。原文已保留，未进入 hard filter。
+
+已执行规则：
+- e_source_province：生源地 等于 广东
+- e_subject_type：科类 等于 物理
+
+候选偏好确认记录：
+- 不想去太贵的中外合作：未执行，原因：缺少合作办学类型字段。。
+
+缺少字段，不能确认执行：
+- 不要中外合作：当前数据中没有可执行字段，不能进入筛表。；即使提交该 candidate_id 也不能执行。
+
+未执行但已保留的偏好：
+- 不要中外合作：未执行，未参与筛选。原因：缺少合作办学类型字段，当前版本不从文本字段推断。
+
+前 5 条结果：
+- 1. 清华大学；专业组代码：10003202；专业代码：046；专业名称：建筑类；专业全称：建筑类(含：建筑学、城乡规划、风景园林，北京市)；选科要求：不限；城市：海淀区；学费：5000 元/年；专业组最低位次：53。
+- 2. 清华大学；专业组代码：10003202；专业代码：055；专业名称：理科试验班类；专业全称：理科试验班类(经济、金融与管理，含：信息管理与信息系统、金融学(经济金融国际班)，北京市)；选科要求：不限；城市：海淀区；学费：5000 元/年；专业组最低位次：53。
+- 3. 清华大学；专业组代码：10003202；专业代码：056；专业名称：法学类；专业全称：法学类(含：法学、法学(国际班)，北京市)；选科要求：不限；城市：海淀区；学费：5000 元/年；专业组最低位次：53。
+- 4. 清华大学；专业组代码：10003202；专业代码：060；专业名称：社会科学试验班；专业全称：社会科学试验班(至善书院，含：经济学、社会学，北京市)；选科要求：不限；城市：海淀区；学费：5000 元/年；专业组最低位次：53。
+- 5. 清华大学；专业组代码：10003202；专业代码：061；专业名称：理科试验班类；专业全称：理科试验班类(新雅书院，含：工程管理(等全校各专业)，北京市)；选科要求：不限；城市：海淀区；学费：5000 元/年；专业组最低位次：53。
+
+安全说明：
+- 答案只能使用 证据包 中的已验证规则、确认记录、结果摘要和 trace。
+- 候选偏好在确认或模拟确认之前不得执行。
+- 不要中外合作 未执行：缺少合作办学类型字段，当前版本不从文本字段推断。
+
+## admissions_08 `通过`
+
+- domain: `admissions`
+- query: 广东物理，排位60000，不想太贵。
+- status: `needs_confirmation`
+- pass/fail：`通过`
+
+### items
+```json
+[
+  {
+    "item_id": "result_001",
+    "title": "清华大学",
+    "subtitle": "建筑类(含：建筑学、城乡规划、风景园林，北京市)",
+    "primary_attributes": [
+      {
+        "key": "year",
+        "label": "year",
+        "value": 2024
+      },
+      {
+        "key": "batch",
+        "label": "batch",
+        "value": "本科批"
+      },
+      {
+        "key": "university_code",
+        "label": "university_code",
+        "value": "10003"
+      },
+      {
+        "key": "university_name",
+        "label": "university_name",
+        "value": "清华大学"
+      }
+    ],
+    "secondary_attributes": [
+      {
+        "key": "group_code",
+        "label": "group_code",
+        "value": "10003202"
+      },
+      {
+        "key": "group_name",
+        "label": "group_name",
+        "value": "202组"
+      },
+      {
+        "key": "major_code",
+        "label": "major_code",
+        "value": "046"
+      },
+      {
+        "key": "major_name",
+        "label": "major_name",
+        "value": "建筑类"
+      },
+      {
+        "key": "full_major_name",
+        "label": "full_major_name",
+        "value": "建筑类(含：建筑学、城乡规划、风景园林，北京市)"
+      },
+      {
+        "key": "subject_requirement",
+        "label": "subject_requirement",
+        "value": "不限"
+      },
+      {
+        "key": "province",
+        "label": "province",
+        "value": "北京"
+      },
+      {
+        "key": "city",
+        "label": "city",
+        "value": "海淀区"
+      },
+      {
+        "key": "tuition",
+        "label": "tuition",
+        "value": 5000.0
+      },
+      {
+        "key": "rank_2024",
+        "label": "rank_2024",
+        "value": 53
+      },
+      {
+        "key": "group_min_rank",
+        "label": "group_min_rank",
+        "value": 53
+      },
+      {
+        "key": "safety_margin",
+        "label": "safety_margin",
+        "value": "-99.9%"
+      }
+    ],
+    "matched_filters": [
+      {
+        "id": "e_source_province",
+        "field": "生源地",
+        "operator": "eq",
+        "value": "广东",
+        "matched": true,
+        "text": "生源地 等于 广东"
+      },
+      {
+        "id": "e_subject_type",
+        "field": "科类",
+        "operator": "eq",
+        "value": "物理",
+        "matched": true,
+        "text": "科类 等于 物理"
+      }
+    ],
+    "raw": {
+      "excel_row_number": 89,
+      "ID": 86,
+      "年份": 2024,
+      "批次": "本科批",
+      "院校代码": "10003",
+      "院校名称": "清华大学",
+      "院校专业组代码": "10003202",
+      "专业组名称": "202组",
+      "科类": "物理",
+      "选科要求": "不限",
+      "专业代码": "046",
+      "专业名称": "建筑类",
+      "专业全称": "建筑类(含：建筑学、城乡规划、风景园林，北京市)",
+      "所在省": "北京",
+      "城市": "海淀区",
+      "学费": 5000.0,
+      "专业组最低位次1": 53,
+      "最低位次1": null,
+      "院校标签": "985/211/双一流/国重点/保研资格",
+      "院校排名": "1",
+      "ranking_key": -59947,
+      "safety_margin_pct": -0.9991,
+      "cooperation_filter_status": "not_executed_missing_cooperation_type_field",
+      "中外合作筛选状态": "未执行：缺少合作办学类型字段"
+    }
+  },
+  {
+    "item_id": "result_002",
+    "title": "清华大学",
+    "subtitle": "理科试验班类(经济、金融与管理，含：信息管理与信息系统、金融学(经济金融国际班)，北京市)",
+    "primary_attributes": [
+      {
+        "key": "year",
+        "label": "year",
+        "value": 2024
+      },
+      {
+        "key": "batch",
+        "label": "batch",
+        "value": "本科批"
+      },
+      {
+        "key": "university_code",
+        "label": "university_code",
+        "value": "10003"
+      },
+      {
+        "key": "university_name",
+        "label": "university_name",
+        "value": "清华大学"
+      }
+    ],
+    "secondary_attributes": [
+      {
+        "key": "group_code",
+        "label": "group_code",
+        "value": "10003202"
+      },
+      {
+        "key": "group_name",
+        "label": "group_name",
+        "value": "202组"
+      },
+      {
+        "key": "major_code",
+        "label": "major_code",
+        "value": "055"
+      },
+      {
+        "key": "major_name",
+        "label": "major_name",
+        "value": "理科试验班类"
+      },
+      {
+        "key": "full_major_name",
+        "label": "full_major_name",
+        "value": "理科试验班类(经济、金融与管理，含：信息管理与信息系统、金融学(经济金融国际班)，北京市)"
+      },
+      {
+        "key": "subject_requirement",
+        "label": "subject_requirement",
+        "value": "不限"
+      },
+      {
+        "key": "province",
+        "label": "province",
+        "value": "北京"
+      },
+      {
+        "key": "city",
+        "label": "city",
+        "value": "海淀区"
+      },
+      {
+        "key": "tuition",
+        "label": "tuition",
+        "value": 5000.0
+      },
+      {
+        "key": "rank_2024",
+        "label": "rank_2024",
+        "value": 53
+      },
+      {
+        "key": "group_min_rank",
+        "label": "group_min_rank",
+        "value": 53
+      },
+      {
+        "key": "safety_margin",
+        "label": "safety_margin",
+        "value": "-99.9%"
+      }
+    ],
+    "matched_filters": [
+      {
+        "id": "e_source_province",
+        "field": "生源地",
+        "operator": "eq",
+        "value": "广东",
+        "matched": true,
+        "text": "生源地 等于 广东"
+      },
+      {
+        "id": "e_subject_type",
+        "field": "科类",
+        "operator": "eq",
+        "value": "物理",
+        "matched": true,
+        "text": "科类 等于 物理"
+      }
+    ],
+    "raw": {
+      "excel_row_number": 90,
+      "ID": 87,
+      "年份": 2024,
+      "批次": "本科批",
+      "院校代码": "10003",
+      "院校名称": "清华大学",
+      "院校专业组代码": "10003202",
+      "专业组名称": "202组",
+      "科类": "物理",
+      "选科要求": "不限",
+      "专业代码": "055",
+      "专业名称": "理科试验班类",
+      "专业全称": "理科试验班类(经济、金融与管理，含：信息管理与信息系统、金融学(经济金融国际班)，北京市)",
+      "所在省": "北京",
+      "城市": "海淀区",
+      "学费": 5000.0,
+      "专业组最低位次1": 53,
+      "最低位次1": null,
+      "院校标签": "985/211/双一流/国重点/保研资格",
+      "院校排名": "1",
+      "ranking_key": -59947,
+      "safety_margin_pct": -0.9991,
+      "cooperation_filter_status": "not_executed_missing_cooperation_type_field",
+      "中外合作筛选状态": "未执行：缺少合作办学类型字段"
+    }
+  },
+  {
+    "item_id": "result_003",
+    "title": "清华大学",
+    "subtitle": "法学类(含：法学、法学(国际班)，北京市)",
+    "primary_attributes": [
+      {
+        "key": "year",
+        "label": "year",
+        "value": 2024
+      },
+      {
+        "key": "batch",
+        "label": "batch",
+        "value": "本科批"
+      },
+      {
+        "key": "university_code",
+        "label": "university_code",
+        "value": "10003"
+      },
+      {
+        "key": "university_name",
+        "label": "university_name",
+        "value": "清华大学"
+      }
+    ],
+    "secondary_attributes": [
+      {
+        "key": "group_code",
+        "label": "group_code",
+        "value": "10003202"
+      },
+      {
+        "key": "group_name",
+        "label": "group_name",
+        "value": "202组"
+      },
+      {
+        "key": "major_code",
+        "label": "major_code",
+        "value": "056"
+      },
+      {
+        "key": "major_name",
+        "label": "major_name",
+        "value": "法学类"
+      },
+      {
+        "key": "full_major_name",
+        "label": "full_major_name",
+        "value": "法学类(含：法学、法学(国际班)，北京市)"
+      },
+      {
+        "key": "subject_requirement",
+        "label": "subject_requirement",
+        "value": "不限"
+      },
+      {
+        "key": "province",
+        "label": "province",
+        "value": "北京"
+      },
+      {
+        "key": "city",
+        "label": "city",
+        "value": "海淀区"
+      },
+      {
+        "key": "tuition",
+        "label": "tuition",
+        "value": 5000.0
+      },
+      {
+        "key": "rank_2024",
+        "label": "rank_2024",
+        "value": 53
+      },
+      {
+        "key": "group_min_rank",
+        "label": "group_min_rank",
+        "value": 53
+      },
+      {
+        "key": "safety_margin",
+        "label": "safety_margin",
+        "value": "-99.9%"
+      }
+    ],
+    "matched_filters": [
+      {
+        "id": "e_source_province",
+        "field": "生源地",
+        "operator": "eq",
+        "value": "广东",
+        "matched": true,
+        "text": "生源地 等于 广东"
+      },
+      {
+        "id": "e_subject_type",
+        "field": "科类",
+        "operator": "eq",
+        "value": "物理",
+        "matched": true,
+        "text": "科类 等于 物理"
+      }
+    ],
+    "raw": {
+      "excel_row_number": 91,
+      "ID": 88,
+      "年份": 2024,
+      "批次": "本科批",
+      "院校代码": "10003",
+      "院校名称": "清华大学",
+      "院校专业组代码": "10003202",
+      "专业组名称": "202组",
+      "科类": "物理",
+      "选科要求": "不限",
+      "专业代码": "056",
+      "专业名称": "法学类",
+      "专业全称": "法学类(含：法学、法学(国际班)，北京市)",
+      "所在省": "北京",
+      "城市": "海淀区",
+      "学费": 5000.0,
+      "专业组最低位次1": 53,
+      "最低位次1": null,
+      "院校标签": "985/211/双一流/国重点/保研资格",
+      "院校排名": "1",
+      "ranking_key": -59947,
+      "safety_margin_pct": -0.9991,
+      "cooperation_filter_status": "not_executed_missing_cooperation_type_field",
+      "中外合作筛选状态": "未执行：缺少合作办学类型字段"
+    }
+  },
+  {
+    "item_id": "result_004",
+    "title": "清华大学",
+    "subtitle": "社会科学试验班(至善书院，含：经济学、社会学，北京市)",
+    "primary_attributes": [
+      {
+        "key": "year",
+        "label": "year",
+        "value": 2024
+      },
+      {
+        "key": "batch",
+        "label": "batch",
+        "value": "本科批"
+      },
+      {
+        "key": "university_code",
+        "label": "university_code",
+        "value": "10003"
+      },
+      {
+        "key": "university_name",
+        "label": "university_name",
+        "value": "清华大学"
+      }
+    ],
+    "secondary_attributes": [
+      {
+        "key": "group_code",
+        "label": "group_code",
+        "value": "10003202"
+      },
+      {
+        "key": "group_name",
+        "label": "group_name",
+        "value": "202组"
+      },
+      {
+        "key": "major_code",
+        "label": "major_code",
+        "value": "060"
+      },
+      {
+        "key": "major_name",
+        "label": "major_name",
+        "value": "社会科学试验班"
+      },
+      {
+        "key": "full_major_name",
+        "label": "full_major_name",
+        "value": "社会科学试验班(至善书院，含：经济学、社会学，北京市)"
+      },
+      {
+        "key": "subject_requirement",
+        "label": "subject_requirement",
+        "value": "不限"
+      },
+      {
+        "key": "province",
+        "label": "province",
+        "value": "北京"
+      },
+      {
+        "key": "city",
+        "label": "city",
+        "value": "海淀区"
+      },
+      {
+        "key": "tuition",
+        "label": "tuition",
+        "value": 5000.0
+      },
+      {
+        "key": "rank_2024",
+        "label": "rank_2024",
+        "value": 53
+      },
+      {
+        "key": "group_min_rank",
+        "label": "group_min_rank",
+        "value": 53
+      },
+      {
+        "key": "safety_margin",
+        "label": "safety_margin",
+        "value": "-99.9%"
+      }
+    ],
+    "matched_filters": [
+      {
+        "id": "e_source_province",
+        "field": "生源地",
+        "operator": "eq",
+        "value": "广东",
+        "matched": true,
+        "text": "生源地 等于 广东"
+      },
+      {
+        "id": "e_subject_type",
+        "field": "科类",
+        "operator": "eq",
+        "value": "物理",
+        "matched": true,
+        "text": "科类 等于 物理"
+      }
+    ],
+    "raw": {
+      "excel_row_number": 92,
+      "ID": 89,
+      "年份": 2024,
+      "批次": "本科批",
+      "院校代码": "10003",
+      "院校名称": "清华大学",
+      "院校专业组代码": "10003202",
+      "专业组名称": "202组",
+      "科类": "物理",
+      "选科要求": "不限",
+      "专业代码": "060",
+      "专业名称": "社会科学试验班",
+      "专业全称": "社会科学试验班(至善书院，含：经济学、社会学，北京市)",
+      "所在省": "北京",
+      "城市": "海淀区",
+      "学费": 5000.0,
+      "专业组最低位次1": 53,
+      "最低位次1": null,
+      "院校标签": "985/211/双一流/国重点/保研资格",
+      "院校排名": "1",
+      "ranking_key": -59947,
+      "safety_margin_pct": -0.9991,
+      "cooperation_filter_status": "not_executed_missing_cooperation_type_field",
+      "中外合作筛选状态": "未执行：缺少合作办学类型字段"
+    }
+  },
+  {
+    "item_id": "result_005",
+    "title": "清华大学",
+    "subtitle": "理科试验班类(新雅书院，含：工程管理(等全校各专业)，北京市)",
+    "primary_attributes": [
+      {
+        "key": "year",
+        "label": "year",
+        "value": 2024
+      },
+      {
+        "key": "batch",
+        "label": "batch",
+        "value": "本科批"
+      },
+      {
+        "key": "university_code",
+        "label": "university_code",
+        "value": "10003"
+      },
+      {
+        "key": "university_name",
+        "label": "university_name",
+        "value": "清华大学"
+      }
+    ],
+    "secondary_attributes": [
+      {
+        "key": "group_code",
+        "label": "group_code",
+        "value": "10003202"
+      },
+      {
+        "key": "group_name",
+        "label": "group_name",
+        "value": "202组"
+      },
+      {
+        "key": "major_code",
+        "label": "major_code",
+        "value": "061"
+      },
+      {
+        "key": "major_name",
+        "label": "major_name",
+        "value": "理科试验班类"
+      },
+      {
+        "key": "full_major_name",
+        "label": "full_major_name",
+        "value": "理科试验班类(新雅书院，含：工程管理(等全校各专业)，北京市)"
+      },
+      {
+        "key": "subject_requirement",
+        "label": "subject_requirement",
+        "value": "不限"
+      },
+      {
+        "key": "province",
+        "label": "province",
+        "value": "北京"
+      },
+      {
+        "key": "city",
+        "label": "city",
+        "value": "海淀区"
+      },
+      {
+        "key": "tuition",
+        "label": "tuition",
+        "value": 5000.0
+      },
+      {
+        "key": "rank_2024",
+        "label": "rank_2024",
+        "value": 53
+      },
+      {
+        "key": "group_min_rank",
+        "label": "group_min_rank",
+        "value": 53
+      },
+      {
+        "key": "safety_margin",
+        "label": "safety_margin",
+        "value": "-99.9%"
+      }
+    ],
+    "matched_filters": [
+      {
+        "id": "e_source_province",
+        "field": "生源地",
+        "operator": "eq",
+        "value": "广东",
+        "matched": true,
+        "text": "生源地 等于 广东"
+      },
+      {
+        "id": "e_subject_type",
+        "field": "科类",
+        "operator": "eq",
+        "value": "物理",
+        "matched": true,
+        "text": "科类 等于 物理"
+      }
+    ],
+    "raw": {
+      "excel_row_number": 93,
+      "ID": 90,
+      "年份": 2024,
+      "批次": "本科批",
+      "院校代码": "10003",
+      "院校名称": "清华大学",
+      "院校专业组代码": "10003202",
+      "专业组名称": "202组",
+      "科类": "物理",
+      "选科要求": "不限",
+      "专业代码": "061",
+      "专业名称": "理科试验班类",
+      "专业全称": "理科试验班类(新雅书院，含：工程管理(等全校各专业)，北京市)",
+      "所在省": "北京",
+      "城市": "海淀区",
+      "学费": 5000.0,
+      "专业组最低位次1": 53,
+      "最低位次1": null,
+      "院校标签": "985/211/双一流/国重点/保研资格",
+      "院校排名": "1",
+      "ranking_key": -59947,
+      "safety_margin_pct": -0.9991,
+      "cooperation_filter_status": "not_executed_missing_cooperation_type_field",
+      "中外合作筛选状态": "未执行：缺少合作办学类型字段"
+    }
+  }
+]
+```
+### top_results
+```json
+[
+  {
+    "id": "result_001",
+    "trace": [
+      {
+        "status": "pass",
+        "text": "生源地 等于 广东"
+      },
+      {
+        "status": "pass",
+        "text": "科类 等于 物理"
+      }
+    ],
+    "year": 2024,
+    "batch": "本科批",
+    "university_code": "10003",
+    "university_name": "清华大学",
+    "group_code": "10003202",
+    "group_name": "202组",
+    "major_code": "046",
+    "major_name": "建筑类",
+    "full_major_name": "建筑类(含：建筑学、城乡规划、风景园林，北京市)",
+    "subject_requirement": "不限",
+    "province": "北京",
+    "city": "海淀区",
+    "tuition": 5000.0,
+    "rank_2024": 53,
+    "major_rank_2024": null,
+    "plan_count": null,
+    "group_min_rank": 53,
+    "major_min_rank": null,
+    "safety_margin": "-99.9%"
+  },
+  {
+    "id": "result_002",
+    "trace": [
+      {
+        "status": "pass",
+        "text": "生源地 等于 广东"
+      },
+      {
+        "status": "pass",
+        "text": "科类 等于 物理"
+      }
+    ],
+    "year": 2024,
+    "batch": "本科批",
+    "university_code": "10003",
+    "university_name": "清华大学",
+    "group_code": "10003202",
+    "group_name": "202组",
+    "major_code": "055",
+    "major_name": "理科试验班类",
+    "full_major_name": "理科试验班类(经济、金融与管理，含：信息管理与信息系统、金融学(经济金融国际班)，北京市)",
+    "subject_requirement": "不限",
+    "province": "北京",
+    "city": "海淀区",
+    "tuition": 5000.0,
+    "rank_2024": 53,
+    "major_rank_2024": null,
+    "plan_count": null,
+    "group_min_rank": 53,
+    "major_min_rank": null,
+    "safety_margin": "-99.9%"
+  },
+  {
+    "id": "result_003",
+    "trace": [
+      {
+        "status": "pass",
+        "text": "生源地 等于 广东"
+      },
+      {
+        "status": "pass",
+        "text": "科类 等于 物理"
+      }
+    ],
+    "year": 2024,
+    "batch": "本科批",
+    "university_code": "10003",
+    "university_name": "清华大学",
+    "group_code": "10003202",
+    "group_name": "202组",
+    "major_code": "056",
+    "major_name": "法学类",
+    "full_major_name": "法学类(含：法学、法学(国际班)，北京市)",
+    "subject_requirement": "不限",
+    "province": "北京",
+    "city": "海淀区",
+    "tuition": 5000.0,
+    "rank_2024": 53,
+    "major_rank_2024": null,
+    "plan_count": null,
+    "group_min_rank": 53,
+    "major_min_rank": null,
+    "safety_margin": "-99.9%"
+  },
+  {
+    "id": "result_004",
+    "trace": [
+      {
+        "status": "pass",
+        "text": "生源地 等于 广东"
+      },
+      {
+        "status": "pass",
+        "text": "科类 等于 物理"
+      }
+    ],
+    "year": 2024,
+    "batch": "本科批",
+    "university_code": "10003",
+    "university_name": "清华大学",
+    "group_code": "10003202",
+    "group_name": "202组",
+    "major_code": "060",
+    "major_name": "社会科学试验班",
+    "full_major_name": "社会科学试验班(至善书院，含：经济学、社会学，北京市)",
+    "subject_requirement": "不限",
+    "province": "北京",
+    "city": "海淀区",
+    "tuition": 5000.0,
+    "rank_2024": 53,
+    "major_rank_2024": null,
+    "plan_count": null,
+    "group_min_rank": 53,
+    "major_min_rank": null,
+    "safety_margin": "-99.9%"
+  },
+  {
+    "id": "result_005",
+    "trace": [
+      {
+        "status": "pass",
+        "text": "生源地 等于 广东"
+      },
+      {
+        "status": "pass",
+        "text": "科类 等于 物理"
+      }
+    ],
+    "year": 2024,
+    "batch": "本科批",
+    "university_code": "10003",
+    "university_name": "清华大学",
+    "group_code": "10003202",
+    "group_name": "202组",
+    "major_code": "061",
+    "major_name": "理科试验班类",
+    "full_major_name": "理科试验班类(新雅书院，含：工程管理(等全校各专业)，北京市)",
+    "subject_requirement": "不限",
+    "province": "北京",
+    "city": "海淀区",
+    "tuition": 5000.0,
+    "rank_2024": 53,
+    "major_rank_2024": null,
+    "plan_count": null,
+    "group_min_rank": 53,
+    "major_min_rank": null,
+    "safety_margin": "-99.9%"
+  }
+]
+```
+### executed_filters
+```json
+[
+  {
+    "id": "e_source_province",
+    "label": "生源地 等于 广东",
+    "field": "生源地",
+    "operator": "eq",
+    "value": "广东",
+    "source_span": "广东"
+  },
+  {
+    "id": "e_subject_type",
+    "label": "科类 等于 物理",
+    "field": "科类",
+    "operator": "eq",
+    "value": "物理",
+    "source_span": "物理"
+  }
+]
+```
+### candidates_to_confirm
+```json
+[]
+```
+### unexecuted_preferences
+```json
+[]
+```
+### SQL / params
+```json
+{
+  "sql": "WITH source AS (\n  SELECT row_number() OVER () AS \"__source_row_number\", *\n  FROM \"admissions\"\n),\nfiltered AS (\n  SELECT\n    source.*,\n    TRY_CAST(regexp_extract(REPLACE(CAST(\"专业组最低位次1\" AS VARCHAR), ',', ''), '\\d+(?:\\.\\d+)?') AS DOUBLE) AS \"__group_rank_num\",\n    TRY_CAST(regexp_extract(REPLACE(CAST(\"学费\" AS VARCHAR), ',', ''), '\\d+(?:\\.\\d+)?') AS DOUBLE) AS \"__tuition_num\",\n    TRY_CAST(regexp_extract(REPLACE(CAST(\"院校排名\" AS VARCHAR), ',', ''), '\\d+(?:\\.\\d+)?') AS DOUBLE) AS \"__school_rank_num\",\n    TRY_CAST(regexp_extract(REPLACE(CAST(\"ID\" AS VARCHAR), ',', ''), '\\d+(?:\\.\\d+)?') AS DOUBLE) AS \"__id_num\"\n  FROM source\n  WHERE CAST(\"生源地\" AS VARCHAR) = ? AND CAST(\"科类\" AS VARCHAR) = ?\n),\nprojectable AS (\n  SELECT *\n  FROM filtered\n  WHERE TRUE\n    AND \"__group_rank_num\" IS NOT NULL\n    AND \"__tuition_num\" IS NOT NULL\n)\nSELECT *\nFROM projectable\nORDER BY\n  \"__group_rank_num\" ASC NULLS LAST,\n  \"__school_rank_num\" ASC NULLS LAST,\n  \"__id_num\" ASC NULLS LAST",
+  "params": [
+    "广东",
+    "物理"
+  ]
+}
+```
+### EvidencePack
+```json
+{
+  "user_request": "广东物理，排位60000，不想太贵。；偏好信息：偏好描述：广东物理，排位60000，不想太贵。",
+  "executed_rules": [
+    {
+      "rule_id": "e_source_province",
+      "derived_from": "d_source_province",
+      "field": "生源地",
+      "operator": "eq",
+      "value": "广东",
+      "description": "生源地 等于 广东"
+    },
+    {
+      "rule_id": "e_subject_type",
+      "derived_from": "d_subject_type",
+      "field": "科类",
+      "operator": "eq",
+      "value": "物理",
+      "description": "科类 等于 物理"
+    }
+  ],
+  "candidate_confirmations": [],
+  "not_executed_preferences": [],
+  "result_count": 19473,
+  "top_k_results": [
+    {
+      "rank": 1,
+      "院校名称": "清华大学",
+      "院校专业组代码": "10003202",
+      "专业代码": "046",
+      "专业名称": "建筑类",
+      "专业全称": "建筑类(含：建筑学、城乡规划、风景园林，北京市)",
+      "选科要求": "不限",
+      "城市": "海淀区",
+      "学费": 5000.0,
+      "专业组最低位次": 53,
+      "safety_margin": "-99.91%",
+      "trace": [
+        {
+          "rule_id": "e_source_province",
+          "status": "pass",
+          "reason": "生源地 等于 广东"
+        },
+        {
+          "rule_id": "e_subject_type",
+          "status": "pass",
+          "reason": "科类 等于 物理"
+        }
+      ]
+    },
+    {
+      "rank": 2,
+      "院校名称": "清华大学",
+      "院校专业组代码": "10003202",
+      "专业代码": "055",
+      "专业名称": "理科试验班类",
+      "专业全称": "理科试验班类(经济、金融与管理，含：信息管理与信息系统、金融学(经济金融国际班)，北京市)",
+      "选科要求": "不限",
+      "城市": "海淀区",
+      "学费": 5000.0,
+      "专业组最低位次": 53,
+      "safety_margin": "-99.91%",
+      "trace": [
+        {
+          "rule_id": "e_source_province",
+          "status": "pass",
+          "reason": "生源地 等于 广东"
+        },
+        {
+          "rule_id": "e_subject_type",
+          "status": "pass",
+          "reason": "科类 等于 物理"
+        }
+      ]
+    },
+    {
+      "rank": 3,
+      "院校名称": "清华大学",
+      "院校专业组代码": "10003202",
+      "专业代码": "056",
+      "专业名称": "法学类",
+      "专业全称": "法学类(含：法学、法学(国际班)，北京市)",
+      "选科要求": "不限",
+      "城市": "海淀区",
+      "学费": 5000.0,
+      "专业组最低位次": 53,
+      "safety_margin": "-99.91%",
+      "trace": [
+        {
+          "rule_id": "e_source_province",
+          "status": "pass",
+          "reason": "生源地 等于 广东"
+        },
+        {
+          "rule_id": "e_subject_type",
+          "status": "pass",
+          "reason": "科类 等于 物理"
+        }
+      ]
+    },
+    {
+      "rank": 4,
+      "院校名称": "清华大学",
+      "院校专业组代码": "10003202",
+      "专业代码": "060",
+      "专业名称": "社会科学试验班",
+      "专业全称": "社会科学试验班(至善书院，含：经济学、社会学，北京市)",
+      "选科要求": "不限",
+      "城市": "海淀区",
+      "学费": 5000.0,
+      "专业组最低位次": 53,
+      "safety_margin": "-99.91%",
+      "trace": [
+        {
+          "rule_id": "e_source_province",
+          "status": "pass",
+          "reason": "生源地 等于 广东"
+        },
+        {
+          "rule_id": "e_subject_type",
+          "status": "pass",
+          "reason": "科类 等于 物理"
+        }
+      ]
+    },
+    {
+      "rank": 5,
+      "院校名称": "清华大学",
+      "院校专业组代码": "10003202",
+      "专业代码": "061",
+      "专业名称": "理科试验班类",
+      "专业全称": "理科试验班类(新雅书院，含：工程管理(等全校各专业)，北京市)",
+      "选科要求": "不限",
+      "城市": "海淀区",
+      "学费": 5000.0,
+      "专业组最低位次": 53,
+      "safety_margin": "-99.91%",
+      "trace": [
+        {
+          "rule_id": "e_source_province",
+          "status": "pass",
+          "reason": "生源地 等于 广东"
+        },
+        {
+          "rule_id": "e_subject_type",
+          "status": "pass",
+          "reason": "科类 等于 物理"
+        }
+      ]
+    }
+  ],
+  "trace_summary": {
+    "executed_rule_ids": [
+      "e_source_province",
+      "e_subject_type"
+    ],
+    "not_executed_preference_count": 0,
+    "traced_result_count": 19473,
+    "top_k": 5,
+    "top_k_trace_status_counts": {
+      "pass": 10
+    },
+    "safety_warnings": [
+      "答案只能使用 evidence_pack 中的已验证规则、确认记录、结果摘要和 trace。",
+      "候选偏好在确认或模拟确认之前不得执行。"
+    ]
+  },
+  "extracted_preferences": [
+    {
+      "id": "pref_origin",
+      "slot": "生源地",
+      "value": "广东",
+      "source_span": "广东",
+      "status": "已对齐字段"
+    },
+    {
+      "id": "pref_track",
+      "slot": "科类",
+      "value": "物理",
+      "source_span": "物理",
+      "status": "已对齐字段"
+    },
+    {
+      "id": "pref_rank",
+      "slot": "排位",
+      "value": 60000,
+      "source_span": "排位60000",
+      "status": "已对齐字段"
+    },
+    {
+      "id": "pref_expensive",
+      "slot": "太贵",
+      "value": "太贵",
+      "source_span": "太贵",
+      "status": "待确认"
+    }
+  ],
+  "attribute_grounding_summary": {
+    "total_attributes": 4,
+    "status_counts": {
+      "schema_grounded": 2,
+      "context_only": 1,
+      "confirmable": 1
+    },
+    "value_index_status_counts": {
+      "matched": 2,
+      "outside_numeric_profile": 1
+    },
+    "unsafe_ungrounded_executable_attributes": 0
+  },
+  "proposed_rule_audit": [],
+  "execution_summary": {
+    "executor": "duckdb",
+    "sql": "WITH source AS (\n  SELECT row_number() OVER () AS \"__source_row_number\", *\n  FROM \"admissions\"\n),\nfiltered AS (\n  SELECT\n    source.*,\n    TRY_CAST(regexp_extract(REPLACE(CAST(\"专业组最低位次1\" AS VARCHAR), ',', ''), '\\d+(?:\\.\\d+)?') AS DOUBLE) AS \"__group_rank_num\",\n    TRY_CAST(regexp_extract(REPLACE(CAST(\"学费\" AS VARCHAR), ',', ''), '\\d+(?:\\.\\d+)?') AS DOUBLE) AS \"__tuition_num\",\n    TRY_CAST(regexp_extract(REPLACE(CAST(\"院校排名\" AS VARCHAR), ',', ''), '\\d+(?:\\.\\d+)?') AS DOUBLE) AS \"__school_rank_num\",\n    TRY_CAST(regexp_extract(REPLACE(CAST(\"ID\" AS VARCHAR), ',', ''), '\\d+(?:\\.\\d+)?') AS DOUBLE) AS \"__id_num\"\n  FROM source\n  WHERE CAST(\"生源地\" AS VARCHAR) = ? AND CAST(\"科类\" AS VARCHAR) = ?\n),\nprojectable AS (\n  SELECT *\n  FROM filtered\n  WHERE TRUE\n    AND \"__group_rank_num\" IS NOT NULL\n    AND \"__tuition_num\" IS NOT NULL\n)\nSELECT *\nFROM projectable\nORDER BY\n  \"__group_rank_num\" ASC NULLS LAST,\n  \"__school_rank_num\" ASC NULLS LAST,\n  \"__id_num\" ASC NULLS LAST",
+    "params": [
+      "广东",
+      "物理"
+    ],
+    "input_row_count": 30855,
+    "filtered_row_count": 19473,
+    "sort_key": [
+      "专业组最低位次1 ASC NULLS LAST",
+      "院校排名 ASC NULLS LAST",
+      "ID ASC NULLS LAST"
+    ],
+    "top_k": 5,
+    "hard_rule_ids": [
+      "e_source_province",
+      "e_subject_type"
+    ],
+    "skipped_soft_rule_ids": []
+  },
+  "attribute_explanations": [
+    {
+      "source_text": "广东",
+      "slot_path": "user_context.source_province",
+      "field": "生源地",
+      "value": "广东",
+      "match_type": "exact_match",
+      "action": "executed",
+      "matched_values": [
+        "广东"
+      ],
+      "reason": "已匹配字段“生源地”，并已进入 hard filter。"
+    },
+    {
+      "source_text": "物理",
+      "slot_path": "user_context.subject_type",
+      "field": "科类",
+      "value": "物理",
+      "match_type": "exact_match",
+      "action": "executed",
+      "matched_values": [
+        "物理"
+      ],
+      "reason": "已匹配字段“科类”，并已进入 hard filter。"
+    },
+    {
+      "source_text": "太贵",
+      "slot_path": "preferences.tuition_preference_raw",
+      "field": "学费",
+      "value": "太贵",
+      "match_type": "partial_match",
+      "action": "needs_confirmation",
+      "matched_values": [],
+      "reason": "该属性有对应字段，但语义或边界需要确认。未进入 hard filter。"
+    }
+  ],
+  "confirmed_rules": [],
+  "confirmation_source": [],
+  "executed_after_confirmation": [],
+  "unconfirmed_candidates": [],
+  "no_schema_field_preferences": [],
+  "rejected_confirmations": []
+}
+```
+### answer
+
+根据已验证规则生成结果：
+
+用户需求：广东物理，排位60000，不想太贵。；偏好信息：偏好描述：广东物理，排位60000，不想太贵。
+共筛选到 19473 条符合已执行规则的结果。
+
+抽取与结构化结果：
+- 生源地：广东；状态：已对齐字段；来源：广东
+- 科类：物理；状态：已对齐字段；来源：物理
+- 排位：60000；状态：已对齐字段；来源：排位60000
+- 太贵：太贵；状态：待确认；来源：太贵
+
+字段值审计解释：
+- [已执行] 广东 -> 生源地：exact_match；索引命中：广东；已匹配字段“生源地”，并已进入 hard filter。
+- [已执行] 物理 -> 科类：exact_match；索引命中：物理；已匹配字段“科类”，并已进入 hard filter。
+- [需确认] 太贵 -> 学费：partial_match；该属性有对应字段，但语义或边界需要确认。未进入 hard filter。
+
+已执行规则：
+- e_source_province：生源地 等于 广东
+- e_subject_type：科类 等于 物理
+
+候选偏好确认记录：
+
+未执行但已保留的偏好：
+- 无。
+
+前 5 条结果：
+- 1. 清华大学；专业组代码：10003202；专业代码：046；专业名称：建筑类；专业全称：建筑类(含：建筑学、城乡规划、风景园林，北京市)；选科要求：不限；城市：海淀区；学费：5000 元/年；专业组最低位次：53。
+- 2. 清华大学；专业组代码：10003202；专业代码：055；专业名称：理科试验班类；专业全称：理科试验班类(经济、金融与管理，含：信息管理与信息系统、金融学(经济金融国际班)，北京市)；选科要求：不限；城市：海淀区；学费：5000 元/年；专业组最低位次：53。
+- 3. 清华大学；专业组代码：10003202；专业代码：056；专业名称：法学类；专业全称：法学类(含：法学、法学(国际班)，北京市)；选科要求：不限；城市：海淀区；学费：5000 元/年；专业组最低位次：53。
+- 4. 清华大学；专业组代码：10003202；专业代码：060；专业名称：社会科学试验班；专业全称：社会科学试验班(至善书院，含：经济学、社会学，北京市)；选科要求：不限；城市：海淀区；学费：5000 元/年；专业组最低位次：53。
+- 5. 清华大学；专业组代码：10003202；专业代码：061；专业名称：理科试验班类；专业全称：理科试验班类(新雅书院，含：工程管理(等全校各专业)，北京市)；选科要求：不限；城市：海淀区；学费：5000 元/年；专业组最低位次：53。
+
+安全说明：
+- 答案只能使用 证据包 中的已验证规则、确认记录、结果摘要和 trace。
+- 候选偏好在确认或模拟确认之前不得执行。
+
+## admissions_09 `通过`
+
+- domain: `admissions`
+- query: 广东物理，排位32000，想冲一冲计算机。
+- status: `needs_confirmation`
+- pass/fail：`通过`
+
+### items
+```json
+[
+  {
+    "item_id": "result_001",
+    "title": "北京大学",
+    "subtitle": "计算机类(含：计算机科学与技术、智能科学与技术，校本部)",
+    "primary_attributes": [
+      {
+        "key": "year",
+        "label": "year",
+        "value": 2024
+      },
+      {
+        "key": "batch",
+        "label": "batch",
+        "value": "本科批"
+      },
+      {
+        "key": "university_code",
+        "label": "university_code",
+        "value": "10001"
+      },
+      {
+        "key": "university_name",
+        "label": "university_name",
+        "value": "北京大学"
+      }
+    ],
+    "secondary_attributes": [
+      {
+        "key": "group_code",
+        "label": "group_code",
+        "value": "10001203"
+      },
+      {
+        "key": "group_name",
+        "label": "group_name",
+        "value": "203组"
+      },
+      {
+        "key": "major_code",
+        "label": "major_code",
+        "value": "111"
+      },
+      {
+        "key": "major_name",
+        "label": "major_name",
+        "value": "计算机类"
+      },
+      {
+        "key": "full_major_name",
+        "label": "full_major_name",
+        "value": "计算机类(含：计算机科学与技术、智能科学与技术，校本部)"
+      },
+      {
+        "key": "subject_requirement",
+        "label": "subject_requirement",
+        "value": "化学"
+      },
+      {
+        "key": "province",
+        "label": "province",
+        "value": "北京"
+      },
+      {
+        "key": "city",
+        "label": "city",
+        "value": "海淀区"
+      },
+      {
+        "key": "tuition",
+        "label": "tuition",
+        "value": 5300.0
+      },
+      {
+        "key": "rank_2024",
+        "label": "rank_2024",
+        "value": 85
+      },
+      {
+        "key": "group_min_rank",
+        "label": "group_min_rank",
+        "value": 85
+      },
+      {
+        "key": "safety_margin",
+        "label": "safety_margin",
+        "value": "-99.7%"
+      }
+    ],
+    "matched_filters": [
+      {
+        "id": "e_source_province",
+        "field": "生源地",
+        "operator": "eq",
+        "value": "广东",
+        "matched": true,
+        "text": "生源地 等于 广东"
+      },
+      {
+        "id": "e_subject_type",
+        "field": "科类",
+        "operator": "eq",
+        "value": "物理",
+        "matched": true,
+        "text": "科类 等于 物理"
+      },
+      {
+        "id": "e_major_keyword",
+        "field": "专业名称",
+        "operator": "contains_any",
+        "value": [
+          "计算机"
+        ],
+        "matched": true,
+        "text": "专业名称 包含任一：计算机；命中 计算机类"
+      }
+    ],
+    "raw": {
+      "excel_row_number": 37,
+      "ID": 34,
+      "年份": 2024,
+      "批次": "本科批",
+      "院校代码": "10001",
+      "院校名称": "北京大学",
+      "院校专业组代码": "10001203",
+      "专业组名称": "203组",
+      "科类": "物理",
+      "选科要求": "化学",
+      "专业代码": "111",
+      "专业名称": "计算机类",
+      "专业全称": "计算机类(含：计算机科学与技术、智能科学与技术，校本部)",
+      "所在省": "北京",
+      "城市": "海淀区",
+      "学费": 5300.0,
+      "专业组最低位次1": 85,
+      "最低位次1": null,
+      "院校标签": "985/211/双一流/国重点/保研资格",
+      "院校排名": "2",
+      "ranking_key": -31915,
+      "safety_margin_pct": -0.9973,
+      "cooperation_filter_status": "not_executed_missing_cooperation_type_field",
+      "中外合作筛选状态": "未执行：缺少合作办学类型字段"
+    }
+  },
+  {
+    "item_id": "result_002",
+    "title": "清华大学",
+    "subtitle": "计算机类(含：计算机科学与技术、计算机科学与技术(计算机科学实验班)，北京市)",
+    "primary_attributes": [
+      {
+        "key": "year",
+        "label": "year",
+        "value": 2024
+      },
+      {
+        "key": "batch",
+        "label": "batch",
+        "value": "本科批"
+      },
+      {
+        "key": "university_code",
+        "label": "university_code",
+        "value": "10003"
+      },
+      {
+        "key": "university_name",
+        "label": "university_name",
+        "value": "清华大学"
+      }
+    ],
+    "secondary_attributes": [
+      {
+        "key": "group_code",
+        "label": "group_code",
+        "value": "10003203"
+      },
+      {
+        "key": "group_name",
+        "label": "group_name",
+        "value": "203组"
+      },
+      {
+        "key": "major_code",
+        "label": "major_code",
+        "value": "051"
+      },
+      {
+        "key": "major_name",
+        "label": "major_name",
+        "value": "计算机类"
+      },
+      {
+        "key": "full_major_name",
+        "label": "full_major_name",
+        "value": "计算机类(含：计算机科学与技术、计算机科学与技术(计算机科学实验班)，北京市)"
+      },
+      {
+        "key": "subject_requirement",
+        "label": "subject_requirement",
+        "value": "化学"
+      },
+      {
+        "key": "province",
+        "label": "province",
+        "value": "北京"
+      },
+      {
+        "key": "city",
+        "label": "city",
+        "value": "海淀区"
+      },
+      {
+        "key": "tuition",
+        "label": "tuition",
+        "value": 5000.0
+      },
+      {
+        "key": "rank_2024",
+        "label": "rank_2024",
+        "value": 97
+      },
+      {
+        "key": "group_min_rank",
+        "label": "group_min_rank",
+        "value": 97
+      },
+      {
+        "key": "safety_margin",
+        "label": "safety_margin",
+        "value": "-99.7%"
+      }
+    ],
+    "matched_filters": [
+      {
+        "id": "e_source_province",
+        "field": "生源地",
+        "operator": "eq",
+        "value": "广东",
+        "matched": true,
+        "text": "生源地 等于 广东"
+      },
+      {
+        "id": "e_subject_type",
+        "field": "科类",
+        "operator": "eq",
+        "value": "物理",
+        "matched": true,
+        "text": "科类 等于 物理"
+      },
+      {
+        "id": "e_major_keyword",
+        "field": "专业名称",
+        "operator": "contains_any",
+        "value": [
+          "计算机"
+        ],
+        "matched": true,
+        "text": "专业名称 包含任一：计算机；命中 计算机类"
+      }
+    ],
+    "raw": {
+      "excel_row_number": 98,
+      "ID": 95,
+      "年份": 2024,
+      "批次": "本科批",
+      "院校代码": "10003",
+      "院校名称": "清华大学",
+      "院校专业组代码": "10003203",
+      "专业组名称": "203组",
+      "科类": "物理",
+      "选科要求": "化学",
+      "专业代码": "051",
+      "专业名称": "计算机类",
+      "专业全称": "计算机类(含：计算机科学与技术、计算机科学与技术(计算机科学实验班)，北京市)",
+      "所在省": "北京",
+      "城市": "海淀区",
+      "学费": 5000.0,
+      "专业组最低位次1": 97,
+      "最低位次1": null,
+      "院校标签": "985/211/双一流/国重点/保研资格",
+      "院校排名": "1",
+      "ranking_key": -31903,
+      "safety_margin_pct": -0.997,
+      "cooperation_filter_status": "not_executed_missing_cooperation_type_field",
+      "中外合作筛选状态": "未执行：缺少合作办学类型字段"
+    }
+  },
+  {
+    "item_id": "result_003",
+    "title": "复旦大学",
+    "subtitle": "计算机科学与技术(拔尖人才试验班，含：澳大利亚国立大学2+2双学位项目，美国芝加哥大学等校暑期交流项目，校本部)",
+    "primary_attributes": [
+      {
+        "key": "year",
+        "label": "year",
+        "value": 2024
+      },
+      {
+        "key": "batch",
+        "label": "batch",
+        "value": "本科批"
+      },
+      {
+        "key": "university_code",
+        "label": "university_code",
+        "value": "10246"
+      },
+      {
+        "key": "university_name",
+        "label": "university_name",
+        "value": "复旦大学"
+      }
+    ],
+    "secondary_attributes": [
+      {
+        "key": "group_code",
+        "label": "group_code",
+        "value": "10246205"
+      },
+      {
+        "key": "group_name",
+        "label": "group_name",
+        "value": "205组"
+      },
+      {
+        "key": "major_code",
+        "label": "major_code",
+        "value": "043"
+      },
+      {
+        "key": "major_name",
+        "label": "major_name",
+        "value": "计算机科学与技术"
+      },
+      {
+        "key": "full_major_name",
+        "label": "full_major_name",
+        "value": "计算机科学与技术(拔尖人才试验班，含：澳大利亚国立大学2+2双学位项目，美国芝加哥大学等校暑期交流项目，校本部)"
+      },
+      {
+        "key": "subject_requirement",
+        "label": "subject_requirement",
+        "value": "化学"
+      },
+      {
+        "key": "province",
+        "label": "province",
+        "value": "上海"
+      },
+      {
+        "key": "city",
+        "label": "city",
+        "value": "杨浦区"
+      },
+      {
+        "key": "tuition",
+        "label": "tuition",
+        "value": 7000.0
+      },
+      {
+        "key": "rank_2024",
+        "label": "rank_2024",
+        "value": 316
+      },
+      {
+        "key": "group_min_rank",
+        "label": "group_min_rank",
+        "value": 316
+      },
+      {
+        "key": "safety_margin",
+        "label": "safety_margin",
+        "value": "-99.0%"
+      }
+    ],
+    "matched_filters": [
+      {
+        "id": "e_source_province",
+        "field": "生源地",
+        "operator": "eq",
+        "value": "广东",
+        "matched": true,
+        "text": "生源地 等于 广东"
+      },
+      {
+        "id": "e_subject_type",
+        "field": "科类",
+        "operator": "eq",
+        "value": "物理",
+        "matched": true,
+        "text": "科类 等于 物理"
+      },
+      {
+        "id": "e_major_keyword",
+        "field": "专业名称",
+        "operator": "contains_any",
+        "value": [
+          "计算机"
+        ],
+        "matched": true,
+        "text": "专业名称 包含任一：计算机；命中 计算机科学与技术"
+      }
+    ],
+    "raw": {
+      "excel_row_number": 2674,
+      "ID": 2671,
+      "年份": 2024,
+      "批次": "本科批",
+      "院校代码": "10246",
+      "院校名称": "复旦大学",
+      "院校专业组代码": "10246205",
+      "专业组名称": "205组",
+      "科类": "物理",
+      "选科要求": "化学",
+      "专业代码": "043",
+      "专业名称": "计算机科学与技术",
+      "专业全称": "计算机科学与技术(拔尖人才试验班，含：澳大利亚国立大学2+2双学位项目，美国芝加哥大学等校暑期交流项目，校本部)",
+      "所在省": "上海",
+      "城市": "杨浦区",
+      "学费": 7000.0,
+      "专业组最低位次1": 316,
+      "最低位次1": null,
+      "院校标签": "985/211/双一流/国重点/保研资格",
+      "院校排名": "5",
+      "ranking_key": -31684,
+      "safety_margin_pct": -0.9901,
+      "cooperation_filter_status": "not_executed_missing_cooperation_type_field",
+      "中外合作筛选状态": "未执行：缺少合作办学类型字段"
+    }
+  },
+  {
+    "item_id": "result_004",
+    "title": "中国科学技术大学",
+    "subtitle": "计算机类(含：计算机科学与技术，校本部)(不招色盲)",
+    "primary_attributes": [
+      {
+        "key": "year",
+        "label": "year",
+        "value": 2024
+      },
+      {
+        "key": "batch",
+        "label": "batch",
+        "value": "本科批"
+      },
+      {
+        "key": "university_code",
+        "label": "university_code",
+        "value": "10358"
+      },
+      {
+        "key": "university_name",
+        "label": "university_name",
+        "value": "中国科学技术大学"
+      }
+    ],
+    "secondary_attributes": [
+      {
+        "key": "group_code",
+        "label": "group_code",
+        "value": "10358201"
+      },
+      {
+        "key": "group_name",
+        "label": "group_name",
+        "value": "201组"
+      },
+      {
+        "key": "major_code",
+        "label": "major_code",
+        "value": "026"
+      },
+      {
+        "key": "major_name",
+        "label": "major_name",
+        "value": "计算机类"
+      },
+      {
+        "key": "full_major_name",
+        "label": "full_major_name",
+        "value": "计算机类(含：计算机科学与技术，校本部)(不招色盲)"
+      },
+      {
+        "key": "subject_requirement",
+        "label": "subject_requirement",
+        "value": "化学"
+      },
+      {
+        "key": "province",
+        "label": "province",
+        "value": "安徽"
+      },
+      {
+        "key": "city",
+        "label": "city",
+        "value": "合肥"
+      },
+      {
+        "key": "tuition",
+        "label": "tuition",
+        "value": 4800.0
+      },
+      {
+        "key": "rank_2024",
+        "label": "rank_2024",
+        "value": 652
+      },
+      {
+        "key": "group_min_rank",
+        "label": "group_min_rank",
+        "value": 652
+      },
+      {
+        "key": "safety_margin",
+        "label": "safety_margin",
+        "value": "-98.0%"
+      }
+    ],
+    "matched_filters": [
+      {
+        "id": "e_source_province",
+        "field": "生源地",
+        "operator": "eq",
+        "value": "广东",
+        "matched": true,
+        "text": "生源地 等于 广东"
+      },
+      {
+        "id": "e_subject_type",
+        "field": "科类",
+        "operator": "eq",
+        "value": "物理",
+        "matched": true,
+        "text": "科类 等于 物理"
+      },
+      {
+        "id": "e_major_keyword",
+        "field": "专业名称",
+        "operator": "contains_any",
+        "value": [
+          "计算机"
+        ],
+        "matched": true,
+        "text": "专业名称 包含任一：计算机；命中 计算机类"
+      }
+    ],
+    "raw": {
+      "excel_row_number": 3851,
+      "ID": 3848,
+      "年份": 2024,
+      "批次": "本科批",
+      "院校代码": "10358",
+      "院校名称": "中国科学技术大学",
+      "院校专业组代码": "10358201",
+      "专业组名称": "201组",
+      "科类": "物理",
+      "选科要求": "化学",
+      "专业代码": "026",
+      "专业名称": "计算机类",
+      "专业全称": "计算机类(含：计算机科学与技术，校本部)(不招色盲)",
+      "所在省": "安徽",
+      "城市": "合肥",
+      "学费": 4800.0,
+      "专业组最低位次1": 652,
+      "最低位次1": null,
+      "院校标签": "985/211/双一流/国重点/保研资格",
+      "院校排名": "7",
+      "ranking_key": -31348,
+      "safety_margin_pct": -0.9796,
+      "cooperation_filter_status": "not_executed_missing_cooperation_type_field",
+      "中外合作筛选状态": "未执行：缺少合作办学类型字段"
+    }
+  },
+  {
+    "item_id": "result_005",
+    "title": "中国人民大学",
+    "subtitle": "计算机类(英才班，含：计算机科学与技术、软件工程、信息安全、数据科学与大数据技术、信息管理与信息系统，含：图灵实验班、信管拔尖班，金融学-大数据大数据-农林经济管理双学士学位项目，美国纽约州立大学宾汉姆顿分校双学位项目、英国曼彻斯特大学硕士项目等，北京市)",
+    "primary_attributes": [
+      {
+        "key": "year",
+        "label": "year",
+        "value": 2024
+      },
+      {
+        "key": "batch",
+        "label": "batch",
+        "value": "本科批"
+      },
+      {
+        "key": "university_code",
+        "label": "university_code",
+        "value": "10002"
+      },
+      {
+        "key": "university_name",
+        "label": "university_name",
+        "value": "中国人民大学"
+      }
+    ],
+    "secondary_attributes": [
+      {
+        "key": "group_code",
+        "label": "group_code",
+        "value": "10002203"
+      },
+      {
+        "key": "group_name",
+        "label": "group_name",
+        "value": "203组"
+      },
+      {
+        "key": "major_code",
+        "label": "major_code",
+        "value": "033"
+      },
+      {
+        "key": "major_name",
+        "label": "major_name",
+        "value": "计算机类"
+      },
+      {
+        "key": "full_major_name",
+        "label": "full_major_name",
+        "value": "计算机类(英才班，含：计算机科学与技术、软件工程、信息安全、数据科学与大数据技术、信息管理与信息系统，含：图灵实验班、信管拔尖班，金融学-大数据大数据-农林经济管理双学士学位项目，美国纽约州立大学宾汉姆顿分校双学位项目、英国曼彻斯特大学硕士项目等，北京市)"
+      },
+      {
+        "key": "subject_requirement",
+        "label": "subject_requirement",
+        "value": "化学"
+      },
+      {
+        "key": "province",
+        "label": "province",
+        "value": "北京"
+      },
+      {
+        "key": "city",
+        "label": "city",
+        "value": "海淀区"
+      },
+      {
+        "key": "tuition",
+        "label": "tuition",
+        "value": 5000.0
+      },
+      {
+        "key": "rank_2024",
+        "label": "rank_2024",
+        "value": 831
+      },
+      {
+        "key": "group_min_rank",
+        "label": "group_min_rank",
+        "value": 831
+      },
+      {
+        "key": "safety_margin",
+        "label": "safety_margin",
+        "value": "-97.4%"
+      }
+    ],
+    "matched_filters": [
+      {
+        "id": "e_source_province",
+        "field": "生源地",
+        "operator": "eq",
+        "value": "广东",
+        "matched": true,
+        "text": "生源地 等于 广东"
+      },
+      {
+        "id": "e_subject_type",
+        "field": "科类",
+        "operator": "eq",
+        "value": "物理",
+        "matched": true,
+        "text": "科类 等于 物理"
+      },
+      {
+        "id": "e_major_keyword",
+        "field": "专业名称",
+        "operator": "contains_any",
+        "value": [
+          "计算机"
+        ],
+        "matched": true,
+        "text": "专业名称 包含任一：计算机；命中 计算机类"
+      }
+    ],
+    "raw": {
+      "excel_row_number": 79,
+      "ID": 76,
+      "年份": 2024,
+      "批次": "本科批",
+      "院校代码": "10002",
+      "院校名称": "中国人民大学",
+      "院校专业组代码": "10002203",
+      "专业组名称": "203组",
+      "科类": "物理",
+      "选科要求": "化学",
+      "专业代码": "033",
+      "专业名称": "计算机类",
+      "专业全称": "计算机类(英才班，含：计算机科学与技术、软件工程、信息安全、数据科学与大数据技术、信息管理与信息系统，含：图灵实验班、信管拔尖班，金融学-大数据大数据-农林经济管理双学士学位项目，美国纽约州立大学宾汉姆顿分校双学位项目、英国曼彻斯特大学硕士项目等，北京市)",
+      "所在省": "北京",
+      "城市": "海淀区",
+      "学费": 5000.0,
+      "专业组最低位次1": 831,
+      "最低位次1": null,
+      "院校标签": "985/211/双一流/国重点/保研资格",
+      "院校排名": "18",
+      "ranking_key": -31169,
+      "safety_margin_pct": -0.974,
+      "cooperation_filter_status": "not_executed_missing_cooperation_type_field",
+      "中外合作筛选状态": "未执行：缺少合作办学类型字段"
+    }
+  }
+]
+```
+### top_results
+```json
+[
+  {
+    "id": "result_001",
+    "trace": [
+      {
+        "status": "pass",
+        "text": "生源地 等于 广东"
+      },
+      {
+        "status": "pass",
+        "text": "科类 等于 物理"
+      },
+      {
+        "status": "pass",
+        "text": "专业名称 包含任一：计算机；命中 计算机类"
+      }
+    ],
+    "year": 2024,
+    "batch": "本科批",
+    "university_code": "10001",
+    "university_name": "北京大学",
+    "group_code": "10001203",
+    "group_name": "203组",
+    "major_code": "111",
+    "major_name": "计算机类",
+    "full_major_name": "计算机类(含：计算机科学与技术、智能科学与技术，校本部)",
+    "subject_requirement": "化学",
+    "province": "北京",
+    "city": "海淀区",
+    "tuition": 5300.0,
+    "rank_2024": 85,
+    "major_rank_2024": null,
+    "plan_count": null,
+    "group_min_rank": 85,
+    "major_min_rank": null,
+    "safety_margin": "-99.7%"
+  },
+  {
+    "id": "result_002",
+    "trace": [
+      {
+        "status": "pass",
+        "text": "生源地 等于 广东"
+      },
+      {
+        "status": "pass",
+        "text": "科类 等于 物理"
+      },
+      {
+        "status": "pass",
+        "text": "专业名称 包含任一：计算机；命中 计算机类"
+      }
+    ],
+    "year": 2024,
+    "batch": "本科批",
+    "university_code": "10003",
+    "university_name": "清华大学",
+    "group_code": "10003203",
+    "group_name": "203组",
+    "major_code": "051",
+    "major_name": "计算机类",
+    "full_major_name": "计算机类(含：计算机科学与技术、计算机科学与技术(计算机科学实验班)，北京市)",
+    "subject_requirement": "化学",
+    "province": "北京",
+    "city": "海淀区",
+    "tuition": 5000.0,
+    "rank_2024": 97,
+    "major_rank_2024": null,
+    "plan_count": null,
+    "group_min_rank": 97,
+    "major_min_rank": null,
+    "safety_margin": "-99.7%"
+  },
+  {
+    "id": "result_003",
+    "trace": [
+      {
+        "status": "pass",
+        "text": "生源地 等于 广东"
+      },
+      {
+        "status": "pass",
+        "text": "科类 等于 物理"
+      },
+      {
+        "status": "pass",
+        "text": "专业名称 包含任一：计算机；命中 计算机科学与技术"
+      }
+    ],
+    "year": 2024,
+    "batch": "本科批",
+    "university_code": "10246",
+    "university_name": "复旦大学",
+    "group_code": "10246205",
+    "group_name": "205组",
+    "major_code": "043",
+    "major_name": "计算机科学与技术",
+    "full_major_name": "计算机科学与技术(拔尖人才试验班，含：澳大利亚国立大学2+2双学位项目，美国芝加哥大学等校暑期交流项目，校本部)",
+    "subject_requirement": "化学",
+    "province": "上海",
+    "city": "杨浦区",
+    "tuition": 7000.0,
+    "rank_2024": 316,
+    "major_rank_2024": null,
+    "plan_count": null,
+    "group_min_rank": 316,
+    "major_min_rank": null,
+    "safety_margin": "-99.0%"
+  },
+  {
+    "id": "result_004",
+    "trace": [
+      {
+        "status": "pass",
+        "text": "生源地 等于 广东"
+      },
+      {
+        "status": "pass",
+        "text": "科类 等于 物理"
+      },
+      {
+        "status": "pass",
+        "text": "专业名称 包含任一：计算机；命中 计算机类"
+      }
+    ],
+    "year": 2024,
+    "batch": "本科批",
+    "university_code": "10358",
+    "university_name": "中国科学技术大学",
+    "group_code": "10358201",
+    "group_name": "201组",
+    "major_code": "026",
+    "major_name": "计算机类",
+    "full_major_name": "计算机类(含：计算机科学与技术，校本部)(不招色盲)",
+    "subject_requirement": "化学",
+    "province": "安徽",
+    "city": "合肥",
+    "tuition": 4800.0,
+    "rank_2024": 652,
+    "major_rank_2024": null,
+    "plan_count": null,
+    "group_min_rank": 652,
+    "major_min_rank": null,
+    "safety_margin": "-98.0%"
+  },
+  {
+    "id": "result_005",
+    "trace": [
+      {
+        "status": "pass",
+        "text": "生源地 等于 广东"
+      },
+      {
+        "status": "pass",
+        "text": "科类 等于 物理"
+      },
+      {
+        "status": "pass",
+        "text": "专业名称 包含任一：计算机；命中 计算机类"
+      }
+    ],
+    "year": 2024,
+    "batch": "本科批",
+    "university_code": "10002",
+    "university_name": "中国人民大学",
+    "group_code": "10002203",
+    "group_name": "203组",
+    "major_code": "033",
+    "major_name": "计算机类",
+    "full_major_name": "计算机类(英才班，含：计算机科学与技术、软件工程、信息安全、数据科学与大数据技术、信息管理与信息系统，含：图灵实验班、信管拔尖班，金融学-大数据大数据-农林经济管理双学士学位项目，美国纽约州立大学宾汉姆顿分校双学位项目、英国曼彻斯特大学硕士项目等，北京市)",
+    "subject_requirement": "化学",
+    "province": "北京",
+    "city": "海淀区",
+    "tuition": 5000.0,
+    "rank_2024": 831,
+    "major_rank_2024": null,
+    "plan_count": null,
+    "group_min_rank": 831,
+    "major_min_rank": null,
+    "safety_margin": "-97.4%"
+  }
+]
+```
+### executed_filters
+```json
+[
+  {
+    "id": "e_source_province",
+    "label": "生源地 等于 广东",
+    "field": "生源地",
+    "operator": "eq",
+    "value": "广东",
+    "source_span": "广东"
+  },
+  {
+    "id": "e_subject_type",
+    "label": "科类 等于 物理",
+    "field": "科类",
+    "operator": "eq",
+    "value": "物理",
+    "source_span": "物理"
+  },
+  {
+    "id": "e_major_keyword",
+    "label": "专业名称 包含任一：计算机",
+    "field": "专业名称",
+    "operator": "contains_any",
+    "value": [
+      "计算机"
+    ],
+    "source_span": "计算机"
+  }
+]
+```
+### candidates_to_confirm
+```json
+[]
+```
+### unexecuted_preferences
+```json
+[]
+```
+### SQL / params
+```json
+{
+  "sql": "WITH source AS (\n  SELECT row_number() OVER () AS \"__source_row_number\", *\n  FROM \"admissions\"\n),\nfiltered AS (\n  SELECT\n    source.*,\n    TRY_CAST(regexp_extract(REPLACE(CAST(\"专业组最低位次1\" AS VARCHAR), ',', ''), '\\d+(?:\\.\\d+)?') AS DOUBLE) AS \"__group_rank_num\",\n    TRY_CAST(regexp_extract(REPLACE(CAST(\"学费\" AS VARCHAR), ',', ''), '\\d+(?:\\.\\d+)?') AS DOUBLE) AS \"__tuition_num\",\n    TRY_CAST(regexp_extract(REPLACE(CAST(\"院校排名\" AS VARCHAR), ',', ''), '\\d+(?:\\.\\d+)?') AS DOUBLE) AS \"__school_rank_num\",\n    TRY_CAST(regexp_extract(REPLACE(CAST(\"ID\" AS VARCHAR), ',', ''), '\\d+(?:\\.\\d+)?') AS DOUBLE) AS \"__id_num\"\n  FROM source\n  WHERE CAST(\"生源地\" AS VARCHAR) = ? AND CAST(\"科类\" AS VARCHAR) = ? AND (STRPOS(CAST(\"专业名称\" AS VARCHAR), ?) > 0)\n),\nprojectable AS (\n  SELECT *\n  FROM filtered\n  WHERE TRUE\n    AND \"__group_rank_num\" IS NOT NULL\n    AND \"__tuition_num\" IS NOT NULL\n)\nSELECT *\nFROM projectable\nORDER BY\n  \"__group_rank_num\" ASC NULLS LAST,\n  \"__school_rank_num\" ASC NULLS LAST,\n  \"__id_num\" ASC NULLS LAST",
+  "params": [
+    "广东",
+    "物理",
+    "计算机"
+  ]
+}
+```
+### EvidencePack
+```json
+{
+  "user_request": "广东物理，排位32000，想冲一冲计算机。；偏好信息：偏好描述：广东物理，排位32000，想冲一冲计算机。",
+  "executed_rules": [
+    {
+      "rule_id": "e_source_province",
+      "derived_from": "d_source_province",
+      "field": "生源地",
+      "operator": "eq",
+      "value": "广东",
+      "description": "生源地 等于 广东"
+    },
+    {
+      "rule_id": "e_subject_type",
+      "derived_from": "d_subject_type",
+      "field": "科类",
+      "operator": "eq",
+      "value": "物理",
+      "description": "科类 等于 物理"
+    },
+    {
+      "rule_id": "e_major_keyword",
+      "derived_from": "d_major_keyword",
+      "field": "专业名称",
+      "operator": "contains_any",
+      "value": [
+        "计算机"
+      ],
+      "description": "专业名称 包含任一：计算机"
+    }
+  ],
+  "candidate_confirmations": [],
+  "not_executed_preferences": [],
+  "result_count": 749,
+  "top_k_results": [
+    {
+      "rank": 1,
+      "院校名称": "北京大学",
+      "院校专业组代码": "10001203",
+      "专业代码": "111",
+      "专业名称": "计算机类",
+      "专业全称": "计算机类(含：计算机科学与技术、智能科学与技术，校本部)",
+      "选科要求": "化学",
+      "城市": "海淀区",
+      "学费": 5300.0,
+      "专业组最低位次": 85,
+      "safety_margin": "-99.73%",
+      "trace": [
+        {
+          "rule_id": "e_source_province",
+          "status": "pass",
+          "reason": "生源地 等于 广东"
+        },
+        {
+          "rule_id": "e_subject_type",
+          "status": "pass",
+          "reason": "科类 等于 物理"
+        },
+        {
+          "rule_id": "e_major_keyword",
+          "status": "pass",
+          "reason": "专业名称 包含任一：计算机；命中 计算机类"
+        }
+      ]
+    },
+    {
+      "rank": 2,
+      "院校名称": "清华大学",
+      "院校专业组代码": "10003203",
+      "专业代码": "051",
+      "专业名称": "计算机类",
+      "专业全称": "计算机类(含：计算机科学与技术、计算机科学与技术(计算机科学实验班)，北京市)",
+      "选科要求": "化学",
+      "城市": "海淀区",
+      "学费": 5000.0,
+      "专业组最低位次": 97,
+      "safety_margin": "-99.70%",
+      "trace": [
+        {
+          "rule_id": "e_source_province",
+          "status": "pass",
+          "reason": "生源地 等于 广东"
+        },
+        {
+          "rule_id": "e_subject_type",
+          "status": "pass",
+          "reason": "科类 等于 物理"
+        },
+        {
+          "rule_id": "e_major_keyword",
+          "status": "pass",
+          "reason": "专业名称 包含任一：计算机；命中 计算机类"
+        }
+      ]
+    },
+    {
+      "rank": 3,
+      "院校名称": "复旦大学",
+      "院校专业组代码": "10246205",
+      "专业代码": "043",
+      "专业名称": "计算机科学与技术",
+      "专业全称": "计算机科学与技术(拔尖人才试验班，含：澳大利亚国立大学2+2双学位项目，美国芝加哥大学等校暑期交流项目，校本部)",
+      "选科要求": "化学",
+      "城市": "杨浦区",
+      "学费": 7000.0,
+      "专业组最低位次": 316,
+      "safety_margin": "-99.01%",
+      "trace": [
+        {
+          "rule_id": "e_source_province",
+          "status": "pass",
+          "reason": "生源地 等于 广东"
+        },
+        {
+          "rule_id": "e_subject_type",
+          "status": "pass",
+          "reason": "科类 等于 物理"
+        },
+        {
+          "rule_id": "e_major_keyword",
+          "status": "pass",
+          "reason": "专业名称 包含任一：计算机；命中 计算机科学与技术"
+        }
+      ]
+    },
+    {
+      "rank": 4,
+      "院校名称": "中国科学技术大学",
+      "院校专业组代码": "10358201",
+      "专业代码": "026",
+      "专业名称": "计算机类",
+      "专业全称": "计算机类(含：计算机科学与技术，校本部)(不招色盲)",
+      "选科要求": "化学",
+      "城市": "合肥",
+      "学费": 4800.0,
+      "专业组最低位次": 652,
+      "safety_margin": "-97.96%",
+      "trace": [
+        {
+          "rule_id": "e_source_province",
+          "status": "pass",
+          "reason": "生源地 等于 广东"
+        },
+        {
+          "rule_id": "e_subject_type",
+          "status": "pass",
+          "reason": "科类 等于 物理"
+        },
+        {
+          "rule_id": "e_major_keyword",
+          "status": "pass",
+          "reason": "专业名称 包含任一：计算机；命中 计算机类"
+        }
+      ]
+    },
+    {
+      "rank": 5,
+      "院校名称": "中国人民大学",
+      "院校专业组代码": "10002203",
+      "专业代码": "033",
+      "专业名称": "计算机类",
+      "专业全称": "计算机类(英才班，含：计算机科学与技术、软件工程、信息安全、数据科学与大数据技术、信息管理与信息系统，含：图灵实验班、信管拔尖班，金融学-大数据大数据-农林经济管理双学士学位项目，美国纽约州立大学宾汉姆顿分校双学位项目、英国曼彻斯特大学硕士项目等，北京市)",
+      "选科要求": "化学",
+      "城市": "海淀区",
+      "学费": 5000.0,
+      "专业组最低位次": 831,
+      "safety_margin": "-97.40%",
+      "trace": [
+        {
+          "rule_id": "e_source_province",
+          "status": "pass",
+          "reason": "生源地 等于 广东"
+        },
+        {
+          "rule_id": "e_subject_type",
+          "status": "pass",
+          "reason": "科类 等于 物理"
+        },
+        {
+          "rule_id": "e_major_keyword",
+          "status": "pass",
+          "reason": "专业名称 包含任一：计算机；命中 计算机类"
+        }
+      ]
+    }
+  ],
+  "trace_summary": {
+    "executed_rule_ids": [
+      "e_source_province",
+      "e_subject_type",
+      "e_major_keyword"
+    ],
+    "not_executed_preference_count": 0,
+    "traced_result_count": 749,
+    "top_k": 5,
+    "top_k_trace_status_counts": {
+      "pass": 15
+    },
+    "safety_warnings": [
+      "答案只能使用 evidence_pack 中的已验证规则、确认记录、结果摘要和 trace。",
+      "候选偏好在确认或模拟确认之前不得执行。"
+    ]
+  },
+  "extracted_preferences": [
+    {
+      "id": "pref_origin",
+      "slot": "生源地",
+      "value": "广东",
+      "source_span": "广东",
+      "status": "已对齐字段"
+    },
+    {
+      "id": "pref_track",
+      "slot": "科类",
+      "value": "物理",
+      "source_span": "物理",
+      "status": "已对齐字段"
+    },
+    {
+      "id": "pref_rank",
+      "slot": "排位",
+      "value": 32000,
+      "source_span": "排位32000",
+      "status": "已对齐字段"
+    },
+    {
+      "id": "pref_major",
+      "slot": "专业名称",
+      "value": [
+        "计算机"
+      ],
+      "source_span": "计算机",
+      "status": "已对齐字段"
+    },
+    {
+      "id": "pref_stable",
+      "slot": "稳一点",
+      "value": "冲一冲",
+      "source_span": "冲一冲",
+      "status": "待确认"
+    }
+  ],
+  "attribute_grounding_summary": {
+    "total_attributes": 6,
+    "status_counts": {
+      "schema_grounded": 4,
+      "context_only": 1,
+      "confirmable": 1
+    },
+    "value_index_status_counts": {
+      "matched": 4,
+      "outside_numeric_profile": 1
+    },
+    "unsafe_ungrounded_executable_attributes": 0
+  },
+  "proposed_rule_audit": [],
+  "execution_summary": {
+    "executor": "duckdb",
+    "sql": "WITH source AS (\n  SELECT row_number() OVER () AS \"__source_row_number\", *\n  FROM \"admissions\"\n),\nfiltered AS (\n  SELECT\n    source.*,\n    TRY_CAST(regexp_extract(REPLACE(CAST(\"专业组最低位次1\" AS VARCHAR), ',', ''), '\\d+(?:\\.\\d+)?') AS DOUBLE) AS \"__group_rank_num\",\n    TRY_CAST(regexp_extract(REPLACE(CAST(\"学费\" AS VARCHAR), ',', ''), '\\d+(?:\\.\\d+)?') AS DOUBLE) AS \"__tuition_num\",\n    TRY_CAST(regexp_extract(REPLACE(CAST(\"院校排名\" AS VARCHAR), ',', ''), '\\d+(?:\\.\\d+)?') AS DOUBLE) AS \"__school_rank_num\",\n    TRY_CAST(regexp_extract(REPLACE(CAST(\"ID\" AS VARCHAR), ',', ''), '\\d+(?:\\.\\d+)?') AS DOUBLE) AS \"__id_num\"\n  FROM source\n  WHERE CAST(\"生源地\" AS VARCHAR) = ? AND CAST(\"科类\" AS VARCHAR) = ? AND (STRPOS(CAST(\"专业名称\" AS VARCHAR), ?) > 0)\n),\nprojectable AS (\n  SELECT *\n  FROM filtered\n  WHERE TRUE\n    AND \"__group_rank_num\" IS NOT NULL\n    AND \"__tuition_num\" IS NOT NULL\n)\nSELECT *\nFROM projectable\nORDER BY\n  \"__group_rank_num\" ASC NULLS LAST,\n  \"__school_rank_num\" ASC NULLS LAST,\n  \"__id_num\" ASC NULLS LAST",
+    "params": [
+      "广东",
+      "物理",
+      "计算机"
+    ],
+    "input_row_count": 30855,
+    "filtered_row_count": 749,
+    "sort_key": [
+      "专业组最低位次1 ASC NULLS LAST",
+      "院校排名 ASC NULLS LAST",
+      "ID ASC NULLS LAST"
+    ],
+    "top_k": 5,
+    "hard_rule_ids": [
+      "e_source_province",
+      "e_subject_type",
+      "e_major_keyword"
+    ],
+    "skipped_soft_rule_ids": []
+  },
+  "attribute_explanations": [
+    {
+      "source_text": "广东",
+      "slot_path": "user_context.source_province",
+      "field": "生源地",
+      "value": "广东",
+      "match_type": "exact_match",
+      "action": "executed",
+      "matched_values": [
+        "广东"
+      ],
+      "reason": "已匹配字段“生源地”，并已进入 hard filter。"
+    },
+    {
+      "source_text": "物理",
+      "slot_path": "user_context.subject_type",
+      "field": "科类",
+      "value": "物理",
+      "match_type": "exact_match",
+      "action": "executed",
+      "matched_values": [
+        "物理"
+      ],
+      "reason": "已匹配字段“科类”，并已进入 hard filter。"
+    },
+    {
+      "source_text": "计算机",
+      "slot_path": "preferences.major_keyword",
+      "field": "专业名称",
+      "value": "计算机",
+      "match_type": "exact_match",
+      "action": "executed",
+      "matched_values": [
+        "计算机类",
+        "计算机科学与技术",
+        "计算机应用技术",
+        "电子与计算机工程",
+        "计算机网络技术"
+      ],
+      "reason": "已匹配字段“专业名称”，并已进入 hard filter。"
+    },
+    {
+      "source_text": "冲一冲",
+      "slot_path": "preferences.risk_preference_raw",
+      "field": "专业组最低位次1",
+      "value": "冲一冲",
+      "match_type": "partial_match",
+      "action": "needs_confirmation",
+      "matched_values": [],
+      "reason": "该属性有对应字段，但语义或边界需要确认。未进入 hard filter。"
+    }
+  ],
+  "confirmed_rules": [],
+  "confirmation_source": [],
+  "executed_after_confirmation": [],
+  "unconfirmed_candidates": [],
+  "no_schema_field_preferences": [],
+  "rejected_confirmations": []
+}
+```
+### answer
+
+根据已验证规则生成结果：
+
+用户需求：广东物理，排位32000，想冲一冲计算机。；偏好信息：偏好描述：广东物理，排位32000，想冲一冲计算机。
+共筛选到 749 条符合已执行规则的结果。
+
+抽取与结构化结果：
+- 生源地：广东；状态：已对齐字段；来源：广东
+- 科类：物理；状态：已对齐字段；来源：物理
+- 排位：32000；状态：已对齐字段；来源：排位32000
+- 专业名称：计算机；状态：已对齐字段；来源：计算机
+- 稳一点：冲一冲；状态：待确认；来源：冲一冲
+
+字段值审计解释：
+- [已执行] 广东 -> 生源地：exact_match；索引命中：广东；已匹配字段“生源地”，并已进入 hard filter。
+- [已执行] 物理 -> 科类：exact_match；索引命中：物理；已匹配字段“科类”，并已进入 hard filter。
+- [已执行] 计算机 -> 专业名称：exact_match；索引命中：计算机类、计算机科学与技术、计算机应用技术、电子与计算机工程、计算机网络技术；已匹配字段“专业名称”，并已进入 hard filter。
+- [需确认] 冲一冲 -> 专业组最低位次1：partial_match；该属性有对应字段，但语义或边界需要确认。未进入 hard filter。
+
+已执行规则：
+- e_source_province：生源地 等于 广东
+- e_subject_type：科类 等于 物理
+- e_major_keyword：专业名称 包含任一：计算机
+
+候选偏好确认记录：
+
+未执行但已保留的偏好：
+- 无。
+
+前 5 条结果：
+- 1. 北京大学；专业组代码：10001203；专业代码：111；专业名称：计算机类；专业全称：计算机类(含：计算机科学与技术、智能科学与技术，校本部)；选科要求：化学；城市：海淀区；学费：5300 元/年；专业组最低位次：85。
+- 2. 清华大学；专业组代码：10003203；专业代码：051；专业名称：计算机类；专业全称：计算机类(含：计算机科学与技术、计算机科学与技术(计算机科学实验班)，北京市)；选科要求：化学；城市：海淀区；学费：5000 元/年；专业组最低位次：97。
+- 3. 复旦大学；专业组代码：10246205；专业代码：043；专业名称：计算机科学与技术；专业全称：计算机科学与技术(拔尖人才试验班，含：澳大利亚国立大学2+2双学位项目，美国芝加哥大学等校暑期交流项目，校本部)；选科要求：化学；城市：杨浦区；学费：7000 元/年；专业组最低位次：316。
+- 4. 中国科学技术大学；专业组代码：10358201；专业代码：026；专业名称：计算机类；专业全称：计算机类(含：计算机科学与技术，校本部)(不招色盲)；选科要求：化学；城市：合肥；学费：4800 元/年；专业组最低位次：652。
+- 5. 中国人民大学；专业组代码：10002203；专业代码：033；专业名称：计算机类；专业全称：计算机类(英才班，含：计算机科学与技术、软件工程、信息安全、数据科学与大数据技术、信息管理与信息系统，含：图灵实验班、信管拔尖班，金融学-大数据大数据-农林经济管理双学士学位项目，美国纽约州立大学宾汉姆顿分校双学位项目、英国曼彻斯特大学硕士项目等，北京市)；选科要求：化学；城市：海淀区；学费：5000 元/年；专业组最低位次：831。
+
+安全说明：
+- 答案只能使用 证据包 中的已验证规则、确认记录、结果摘要和 trace。
+- 候选偏好在确认或模拟确认之前不得执行。
+
+## admissions_10 `通过`
+
+- domain: `admissions`
+- query: 广东历史，排位25000，法学，预算有限。
+- status: `needs_confirmation`
+- pass/fail：`通过`
+
+### items
+```json
+[
+  {
+    "item_id": "result_001",
+    "title": "清华大学",
+    "subtitle": "法学类(含：法学、法学(国际班)，北京市)",
+    "primary_attributes": [
+      {
+        "key": "year",
+        "label": "year",
+        "value": 2024
+      },
+      {
+        "key": "batch",
+        "label": "batch",
+        "value": "本科批"
+      },
+      {
+        "key": "university_code",
+        "label": "university_code",
+        "value": "10003"
+      },
+      {
+        "key": "university_name",
+        "label": "university_name",
+        "value": "清华大学"
+      }
+    ],
+    "secondary_attributes": [
+      {
+        "key": "group_code",
+        "label": "group_code",
+        "value": "10003201"
+      },
+      {
+        "key": "group_name",
+        "label": "group_name",
+        "value": "201组"
+      },
+      {
+        "key": "major_code",
+        "label": "major_code",
+        "value": "043"
+      },
+      {
+        "key": "major_name",
+        "label": "major_name",
+        "value": "法学类"
+      },
+      {
+        "key": "full_major_name",
+        "label": "full_major_name",
+        "value": "法学类(含：法学、法学(国际班)，北京市)"
+      },
+      {
+        "key": "subject_requirement",
+        "label": "subject_requirement",
+        "value": "不限"
+      },
+      {
+        "key": "province",
+        "label": "province",
+        "value": "北京"
+      },
+      {
+        "key": "city",
+        "label": "city",
+        "value": "海淀区"
+      },
+      {
+        "key": "tuition",
+        "label": "tuition",
+        "value": 5000.0
+      },
+      {
+        "key": "rank_2024",
+        "label": "rank_2024",
+        "value": 19
+      },
+      {
+        "key": "group_min_rank",
+        "label": "group_min_rank",
+        "value": 19
+      },
+      {
+        "key": "safety_margin",
+        "label": "safety_margin",
+        "value": "-99.9%"
+      }
+    ],
+    "matched_filters": [
+      {
+        "id": "e_source_province",
+        "field": "生源地",
+        "operator": "eq",
+        "value": "广东",
+        "matched": true,
+        "text": "生源地 等于 广东"
+      },
+      {
+        "id": "e_subject_type",
+        "field": "科类",
+        "operator": "eq",
+        "value": "历史",
+        "matched": true,
+        "text": "科类 等于 历史"
+      },
+      {
+        "id": "e_major_keyword",
+        "field": "专业名称",
+        "operator": "contains_any",
+        "value": [
+          "法学"
+        ],
+        "matched": true,
+        "text": "专业名称 包含任一：法学；命中 法学类"
+      }
+    ],
+    "raw": {
+      "excel_row_number": 86,
+      "ID": 83,
+      "年份": 2024,
+      "批次": "本科批",
+      "院校代码": "10003",
+      "院校名称": "清华大学",
+      "院校专业组代码": "10003201",
+      "专业组名称": "201组",
+      "科类": "历史",
+      "选科要求": "不限",
+      "专业代码": "043",
+      "专业名称": "法学类",
+      "专业全称": "法学类(含：法学、法学(国际班)，北京市)",
+      "所在省": "北京",
+      "城市": "海淀区",
+      "学费": 5000.0,
+      "专业组最低位次1": 19,
+      "最低位次1": null,
+      "院校标签": "985/211/双一流/国重点/保研资格",
+      "院校排名": "1",
+      "ranking_key": -24981,
+      "safety_margin_pct": -0.9992,
+      "cooperation_filter_status": "not_executed_missing_cooperation_type_field",
+      "中外合作筛选状态": "未执行：缺少合作办学类型字段"
+    }
+  },
+  {
+    "item_id": "result_002",
+    "title": "北京大学",
+    "subtitle": "法学(校本部)",
+    "primary_attributes": [
+      {
+        "key": "year",
+        "label": "year",
+        "value": 2024
+      },
+      {
+        "key": "batch",
+        "label": "batch",
+        "value": "本科批"
+      },
+      {
+        "key": "university_code",
+        "label": "university_code",
+        "value": "10001"
+      },
+      {
+        "key": "university_name",
+        "label": "university_name",
+        "value": "北京大学"
+      }
+    ],
+    "secondary_attributes": [
+      {
+        "key": "group_code",
+        "label": "group_code",
+        "value": "10001201"
+      },
+      {
+        "key": "group_name",
+        "label": "group_name",
+        "value": "201组"
+      },
+      {
+        "key": "major_code",
+        "label": "major_code",
+        "value": "096"
+      },
+      {
+        "key": "major_name",
+        "label": "major_name",
+        "value": "法学"
+      },
+      {
+        "key": "full_major_name",
+        "label": "full_major_name",
+        "value": "法学(校本部)"
+      },
+      {
+        "key": "subject_requirement",
+        "label": "subject_requirement",
+        "value": "不限"
+      },
+      {
+        "key": "province",
+        "label": "province",
+        "value": "北京"
+      },
+      {
+        "key": "city",
+        "label": "city",
+        "value": "海淀区"
+      },
+      {
+        "key": "tuition",
+        "label": "tuition",
+        "value": 5000.0
+      },
+      {
+        "key": "rank_2024",
+        "label": "rank_2024",
+        "value": 32
+      },
+      {
+        "key": "group_min_rank",
+        "label": "group_min_rank",
+        "value": 32
+      },
+      {
+        "key": "safety_margin",
+        "label": "safety_margin",
+        "value": "-99.9%"
+      }
+    ],
+    "matched_filters": [
+      {
+        "id": "e_source_province",
+        "field": "生源地",
+        "operator": "eq",
+        "value": "广东",
+        "matched": true,
+        "text": "生源地 等于 广东"
+      },
+      {
+        "id": "e_subject_type",
+        "field": "科类",
+        "operator": "eq",
+        "value": "历史",
+        "matched": true,
+        "text": "科类 等于 历史"
+      },
+      {
+        "id": "e_major_keyword",
+        "field": "专业名称",
+        "operator": "contains_any",
+        "value": [
+          "法学"
+        ],
+        "matched": true,
+        "text": "专业名称 包含任一：法学；命中 法学"
+      }
+    ],
+    "raw": {
+      "excel_row_number": 22,
+      "ID": 19,
+      "年份": 2024,
+      "批次": "本科批",
+      "院校代码": "10001",
+      "院校名称": "北京大学",
+      "院校专业组代码": "10001201",
+      "专业组名称": "201组",
+      "科类": "历史",
+      "选科要求": "不限",
+      "专业代码": "096",
+      "专业名称": "法学",
+      "专业全称": "法学(校本部)",
+      "所在省": "北京",
+      "城市": "海淀区",
+      "学费": 5000.0,
+      "专业组最低位次1": 32,
+      "最低位次1": null,
+      "院校标签": "985/211/双一流/国重点/保研资格",
+      "院校排名": "2",
+      "ranking_key": -24968,
+      "safety_margin_pct": -0.9987,
+      "cooperation_filter_status": "not_executed_missing_cooperation_type_field",
+      "中外合作筛选状态": "未执行：缺少合作办学类型字段"
+    }
+  },
+  {
+    "item_id": "result_003",
+    "title": "中国人民大学",
+    "subtitle": "法学(含：法学-新闻学工商管理-法学涉外法治双主学位项目，含：法学-劳动关系实验班，含：哈佛大学、新加坡国立大学等免学费交换项目，亚洲校园+项目(中日韩三国政府奖学金支持)、中欧欧洲法国际组织后备人才培养项目(国家留基委资助)等，北京市)",
+    "primary_attributes": [
+      {
+        "key": "year",
+        "label": "year",
+        "value": 2024
+      },
+      {
+        "key": "batch",
+        "label": "batch",
+        "value": "本科批"
+      },
+      {
+        "key": "university_code",
+        "label": "university_code",
+        "value": "10002"
+      },
+      {
+        "key": "university_name",
+        "label": "university_name",
+        "value": "中国人民大学"
+      }
+    ],
+    "secondary_attributes": [
+      {
+        "key": "group_code",
+        "label": "group_code",
+        "value": "10002205"
+      },
+      {
+        "key": "group_name",
+        "label": "group_name",
+        "value": "205组"
+      },
+      {
+        "key": "major_code",
+        "label": "major_code",
+        "value": "013"
+      },
+      {
+        "key": "major_name",
+        "label": "major_name",
+        "value": "法学"
+      },
+      {
+        "key": "full_major_name",
+        "label": "full_major_name",
+        "value": "法学(含：法学-新闻学工商管理-法学涉外法治双主学位项目，含：法学-劳动关系实验班，含：哈佛大学、新加坡国立大学等免学费交换项目，亚洲校园+项目(中日韩三国政府奖学金支持)、中欧欧洲法国际组织后备人才培养项目(国家留基委资助)等，北京市)"
+      },
+      {
+        "key": "subject_requirement",
+        "label": "subject_requirement",
+        "value": "不限"
+      },
+      {
+        "key": "province",
+        "label": "province",
+        "value": "北京"
+      },
+      {
+        "key": "city",
+        "label": "city",
+        "value": "海淀区"
+      },
+      {
+        "key": "tuition",
+        "label": "tuition",
+        "value": 5000.0
+      },
+      {
+        "key": "rank_2024",
+        "label": "rank_2024",
+        "value": 53
+      },
+      {
+        "key": "group_min_rank",
+        "label": "group_min_rank",
+        "value": 53
+      },
+      {
+        "key": "safety_margin",
+        "label": "safety_margin",
+        "value": "-99.8%"
+      }
+    ],
+    "matched_filters": [
+      {
+        "id": "e_source_province",
+        "field": "生源地",
+        "operator": "eq",
+        "value": "广东",
+        "matched": true,
+        "text": "生源地 等于 广东"
+      },
+      {
+        "id": "e_subject_type",
+        "field": "科类",
+        "operator": "eq",
+        "value": "历史",
+        "matched": true,
+        "text": "科类 等于 历史"
+      },
+      {
+        "id": "e_major_keyword",
+        "field": "专业名称",
+        "operator": "contains_any",
+        "value": [
+          "法学"
+        ],
+        "matched": true,
+        "text": "专业名称 包含任一：法学；命中 法学"
+      }
+    ],
+    "raw": {
+      "excel_row_number": 82,
+      "ID": 79,
+      "年份": 2024,
+      "批次": "本科批",
+      "院校代码": "10002",
+      "院校名称": "中国人民大学",
+      "院校专业组代码": "10002205",
+      "专业组名称": "205组",
+      "科类": "历史",
+      "选科要求": "不限",
+      "专业代码": "013",
+      "专业名称": "法学",
+      "专业全称": "法学(含：法学-新闻学工商管理-法学涉外法治双主学位项目，含：法学-劳动关系实验班，含：哈佛大学、新加坡国立大学等免学费交换项目，亚洲校园+项目(中日韩三国政府奖学金支持)、中欧欧洲法国际组织后备人才培养项目(国家留基委资助)等，北京市)",
+      "所在省": "北京",
+      "城市": "海淀区",
+      "学费": 5000.0,
+      "专业组最低位次1": 53,
+      "最低位次1": null,
+      "院校标签": "985/211/双一流/国重点/保研资格",
+      "院校排名": "18",
+      "ranking_key": -24947,
+      "safety_margin_pct": -0.9979,
+      "cooperation_filter_status": "not_executed_missing_cooperation_type_field",
+      "中外合作筛选状态": "未执行：缺少合作办学类型字段"
+    }
+  },
+  {
+    "item_id": "result_004",
+    "title": "上海交通大学",
+    "subtitle": "法学试验班(含：法学，含：法学-经济学双学士学位，校本部)",
+    "primary_attributes": [
+      {
+        "key": "year",
+        "label": "year",
+        "value": 2024
+      },
+      {
+        "key": "batch",
+        "label": "batch",
+        "value": "本科批"
+      },
+      {
+        "key": "university_code",
+        "label": "university_code",
+        "value": "10248"
+      },
+      {
+        "key": "university_name",
+        "label": "university_name",
+        "value": "上海交通大学"
+      }
+    ],
+    "secondary_attributes": [
+      {
+        "key": "group_code",
+        "label": "group_code",
+        "value": "10248201"
+      },
+      {
+        "key": "group_name",
+        "label": "group_name",
+        "value": "201组"
+      },
+      {
+        "key": "major_code",
+        "label": "major_code",
+        "value": "016"
+      },
+      {
+        "key": "major_name",
+        "label": "major_name",
+        "value": "法学试验班"
+      },
+      {
+        "key": "full_major_name",
+        "label": "full_major_name",
+        "value": "法学试验班(含：法学，含：法学-经济学双学士学位，校本部)"
+      },
+      {
+        "key": "subject_requirement",
+        "label": "subject_requirement",
+        "value": "不限"
+      },
+      {
+        "key": "province",
+        "label": "province",
+        "value": "上海"
+      },
+      {
+        "key": "city",
+        "label": "city",
+        "value": "闵行区"
+      },
+      {
+        "key": "tuition",
+        "label": "tuition",
+        "value": 6500.0
+      },
+      {
+        "key": "rank_2024",
+        "label": "rank_2024",
+        "value": 68
+      },
+      {
+        "key": "group_min_rank",
+        "label": "group_min_rank",
+        "value": 68
+      },
+      {
+        "key": "safety_margin",
+        "label": "safety_margin",
+        "value": "-99.7%"
+      }
+    ],
+    "matched_filters": [
+      {
+        "id": "e_source_province",
+        "field": "生源地",
+        "operator": "eq",
+        "value": "广东",
+        "matched": true,
+        "text": "生源地 等于 广东"
+      },
+      {
+        "id": "e_subject_type",
+        "field": "科类",
+        "operator": "eq",
+        "value": "历史",
+        "matched": true,
+        "text": "科类 等于 历史"
+      },
+      {
+        "id": "e_major_keyword",
+        "field": "专业名称",
+        "operator": "contains_any",
+        "value": [
+          "法学"
+        ],
+        "matched": true,
+        "text": "专业名称 包含任一：法学；命中 法学试验班"
+      }
+    ],
+    "raw": {
+      "excel_row_number": 2692,
+      "ID": 2689,
+      "年份": 2024,
+      "批次": "本科批",
+      "院校代码": "10248",
+      "院校名称": "上海交通大学",
+      "院校专业组代码": "10248201",
+      "专业组名称": "201组",
+      "科类": "历史",
+      "选科要求": "不限",
+      "专业代码": "016",
+      "专业名称": "法学试验班",
+      "专业全称": "法学试验班(含：法学，含：法学-经济学双学士学位，校本部)",
+      "所在省": "上海",
+      "城市": "闵行区",
+      "学费": 6500.0,
+      "专业组最低位次1": 68,
+      "最低位次1": null,
+      "院校标签": "985/211/双一流/国重点/保研资格",
+      "院校排名": "4",
+      "ranking_key": -24932,
+      "safety_margin_pct": -0.9973,
+      "cooperation_filter_status": "not_executed_missing_cooperation_type_field",
+      "中外合作筛选状态": "未执行：缺少合作办学类型字段"
+    }
+  },
+  {
+    "item_id": "result_005",
+    "title": "上海交通大学",
+    "subtitle": "法学试验班(涉外法治特班，含：法学，校本部)",
+    "primary_attributes": [
+      {
+        "key": "year",
+        "label": "year",
+        "value": 2024
+      },
+      {
+        "key": "batch",
+        "label": "batch",
+        "value": "本科批"
+      },
+      {
+        "key": "university_code",
+        "label": "university_code",
+        "value": "10248"
+      },
+      {
+        "key": "university_name",
+        "label": "university_name",
+        "value": "上海交通大学"
+      }
+    ],
+    "secondary_attributes": [
+      {
+        "key": "group_code",
+        "label": "group_code",
+        "value": "10248201"
+      },
+      {
+        "key": "group_name",
+        "label": "group_name",
+        "value": "201组"
+      },
+      {
+        "key": "major_code",
+        "label": "major_code",
+        "value": "017"
+      },
+      {
+        "key": "major_name",
+        "label": "major_name",
+        "value": "法学试验班"
+      },
+      {
+        "key": "full_major_name",
+        "label": "full_major_name",
+        "value": "法学试验班(涉外法治特班，含：法学，校本部)"
+      },
+      {
+        "key": "subject_requirement",
+        "label": "subject_requirement",
+        "value": "不限"
+      },
+      {
+        "key": "province",
+        "label": "province",
+        "value": "上海"
+      },
+      {
+        "key": "city",
+        "label": "city",
+        "value": "闵行区"
+      },
+      {
+        "key": "tuition",
+        "label": "tuition",
+        "value": 6500.0
+      },
+      {
+        "key": "rank_2024",
+        "label": "rank_2024",
+        "value": 68
+      },
+      {
+        "key": "group_min_rank",
+        "label": "group_min_rank",
+        "value": 68
+      },
+      {
+        "key": "safety_margin",
+        "label": "safety_margin",
+        "value": "-99.7%"
+      }
+    ],
+    "matched_filters": [
+      {
+        "id": "e_source_province",
+        "field": "生源地",
+        "operator": "eq",
+        "value": "广东",
+        "matched": true,
+        "text": "生源地 等于 广东"
+      },
+      {
+        "id": "e_subject_type",
+        "field": "科类",
+        "operator": "eq",
+        "value": "历史",
+        "matched": true,
+        "text": "科类 等于 历史"
+      },
+      {
+        "id": "e_major_keyword",
+        "field": "专业名称",
+        "operator": "contains_any",
+        "value": [
+          "法学"
+        ],
+        "matched": true,
+        "text": "专业名称 包含任一：法学；命中 法学试验班"
+      }
+    ],
+    "raw": {
+      "excel_row_number": 2693,
+      "ID": 2690,
+      "年份": 2024,
+      "批次": "本科批",
+      "院校代码": "10248",
+      "院校名称": "上海交通大学",
+      "院校专业组代码": "10248201",
+      "专业组名称": "201组",
+      "科类": "历史",
+      "选科要求": "不限",
+      "专业代码": "017",
+      "专业名称": "法学试验班",
+      "专业全称": "法学试验班(涉外法治特班，含：法学，校本部)",
+      "所在省": "上海",
+      "城市": "闵行区",
+      "学费": 6500.0,
+      "专业组最低位次1": 68,
+      "最低位次1": null,
+      "院校标签": "985/211/双一流/国重点/保研资格",
+      "院校排名": "4",
+      "ranking_key": -24932,
+      "safety_margin_pct": -0.9973,
+      "cooperation_filter_status": "not_executed_missing_cooperation_type_field",
+      "中外合作筛选状态": "未执行：缺少合作办学类型字段"
+    }
+  }
+]
+```
+### top_results
+```json
+[
+  {
+    "id": "result_001",
+    "trace": [
+      {
+        "status": "pass",
+        "text": "生源地 等于 广东"
+      },
+      {
+        "status": "pass",
+        "text": "科类 等于 历史"
+      },
+      {
+        "status": "pass",
+        "text": "专业名称 包含任一：法学；命中 法学类"
+      }
+    ],
+    "year": 2024,
+    "batch": "本科批",
+    "university_code": "10003",
+    "university_name": "清华大学",
+    "group_code": "10003201",
+    "group_name": "201组",
+    "major_code": "043",
+    "major_name": "法学类",
+    "full_major_name": "法学类(含：法学、法学(国际班)，北京市)",
+    "subject_requirement": "不限",
+    "province": "北京",
+    "city": "海淀区",
+    "tuition": 5000.0,
+    "rank_2024": 19,
+    "major_rank_2024": null,
+    "plan_count": null,
+    "group_min_rank": 19,
+    "major_min_rank": null,
+    "safety_margin": "-99.9%"
+  },
+  {
+    "id": "result_002",
+    "trace": [
+      {
+        "status": "pass",
+        "text": "生源地 等于 广东"
+      },
+      {
+        "status": "pass",
+        "text": "科类 等于 历史"
+      },
+      {
+        "status": "pass",
+        "text": "专业名称 包含任一：法学；命中 法学"
+      }
+    ],
+    "year": 2024,
+    "batch": "本科批",
+    "university_code": "10001",
+    "university_name": "北京大学",
+    "group_code": "10001201",
+    "group_name": "201组",
+    "major_code": "096",
+    "major_name": "法学",
+    "full_major_name": "法学(校本部)",
+    "subject_requirement": "不限",
+    "province": "北京",
+    "city": "海淀区",
+    "tuition": 5000.0,
+    "rank_2024": 32,
+    "major_rank_2024": null,
+    "plan_count": null,
+    "group_min_rank": 32,
+    "major_min_rank": null,
+    "safety_margin": "-99.9%"
+  },
+  {
+    "id": "result_003",
+    "trace": [
+      {
+        "status": "pass",
+        "text": "生源地 等于 广东"
+      },
+      {
+        "status": "pass",
+        "text": "科类 等于 历史"
+      },
+      {
+        "status": "pass",
+        "text": "专业名称 包含任一：法学；命中 法学"
+      }
+    ],
+    "year": 2024,
+    "batch": "本科批",
+    "university_code": "10002",
+    "university_name": "中国人民大学",
+    "group_code": "10002205",
+    "group_name": "205组",
+    "major_code": "013",
+    "major_name": "法学",
+    "full_major_name": "法学(含：法学-新闻学工商管理-法学涉外法治双主学位项目，含：法学-劳动关系实验班，含：哈佛大学、新加坡国立大学等免学费交换项目，亚洲校园+项目(中日韩三国政府奖学金支持)、中欧欧洲法国际组织后备人才培养项目(国家留基委资助)等，北京市)",
+    "subject_requirement": "不限",
+    "province": "北京",
+    "city": "海淀区",
+    "tuition": 5000.0,
+    "rank_2024": 53,
+    "major_rank_2024": null,
+    "plan_count": null,
+    "group_min_rank": 53,
+    "major_min_rank": null,
+    "safety_margin": "-99.8%"
+  },
+  {
+    "id": "result_004",
+    "trace": [
+      {
+        "status": "pass",
+        "text": "生源地 等于 广东"
+      },
+      {
+        "status": "pass",
+        "text": "科类 等于 历史"
+      },
+      {
+        "status": "pass",
+        "text": "专业名称 包含任一：法学；命中 法学试验班"
+      }
+    ],
+    "year": 2024,
+    "batch": "本科批",
+    "university_code": "10248",
+    "university_name": "上海交通大学",
+    "group_code": "10248201",
+    "group_name": "201组",
+    "major_code": "016",
+    "major_name": "法学试验班",
+    "full_major_name": "法学试验班(含：法学，含：法学-经济学双学士学位，校本部)",
+    "subject_requirement": "不限",
+    "province": "上海",
+    "city": "闵行区",
+    "tuition": 6500.0,
+    "rank_2024": 68,
+    "major_rank_2024": null,
+    "plan_count": null,
+    "group_min_rank": 68,
+    "major_min_rank": null,
+    "safety_margin": "-99.7%"
+  },
+  {
+    "id": "result_005",
+    "trace": [
+      {
+        "status": "pass",
+        "text": "生源地 等于 广东"
+      },
+      {
+        "status": "pass",
+        "text": "科类 等于 历史"
+      },
+      {
+        "status": "pass",
+        "text": "专业名称 包含任一：法学；命中 法学试验班"
+      }
+    ],
+    "year": 2024,
+    "batch": "本科批",
+    "university_code": "10248",
+    "university_name": "上海交通大学",
+    "group_code": "10248201",
+    "group_name": "201组",
+    "major_code": "017",
+    "major_name": "法学试验班",
+    "full_major_name": "法学试验班(涉外法治特班，含：法学，校本部)",
+    "subject_requirement": "不限",
+    "province": "上海",
+    "city": "闵行区",
+    "tuition": 6500.0,
+    "rank_2024": 68,
+    "major_rank_2024": null,
+    "plan_count": null,
+    "group_min_rank": 68,
+    "major_min_rank": null,
+    "safety_margin": "-99.7%"
+  }
+]
+```
+### executed_filters
+```json
+[
+  {
+    "id": "e_source_province",
+    "label": "生源地 等于 广东",
+    "field": "生源地",
+    "operator": "eq",
+    "value": "广东",
+    "source_span": "广东"
+  },
+  {
+    "id": "e_subject_type",
+    "label": "科类 等于 历史",
+    "field": "科类",
+    "operator": "eq",
+    "value": "历史",
+    "source_span": "历史"
+  },
+  {
+    "id": "e_major_keyword",
+    "label": "专业名称 包含任一：法学",
+    "field": "专业名称",
+    "operator": "contains_any",
+    "value": [
+      "法学"
+    ],
+    "source_span": "法学"
+  }
+]
+```
+### candidates_to_confirm
+```json
+[]
+```
+### unexecuted_preferences
+```json
+[]
+```
+### SQL / params
+```json
+{
+  "sql": "WITH source AS (\n  SELECT row_number() OVER () AS \"__source_row_number\", *\n  FROM \"admissions\"\n),\nfiltered AS (\n  SELECT\n    source.*,\n    TRY_CAST(regexp_extract(REPLACE(CAST(\"专业组最低位次1\" AS VARCHAR), ',', ''), '\\d+(?:\\.\\d+)?') AS DOUBLE) AS \"__group_rank_num\",\n    TRY_CAST(regexp_extract(REPLACE(CAST(\"学费\" AS VARCHAR), ',', ''), '\\d+(?:\\.\\d+)?') AS DOUBLE) AS \"__tuition_num\",\n    TRY_CAST(regexp_extract(REPLACE(CAST(\"院校排名\" AS VARCHAR), ',', ''), '\\d+(?:\\.\\d+)?') AS DOUBLE) AS \"__school_rank_num\",\n    TRY_CAST(regexp_extract(REPLACE(CAST(\"ID\" AS VARCHAR), ',', ''), '\\d+(?:\\.\\d+)?') AS DOUBLE) AS \"__id_num\"\n  FROM source\n  WHERE CAST(\"生源地\" AS VARCHAR) = ? AND CAST(\"科类\" AS VARCHAR) = ? AND (STRPOS(CAST(\"专业名称\" AS VARCHAR), ?) > 0)\n),\nprojectable AS (\n  SELECT *\n  FROM filtered\n  WHERE TRUE\n    AND \"__group_rank_num\" IS NOT NULL\n    AND \"__tuition_num\" IS NOT NULL\n)\nSELECT *\nFROM projectable\nORDER BY\n  \"__group_rank_num\" ASC NULLS LAST,\n  \"__school_rank_num\" ASC NULLS LAST,\n  \"__id_num\" ASC NULLS LAST",
+  "params": [
+    "广东",
+    "历史",
+    "法学"
+  ]
+}
+```
+### EvidencePack
+```json
+{
+  "user_request": "广东历史，排位25000，法学，预算有限。；偏好信息：偏好描述：广东历史，排位25000，法学，预算有限。",
+  "executed_rules": [
+    {
+      "rule_id": "e_source_province",
+      "derived_from": "d_source_province",
+      "field": "生源地",
+      "operator": "eq",
+      "value": "广东",
+      "description": "生源地 等于 广东"
+    },
+    {
+      "rule_id": "e_subject_type",
+      "derived_from": "d_subject_type",
+      "field": "科类",
+      "operator": "eq",
+      "value": "历史",
+      "description": "科类 等于 历史"
+    },
+    {
+      "rule_id": "e_major_keyword",
+      "derived_from": "d_major_keyword",
+      "field": "专业名称",
+      "operator": "contains_any",
+      "value": [
+        "法学"
+      ],
+      "description": "专业名称 包含任一：法学"
+    }
+  ],
+  "candidate_confirmations": [],
+  "not_executed_preferences": [],
+  "result_count": 282,
+  "top_k_results": [
+    {
+      "rank": 1,
+      "院校名称": "清华大学",
+      "院校专业组代码": "10003201",
+      "专业代码": "043",
+      "专业名称": "法学类",
+      "专业全称": "法学类(含：法学、法学(国际班)，北京市)",
+      "选科要求": "不限",
+      "城市": "海淀区",
+      "学费": 5000.0,
+      "专业组最低位次": 19,
+      "safety_margin": "-99.92%",
+      "trace": [
+        {
+          "rule_id": "e_source_province",
+          "status": "pass",
+          "reason": "生源地 等于 广东"
+        },
+        {
+          "rule_id": "e_subject_type",
+          "status": "pass",
+          "reason": "科类 等于 历史"
+        },
+        {
+          "rule_id": "e_major_keyword",
+          "status": "pass",
+          "reason": "专业名称 包含任一：法学；命中 法学类"
+        }
+      ]
+    },
+    {
+      "rank": 2,
+      "院校名称": "北京大学",
+      "院校专业组代码": "10001201",
+      "专业代码": "096",
+      "专业名称": "法学",
+      "专业全称": "法学(校本部)",
+      "选科要求": "不限",
+      "城市": "海淀区",
+      "学费": 5000.0,
+      "专业组最低位次": 32,
+      "safety_margin": "-99.87%",
+      "trace": [
+        {
+          "rule_id": "e_source_province",
+          "status": "pass",
+          "reason": "生源地 等于 广东"
+        },
+        {
+          "rule_id": "e_subject_type",
+          "status": "pass",
+          "reason": "科类 等于 历史"
+        },
+        {
+          "rule_id": "e_major_keyword",
+          "status": "pass",
+          "reason": "专业名称 包含任一：法学；命中 法学"
+        }
+      ]
+    },
+    {
+      "rank": 3,
+      "院校名称": "中国人民大学",
+      "院校专业组代码": "10002205",
+      "专业代码": "013",
+      "专业名称": "法学",
+      "专业全称": "法学(含：法学-新闻学工商管理-法学涉外法治双主学位项目，含：法学-劳动关系实验班，含：哈佛大学、新加坡国立大学等免学费交换项目，亚洲校园+项目(中日韩三国政府奖学金支持)、中欧欧洲法国际组织后备人才培养项目(国家留基委资助)等，北京市)",
+      "选科要求": "不限",
+      "城市": "海淀区",
+      "学费": 5000.0,
+      "专业组最低位次": 53,
+      "safety_margin": "-99.79%",
+      "trace": [
+        {
+          "rule_id": "e_source_province",
+          "status": "pass",
+          "reason": "生源地 等于 广东"
+        },
+        {
+          "rule_id": "e_subject_type",
+          "status": "pass",
+          "reason": "科类 等于 历史"
+        },
+        {
+          "rule_id": "e_major_keyword",
+          "status": "pass",
+          "reason": "专业名称 包含任一：法学；命中 法学"
+        }
+      ]
+    },
+    {
+      "rank": 4,
+      "院校名称": "上海交通大学",
+      "院校专业组代码": "10248201",
+      "专业代码": "016",
+      "专业名称": "法学试验班",
+      "专业全称": "法学试验班(含：法学，含：法学-经济学双学士学位，校本部)",
+      "选科要求": "不限",
+      "城市": "闵行区",
+      "学费": 6500.0,
+      "专业组最低位次": 68,
+      "safety_margin": "-99.73%",
+      "trace": [
+        {
+          "rule_id": "e_source_province",
+          "status": "pass",
+          "reason": "生源地 等于 广东"
+        },
+        {
+          "rule_id": "e_subject_type",
+          "status": "pass",
+          "reason": "科类 等于 历史"
+        },
+        {
+          "rule_id": "e_major_keyword",
+          "status": "pass",
+          "reason": "专业名称 包含任一：法学；命中 法学试验班"
+        }
+      ]
+    },
+    {
+      "rank": 5,
+      "院校名称": "上海交通大学",
+      "院校专业组代码": "10248201",
+      "专业代码": "017",
+      "专业名称": "法学试验班",
+      "专业全称": "法学试验班(涉外法治特班，含：法学，校本部)",
+      "选科要求": "不限",
+      "城市": "闵行区",
+      "学费": 6500.0,
+      "专业组最低位次": 68,
+      "safety_margin": "-99.73%",
+      "trace": [
+        {
+          "rule_id": "e_source_province",
+          "status": "pass",
+          "reason": "生源地 等于 广东"
+        },
+        {
+          "rule_id": "e_subject_type",
+          "status": "pass",
+          "reason": "科类 等于 历史"
+        },
+        {
+          "rule_id": "e_major_keyword",
+          "status": "pass",
+          "reason": "专业名称 包含任一：法学；命中 法学试验班"
+        }
+      ]
+    }
+  ],
+  "trace_summary": {
+    "executed_rule_ids": [
+      "e_source_province",
+      "e_subject_type",
+      "e_major_keyword"
+    ],
+    "not_executed_preference_count": 0,
+    "traced_result_count": 282,
+    "top_k": 5,
+    "top_k_trace_status_counts": {
+      "pass": 15
+    },
+    "safety_warnings": [
+      "答案只能使用 evidence_pack 中的已验证规则、确认记录、结果摘要和 trace。",
+      "候选偏好在确认或模拟确认之前不得执行。"
+    ]
+  },
+  "extracted_preferences": [
+    {
+      "id": "pref_origin",
+      "slot": "生源地",
+      "value": "广东",
+      "source_span": "广东",
+      "status": "已对齐字段"
+    },
+    {
+      "id": "pref_track",
+      "slot": "科类",
+      "value": "历史",
+      "source_span": "历史",
+      "status": "已对齐字段"
+    },
+    {
+      "id": "pref_rank",
+      "slot": "排位",
+      "value": 25000,
+      "source_span": "排位25000",
+      "status": "已对齐字段"
+    },
+    {
+      "id": "pref_major",
+      "slot": "专业名称",
+      "value": [
+        "法学"
+      ],
+      "source_span": "法学",
+      "status": "已对齐字段"
+    },
+    {
+      "id": "pref_expensive",
+      "slot": "太贵",
+      "value": "预算有限",
+      "source_span": "预算有限",
+      "status": "待确认"
+    }
+  ],
+  "attribute_grounding_summary": {
+    "total_attributes": 6,
+    "status_counts": {
+      "schema_grounded": 4,
+      "context_only": 1,
+      "confirmable": 1
+    },
+    "value_index_status_counts": {
+      "matched": 4,
+      "outside_numeric_profile": 1
+    },
+    "unsafe_ungrounded_executable_attributes": 0
+  },
+  "proposed_rule_audit": [],
+  "execution_summary": {
+    "executor": "duckdb",
+    "sql": "WITH source AS (\n  SELECT row_number() OVER () AS \"__source_row_number\", *\n  FROM \"admissions\"\n),\nfiltered AS (\n  SELECT\n    source.*,\n    TRY_CAST(regexp_extract(REPLACE(CAST(\"专业组最低位次1\" AS VARCHAR), ',', ''), '\\d+(?:\\.\\d+)?') AS DOUBLE) AS \"__group_rank_num\",\n    TRY_CAST(regexp_extract(REPLACE(CAST(\"学费\" AS VARCHAR), ',', ''), '\\d+(?:\\.\\d+)?') AS DOUBLE) AS \"__tuition_num\",\n    TRY_CAST(regexp_extract(REPLACE(CAST(\"院校排名\" AS VARCHAR), ',', ''), '\\d+(?:\\.\\d+)?') AS DOUBLE) AS \"__school_rank_num\",\n    TRY_CAST(regexp_extract(REPLACE(CAST(\"ID\" AS VARCHAR), ',', ''), '\\d+(?:\\.\\d+)?') AS DOUBLE) AS \"__id_num\"\n  FROM source\n  WHERE CAST(\"生源地\" AS VARCHAR) = ? AND CAST(\"科类\" AS VARCHAR) = ? AND (STRPOS(CAST(\"专业名称\" AS VARCHAR), ?) > 0)\n),\nprojectable AS (\n  SELECT *\n  FROM filtered\n  WHERE TRUE\n    AND \"__group_rank_num\" IS NOT NULL\n    AND \"__tuition_num\" IS NOT NULL\n)\nSELECT *\nFROM projectable\nORDER BY\n  \"__group_rank_num\" ASC NULLS LAST,\n  \"__school_rank_num\" ASC NULLS LAST,\n  \"__id_num\" ASC NULLS LAST",
+    "params": [
+      "广东",
+      "历史",
+      "法学"
+    ],
+    "input_row_count": 30855,
+    "filtered_row_count": 282,
+    "sort_key": [
+      "专业组最低位次1 ASC NULLS LAST",
+      "院校排名 ASC NULLS LAST",
+      "ID ASC NULLS LAST"
+    ],
+    "top_k": 5,
+    "hard_rule_ids": [
+      "e_source_province",
+      "e_subject_type",
+      "e_major_keyword"
+    ],
+    "skipped_soft_rule_ids": []
+  },
+  "attribute_explanations": [
+    {
+      "source_text": "广东",
+      "slot_path": "user_context.source_province",
+      "field": "生源地",
+      "value": "广东",
+      "match_type": "exact_match",
+      "action": "executed",
+      "matched_values": [
+        "广东"
+      ],
+      "reason": "已匹配字段“生源地”，并已进入 hard filter。"
+    },
+    {
+      "source_text": "历史",
+      "slot_path": "user_context.subject_type",
+      "field": "科类",
+      "value": "历史",
+      "match_type": "exact_match",
+      "action": "executed",
+      "matched_values": [
+        "历史"
+      ],
+      "reason": "已匹配字段“科类”，并已进入 hard filter。"
+    },
+    {
+      "source_text": "法学",
+      "slot_path": "preferences.major_keyword",
+      "field": "专业名称",
+      "value": "法学",
+      "match_type": "exact_match",
+      "action": "executed",
+      "matched_values": [
+        "法学"
+      ],
+      "reason": "已匹配字段“专业名称”，并已进入 hard filter。"
+    },
+    {
+      "source_text": "预算有限",
+      "slot_path": "preferences.tuition_preference_raw",
+      "field": "学费",
+      "value": "预算有限",
+      "match_type": "partial_match",
+      "action": "needs_confirmation",
+      "matched_values": [],
+      "reason": "该属性有对应字段，但语义或边界需要确认。未进入 hard filter。"
+    }
+  ],
+  "confirmed_rules": [],
+  "confirmation_source": [],
+  "executed_after_confirmation": [],
+  "unconfirmed_candidates": [],
+  "no_schema_field_preferences": [],
+  "rejected_confirmations": []
+}
+```
+### answer
+
+根据已验证规则生成结果：
+
+用户需求：广东历史，排位25000，法学，预算有限。；偏好信息：偏好描述：广东历史，排位25000，法学，预算有限。
+共筛选到 282 条符合已执行规则的结果。
+
+抽取与结构化结果：
+- 生源地：广东；状态：已对齐字段；来源：广东
+- 科类：历史；状态：已对齐字段；来源：历史
+- 排位：25000；状态：已对齐字段；来源：排位25000
+- 专业名称：法学；状态：已对齐字段；来源：法学
+- 太贵：预算有限；状态：待确认；来源：预算有限
+
+字段值审计解释：
+- [已执行] 广东 -> 生源地：exact_match；索引命中：广东；已匹配字段“生源地”，并已进入 hard filter。
+- [已执行] 历史 -> 科类：exact_match；索引命中：历史；已匹配字段“科类”，并已进入 hard filter。
+- [已执行] 法学 -> 专业名称：exact_match；索引命中：法学；已匹配字段“专业名称”，并已进入 hard filter。
+- [需确认] 预算有限 -> 学费：partial_match；该属性有对应字段，但语义或边界需要确认。未进入 hard filter。
+
+已执行规则：
+- e_source_province：生源地 等于 广东
+- e_subject_type：科类 等于 历史
+- e_major_keyword：专业名称 包含任一：法学
+
+候选偏好确认记录：
+
+未执行但已保留的偏好：
+- 无。
+
+前 5 条结果：
+- 1. 清华大学；专业组代码：10003201；专业代码：043；专业名称：法学类；专业全称：法学类(含：法学、法学(国际班)，北京市)；选科要求：不限；城市：海淀区；学费：5000 元/年；专业组最低位次：19。
+- 2. 北京大学；专业组代码：10001201；专业代码：096；专业名称：法学；专业全称：法学(校本部)；选科要求：不限；城市：海淀区；学费：5000 元/年；专业组最低位次：32。
+- 3. 中国人民大学；专业组代码：10002205；专业代码：013；专业名称：法学；专业全称：法学(含：法学-新闻学工商管理-法学涉外法治双主学位项目，含：法学-劳动关系实验班，含：哈佛大学、新加坡国立大学等免学费交换项目，亚洲校园+项目(中日韩三国政府奖学金支持)、中欧欧洲法国际组织后备人才培养项目(国家留基委资助)等，北京市)；选科要求：不限；城市：海淀区；学费：5000 元/年；专业组最低位次：53。
+- 4. 上海交通大学；专业组代码：10248201；专业代码：016；专业名称：法学试验班；专业全称：法学试验班(含：法学，含：法学-经济学双学士学位，校本部)；选科要求：不限；城市：闵行区；学费：6500 元/年；专业组最低位次：68。
+- 5. 上海交通大学；专业组代码：10248201；专业代码：017；专业名称：法学试验班；专业全称：法学试验班(涉外法治特班，含：法学，校本部)；选科要求：不限；城市：闵行区；学费：6500 元/年；专业组最低位次：68。
+
+安全说明：
+- 答案只能使用 证据包 中的已验证规则、确认记录、结果摘要和 trace。
+- 候选偏好在确认或模拟确认之前不得执行。
+
+## admissions_11 `通过`
+
+- domain: `admissions`
+- query: 广东物理，排位40000，想要就业前景好。
+- status: `ok`
+- pass/fail：`通过`
+
+### items
+```json
+[
+  {
+    "item_id": "result_001",
+    "title": "清华大学",
+    "subtitle": "建筑类(含：建筑学、城乡规划、风景园林，北京市)",
+    "primary_attributes": [
+      {
+        "key": "year",
+        "label": "year",
+        "value": 2024
+      },
+      {
+        "key": "batch",
+        "label": "batch",
+        "value": "本科批"
+      },
+      {
+        "key": "university_code",
+        "label": "university_code",
+        "value": "10003"
+      },
+      {
+        "key": "university_name",
+        "label": "university_name",
+        "value": "清华大学"
+      }
+    ],
+    "secondary_attributes": [
+      {
+        "key": "group_code",
+        "label": "group_code",
+        "value": "10003202"
+      },
+      {
+        "key": "group_name",
+        "label": "group_name",
+        "value": "202组"
+      },
+      {
+        "key": "major_code",
+        "label": "major_code",
+        "value": "046"
+      },
+      {
+        "key": "major_name",
+        "label": "major_name",
+        "value": "建筑类"
+      },
+      {
+        "key": "full_major_name",
+        "label": "full_major_name",
+        "value": "建筑类(含：建筑学、城乡规划、风景园林，北京市)"
+      },
+      {
+        "key": "subject_requirement",
+        "label": "subject_requirement",
+        "value": "不限"
+      },
+      {
+        "key": "province",
+        "label": "province",
+        "value": "北京"
+      },
+      {
+        "key": "city",
+        "label": "city",
+        "value": "海淀区"
+      },
+      {
+        "key": "tuition",
+        "label": "tuition",
+        "value": 5000.0
+      },
+      {
+        "key": "rank_2024",
+        "label": "rank_2024",
+        "value": 53
+      },
+      {
+        "key": "group_min_rank",
+        "label": "group_min_rank",
+        "value": 53
+      },
+      {
+        "key": "safety_margin",
+        "label": "safety_margin",
+        "value": "-99.9%"
+      }
+    ],
+    "matched_filters": [
+      {
+        "id": "e_source_province",
+        "field": "生源地",
+        "operator": "eq",
+        "value": "广东",
+        "matched": true,
+        "text": "生源地 等于 广东"
+      },
+      {
+        "id": "e_subject_type",
+        "field": "科类",
+        "operator": "eq",
+        "value": "物理",
+        "matched": true,
+        "text": "科类 等于 物理"
+      }
+    ],
+    "raw": {
+      "excel_row_number": 89,
+      "ID": 86,
+      "年份": 2024,
+      "批次": "本科批",
+      "院校代码": "10003",
+      "院校名称": "清华大学",
+      "院校专业组代码": "10003202",
+      "专业组名称": "202组",
+      "科类": "物理",
+      "选科要求": "不限",
+      "专业代码": "046",
+      "专业名称": "建筑类",
+      "专业全称": "建筑类(含：建筑学、城乡规划、风景园林，北京市)",
+      "所在省": "北京",
+      "城市": "海淀区",
+      "学费": 5000.0,
+      "专业组最低位次1": 53,
+      "最低位次1": null,
+      "院校标签": "985/211/双一流/国重点/保研资格",
+      "院校排名": "1",
+      "ranking_key": -39947,
+      "safety_margin_pct": -0.9987,
+      "cooperation_filter_status": "not_executed_missing_cooperation_type_field",
+      "中外合作筛选状态": "未执行：缺少合作办学类型字段"
+    }
+  },
+  {
+    "item_id": "result_002",
+    "title": "清华大学",
+    "subtitle": "理科试验班类(经济、金融与管理，含：信息管理与信息系统、金融学(经济金融国际班)，北京市)",
+    "primary_attributes": [
+      {
+        "key": "year",
+        "label": "year",
+        "value": 2024
+      },
+      {
+        "key": "batch",
+        "label": "batch",
+        "value": "本科批"
+      },
+      {
+        "key": "university_code",
+        "label": "university_code",
+        "value": "10003"
+      },
+      {
+        "key": "university_name",
+        "label": "university_name",
+        "value": "清华大学"
+      }
+    ],
+    "secondary_attributes": [
+      {
+        "key": "group_code",
+        "label": "group_code",
+        "value": "10003202"
+      },
+      {
+        "key": "group_name",
+        "label": "group_name",
+        "value": "202组"
+      },
+      {
+        "key": "major_code",
+        "label": "major_code",
+        "value": "055"
+      },
+      {
+        "key": "major_name",
+        "label": "major_name",
+        "value": "理科试验班类"
+      },
+      {
+        "key": "full_major_name",
+        "label": "full_major_name",
+        "value": "理科试验班类(经济、金融与管理，含：信息管理与信息系统、金融学(经济金融国际班)，北京市)"
+      },
+      {
+        "key": "subject_requirement",
+        "label": "subject_requirement",
+        "value": "不限"
+      },
+      {
+        "key": "province",
+        "label": "province",
+        "value": "北京"
+      },
+      {
+        "key": "city",
+        "label": "city",
+        "value": "海淀区"
+      },
+      {
+        "key": "tuition",
+        "label": "tuition",
+        "value": 5000.0
+      },
+      {
+        "key": "rank_2024",
+        "label": "rank_2024",
+        "value": 53
+      },
+      {
+        "key": "group_min_rank",
+        "label": "group_min_rank",
+        "value": 53
+      },
+      {
+        "key": "safety_margin",
+        "label": "safety_margin",
+        "value": "-99.9%"
+      }
+    ],
+    "matched_filters": [
+      {
+        "id": "e_source_province",
+        "field": "生源地",
+        "operator": "eq",
+        "value": "广东",
+        "matched": true,
+        "text": "生源地 等于 广东"
+      },
+      {
+        "id": "e_subject_type",
+        "field": "科类",
+        "operator": "eq",
+        "value": "物理",
+        "matched": true,
+        "text": "科类 等于 物理"
+      }
+    ],
+    "raw": {
+      "excel_row_number": 90,
+      "ID": 87,
+      "年份": 2024,
+      "批次": "本科批",
+      "院校代码": "10003",
+      "院校名称": "清华大学",
+      "院校专业组代码": "10003202",
+      "专业组名称": "202组",
+      "科类": "物理",
+      "选科要求": "不限",
+      "专业代码": "055",
+      "专业名称": "理科试验班类",
+      "专业全称": "理科试验班类(经济、金融与管理，含：信息管理与信息系统、金融学(经济金融国际班)，北京市)",
+      "所在省": "北京",
+      "城市": "海淀区",
+      "学费": 5000.0,
+      "专业组最低位次1": 53,
+      "最低位次1": null,
+      "院校标签": "985/211/双一流/国重点/保研资格",
+      "院校排名": "1",
+      "ranking_key": -39947,
+      "safety_margin_pct": -0.9987,
+      "cooperation_filter_status": "not_executed_missing_cooperation_type_field",
+      "中外合作筛选状态": "未执行：缺少合作办学类型字段"
+    }
+  },
+  {
+    "item_id": "result_003",
+    "title": "清华大学",
+    "subtitle": "法学类(含：法学、法学(国际班)，北京市)",
+    "primary_attributes": [
+      {
+        "key": "year",
+        "label": "year",
+        "value": 2024
+      },
+      {
+        "key": "batch",
+        "label": "batch",
+        "value": "本科批"
+      },
+      {
+        "key": "university_code",
+        "label": "university_code",
+        "value": "10003"
+      },
+      {
+        "key": "university_name",
+        "label": "university_name",
+        "value": "清华大学"
+      }
+    ],
+    "secondary_attributes": [
+      {
+        "key": "group_code",
+        "label": "group_code",
+        "value": "10003202"
+      },
+      {
+        "key": "group_name",
+        "label": "group_name",
+        "value": "202组"
+      },
+      {
+        "key": "major_code",
+        "label": "major_code",
+        "value": "056"
+      },
+      {
+        "key": "major_name",
+        "label": "major_name",
+        "value": "法学类"
+      },
+      {
+        "key": "full_major_name",
+        "label": "full_major_name",
+        "value": "法学类(含：法学、法学(国际班)，北京市)"
+      },
+      {
+        "key": "subject_requirement",
+        "label": "subject_requirement",
+        "value": "不限"
+      },
+      {
+        "key": "province",
+        "label": "province",
+        "value": "北京"
+      },
+      {
+        "key": "city",
+        "label": "city",
+        "value": "海淀区"
+      },
+      {
+        "key": "tuition",
+        "label": "tuition",
+        "value": 5000.0
+      },
+      {
+        "key": "rank_2024",
+        "label": "rank_2024",
+        "value": 53
+      },
+      {
+        "key": "group_min_rank",
+        "label": "group_min_rank",
+        "value": 53
+      },
+      {
+        "key": "safety_margin",
+        "label": "safety_margin",
+        "value": "-99.9%"
+      }
+    ],
+    "matched_filters": [
+      {
+        "id": "e_source_province",
+        "field": "生源地",
+        "operator": "eq",
+        "value": "广东",
+        "matched": true,
+        "text": "生源地 等于 广东"
+      },
+      {
+        "id": "e_subject_type",
+        "field": "科类",
+        "operator": "eq",
+        "value": "物理",
+        "matched": true,
+        "text": "科类 等于 物理"
+      }
+    ],
+    "raw": {
+      "excel_row_number": 91,
+      "ID": 88,
+      "年份": 2024,
+      "批次": "本科批",
+      "院校代码": "10003",
+      "院校名称": "清华大学",
+      "院校专业组代码": "10003202",
+      "专业组名称": "202组",
+      "科类": "物理",
+      "选科要求": "不限",
+      "专业代码": "056",
+      "专业名称": "法学类",
+      "专业全称": "法学类(含：法学、法学(国际班)，北京市)",
+      "所在省": "北京",
+      "城市": "海淀区",
+      "学费": 5000.0,
+      "专业组最低位次1": 53,
+      "最低位次1": null,
+      "院校标签": "985/211/双一流/国重点/保研资格",
+      "院校排名": "1",
+      "ranking_key": -39947,
+      "safety_margin_pct": -0.9987,
+      "cooperation_filter_status": "not_executed_missing_cooperation_type_field",
+      "中外合作筛选状态": "未执行：缺少合作办学类型字段"
+    }
+  },
+  {
+    "item_id": "result_004",
+    "title": "清华大学",
+    "subtitle": "社会科学试验班(至善书院，含：经济学、社会学，北京市)",
+    "primary_attributes": [
+      {
+        "key": "year",
+        "label": "year",
+        "value": 2024
+      },
+      {
+        "key": "batch",
+        "label": "batch",
+        "value": "本科批"
+      },
+      {
+        "key": "university_code",
+        "label": "university_code",
+        "value": "10003"
+      },
+      {
+        "key": "university_name",
+        "label": "university_name",
+        "value": "清华大学"
+      }
+    ],
+    "secondary_attributes": [
+      {
+        "key": "group_code",
+        "label": "group_code",
+        "value": "10003202"
+      },
+      {
+        "key": "group_name",
+        "label": "group_name",
+        "value": "202组"
+      },
+      {
+        "key": "major_code",
+        "label": "major_code",
+        "value": "060"
+      },
+      {
+        "key": "major_name",
+        "label": "major_name",
+        "value": "社会科学试验班"
+      },
+      {
+        "key": "full_major_name",
+        "label": "full_major_name",
+        "value": "社会科学试验班(至善书院，含：经济学、社会学，北京市)"
+      },
+      {
+        "key": "subject_requirement",
+        "label": "subject_requirement",
+        "value": "不限"
+      },
+      {
+        "key": "province",
+        "label": "province",
+        "value": "北京"
+      },
+      {
+        "key": "city",
+        "label": "city",
+        "value": "海淀区"
+      },
+      {
+        "key": "tuition",
+        "label": "tuition",
+        "value": 5000.0
+      },
+      {
+        "key": "rank_2024",
+        "label": "rank_2024",
+        "value": 53
+      },
+      {
+        "key": "group_min_rank",
+        "label": "group_min_rank",
+        "value": 53
+      },
+      {
+        "key": "safety_margin",
+        "label": "safety_margin",
+        "value": "-99.9%"
+      }
+    ],
+    "matched_filters": [
+      {
+        "id": "e_source_province",
+        "field": "生源地",
+        "operator": "eq",
+        "value": "广东",
+        "matched": true,
+        "text": "生源地 等于 广东"
+      },
+      {
+        "id": "e_subject_type",
+        "field": "科类",
+        "operator": "eq",
+        "value": "物理",
+        "matched": true,
+        "text": "科类 等于 物理"
+      }
+    ],
+    "raw": {
+      "excel_row_number": 92,
+      "ID": 89,
+      "年份": 2024,
+      "批次": "本科批",
+      "院校代码": "10003",
+      "院校名称": "清华大学",
+      "院校专业组代码": "10003202",
+      "专业组名称": "202组",
+      "科类": "物理",
+      "选科要求": "不限",
+      "专业代码": "060",
+      "专业名称": "社会科学试验班",
+      "专业全称": "社会科学试验班(至善书院，含：经济学、社会学，北京市)",
+      "所在省": "北京",
+      "城市": "海淀区",
+      "学费": 5000.0,
+      "专业组最低位次1": 53,
+      "最低位次1": null,
+      "院校标签": "985/211/双一流/国重点/保研资格",
+      "院校排名": "1",
+      "ranking_key": -39947,
+      "safety_margin_pct": -0.9987,
+      "cooperation_filter_status": "not_executed_missing_cooperation_type_field",
+      "中外合作筛选状态": "未执行：缺少合作办学类型字段"
+    }
+  },
+  {
+    "item_id": "result_005",
+    "title": "清华大学",
+    "subtitle": "理科试验班类(新雅书院，含：工程管理(等全校各专业)，北京市)",
+    "primary_attributes": [
+      {
+        "key": "year",
+        "label": "year",
+        "value": 2024
+      },
+      {
+        "key": "batch",
+        "label": "batch",
+        "value": "本科批"
+      },
+      {
+        "key": "university_code",
+        "label": "university_code",
+        "value": "10003"
+      },
+      {
+        "key": "university_name",
+        "label": "university_name",
+        "value": "清华大学"
+      }
+    ],
+    "secondary_attributes": [
+      {
+        "key": "group_code",
+        "label": "group_code",
+        "value": "10003202"
+      },
+      {
+        "key": "group_name",
+        "label": "group_name",
+        "value": "202组"
+      },
+      {
+        "key": "major_code",
+        "label": "major_code",
+        "value": "061"
+      },
+      {
+        "key": "major_name",
+        "label": "major_name",
+        "value": "理科试验班类"
+      },
+      {
+        "key": "full_major_name",
+        "label": "full_major_name",
+        "value": "理科试验班类(新雅书院，含：工程管理(等全校各专业)，北京市)"
+      },
+      {
+        "key": "subject_requirement",
+        "label": "subject_requirement",
+        "value": "不限"
+      },
+      {
+        "key": "province",
+        "label": "province",
+        "value": "北京"
+      },
+      {
+        "key": "city",
+        "label": "city",
+        "value": "海淀区"
+      },
+      {
+        "key": "tuition",
+        "label": "tuition",
+        "value": 5000.0
+      },
+      {
+        "key": "rank_2024",
+        "label": "rank_2024",
+        "value": 53
+      },
+      {
+        "key": "group_min_rank",
+        "label": "group_min_rank",
+        "value": 53
+      },
+      {
+        "key": "safety_margin",
+        "label": "safety_margin",
+        "value": "-99.9%"
+      }
+    ],
+    "matched_filters": [
+      {
+        "id": "e_source_province",
+        "field": "生源地",
+        "operator": "eq",
+        "value": "广东",
+        "matched": true,
+        "text": "生源地 等于 广东"
+      },
+      {
+        "id": "e_subject_type",
+        "field": "科类",
+        "operator": "eq",
+        "value": "物理",
+        "matched": true,
+        "text": "科类 等于 物理"
+      }
+    ],
+    "raw": {
+      "excel_row_number": 93,
+      "ID": 90,
+      "年份": 2024,
+      "批次": "本科批",
+      "院校代码": "10003",
+      "院校名称": "清华大学",
+      "院校专业组代码": "10003202",
+      "专业组名称": "202组",
+      "科类": "物理",
+      "选科要求": "不限",
+      "专业代码": "061",
+      "专业名称": "理科试验班类",
+      "专业全称": "理科试验班类(新雅书院，含：工程管理(等全校各专业)，北京市)",
+      "所在省": "北京",
+      "城市": "海淀区",
+      "学费": 5000.0,
+      "专业组最低位次1": 53,
+      "最低位次1": null,
+      "院校标签": "985/211/双一流/国重点/保研资格",
+      "院校排名": "1",
+      "ranking_key": -39947,
+      "safety_margin_pct": -0.9987,
+      "cooperation_filter_status": "not_executed_missing_cooperation_type_field",
+      "中外合作筛选状态": "未执行：缺少合作办学类型字段"
+    }
+  }
+]
+```
+### top_results
+```json
+[
+  {
+    "id": "result_001",
+    "trace": [
+      {
+        "status": "pass",
+        "text": "生源地 等于 广东"
+      },
+      {
+        "status": "pass",
+        "text": "科类 等于 物理"
+      },
+      {
+        "status": "not_executed",
+        "text": "就业前景好 未执行：当前数据中没有就业结果字段。"
+      }
+    ],
+    "year": 2024,
+    "batch": "本科批",
+    "university_code": "10003",
+    "university_name": "清华大学",
+    "group_code": "10003202",
+    "group_name": "202组",
+    "major_code": "046",
+    "major_name": "建筑类",
+    "full_major_name": "建筑类(含：建筑学、城乡规划、风景园林，北京市)",
+    "subject_requirement": "不限",
+    "province": "北京",
+    "city": "海淀区",
+    "tuition": 5000.0,
+    "rank_2024": 53,
+    "major_rank_2024": null,
+    "plan_count": null,
+    "group_min_rank": 53,
+    "major_min_rank": null,
+    "safety_margin": "-99.9%"
+  },
+  {
+    "id": "result_002",
+    "trace": [
+      {
+        "status": "pass",
+        "text": "生源地 等于 广东"
+      },
+      {
+        "status": "pass",
+        "text": "科类 等于 物理"
+      },
+      {
+        "status": "not_executed",
+        "text": "就业前景好 未执行：当前数据中没有就业结果字段。"
+      }
+    ],
+    "year": 2024,
+    "batch": "本科批",
+    "university_code": "10003",
+    "university_name": "清华大学",
+    "group_code": "10003202",
+    "group_name": "202组",
+    "major_code": "055",
+    "major_name": "理科试验班类",
+    "full_major_name": "理科试验班类(经济、金融与管理，含：信息管理与信息系统、金融学(经济金融国际班)，北京市)",
+    "subject_requirement": "不限",
+    "province": "北京",
+    "city": "海淀区",
+    "tuition": 5000.0,
+    "rank_2024": 53,
+    "major_rank_2024": null,
+    "plan_count": null,
+    "group_min_rank": 53,
+    "major_min_rank": null,
+    "safety_margin": "-99.9%"
+  },
+  {
+    "id": "result_003",
+    "trace": [
+      {
+        "status": "pass",
+        "text": "生源地 等于 广东"
+      },
+      {
+        "status": "pass",
+        "text": "科类 等于 物理"
+      },
+      {
+        "status": "not_executed",
+        "text": "就业前景好 未执行：当前数据中没有就业结果字段。"
+      }
+    ],
+    "year": 2024,
+    "batch": "本科批",
+    "university_code": "10003",
+    "university_name": "清华大学",
+    "group_code": "10003202",
+    "group_name": "202组",
+    "major_code": "056",
+    "major_name": "法学类",
+    "full_major_name": "法学类(含：法学、法学(国际班)，北京市)",
+    "subject_requirement": "不限",
+    "province": "北京",
+    "city": "海淀区",
+    "tuition": 5000.0,
+    "rank_2024": 53,
+    "major_rank_2024": null,
+    "plan_count": null,
+    "group_min_rank": 53,
+    "major_min_rank": null,
+    "safety_margin": "-99.9%"
+  },
+  {
+    "id": "result_004",
+    "trace": [
+      {
+        "status": "pass",
+        "text": "生源地 等于 广东"
+      },
+      {
+        "status": "pass",
+        "text": "科类 等于 物理"
+      },
+      {
+        "status": "not_executed",
+        "text": "就业前景好 未执行：当前数据中没有就业结果字段。"
+      }
+    ],
+    "year": 2024,
+    "batch": "本科批",
+    "university_code": "10003",
+    "university_name": "清华大学",
+    "group_code": "10003202",
+    "group_name": "202组",
+    "major_code": "060",
+    "major_name": "社会科学试验班",
+    "full_major_name": "社会科学试验班(至善书院，含：经济学、社会学，北京市)",
+    "subject_requirement": "不限",
+    "province": "北京",
+    "city": "海淀区",
+    "tuition": 5000.0,
+    "rank_2024": 53,
+    "major_rank_2024": null,
+    "plan_count": null,
+    "group_min_rank": 53,
+    "major_min_rank": null,
+    "safety_margin": "-99.9%"
+  },
+  {
+    "id": "result_005",
+    "trace": [
+      {
+        "status": "pass",
+        "text": "生源地 等于 广东"
+      },
+      {
+        "status": "pass",
+        "text": "科类 等于 物理"
+      },
+      {
+        "status": "not_executed",
+        "text": "就业前景好 未执行：当前数据中没有就业结果字段。"
+      }
+    ],
+    "year": 2024,
+    "batch": "本科批",
+    "university_code": "10003",
+    "university_name": "清华大学",
+    "group_code": "10003202",
+    "group_name": "202组",
+    "major_code": "061",
+    "major_name": "理科试验班类",
+    "full_major_name": "理科试验班类(新雅书院，含：工程管理(等全校各专业)，北京市)",
+    "subject_requirement": "不限",
+    "province": "北京",
+    "city": "海淀区",
+    "tuition": 5000.0,
+    "rank_2024": 53,
+    "major_rank_2024": null,
+    "plan_count": null,
+    "group_min_rank": 53,
+    "major_min_rank": null,
+    "safety_margin": "-99.9%"
+  }
+]
+```
+### executed_filters
+```json
+[
+  {
+    "id": "e_source_province",
+    "label": "生源地 等于 广东",
+    "field": "生源地",
+    "operator": "eq",
+    "value": "广东",
+    "source_span": "广东"
+  },
+  {
+    "id": "e_subject_type",
+    "label": "科类 等于 物理",
+    "field": "科类",
+    "operator": "eq",
+    "value": "物理",
+    "source_span": "物理"
+  }
+]
+```
+### candidates_to_confirm
+```json
+[]
+```
+### unexecuted_preferences
+```json
+[
+  {
+    "id": "not_exec_1",
+    "preference": "就业前景好",
+    "display": "就业前景好未执行：当前数据中没有就业结果字段。",
+    "reason": "当前数据中没有就业结果字段。",
+    "missing_field": "缺少已审查数据字段",
+    "source_span": "就业前景好"
+  }
+]
+```
+### SQL / params
+```json
+{
+  "sql": "WITH source AS (\n  SELECT row_number() OVER () AS \"__source_row_number\", *\n  FROM \"admissions\"\n),\nfiltered AS (\n  SELECT\n    source.*,\n    TRY_CAST(regexp_extract(REPLACE(CAST(\"专业组最低位次1\" AS VARCHAR), ',', ''), '\\d+(?:\\.\\d+)?') AS DOUBLE) AS \"__group_rank_num\",\n    TRY_CAST(regexp_extract(REPLACE(CAST(\"学费\" AS VARCHAR), ',', ''), '\\d+(?:\\.\\d+)?') AS DOUBLE) AS \"__tuition_num\",\n    TRY_CAST(regexp_extract(REPLACE(CAST(\"院校排名\" AS VARCHAR), ',', ''), '\\d+(?:\\.\\d+)?') AS DOUBLE) AS \"__school_rank_num\",\n    TRY_CAST(regexp_extract(REPLACE(CAST(\"ID\" AS VARCHAR), ',', ''), '\\d+(?:\\.\\d+)?') AS DOUBLE) AS \"__id_num\"\n  FROM source\n  WHERE CAST(\"生源地\" AS VARCHAR) = ? AND CAST(\"科类\" AS VARCHAR) = ?\n),\nprojectable AS (\n  SELECT *\n  FROM filtered\n  WHERE TRUE\n    AND \"__group_rank_num\" IS NOT NULL\n    AND \"__tuition_num\" IS NOT NULL\n)\nSELECT *\nFROM projectable\nORDER BY\n  \"__group_rank_num\" ASC NULLS LAST,\n  \"__school_rank_num\" ASC NULLS LAST,\n  \"__id_num\" ASC NULLS LAST",
+  "params": [
+    "广东",
+    "物理"
+  ]
+}
+```
+### EvidencePack
+```json
+{
+  "user_request": "广东物理，排位40000，想要就业前景好。；偏好信息：偏好描述：广东物理，排位40000，想要就业前景好。",
+  "executed_rules": [
+    {
+      "rule_id": "e_source_province",
+      "derived_from": "d_source_province",
+      "field": "生源地",
+      "operator": "eq",
+      "value": "广东",
+      "description": "生源地 等于 广东"
+    },
+    {
+      "rule_id": "e_subject_type",
+      "derived_from": "d_subject_type",
+      "field": "科类",
+      "operator": "eq",
+      "value": "物理",
+      "description": "科类 等于 物理"
+    }
+  ],
+  "candidate_confirmations": [
+    {
+      "confirmation_id": "cooperation_type",
+      "source_rule_id": null,
+      "source_text": "不想去太贵的中外合作",
+      "selected_label": null,
+      "selected_option": null,
+      "status": "not_executable",
+      "reason": "缺少合作办学类型字段。"
+    }
+  ],
+  "not_executed_preferences": [
+    {
+      "source_text": "就业前景好",
+      "status": "not_executed",
+      "reason": "当前数据中没有就业结果字段。",
+      "safety_warning": "就业前景好 未执行：当前数据中没有就业结果字段。"
+    }
+  ],
+  "result_count": 19473,
+  "top_k_results": [
+    {
+      "rank": 1,
+      "院校名称": "清华大学",
+      "院校专业组代码": "10003202",
+      "专业代码": "046",
+      "专业名称": "建筑类",
+      "专业全称": "建筑类(含：建筑学、城乡规划、风景园林，北京市)",
+      "选科要求": "不限",
+      "城市": "海淀区",
+      "学费": 5000.0,
+      "专业组最低位次": 53,
+      "safety_margin": "-99.87%",
+      "trace": [
+        {
+          "rule_id": "e_source_province",
+          "status": "pass",
+          "reason": "生源地 等于 广东"
+        },
+        {
+          "rule_id": "e_subject_type",
+          "status": "pass",
+          "reason": "科类 等于 物理"
+        },
+        {
+          "rule_id": "not_executed_1",
+          "status": "not_executed",
+          "reason": "就业前景好 未执行：当前数据中没有就业结果字段。"
+        }
+      ]
+    },
+    {
+      "rank": 2,
+      "院校名称": "清华大学",
+      "院校专业组代码": "10003202",
+      "专业代码": "055",
+      "专业名称": "理科试验班类",
+      "专业全称": "理科试验班类(经济、金融与管理，含：信息管理与信息系统、金融学(经济金融国际班)，北京市)",
+      "选科要求": "不限",
+      "城市": "海淀区",
+      "学费": 5000.0,
+      "专业组最低位次": 53,
+      "safety_margin": "-99.87%",
+      "trace": [
+        {
+          "rule_id": "e_source_province",
+          "status": "pass",
+          "reason": "生源地 等于 广东"
+        },
+        {
+          "rule_id": "e_subject_type",
+          "status": "pass",
+          "reason": "科类 等于 物理"
+        },
+        {
+          "rule_id": "not_executed_1",
+          "status": "not_executed",
+          "reason": "就业前景好 未执行：当前数据中没有就业结果字段。"
+        }
+      ]
+    },
+    {
+      "rank": 3,
+      "院校名称": "清华大学",
+      "院校专业组代码": "10003202",
+      "专业代码": "056",
+      "专业名称": "法学类",
+      "专业全称": "法学类(含：法学、法学(国际班)，北京市)",
+      "选科要求": "不限",
+      "城市": "海淀区",
+      "学费": 5000.0,
+      "专业组最低位次": 53,
+      "safety_margin": "-99.87%",
+      "trace": [
+        {
+          "rule_id": "e_source_province",
+          "status": "pass",
+          "reason": "生源地 等于 广东"
+        },
+        {
+          "rule_id": "e_subject_type",
+          "status": "pass",
+          "reason": "科类 等于 物理"
+        },
+        {
+          "rule_id": "not_executed_1",
+          "status": "not_executed",
+          "reason": "就业前景好 未执行：当前数据中没有就业结果字段。"
+        }
+      ]
+    },
+    {
+      "rank": 4,
+      "院校名称": "清华大学",
+      "院校专业组代码": "10003202",
+      "专业代码": "060",
+      "专业名称": "社会科学试验班",
+      "专业全称": "社会科学试验班(至善书院，含：经济学、社会学，北京市)",
+      "选科要求": "不限",
+      "城市": "海淀区",
+      "学费": 5000.0,
+      "专业组最低位次": 53,
+      "safety_margin": "-99.87%",
+      "trace": [
+        {
+          "rule_id": "e_source_province",
+          "status": "pass",
+          "reason": "生源地 等于 广东"
+        },
+        {
+          "rule_id": "e_subject_type",
+          "status": "pass",
+          "reason": "科类 等于 物理"
+        },
+        {
+          "rule_id": "not_executed_1",
+          "status": "not_executed",
+          "reason": "就业前景好 未执行：当前数据中没有就业结果字段。"
+        }
+      ]
+    },
+    {
+      "rank": 5,
+      "院校名称": "清华大学",
+      "院校专业组代码": "10003202",
+      "专业代码": "061",
+      "专业名称": "理科试验班类",
+      "专业全称": "理科试验班类(新雅书院，含：工程管理(等全校各专业)，北京市)",
+      "选科要求": "不限",
+      "城市": "海淀区",
+      "学费": 5000.0,
+      "专业组最低位次": 53,
+      "safety_margin": "-99.87%",
+      "trace": [
+        {
+          "rule_id": "e_source_province",
+          "status": "pass",
+          "reason": "生源地 等于 广东"
+        },
+        {
+          "rule_id": "e_subject_type",
+          "status": "pass",
+          "reason": "科类 等于 物理"
+        },
+        {
+          "rule_id": "not_executed_1",
+          "status": "not_executed",
+          "reason": "就业前景好 未执行：当前数据中没有就业结果字段。"
+        }
+      ]
+    }
+  ],
+  "trace_summary": {
+    "executed_rule_ids": [
+      "e_source_province",
+      "e_subject_type"
+    ],
+    "not_executed_preference_count": 1,
+    "traced_result_count": 19473,
+    "top_k": 5,
+    "top_k_trace_status_counts": {
+      "pass": 10,
+      "not_executed": 5
+    },
+    "safety_warnings": [
+      "答案只能使用 evidence_pack 中的已验证规则、确认记录、结果摘要和 trace。",
+      "候选偏好在确认或模拟确认之前不得执行。",
+      "就业前景好 未执行：当前数据中没有就业结果字段。"
+    ]
+  },
+  "extracted_preferences": [
+    {
+      "id": "pref_origin",
+      "slot": "生源地",
+      "value": "广东",
+      "source_span": "广东",
+      "status": "已对齐字段"
+    },
+    {
+      "id": "pref_track",
+      "slot": "科类",
+      "value": "物理",
+      "source_span": "物理",
+      "status": "已对齐字段"
+    },
+    {
+      "id": "pref_rank",
+      "slot": "排位",
+      "value": 40000,
+      "source_span": "排位40000",
+      "status": "已对齐字段"
+    }
+  ],
+  "attribute_grounding_summary": {
+    "total_attributes": 4,
+    "status_counts": {
+      "schema_grounded": 2,
+      "context_only": 1,
+      "missing_schema": 1
+    },
+    "value_index_status_counts": {
+      "matched": 2,
+      "field_not_indexed": 1
+    },
+    "unsafe_ungrounded_executable_attributes": 0
+  },
+  "proposed_rule_audit": [],
+  "execution_summary": {
+    "executor": "duckdb",
+    "sql": "WITH source AS (\n  SELECT row_number() OVER () AS \"__source_row_number\", *\n  FROM \"admissions\"\n),\nfiltered AS (\n  SELECT\n    source.*,\n    TRY_CAST(regexp_extract(REPLACE(CAST(\"专业组最低位次1\" AS VARCHAR), ',', ''), '\\d+(?:\\.\\d+)?') AS DOUBLE) AS \"__group_rank_num\",\n    TRY_CAST(regexp_extract(REPLACE(CAST(\"学费\" AS VARCHAR), ',', ''), '\\d+(?:\\.\\d+)?') AS DOUBLE) AS \"__tuition_num\",\n    TRY_CAST(regexp_extract(REPLACE(CAST(\"院校排名\" AS VARCHAR), ',', ''), '\\d+(?:\\.\\d+)?') AS DOUBLE) AS \"__school_rank_num\",\n    TRY_CAST(regexp_extract(REPLACE(CAST(\"ID\" AS VARCHAR), ',', ''), '\\d+(?:\\.\\d+)?') AS DOUBLE) AS \"__id_num\"\n  FROM source\n  WHERE CAST(\"生源地\" AS VARCHAR) = ? AND CAST(\"科类\" AS VARCHAR) = ?\n),\nprojectable AS (\n  SELECT *\n  FROM filtered\n  WHERE TRUE\n    AND \"__group_rank_num\" IS NOT NULL\n    AND \"__tuition_num\" IS NOT NULL\n)\nSELECT *\nFROM projectable\nORDER BY\n  \"__group_rank_num\" ASC NULLS LAST,\n  \"__school_rank_num\" ASC NULLS LAST,\n  \"__id_num\" ASC NULLS LAST",
+    "params": [
+      "广东",
+      "物理"
+    ],
+    "input_row_count": 30855,
+    "filtered_row_count": 19473,
+    "sort_key": [
+      "专业组最低位次1 ASC NULLS LAST",
+      "院校排名 ASC NULLS LAST",
+      "ID ASC NULLS LAST"
+    ],
+    "top_k": 5,
+    "hard_rule_ids": [
+      "e_source_province",
+      "e_subject_type"
+    ],
+    "skipped_soft_rule_ids": []
+  },
+  "attribute_explanations": [
+    {
+      "source_text": "广东",
+      "slot_path": "user_context.source_province",
+      "field": "生源地",
+      "value": "广东",
+      "match_type": "exact_match",
+      "action": "executed",
+      "matched_values": [
+        "广东"
+      ],
+      "reason": "已匹配字段“生源地”，并已进入 hard filter。"
+    },
+    {
+      "source_text": "物理",
+      "slot_path": "user_context.subject_type",
+      "field": "科类",
+      "value": "物理",
+      "match_type": "exact_match",
+      "action": "executed",
+      "matched_values": [
+        "物理"
+      ],
+      "reason": "已匹配字段“科类”，并已进入 hard filter。"
+    },
+    {
+      "source_text": "就业前景好",
+      "slot_path": "preferences.other_vague_preferences[]",
+      "field": "employment_outlook",
+      "value": "就业前景好",
+      "match_type": "no_schema_field",
+      "action": "not_executed",
+      "matched_values": [],
+      "reason": "当前数据中没有就业结果字段。原文已保留，未进入 hard filter。"
+    }
+  ],
+  "confirmed_rules": [],
+  "confirmation_source": [],
+  "executed_after_confirmation": [],
+  "unconfirmed_candidates": [],
+  "no_schema_field_preferences": [
+    {
+      "candidate_id": "cand_c878a7931b736b08",
+      "source_text": "就业前景好",
+      "slot_path": "preferences.other_vague_preferences[]",
+      "field_id": "employment_outlook",
+      "field": "无可执行字段",
+      "match_type": "no_schema_field",
+      "operator": null,
+      "value": null,
+      "label": "不可执行",
+      "executable": false,
+      "reason": "当前数据中没有就业结果字段。",
+      "matched_values": []
+    }
+  ],
+  "rejected_confirmations": []
+}
+```
+### answer
+
+根据已验证规则生成结果：
+
+用户需求：广东物理，排位40000，想要就业前景好。；偏好信息：偏好描述：广东物理，排位40000，想要就业前景好。
+共筛选到 19473 条符合已执行规则的结果。
+
+抽取与结构化结果：
+- 生源地：广东；状态：已对齐字段；来源：广东
+- 科类：物理；状态：已对齐字段；来源：物理
+- 排位：40000；状态：已对齐字段；来源：排位40000
+
+字段值审计解释：
+- [已执行] 广东 -> 生源地：exact_match；索引命中：广东；已匹配字段“生源地”，并已进入 hard filter。
+- [已执行] 物理 -> 科类：exact_match；索引命中：物理；已匹配字段“科类”，并已进入 hard filter。
+- [未执行] 就业前景好 -> employment_outlook：no_schema_field；当前数据中没有就业结果字段。原文已保留，未进入 hard filter。
+
+已执行规则：
+- e_source_province：生源地 等于 广东
+- e_subject_type：科类 等于 物理
+
+候选偏好确认记录：
+- 不想去太贵的中外合作：未执行，原因：缺少合作办学类型字段。。
+
+缺少字段，不能确认执行：
+- 就业前景好：当前数据中没有就业结果字段。；即使提交该 candidate_id 也不能执行。
+
+未执行但已保留的偏好：
+- 就业前景好：未执行，未参与筛选。原因：当前数据中没有就业结果字段。
+
+前 5 条结果：
+- 1. 清华大学；专业组代码：10003202；专业代码：046；专业名称：建筑类；专业全称：建筑类(含：建筑学、城乡规划、风景园林，北京市)；选科要求：不限；城市：海淀区；学费：5000 元/年；专业组最低位次：53。
+- 2. 清华大学；专业组代码：10003202；专业代码：055；专业名称：理科试验班类；专业全称：理科试验班类(经济、金融与管理，含：信息管理与信息系统、金融学(经济金融国际班)，北京市)；选科要求：不限；城市：海淀区；学费：5000 元/年；专业组最低位次：53。
+- 3. 清华大学；专业组代码：10003202；专业代码：056；专业名称：法学类；专业全称：法学类(含：法学、法学(国际班)，北京市)；选科要求：不限；城市：海淀区；学费：5000 元/年；专业组最低位次：53。
+- 4. 清华大学；专业组代码：10003202；专业代码：060；专业名称：社会科学试验班；专业全称：社会科学试验班(至善书院，含：经济学、社会学，北京市)；选科要求：不限；城市：海淀区；学费：5000 元/年；专业组最低位次：53。
+- 5. 清华大学；专业组代码：10003202；专业代码：061；专业名称：理科试验班类；专业全称：理科试验班类(新雅书院，含：工程管理(等全校各专业)，北京市)；选科要求：不限；城市：海淀区；学费：5000 元/年；专业组最低位次：53。
+
+安全说明：
+- 答案只能使用 证据包 中的已验证规则、确认记录、结果摘要和 trace。
+- 候选偏好在确认或模拟确认之前不得执行。
+- 就业前景好 未执行：当前数据中没有就业结果字段。
+
+## admissions_12 `通过`
+
+- domain: `admissions`
+- query: 广东物理，排位35000，人工智能，好就业。
+- status: `ok`
+- pass/fail：`通过`
+
+### items
+```json
+[
+  {
+    "item_id": "result_001",
+    "title": "上海交通大学",
+    "subtitle": "人工智能(拔尖英才试点班，校本部)",
+    "primary_attributes": [
+      {
+        "key": "year",
+        "label": "year",
+        "value": 2024
+      },
+      {
+        "key": "batch",
+        "label": "batch",
+        "value": "本科批"
+      },
+      {
+        "key": "university_code",
+        "label": "university_code",
+        "value": "10248"
+      },
+      {
+        "key": "university_name",
+        "label": "university_name",
+        "value": "上海交通大学"
+      }
+    ],
+    "secondary_attributes": [
+      {
+        "key": "group_code",
+        "label": "group_code",
+        "value": "10248202"
+      },
+      {
+        "key": "group_name",
+        "label": "group_name",
+        "value": "202组"
+      },
+      {
+        "key": "major_code",
+        "label": "major_code",
+        "value": "018"
+      },
+      {
+        "key": "major_name",
+        "label": "major_name",
+        "value": "人工智能"
+      },
+      {
+        "key": "full_major_name",
+        "label": "full_major_name",
+        "value": "人工智能(拔尖英才试点班，校本部)"
+      },
+      {
+        "key": "subject_requirement",
+        "label": "subject_requirement",
+        "value": "化学"
+      },
+      {
+        "key": "province",
+        "label": "province",
+        "value": "上海"
+      },
+      {
+        "key": "city",
+        "label": "city",
+        "value": "闵行区"
+      },
+      {
+        "key": "tuition",
+        "label": "tuition",
+        "value": 7000.0
+      },
+      {
+        "key": "rank_2024",
+        "label": "rank_2024",
+        "value": 104
+      },
+      {
+        "key": "group_min_rank",
+        "label": "group_min_rank",
+        "value": 104
+      },
+      {
+        "key": "safety_margin",
+        "label": "safety_margin",
+        "value": "-99.7%"
+      }
+    ],
+    "matched_filters": [
+      {
+        "id": "e_source_province",
+        "field": "生源地",
+        "operator": "eq",
+        "value": "广东",
+        "matched": true,
+        "text": "生源地 等于 广东"
+      },
+      {
+        "id": "e_subject_type",
+        "field": "科类",
+        "operator": "eq",
+        "value": "物理",
+        "matched": true,
+        "text": "科类 等于 物理"
+      },
+      {
+        "id": "e_major_keyword",
+        "field": "专业名称",
+        "operator": "contains_any",
+        "value": [
+          "人工智能"
+        ],
+        "matched": true,
+        "text": "专业名称 包含任一：人工智能；命中 人工智能"
+      }
+    ],
+    "raw": {
+      "excel_row_number": 2694,
+      "ID": 2691,
+      "年份": 2024,
+      "批次": "本科批",
+      "院校代码": "10248",
+      "院校名称": "上海交通大学",
+      "院校专业组代码": "10248202",
+      "专业组名称": "202组",
+      "科类": "物理",
+      "选科要求": "化学",
+      "专业代码": "018",
+      "专业名称": "人工智能",
+      "专业全称": "人工智能(拔尖英才试点班，校本部)",
+      "所在省": "上海",
+      "城市": "闵行区",
+      "学费": 7000.0,
+      "专业组最低位次1": 104,
+      "最低位次1": null,
+      "院校标签": "985/211/双一流/国重点/保研资格",
+      "院校排名": "4",
+      "ranking_key": -34896,
+      "safety_margin_pct": -0.997,
+      "cooperation_filter_status": "not_executed_missing_cooperation_type_field",
+      "中外合作筛选状态": "未执行：缺少合作办学类型字段"
+    }
+  },
+  {
+    "item_id": "result_002",
+    "title": "上海交通大学",
+    "subtitle": "人工智能(卓越人才试点班，校本部)",
+    "primary_attributes": [
+      {
+        "key": "year",
+        "label": "year",
+        "value": 2024
+      },
+      {
+        "key": "batch",
+        "label": "batch",
+        "value": "本科批"
+      },
+      {
+        "key": "university_code",
+        "label": "university_code",
+        "value": "10248"
+      },
+      {
+        "key": "university_name",
+        "label": "university_name",
+        "value": "上海交通大学"
+      }
+    ],
+    "secondary_attributes": [
+      {
+        "key": "group_code",
+        "label": "group_code",
+        "value": "10248203"
+      },
+      {
+        "key": "group_name",
+        "label": "group_name",
+        "value": "203组"
+      },
+      {
+        "key": "major_code",
+        "label": "major_code",
+        "value": "019"
+      },
+      {
+        "key": "major_name",
+        "label": "major_name",
+        "value": "人工智能"
+      },
+      {
+        "key": "full_major_name",
+        "label": "full_major_name",
+        "value": "人工智能(卓越人才试点班，校本部)"
+      },
+      {
+        "key": "subject_requirement",
+        "label": "subject_requirement",
+        "value": "化学"
+      },
+      {
+        "key": "province",
+        "label": "province",
+        "value": "上海"
+      },
+      {
+        "key": "city",
+        "label": "city",
+        "value": "闵行区"
+      },
+      {
+        "key": "tuition",
+        "label": "tuition",
+        "value": 7000.0
+      },
+      {
+        "key": "rank_2024",
+        "label": "rank_2024",
+        "value": 478
+      },
+      {
+        "key": "group_min_rank",
+        "label": "group_min_rank",
+        "value": 478
+      },
+      {
+        "key": "safety_margin",
+        "label": "safety_margin",
+        "value": "-98.6%"
+      }
+    ],
+    "matched_filters": [
+      {
+        "id": "e_source_province",
+        "field": "生源地",
+        "operator": "eq",
+        "value": "广东",
+        "matched": true,
+        "text": "生源地 等于 广东"
+      },
+      {
+        "id": "e_subject_type",
+        "field": "科类",
+        "operator": "eq",
+        "value": "物理",
+        "matched": true,
+        "text": "科类 等于 物理"
+      },
+      {
+        "id": "e_major_keyword",
+        "field": "专业名称",
+        "operator": "contains_any",
+        "value": [
+          "人工智能"
+        ],
+        "matched": true,
+        "text": "专业名称 包含任一：人工智能；命中 人工智能"
+      }
+    ],
+    "raw": {
+      "excel_row_number": 2697,
+      "ID": 2694,
+      "年份": 2024,
+      "批次": "本科批",
+      "院校代码": "10248",
+      "院校名称": "上海交通大学",
+      "院校专业组代码": "10248203",
+      "专业组名称": "203组",
+      "科类": "物理",
+      "选科要求": "化学",
+      "专业代码": "019",
+      "专业名称": "人工智能",
+      "专业全称": "人工智能(卓越人才试点班，校本部)",
+      "所在省": "上海",
+      "城市": "闵行区",
+      "学费": 7000.0,
+      "专业组最低位次1": 478,
+      "最低位次1": null,
+      "院校标签": "985/211/双一流/国重点/保研资格",
+      "院校排名": "4",
+      "ranking_key": -34522,
+      "safety_margin_pct": -0.9863,
+      "cooperation_filter_status": "not_executed_missing_cooperation_type_field",
+      "中外合作筛选状态": "未执行：缺少合作办学类型字段"
+    }
+  },
+  {
+    "item_id": "result_003",
+    "title": "中国人民大学",
+    "subtitle": "人工智能(拔尖班，北京市)",
+    "primary_attributes": [
+      {
+        "key": "year",
+        "label": "year",
+        "value": 2024
+      },
+      {
+        "key": "batch",
+        "label": "batch",
+        "value": "本科批"
+      },
+      {
+        "key": "university_code",
+        "label": "university_code",
+        "value": "10002"
+      },
+      {
+        "key": "university_name",
+        "label": "university_name",
+        "value": "中国人民大学"
+      }
+    ],
+    "secondary_attributes": [
+      {
+        "key": "group_code",
+        "label": "group_code",
+        "value": "10002203"
+      },
+      {
+        "key": "group_name",
+        "label": "group_name",
+        "value": "203组"
+      },
+      {
+        "key": "major_code",
+        "label": "major_code",
+        "value": "031"
+      },
+      {
+        "key": "major_name",
+        "label": "major_name",
+        "value": "人工智能"
+      },
+      {
+        "key": "full_major_name",
+        "label": "full_major_name",
+        "value": "人工智能(拔尖班，北京市)"
+      },
+      {
+        "key": "subject_requirement",
+        "label": "subject_requirement",
+        "value": "化学"
+      },
+      {
+        "key": "province",
+        "label": "province",
+        "value": "北京"
+      },
+      {
+        "key": "city",
+        "label": "city",
+        "value": "海淀区"
+      },
+      {
+        "key": "tuition",
+        "label": "tuition",
+        "value": 5000.0
+      },
+      {
+        "key": "rank_2024",
+        "label": "rank_2024",
+        "value": 831
+      },
+      {
+        "key": "group_min_rank",
+        "label": "group_min_rank",
+        "value": 831
+      },
+      {
+        "key": "safety_margin",
+        "label": "safety_margin",
+        "value": "-97.6%"
+      }
+    ],
+    "matched_filters": [
+      {
+        "id": "e_source_province",
+        "field": "生源地",
+        "operator": "eq",
+        "value": "广东",
+        "matched": true,
+        "text": "生源地 等于 广东"
+      },
+      {
+        "id": "e_subject_type",
+        "field": "科类",
+        "operator": "eq",
+        "value": "物理",
+        "matched": true,
+        "text": "科类 等于 物理"
+      },
+      {
+        "id": "e_major_keyword",
+        "field": "专业名称",
+        "operator": "contains_any",
+        "value": [
+          "人工智能"
+        ],
+        "matched": true,
+        "text": "专业名称 包含任一：人工智能；命中 人工智能"
+      }
+    ],
+    "raw": {
+      "excel_row_number": 77,
+      "ID": 74,
+      "年份": 2024,
+      "批次": "本科批",
+      "院校代码": "10002",
+      "院校名称": "中国人民大学",
+      "院校专业组代码": "10002203",
+      "专业组名称": "203组",
+      "科类": "物理",
+      "选科要求": "化学",
+      "专业代码": "031",
+      "专业名称": "人工智能",
+      "专业全称": "人工智能(拔尖班，北京市)",
+      "所在省": "北京",
+      "城市": "海淀区",
+      "学费": 5000.0,
+      "专业组最低位次1": 831,
+      "最低位次1": null,
+      "院校标签": "985/211/双一流/国重点/保研资格",
+      "院校排名": "18",
+      "ranking_key": -34169,
+      "safety_margin_pct": -0.9763,
+      "cooperation_filter_status": "not_executed_missing_cooperation_type_field",
+      "中外合作筛选状态": "未执行：缺少合作办学类型字段"
+    }
+  },
+  {
+    "item_id": "result_004",
+    "title": "南京大学",
+    "subtitle": "人工智能(第一学年鼓楼校区，、第二至四学年仙林校区)",
+    "primary_attributes": [
+      {
+        "key": "year",
+        "label": "year",
+        "value": 2024
+      },
+      {
+        "key": "batch",
+        "label": "batch",
+        "value": "本科批"
+      },
+      {
+        "key": "university_code",
+        "label": "university_code",
+        "value": "10284"
+      },
+      {
+        "key": "university_name",
+        "label": "university_name",
+        "value": "南京大学"
+      }
+    ],
+    "secondary_attributes": [
+      {
+        "key": "group_code",
+        "label": "group_code",
+        "value": "10284203"
+      },
+      {
+        "key": "group_name",
+        "label": "group_name",
+        "value": "203组"
+      },
+      {
+        "key": "major_code",
+        "label": "major_code",
+        "value": "033"
+      },
+      {
+        "key": "major_name",
+        "label": "major_name",
+        "value": "人工智能"
+      },
+      {
+        "key": "full_major_name",
+        "label": "full_major_name",
+        "value": "人工智能(第一学年鼓楼校区，、第二至四学年仙林校区)"
+      },
+      {
+        "key": "subject_requirement",
+        "label": "subject_requirement",
+        "value": "化学"
+      },
+      {
+        "key": "province",
+        "label": "province",
+        "value": "江苏"
+      },
+      {
+        "key": "city",
+        "label": "city",
+        "value": "南京"
+      },
+      {
+        "key": "tuition",
+        "label": "tuition",
+        "value": 6380.0
+      },
+      {
+        "key": "rank_2024",
+        "label": "rank_2024",
+        "value": 894
+      },
+      {
+        "key": "group_min_rank",
+        "label": "group_min_rank",
+        "value": 894
+      },
+      {
+        "key": "safety_margin",
+        "label": "safety_margin",
+        "value": "-97.5%"
+      }
+    ],
+    "matched_filters": [
+      {
+        "id": "e_source_province",
+        "field": "生源地",
+        "operator": "eq",
+        "value": "广东",
+        "matched": true,
+        "text": "生源地 等于 广东"
+      },
+      {
+        "id": "e_subject_type",
+        "field": "科类",
+        "operator": "eq",
+        "value": "物理",
+        "matched": true,
+        "text": "科类 等于 物理"
+      },
+      {
+        "id": "e_major_keyword",
+        "field": "专业名称",
+        "operator": "contains_any",
+        "value": [
+          "人工智能"
+        ],
+        "matched": true,
+        "text": "专业名称 包含任一：人工智能；命中 人工智能"
+      }
+    ],
+    "raw": {
+      "excel_row_number": 2963,
+      "ID": 2960,
+      "年份": 2024,
+      "批次": "本科批",
+      "院校代码": "10284",
+      "院校名称": "南京大学",
+      "院校专业组代码": "10284203",
+      "专业组名称": "203组",
+      "科类": "物理",
+      "选科要求": "化学",
+      "专业代码": "033",
+      "专业名称": "人工智能",
+      "专业全称": "人工智能(第一学年鼓楼校区，、第二至四学年仙林校区)",
+      "所在省": "江苏",
+      "城市": "南京",
+      "学费": 6380.0,
+      "专业组最低位次1": 894,
+      "最低位次1": null,
+      "院校标签": "985/211/双一流/国重点/保研资格",
+      "院校排名": "6",
+      "ranking_key": -34106,
+      "safety_margin_pct": -0.9745,
+      "cooperation_filter_status": "not_executed_missing_cooperation_type_field",
+      "中外合作筛选状态": "未执行：缺少合作办学类型字段"
+    }
+  },
+  {
+    "item_id": "result_005",
+    "title": "香港科技大学(广州)",
+    "subtitle": "人工智能(中外合作办学，领军人才班，入学不分专业，大二结束时，可在人工智能、数据科学与大数据技术、智能制造工程中选择，英文授课，具体培养模式和学习费用请查看学校网站，广州市)(请非英语语种的考生慎重报考，成绩要求：外语≥120)",
+    "primary_attributes": [
+      {
+        "key": "year",
+        "label": "year",
+        "value": 2024
+      },
+      {
+        "key": "batch",
+        "label": "batch",
+        "value": "本科提前批"
+      },
+      {
+        "key": "university_code",
+        "label": "university_code",
+        "value": "16412"
+      },
+      {
+        "key": "university_name",
+        "label": "university_name",
+        "value": "香港科技大学(广州)"
+      }
+    ],
+    "secondary_attributes": [
+      {
+        "key": "group_code",
+        "label": "group_code",
+        "value": "16412101"
+      },
+      {
+        "key": "group_name",
+        "label": "group_name",
+        "value": "101组(中外合作)"
+      },
+      {
+        "key": "major_code",
+        "label": "major_code",
+        "value": "001"
+      },
+      {
+        "key": "major_name",
+        "label": "major_name",
+        "value": "人工智能"
+      },
+      {
+        "key": "full_major_name",
+        "label": "full_major_name",
+        "value": "人工智能(中外合作办学，领军人才班，入学不分专业，大二结束时，可在人工智能、数据科学与大数据技术、智能制造工程中选择，英文授课，具体培养模式和学习费用请查看学校网站，广州市)(请非英语语种的考生慎重报考，成绩要求：外语≥120)"
+      },
+      {
+        "key": "subject_requirement",
+        "label": "subject_requirement",
+        "value": "化学"
+      },
+      {
+        "key": "province",
+        "label": "province",
+        "value": "广东"
+      },
+      {
+        "key": "city",
+        "label": "city",
+        "value": "广州"
+      },
+      {
+        "key": "tuition",
+        "label": "tuition",
+        "value": 50000.0
+      },
+      {
+        "key": "rank_2024",
+        "label": "rank_2024",
+        "value": 1424
+      },
+      {
+        "key": "group_min_rank",
+        "label": "group_min_rank",
+        "value": 1424
+      },
+      {
+        "key": "safety_margin",
+        "label": "safety_margin",
+        "value": "-95.9%"
+      }
+    ],
+    "matched_filters": [
+      {
+        "id": "e_source_province",
+        "field": "生源地",
+        "operator": "eq",
+        "value": "广东",
+        "matched": true,
+        "text": "生源地 等于 广东"
+      },
+      {
+        "id": "e_subject_type",
+        "field": "科类",
+        "operator": "eq",
+        "value": "物理",
+        "matched": true,
+        "text": "科类 等于 物理"
+      },
+      {
+        "id": "e_major_keyword",
+        "field": "专业名称",
+        "operator": "contains_any",
+        "value": [
+          "人工智能"
+        ],
+        "matched": true,
+        "text": "专业名称 包含任一：人工智能；命中 人工智能"
+      }
+    ],
+    "raw": {
+      "excel_row_number": 30311,
+      "ID": 30308,
+      "年份": 2024,
+      "批次": "本科提前批",
+      "院校代码": "16412",
+      "院校名称": "香港科技大学(广州)",
+      "院校专业组代码": "16412101",
+      "专业组名称": "101组(中外合作)",
+      "科类": "物理",
+      "选科要求": "化学",
+      "专业代码": "001",
+      "专业名称": "人工智能",
+      "专业全称": "人工智能(中外合作办学，领军人才班，入学不分专业，大二结束时，可在人工智能、数据科学与大数据技术、智能制造工程中选择，英文授课，具体培养模式和学习费用请查看学校网站，广州市)(请非英语语种的考生慎重报考，成绩要求：外语≥120)",
+      "所在省": "广东",
+      "城市": "广州",
+      "学费": 50000.0,
+      "专业组最低位次1": 1424,
+      "最低位次1": null,
+      "院校标签": null,
+      "院校排名": "/",
+      "ranking_key": -33576,
+      "safety_margin_pct": -0.9593,
+      "cooperation_filter_status": "not_executed_missing_cooperation_type_field",
+      "中外合作筛选状态": "未执行：缺少合作办学类型字段"
+    }
+  }
+]
+```
+### top_results
+```json
+[
+  {
+    "id": "result_001",
+    "trace": [
+      {
+        "status": "pass",
+        "text": "生源地 等于 广东"
+      },
+      {
+        "status": "pass",
+        "text": "科类 等于 物理"
+      },
+      {
+        "status": "pass",
+        "text": "专业名称 包含任一：人工智能；命中 人工智能"
+      },
+      {
+        "status": "not_executed",
+        "text": "好就业 未执行：当前数据中没有就业结果字段。"
+      }
+    ],
+    "year": 2024,
+    "batch": "本科批",
+    "university_code": "10248",
+    "university_name": "上海交通大学",
+    "group_code": "10248202",
+    "group_name": "202组",
+    "major_code": "018",
+    "major_name": "人工智能",
+    "full_major_name": "人工智能(拔尖英才试点班，校本部)",
+    "subject_requirement": "化学",
+    "province": "上海",
+    "city": "闵行区",
+    "tuition": 7000.0,
+    "rank_2024": 104,
+    "major_rank_2024": null,
+    "plan_count": null,
+    "group_min_rank": 104,
+    "major_min_rank": null,
+    "safety_margin": "-99.7%"
+  },
+  {
+    "id": "result_002",
+    "trace": [
+      {
+        "status": "pass",
+        "text": "生源地 等于 广东"
+      },
+      {
+        "status": "pass",
+        "text": "科类 等于 物理"
+      },
+      {
+        "status": "pass",
+        "text": "专业名称 包含任一：人工智能；命中 人工智能"
+      },
+      {
+        "status": "not_executed",
+        "text": "好就业 未执行：当前数据中没有就业结果字段。"
+      }
+    ],
+    "year": 2024,
+    "batch": "本科批",
+    "university_code": "10248",
+    "university_name": "上海交通大学",
+    "group_code": "10248203",
+    "group_name": "203组",
+    "major_code": "019",
+    "major_name": "人工智能",
+    "full_major_name": "人工智能(卓越人才试点班，校本部)",
+    "subject_requirement": "化学",
+    "province": "上海",
+    "city": "闵行区",
+    "tuition": 7000.0,
+    "rank_2024": 478,
+    "major_rank_2024": null,
+    "plan_count": null,
+    "group_min_rank": 478,
+    "major_min_rank": null,
+    "safety_margin": "-98.6%"
+  },
+  {
+    "id": "result_003",
+    "trace": [
+      {
+        "status": "pass",
+        "text": "生源地 等于 广东"
+      },
+      {
+        "status": "pass",
+        "text": "科类 等于 物理"
+      },
+      {
+        "status": "pass",
+        "text": "专业名称 包含任一：人工智能；命中 人工智能"
+      },
+      {
+        "status": "not_executed",
+        "text": "好就业 未执行：当前数据中没有就业结果字段。"
+      }
+    ],
+    "year": 2024,
+    "batch": "本科批",
+    "university_code": "10002",
+    "university_name": "中国人民大学",
+    "group_code": "10002203",
+    "group_name": "203组",
+    "major_code": "031",
+    "major_name": "人工智能",
+    "full_major_name": "人工智能(拔尖班，北京市)",
+    "subject_requirement": "化学",
+    "province": "北京",
+    "city": "海淀区",
+    "tuition": 5000.0,
+    "rank_2024": 831,
+    "major_rank_2024": null,
+    "plan_count": null,
+    "group_min_rank": 831,
+    "major_min_rank": null,
+    "safety_margin": "-97.6%"
+  },
+  {
+    "id": "result_004",
+    "trace": [
+      {
+        "status": "pass",
+        "text": "生源地 等于 广东"
+      },
+      {
+        "status": "pass",
+        "text": "科类 等于 物理"
+      },
+      {
+        "status": "pass",
+        "text": "专业名称 包含任一：人工智能；命中 人工智能"
+      },
+      {
+        "status": "not_executed",
+        "text": "好就业 未执行：当前数据中没有就业结果字段。"
+      }
+    ],
+    "year": 2024,
+    "batch": "本科批",
+    "university_code": "10284",
+    "university_name": "南京大学",
+    "group_code": "10284203",
+    "group_name": "203组",
+    "major_code": "033",
+    "major_name": "人工智能",
+    "full_major_name": "人工智能(第一学年鼓楼校区，、第二至四学年仙林校区)",
+    "subject_requirement": "化学",
+    "province": "江苏",
+    "city": "南京",
+    "tuition": 6380.0,
+    "rank_2024": 894,
+    "major_rank_2024": null,
+    "plan_count": null,
+    "group_min_rank": 894,
+    "major_min_rank": null,
+    "safety_margin": "-97.5%"
+  },
+  {
+    "id": "result_005",
+    "trace": [
+      {
+        "status": "pass",
+        "text": "生源地 等于 广东"
+      },
+      {
+        "status": "pass",
+        "text": "科类 等于 物理"
+      },
+      {
+        "status": "pass",
+        "text": "专业名称 包含任一：人工智能；命中 人工智能"
+      },
+      {
+        "status": "not_executed",
+        "text": "好就业 未执行：当前数据中没有就业结果字段。"
+      }
+    ],
+    "year": 2024,
+    "batch": "本科提前批",
+    "university_code": "16412",
+    "university_name": "香港科技大学(广州)",
+    "group_code": "16412101",
+    "group_name": "101组(中外合作)",
+    "major_code": "001",
+    "major_name": "人工智能",
+    "full_major_name": "人工智能(中外合作办学，领军人才班，入学不分专业，大二结束时，可在人工智能、数据科学与大数据技术、智能制造工程中选择，英文授课，具体培养模式和学习费用请查看学校网站，广州市)(请非英语语种的考生慎重报考，成绩要求：外语≥120)",
+    "subject_requirement": "化学",
+    "province": "广东",
+    "city": "广州",
+    "tuition": 50000.0,
+    "rank_2024": 1424,
+    "major_rank_2024": null,
+    "plan_count": null,
+    "group_min_rank": 1424,
+    "major_min_rank": null,
+    "safety_margin": "-95.9%"
+  }
+]
+```
+### executed_filters
+```json
+[
+  {
+    "id": "e_source_province",
+    "label": "生源地 等于 广东",
+    "field": "生源地",
+    "operator": "eq",
+    "value": "广东",
+    "source_span": "广东"
+  },
+  {
+    "id": "e_subject_type",
+    "label": "科类 等于 物理",
+    "field": "科类",
+    "operator": "eq",
+    "value": "物理",
+    "source_span": "物理"
+  },
+  {
+    "id": "e_major_keyword",
+    "label": "专业名称 包含任一：人工智能",
+    "field": "专业名称",
+    "operator": "contains_any",
+    "value": [
+      "人工智能"
+    ],
+    "source_span": "人工智能"
+  }
+]
+```
+### candidates_to_confirm
+```json
+[]
+```
+### unexecuted_preferences
+```json
+[
+  {
+    "id": "not_exec_1",
+    "preference": "好就业",
+    "display": "好就业未执行：当前数据中没有就业结果字段。",
+    "reason": "当前数据中没有就业结果字段。",
+    "missing_field": "缺少已审查数据字段",
+    "source_span": "好就业"
+  }
+]
+```
+### SQL / params
+```json
+{
+  "sql": "WITH source AS (\n  SELECT row_number() OVER () AS \"__source_row_number\", *\n  FROM \"admissions\"\n),\nfiltered AS (\n  SELECT\n    source.*,\n    TRY_CAST(regexp_extract(REPLACE(CAST(\"专业组最低位次1\" AS VARCHAR), ',', ''), '\\d+(?:\\.\\d+)?') AS DOUBLE) AS \"__group_rank_num\",\n    TRY_CAST(regexp_extract(REPLACE(CAST(\"学费\" AS VARCHAR), ',', ''), '\\d+(?:\\.\\d+)?') AS DOUBLE) AS \"__tuition_num\",\n    TRY_CAST(regexp_extract(REPLACE(CAST(\"院校排名\" AS VARCHAR), ',', ''), '\\d+(?:\\.\\d+)?') AS DOUBLE) AS \"__school_rank_num\",\n    TRY_CAST(regexp_extract(REPLACE(CAST(\"ID\" AS VARCHAR), ',', ''), '\\d+(?:\\.\\d+)?') AS DOUBLE) AS \"__id_num\"\n  FROM source\n  WHERE CAST(\"生源地\" AS VARCHAR) = ? AND CAST(\"科类\" AS VARCHAR) = ? AND (STRPOS(CAST(\"专业名称\" AS VARCHAR), ?) > 0)\n),\nprojectable AS (\n  SELECT *\n  FROM filtered\n  WHERE TRUE\n    AND \"__group_rank_num\" IS NOT NULL\n    AND \"__tuition_num\" IS NOT NULL\n)\nSELECT *\nFROM projectable\nORDER BY\n  \"__group_rank_num\" ASC NULLS LAST,\n  \"__school_rank_num\" ASC NULLS LAST,\n  \"__id_num\" ASC NULLS LAST",
+  "params": [
+    "广东",
+    "物理",
+    "人工智能"
+  ]
+}
+```
+### EvidencePack
+```json
+{
+  "user_request": "广东物理，排位35000，人工智能，好就业。；偏好信息：偏好描述：广东物理，排位35000，人工智能，好就业。",
+  "executed_rules": [
+    {
+      "rule_id": "e_source_province",
+      "derived_from": "d_source_province",
+      "field": "生源地",
+      "operator": "eq",
+      "value": "广东",
+      "description": "生源地 等于 广东"
+    },
+    {
+      "rule_id": "e_subject_type",
+      "derived_from": "d_subject_type",
+      "field": "科类",
+      "operator": "eq",
+      "value": "物理",
+      "description": "科类 等于 物理"
+    },
+    {
+      "rule_id": "e_major_keyword",
+      "derived_from": "d_major_keyword",
+      "field": "专业名称",
+      "operator": "contains_any",
+      "value": [
+        "人工智能"
+      ],
+      "description": "专业名称 包含任一：人工智能"
+    }
+  ],
+  "candidate_confirmations": [
+    {
+      "confirmation_id": "cooperation_type",
+      "source_rule_id": null,
+      "source_text": "不想去太贵的中外合作",
+      "selected_label": null,
+      "selected_option": null,
+      "status": "not_executable",
+      "reason": "缺少合作办学类型字段。"
+    }
+  ],
+  "not_executed_preferences": [
+    {
+      "source_text": "好就业",
+      "status": "not_executed",
+      "reason": "当前数据中没有就业结果字段。",
+      "safety_warning": "好就业 未执行：当前数据中没有就业结果字段。"
+    }
+  ],
+  "result_count": 277,
+  "top_k_results": [
+    {
+      "rank": 1,
+      "院校名称": "上海交通大学",
+      "院校专业组代码": "10248202",
+      "专业代码": "018",
+      "专业名称": "人工智能",
+      "专业全称": "人工智能(拔尖英才试点班，校本部)",
+      "选科要求": "化学",
+      "城市": "闵行区",
+      "学费": 7000.0,
+      "专业组最低位次": 104,
+      "safety_margin": "-99.70%",
+      "trace": [
+        {
+          "rule_id": "e_source_province",
+          "status": "pass",
+          "reason": "生源地 等于 广东"
+        },
+        {
+          "rule_id": "e_subject_type",
+          "status": "pass",
+          "reason": "科类 等于 物理"
+        },
+        {
+          "rule_id": "e_major_keyword",
+          "status": "pass",
+          "reason": "专业名称 包含任一：人工智能；命中 人工智能"
+        },
+        {
+          "rule_id": "not_executed_1",
+          "status": "not_executed",
+          "reason": "好就业 未执行：当前数据中没有就业结果字段。"
+        }
+      ]
+    },
+    {
+      "rank": 2,
+      "院校名称": "上海交通大学",
+      "院校专业组代码": "10248203",
+      "专业代码": "019",
+      "专业名称": "人工智能",
+      "专业全称": "人工智能(卓越人才试点班，校本部)",
+      "选科要求": "化学",
+      "城市": "闵行区",
+      "学费": 7000.0,
+      "专业组最低位次": 478,
+      "safety_margin": "-98.63%",
+      "trace": [
+        {
+          "rule_id": "e_source_province",
+          "status": "pass",
+          "reason": "生源地 等于 广东"
+        },
+        {
+          "rule_id": "e_subject_type",
+          "status": "pass",
+          "reason": "科类 等于 物理"
+        },
+        {
+          "rule_id": "e_major_keyword",
+          "status": "pass",
+          "reason": "专业名称 包含任一：人工智能；命中 人工智能"
+        },
+        {
+          "rule_id": "not_executed_1",
+          "status": "not_executed",
+          "reason": "好就业 未执行：当前数据中没有就业结果字段。"
+        }
+      ]
+    },
+    {
+      "rank": 3,
+      "院校名称": "中国人民大学",
+      "院校专业组代码": "10002203",
+      "专业代码": "031",
+      "专业名称": "人工智能",
+      "专业全称": "人工智能(拔尖班，北京市)",
+      "选科要求": "化学",
+      "城市": "海淀区",
+      "学费": 5000.0,
+      "专业组最低位次": 831,
+      "safety_margin": "-97.63%",
+      "trace": [
+        {
+          "rule_id": "e_source_province",
+          "status": "pass",
+          "reason": "生源地 等于 广东"
+        },
+        {
+          "rule_id": "e_subject_type",
+          "status": "pass",
+          "reason": "科类 等于 物理"
+        },
+        {
+          "rule_id": "e_major_keyword",
+          "status": "pass",
+          "reason": "专业名称 包含任一：人工智能；命中 人工智能"
+        },
+        {
+          "rule_id": "not_executed_1",
+          "status": "not_executed",
+          "reason": "好就业 未执行：当前数据中没有就业结果字段。"
+        }
+      ]
+    },
+    {
+      "rank": 4,
+      "院校名称": "南京大学",
+      "院校专业组代码": "10284203",
+      "专业代码": "033",
+      "专业名称": "人工智能",
+      "专业全称": "人工智能(第一学年鼓楼校区，、第二至四学年仙林校区)",
+      "选科要求": "化学",
+      "城市": "南京",
+      "学费": 6380.0,
+      "专业组最低位次": 894,
+      "safety_margin": "-97.45%",
+      "trace": [
+        {
+          "rule_id": "e_source_province",
+          "status": "pass",
+          "reason": "生源地 等于 广东"
+        },
+        {
+          "rule_id": "e_subject_type",
+          "status": "pass",
+          "reason": "科类 等于 物理"
+        },
+        {
+          "rule_id": "e_major_keyword",
+          "status": "pass",
+          "reason": "专业名称 包含任一：人工智能；命中 人工智能"
+        },
+        {
+          "rule_id": "not_executed_1",
+          "status": "not_executed",
+          "reason": "好就业 未执行：当前数据中没有就业结果字段。"
+        }
+      ]
+    },
+    {
+      "rank": 5,
+      "院校名称": "香港科技大学(广州)",
+      "院校专业组代码": "16412101",
+      "专业代码": "001",
+      "专业名称": "人工智能",
+      "专业全称": "人工智能(中外合作办学，领军人才班，入学不分专业，大二结束时，可在人工智能、数据科学与大数据技术、智能制造工程中选择，英文授课，具体培养模式和学习费用请查看学校网站，广州市)(请非英语语种的考生慎重报考，成绩要求：外语≥120)",
+      "选科要求": "化学",
+      "城市": "广州",
+      "学费": 50000.0,
+      "专业组最低位次": 1424,
+      "safety_margin": "-95.93%",
+      "trace": [
+        {
+          "rule_id": "e_source_province",
+          "status": "pass",
+          "reason": "生源地 等于 广东"
+        },
+        {
+          "rule_id": "e_subject_type",
+          "status": "pass",
+          "reason": "科类 等于 物理"
+        },
+        {
+          "rule_id": "e_major_keyword",
+          "status": "pass",
+          "reason": "专业名称 包含任一：人工智能；命中 人工智能"
+        },
+        {
+          "rule_id": "not_executed_1",
+          "status": "not_executed",
+          "reason": "好就业 未执行：当前数据中没有就业结果字段。"
+        }
+      ]
+    }
+  ],
+  "trace_summary": {
+    "executed_rule_ids": [
+      "e_source_province",
+      "e_subject_type",
+      "e_major_keyword"
+    ],
+    "not_executed_preference_count": 1,
+    "traced_result_count": 277,
+    "top_k": 5,
+    "top_k_trace_status_counts": {
+      "pass": 15,
+      "not_executed": 5
+    },
+    "safety_warnings": [
+      "答案只能使用 evidence_pack 中的已验证规则、确认记录、结果摘要和 trace。",
+      "候选偏好在确认或模拟确认之前不得执行。",
+      "好就业 未执行：当前数据中没有就业结果字段。"
+    ]
+  },
+  "extracted_preferences": [
+    {
+      "id": "pref_origin",
+      "slot": "生源地",
+      "value": "广东",
+      "source_span": "广东",
+      "status": "已对齐字段"
+    },
+    {
+      "id": "pref_track",
+      "slot": "科类",
+      "value": "物理",
+      "source_span": "物理",
+      "status": "已对齐字段"
+    },
+    {
+      "id": "pref_rank",
+      "slot": "排位",
+      "value": 35000,
+      "source_span": "排位35000",
+      "status": "已对齐字段"
+    },
+    {
+      "id": "pref_major",
+      "slot": "专业名称",
+      "value": [
+        "人工智能"
+      ],
+      "source_span": "人工智能",
+      "status": "已对齐字段"
+    }
+  ],
+  "attribute_grounding_summary": {
+    "total_attributes": 6,
+    "status_counts": {
+      "schema_grounded": 4,
+      "context_only": 1,
+      "missing_schema": 1
+    },
+    "value_index_status_counts": {
+      "matched": 4,
+      "field_not_indexed": 1
+    },
+    "unsafe_ungrounded_executable_attributes": 0
+  },
+  "proposed_rule_audit": [],
+  "execution_summary": {
+    "executor": "duckdb",
+    "sql": "WITH source AS (\n  SELECT row_number() OVER () AS \"__source_row_number\", *\n  FROM \"admissions\"\n),\nfiltered AS (\n  SELECT\n    source.*,\n    TRY_CAST(regexp_extract(REPLACE(CAST(\"专业组最低位次1\" AS VARCHAR), ',', ''), '\\d+(?:\\.\\d+)?') AS DOUBLE) AS \"__group_rank_num\",\n    TRY_CAST(regexp_extract(REPLACE(CAST(\"学费\" AS VARCHAR), ',', ''), '\\d+(?:\\.\\d+)?') AS DOUBLE) AS \"__tuition_num\",\n    TRY_CAST(regexp_extract(REPLACE(CAST(\"院校排名\" AS VARCHAR), ',', ''), '\\d+(?:\\.\\d+)?') AS DOUBLE) AS \"__school_rank_num\",\n    TRY_CAST(regexp_extract(REPLACE(CAST(\"ID\" AS VARCHAR), ',', ''), '\\d+(?:\\.\\d+)?') AS DOUBLE) AS \"__id_num\"\n  FROM source\n  WHERE CAST(\"生源地\" AS VARCHAR) = ? AND CAST(\"科类\" AS VARCHAR) = ? AND (STRPOS(CAST(\"专业名称\" AS VARCHAR), ?) > 0)\n),\nprojectable AS (\n  SELECT *\n  FROM filtered\n  WHERE TRUE\n    AND \"__group_rank_num\" IS NOT NULL\n    AND \"__tuition_num\" IS NOT NULL\n)\nSELECT *\nFROM projectable\nORDER BY\n  \"__group_rank_num\" ASC NULLS LAST,\n  \"__school_rank_num\" ASC NULLS LAST,\n  \"__id_num\" ASC NULLS LAST",
+    "params": [
+      "广东",
+      "物理",
+      "人工智能"
+    ],
+    "input_row_count": 30855,
+    "filtered_row_count": 277,
+    "sort_key": [
+      "专业组最低位次1 ASC NULLS LAST",
+      "院校排名 ASC NULLS LAST",
+      "ID ASC NULLS LAST"
+    ],
+    "top_k": 5,
+    "hard_rule_ids": [
+      "e_source_province",
+      "e_subject_type",
+      "e_major_keyword"
+    ],
+    "skipped_soft_rule_ids": []
+  },
+  "attribute_explanations": [
+    {
+      "source_text": "广东",
+      "slot_path": "user_context.source_province",
+      "field": "生源地",
+      "value": "广东",
+      "match_type": "exact_match",
+      "action": "executed",
+      "matched_values": [
+        "广东"
+      ],
+      "reason": "已匹配字段“生源地”，并已进入 hard filter。"
+    },
+    {
+      "source_text": "物理",
+      "slot_path": "user_context.subject_type",
+      "field": "科类",
+      "value": "物理",
+      "match_type": "exact_match",
+      "action": "executed",
+      "matched_values": [
+        "物理"
+      ],
+      "reason": "已匹配字段“科类”，并已进入 hard filter。"
+    },
+    {
+      "source_text": "人工智能",
+      "slot_path": "preferences.major_keyword",
+      "field": "专业名称",
+      "value": "人工智能",
+      "match_type": "exact_match",
+      "action": "executed",
+      "matched_values": [
+        "人工智能"
+      ],
+      "reason": "已匹配字段“专业名称”，并已进入 hard filter。"
+    },
+    {
+      "source_text": "好就业",
+      "slot_path": "preferences.other_vague_preferences[]",
+      "field": "employment_outlook",
+      "value": "好就业",
+      "match_type": "no_schema_field",
+      "action": "not_executed",
+      "matched_values": [],
+      "reason": "当前数据中没有就业结果字段。原文已保留，未进入 hard filter。"
+    }
+  ],
+  "confirmed_rules": [],
+  "confirmation_source": [],
+  "executed_after_confirmation": [],
+  "unconfirmed_candidates": [],
+  "no_schema_field_preferences": [
+    {
+      "candidate_id": "cand_94ded559e4a0cf3a",
+      "source_text": "好就业",
+      "slot_path": "preferences.other_vague_preferences[]",
+      "field_id": "employment_outlook",
+      "field": "无可执行字段",
+      "match_type": "no_schema_field",
+      "operator": null,
+      "value": null,
+      "label": "不可执行",
+      "executable": false,
+      "reason": "当前数据中没有就业结果字段。",
+      "matched_values": []
+    }
+  ],
+  "rejected_confirmations": []
+}
+```
+### answer
+
+根据已验证规则生成结果：
+
+用户需求：广东物理，排位35000，人工智能，好就业。；偏好信息：偏好描述：广东物理，排位35000，人工智能，好就业。
+共筛选到 277 条符合已执行规则的结果。
+
+抽取与结构化结果：
+- 生源地：广东；状态：已对齐字段；来源：广东
+- 科类：物理；状态：已对齐字段；来源：物理
+- 排位：35000；状态：已对齐字段；来源：排位35000
+- 专业名称：人工智能；状态：已对齐字段；来源：人工智能
+
+字段值审计解释：
+- [已执行] 广东 -> 生源地：exact_match；索引命中：广东；已匹配字段“生源地”，并已进入 hard filter。
+- [已执行] 物理 -> 科类：exact_match；索引命中：物理；已匹配字段“科类”，并已进入 hard filter。
+- [已执行] 人工智能 -> 专业名称：exact_match；索引命中：人工智能；已匹配字段“专业名称”，并已进入 hard filter。
+- [未执行] 好就业 -> employment_outlook：no_schema_field；当前数据中没有就业结果字段。原文已保留，未进入 hard filter。
+
+已执行规则：
+- e_source_province：生源地 等于 广东
+- e_subject_type：科类 等于 物理
+- e_major_keyword：专业名称 包含任一：人工智能
+
+候选偏好确认记录：
+- 不想去太贵的中外合作：未执行，原因：缺少合作办学类型字段。。
+
+缺少字段，不能确认执行：
+- 好就业：当前数据中没有就业结果字段。；即使提交该 candidate_id 也不能执行。
+
+未执行但已保留的偏好：
+- 好就业：未执行，未参与筛选。原因：当前数据中没有就业结果字段。
+
+前 5 条结果：
+- 1. 上海交通大学；专业组代码：10248202；专业代码：018；专业名称：人工智能；专业全称：人工智能(拔尖英才试点班，校本部)；选科要求：化学；城市：闵行区；学费：7000 元/年；专业组最低位次：104。
+- 2. 上海交通大学；专业组代码：10248203；专业代码：019；专业名称：人工智能；专业全称：人工智能(卓越人才试点班，校本部)；选科要求：化学；城市：闵行区；学费：7000 元/年；专业组最低位次：478。
+- 3. 中国人民大学；专业组代码：10002203；专业代码：031；专业名称：人工智能；专业全称：人工智能(拔尖班，北京市)；选科要求：化学；城市：海淀区；学费：5000 元/年；专业组最低位次：831。
+- 4. 南京大学；专业组代码：10284203；专业代码：033；专业名称：人工智能；专业全称：人工智能(第一学年鼓楼校区，、第二至四学年仙林校区)；选科要求：化学；城市：南京；学费：6380 元/年；专业组最低位次：894。
+- 5. 香港科技大学(广州)；专业组代码：16412101；专业代码：001；专业名称：人工智能；专业全称：人工智能(中外合作办学，领军人才班，入学不分专业，大二结束时，可在人工智能、数据科学与大数据技术、智能制造工程中选择，英文授课，具体培养模式和学习费用请查看学校网站，广州市)(请非英语语种的考生慎重报考，成绩要求：外语≥120)；选科要求：化学；城市：广州；学费：50000 元/年；专业组最低位次：1424。
+
+安全说明：
+- 答案只能使用 证据包 中的已验证规则、确认记录、结果摘要和 trace。
+- 候选偏好在确认或模拟确认之前不得执行。
+- 好就业 未执行：当前数据中没有就业结果字段。
+
+## admissions_13 `通过`
+
+- domain: `admissions`
+- query: 广东物理，排位52000，软件工程，费用别太高。
+- status: `needs_confirmation`
+- pass/fail：`通过`
+
+### items
+```json
+[
+  {
+    "item_id": "result_001",
+    "title": "南京大学",
+    "subtitle": "软件工程(国家特色化软件学院实验班，第三、四学年学费16000元/学年，第一学年鼓楼校区，、第二至四学年仙林校区)",
+    "primary_attributes": [
+      {
+        "key": "year",
+        "label": "year",
+        "value": 2024
+      },
+      {
+        "key": "batch",
+        "label": "batch",
+        "value": "本科批"
+      },
+      {
+        "key": "university_code",
+        "label": "university_code",
+        "value": "10284"
+      },
+      {
+        "key": "university_name",
+        "label": "university_name",
+        "value": "南京大学"
+      }
+    ],
+    "secondary_attributes": [
+      {
+        "key": "group_code",
+        "label": "group_code",
+        "value": "10284203"
+      },
+      {
+        "key": "group_name",
+        "label": "group_name",
+        "value": "203组"
+      },
+      {
+        "key": "major_code",
+        "label": "major_code",
+        "value": "030"
+      },
+      {
+        "key": "major_name",
+        "label": "major_name",
+        "value": "软件工程"
+      },
+      {
+        "key": "full_major_name",
+        "label": "full_major_name",
+        "value": "软件工程(国家特色化软件学院实验班，第三、四学年学费16000元/学年，第一学年鼓楼校区，、第二至四学年仙林校区)"
+      },
+      {
+        "key": "subject_requirement",
+        "label": "subject_requirement",
+        "value": "化学"
+      },
+      {
+        "key": "province",
+        "label": "province",
+        "value": "江苏"
+      },
+      {
+        "key": "city",
+        "label": "city",
+        "value": "南京"
+      },
+      {
+        "key": "tuition",
+        "label": "tuition",
+        "value": 6380.0
+      },
+      {
+        "key": "rank_2024",
+        "label": "rank_2024",
+        "value": 894
+      },
+      {
+        "key": "group_min_rank",
+        "label": "group_min_rank",
+        "value": 894
+      },
+      {
+        "key": "safety_margin",
+        "label": "safety_margin",
+        "value": "-98.3%"
+      }
+    ],
+    "matched_filters": [
+      {
+        "id": "e_source_province",
+        "field": "生源地",
+        "operator": "eq",
+        "value": "广东",
+        "matched": true,
+        "text": "生源地 等于 广东"
+      },
+      {
+        "id": "e_subject_type",
+        "field": "科类",
+        "operator": "eq",
+        "value": "物理",
+        "matched": true,
+        "text": "科类 等于 物理"
+      },
+      {
+        "id": "e_major_keyword",
+        "field": "专业名称",
+        "operator": "contains_any",
+        "value": [
+          "软件工程"
+        ],
+        "matched": true,
+        "text": "专业名称 包含任一：软件工程；命中 软件工程"
+      }
+    ],
+    "raw": {
+      "excel_row_number": 2960,
+      "ID": 2957,
+      "年份": 2024,
+      "批次": "本科批",
+      "院校代码": "10284",
+      "院校名称": "南京大学",
+      "院校专业组代码": "10284203",
+      "专业组名称": "203组",
+      "科类": "物理",
+      "选科要求": "化学",
+      "专业代码": "030",
+      "专业名称": "软件工程",
+      "专业全称": "软件工程(国家特色化软件学院实验班，第三、四学年学费16000元/学年，第一学年鼓楼校区，、第二至四学年仙林校区)",
+      "所在省": "江苏",
+      "城市": "南京",
+      "学费": 6380.0,
+      "专业组最低位次1": 894,
+      "最低位次1": null,
+      "院校标签": "985/211/双一流/国重点/保研资格",
+      "院校排名": "6",
+      "ranking_key": -51106,
+      "safety_margin_pct": -0.9828,
+      "cooperation_filter_status": "not_executed_missing_cooperation_type_field",
+      "中外合作筛选状态": "未执行：缺少合作办学类型字段"
+    }
+  },
+  {
+    "item_id": "result_002",
+    "title": "西安交通大学",
+    "subtitle": "软件工程(软件工程专业后两年学费为16000元/学年，兴庆校区)",
+    "primary_attributes": [
+      {
+        "key": "year",
+        "label": "year",
+        "value": 2024
+      },
+      {
+        "key": "batch",
+        "label": "batch",
+        "value": "本科批"
+      },
+      {
+        "key": "university_code",
+        "label": "university_code",
+        "value": "10698"
+      },
+      {
+        "key": "university_name",
+        "label": "university_name",
+        "value": "西安交通大学"
+      }
+    ],
+    "secondary_attributes": [
+      {
+        "key": "group_code",
+        "label": "group_code",
+        "value": "10698203"
+      },
+      {
+        "key": "group_name",
+        "label": "group_name",
+        "value": "203组"
+      },
+      {
+        "key": "major_code",
+        "label": "major_code",
+        "value": "022"
+      },
+      {
+        "key": "major_name",
+        "label": "major_name",
+        "value": "软件工程"
+      },
+      {
+        "key": "full_major_name",
+        "label": "full_major_name",
+        "value": "软件工程(软件工程专业后两年学费为16000元/学年，兴庆校区)"
+      },
+      {
+        "key": "subject_requirement",
+        "label": "subject_requirement",
+        "value": "化学"
+      },
+      {
+        "key": "province",
+        "label": "province",
+        "value": "陕西"
+      },
+      {
+        "key": "city",
+        "label": "city",
+        "value": "西安"
+      },
+      {
+        "key": "tuition",
+        "label": "tuition",
+        "value": 6600.0
+      },
+      {
+        "key": "rank_2024",
+        "label": "rank_2024",
+        "value": 3031
+      },
+      {
+        "key": "major_rank_2024",
+        "label": "major_rank_2024",
+        "value": 2852
+      },
+      {
+        "key": "group_min_rank",
+        "label": "group_min_rank",
+        "value": 3031
+      },
+      {
+        "key": "major_min_rank",
+        "label": "major_min_rank",
+        "value": 2852
+      },
+      {
+        "key": "safety_margin",
+        "label": "safety_margin",
+        "value": "-94.2%"
+      }
+    ],
+    "matched_filters": [
+      {
+        "id": "e_source_province",
+        "field": "生源地",
+        "operator": "eq",
+        "value": "广东",
+        "matched": true,
+        "text": "生源地 等于 广东"
+      },
+      {
+        "id": "e_subject_type",
+        "field": "科类",
+        "operator": "eq",
+        "value": "物理",
+        "matched": true,
+        "text": "科类 等于 物理"
+      },
+      {
+        "id": "e_major_keyword",
+        "field": "专业名称",
+        "operator": "contains_any",
+        "value": [
+          "软件工程"
+        ],
+        "matched": true,
+        "text": "专业名称 包含任一：软件工程；命中 软件工程"
+      }
+    ],
+    "raw": {
+      "excel_row_number": 10558,
+      "ID": 10555,
+      "年份": 2024,
+      "批次": "本科批",
+      "院校代码": "10698",
+      "院校名称": "西安交通大学",
+      "院校专业组代码": "10698203",
+      "专业组名称": "203组",
+      "科类": "物理",
+      "选科要求": "化学",
+      "专业代码": "022",
+      "专业名称": "软件工程",
+      "专业全称": "软件工程(软件工程专业后两年学费为16000元/学年，兴庆校区)",
+      "所在省": "陕西",
+      "城市": "西安",
+      "学费": 6600.0,
+      "专业组最低位次1": 3031,
+      "最低位次1": 2852,
+      "院校标签": "985/211/双一流/国重点/保研资格",
+      "院校排名": "10",
+      "ranking_key": -48969,
+      "safety_margin_pct": -0.9417,
+      "cooperation_filter_status": "not_executed_missing_cooperation_type_field",
+      "中外合作筛选状态": "未执行：缺少合作办学类型字段"
+    }
+  },
+  {
+    "item_id": "result_003",
+    "title": "中山大学",
+    "subtitle": "软件工程(珠海校区)",
+    "primary_attributes": [
+      {
+        "key": "year",
+        "label": "year",
+        "value": 2024
+      },
+      {
+        "key": "batch",
+        "label": "batch",
+        "value": "本科批"
+      },
+      {
+        "key": "university_code",
+        "label": "university_code",
+        "value": "10558"
+      },
+      {
+        "key": "university_name",
+        "label": "university_name",
+        "value": "中山大学"
+      }
+    ],
+    "secondary_attributes": [
+      {
+        "key": "group_code",
+        "label": "group_code",
+        "value": "10558219"
+      },
+      {
+        "key": "group_name",
+        "label": "group_name",
+        "value": "219组"
+      },
+      {
+        "key": "major_code",
+        "label": "major_code",
+        "value": "094"
+      },
+      {
+        "key": "major_name",
+        "label": "major_name",
+        "value": "软件工程"
+      },
+      {
+        "key": "full_major_name",
+        "label": "full_major_name",
+        "value": "软件工程(珠海校区)"
+      },
+      {
+        "key": "subject_requirement",
+        "label": "subject_requirement",
+        "value": "化学"
+      },
+      {
+        "key": "province",
+        "label": "province",
+        "value": "广东"
+      },
+      {
+        "key": "city",
+        "label": "city",
+        "value": "广州"
+      },
+      {
+        "key": "tuition",
+        "label": "tuition",
+        "value": 8000.0
+      },
+      {
+        "key": "rank_2024",
+        "label": "rank_2024",
+        "value": 4019
+      },
+      {
+        "key": "major_rank_2024",
+        "label": "major_rank_2024",
+        "value": 3777
+      },
+      {
+        "key": "group_min_rank",
+        "label": "group_min_rank",
+        "value": 4019
+      },
+      {
+        "key": "major_min_rank",
+        "label": "major_min_rank",
+        "value": 3777
+      },
+      {
+        "key": "safety_margin",
+        "label": "safety_margin",
+        "value": "-92.3%"
+      }
+    ],
+    "matched_filters": [
+      {
+        "id": "e_source_province",
+        "field": "生源地",
+        "operator": "eq",
+        "value": "广东",
+        "matched": true,
+        "text": "生源地 等于 广东"
+      },
+      {
+        "id": "e_subject_type",
+        "field": "科类",
+        "operator": "eq",
+        "value": "物理",
+        "matched": true,
+        "text": "科类 等于 物理"
+      },
+      {
+        "id": "e_major_keyword",
+        "field": "专业名称",
+        "operator": "contains_any",
+        "value": [
+          "软件工程"
+        ],
+        "matched": true,
+        "text": "专业名称 包含任一：软件工程；命中 软件工程"
+      }
+    ],
+    "raw": {
+      "excel_row_number": 6936,
+      "ID": 6933,
+      "年份": 2024,
+      "批次": "本科批",
+      "院校代码": "10558",
+      "院校名称": "中山大学",
+      "院校专业组代码": "10558219",
+      "专业组名称": "219组",
+      "科类": "物理",
+      "选科要求": "化学",
+      "专业代码": "094",
+      "专业名称": "软件工程",
+      "专业全称": "软件工程(珠海校区)",
+      "所在省": "广东",
+      "城市": "广州",
+      "学费": 8000.0,
+      "专业组最低位次1": 4019,
+      "最低位次1": 3777,
+      "院校标签": "985/211/双一流/国重点/保研资格",
+      "院校排名": "11",
+      "ranking_key": -47981,
+      "safety_margin_pct": -0.9227,
+      "cooperation_filter_status": "not_executed_missing_cooperation_type_field",
+      "中外合作筛选状态": "未执行：缺少合作办学类型字段"
+    }
+  },
+  {
+    "item_id": "result_004",
+    "title": "电子科技大学(沙河校区)",
+    "subtitle": "软件工程(国家示范性软件学院，沙河校区)",
+    "primary_attributes": [
+      {
+        "key": "year",
+        "label": "year",
+        "value": 2024
+      },
+      {
+        "key": "batch",
+        "label": "batch",
+        "value": "本科批"
+      },
+      {
+        "key": "university_code",
+        "label": "university_code",
+        "value": "19614"
+      },
+      {
+        "key": "university_name",
+        "label": "university_name",
+        "value": "电子科技大学(沙河校区)"
+      }
+    ],
+    "secondary_attributes": [
+      {
+        "key": "group_code",
+        "label": "group_code",
+        "value": "19614201"
+      },
+      {
+        "key": "group_name",
+        "label": "group_name",
+        "value": "201组"
+      },
+      {
+        "key": "major_code",
+        "label": "major_code",
+        "value": "004"
+      },
+      {
+        "key": "major_name",
+        "label": "major_name",
+        "value": "软件工程"
+      },
+      {
+        "key": "full_major_name",
+        "label": "full_major_name",
+        "value": "软件工程(国家示范性软件学院，沙河校区)"
+      },
+      {
+        "key": "subject_requirement",
+        "label": "subject_requirement",
+        "value": "化学"
+      },
+      {
+        "key": "province",
+        "label": "province",
+        "value": "四川"
+      },
+      {
+        "key": "city",
+        "label": "city",
+        "value": "成都"
+      },
+      {
+        "key": "tuition",
+        "label": "tuition",
+        "value": 9800.0
+      },
+      {
+        "key": "rank_2024",
+        "label": "rank_2024",
+        "value": 5650
+      },
+      {
+        "key": "major_rank_2024",
+        "label": "major_rank_2024",
+        "value": 5716
+      },
+      {
+        "key": "group_min_rank",
+        "label": "group_min_rank",
+        "value": 5650
+      },
+      {
+        "key": "major_min_rank",
+        "label": "major_min_rank",
+        "value": 5716
+      },
+      {
+        "key": "safety_margin",
+        "label": "safety_margin",
+        "value": "-89.1%"
+      }
+    ],
+    "matched_filters": [
+      {
+        "id": "e_source_province",
+        "field": "生源地",
+        "operator": "eq",
+        "value": "广东",
+        "matched": true,
+        "text": "生源地 等于 广东"
+      },
+      {
+        "id": "e_subject_type",
+        "field": "科类",
+        "operator": "eq",
+        "value": "物理",
+        "matched": true,
+        "text": "科类 等于 物理"
+      },
+      {
+        "id": "e_major_keyword",
+        "field": "专业名称",
+        "operator": "contains_any",
+        "value": [
+          "软件工程"
+        ],
+        "matched": true,
+        "text": "专业名称 包含任一：软件工程；命中 软件工程"
+      }
+    ],
+    "raw": {
+      "excel_row_number": 30448,
+      "ID": 30445,
+      "年份": 2024,
+      "批次": "本科批",
+      "院校代码": "19614",
+      "院校名称": "电子科技大学(沙河校区)",
+      "院校专业组代码": "19614201",
+      "专业组名称": "201组",
+      "科类": "物理",
+      "选科要求": "化学",
+      "专业代码": "004",
+      "专业名称": "软件工程",
+      "专业全称": "软件工程(国家示范性软件学院，沙河校区)",
+      "所在省": "四川",
+      "城市": "成都",
+      "学费": 9800.0,
+      "专业组最低位次1": 5650,
+      "最低位次1": 5716,
+      "院校标签": "985/211/双一流/国重点/保研资格",
+      "院校排名": "31",
+      "ranking_key": -46350,
+      "safety_margin_pct": -0.8913,
+      "cooperation_filter_status": "not_executed_missing_cooperation_type_field",
+      "中外合作筛选状态": "未执行：缺少合作办学类型字段"
+    }
+  },
+  {
+    "item_id": "result_005",
+    "title": "电子科技大学(沙河校区)",
+    "subtitle": "软件工程(互联网交叉培养实验班，沙河校区)",
+    "primary_attributes": [
+      {
+        "key": "year",
+        "label": "year",
+        "value": 2024
+      },
+      {
+        "key": "batch",
+        "label": "batch",
+        "value": "本科批"
+      },
+      {
+        "key": "university_code",
+        "label": "university_code",
+        "value": "19614"
+      },
+      {
+        "key": "university_name",
+        "label": "university_name",
+        "value": "电子科技大学(沙河校区)"
+      }
+    ],
+    "secondary_attributes": [
+      {
+        "key": "group_code",
+        "label": "group_code",
+        "value": "19614201"
+      },
+      {
+        "key": "group_name",
+        "label": "group_name",
+        "value": "201组"
+      },
+      {
+        "key": "major_code",
+        "label": "major_code",
+        "value": "005"
+      },
+      {
+        "key": "major_name",
+        "label": "major_name",
+        "value": "软件工程"
+      },
+      {
+        "key": "full_major_name",
+        "label": "full_major_name",
+        "value": "软件工程(互联网交叉培养实验班，沙河校区)"
+      },
+      {
+        "key": "subject_requirement",
+        "label": "subject_requirement",
+        "value": "化学"
+      },
+      {
+        "key": "province",
+        "label": "province",
+        "value": "四川"
+      },
+      {
+        "key": "city",
+        "label": "city",
+        "value": "成都"
+      },
+      {
+        "key": "tuition",
+        "label": "tuition",
+        "value": 9800.0
+      },
+      {
+        "key": "rank_2024",
+        "label": "rank_2024",
+        "value": 5650
+      },
+      {
+        "key": "major_rank_2024",
+        "label": "major_rank_2024",
+        "value": 5716
+      },
+      {
+        "key": "group_min_rank",
+        "label": "group_min_rank",
+        "value": 5650
+      },
+      {
+        "key": "major_min_rank",
+        "label": "major_min_rank",
+        "value": 5716
+      },
+      {
+        "key": "safety_margin",
+        "label": "safety_margin",
+        "value": "-89.1%"
+      }
+    ],
+    "matched_filters": [
+      {
+        "id": "e_source_province",
+        "field": "生源地",
+        "operator": "eq",
+        "value": "广东",
+        "matched": true,
+        "text": "生源地 等于 广东"
+      },
+      {
+        "id": "e_subject_type",
+        "field": "科类",
+        "operator": "eq",
+        "value": "物理",
+        "matched": true,
+        "text": "科类 等于 物理"
+      },
+      {
+        "id": "e_major_keyword",
+        "field": "专业名称",
+        "operator": "contains_any",
+        "value": [
+          "软件工程"
+        ],
+        "matched": true,
+        "text": "专业名称 包含任一：软件工程；命中 软件工程"
+      }
+    ],
+    "raw": {
+      "excel_row_number": 30449,
+      "ID": 30446,
+      "年份": 2024,
+      "批次": "本科批",
+      "院校代码": "19614",
+      "院校名称": "电子科技大学(沙河校区)",
+      "院校专业组代码": "19614201",
+      "专业组名称": "201组",
+      "科类": "物理",
+      "选科要求": "化学",
+      "专业代码": "005",
+      "专业名称": "软件工程",
+      "专业全称": "软件工程(互联网交叉培养实验班，沙河校区)",
+      "所在省": "四川",
+      "城市": "成都",
+      "学费": 9800.0,
+      "专业组最低位次1": 5650,
+      "最低位次1": 5716,
+      "院校标签": "985/211/双一流/国重点/保研资格",
+      "院校排名": "31",
+      "ranking_key": -46350,
+      "safety_margin_pct": -0.8913,
+      "cooperation_filter_status": "not_executed_missing_cooperation_type_field",
+      "中外合作筛选状态": "未执行：缺少合作办学类型字段"
+    }
+  }
+]
+```
+### top_results
+```json
+[
+  {
+    "id": "result_001",
+    "trace": [
+      {
+        "status": "pass",
+        "text": "生源地 等于 广东"
+      },
+      {
+        "status": "pass",
+        "text": "科类 等于 物理"
+      },
+      {
+        "status": "pass",
+        "text": "专业名称 包含任一：软件工程；命中 软件工程"
+      }
+    ],
+    "year": 2024,
+    "batch": "本科批",
+    "university_code": "10284",
+    "university_name": "南京大学",
+    "group_code": "10284203",
+    "group_name": "203组",
+    "major_code": "030",
+    "major_name": "软件工程",
+    "full_major_name": "软件工程(国家特色化软件学院实验班，第三、四学年学费16000元/学年，第一学年鼓楼校区，、第二至四学年仙林校区)",
+    "subject_requirement": "化学",
+    "province": "江苏",
+    "city": "南京",
+    "tuition": 6380.0,
+    "rank_2024": 894,
+    "major_rank_2024": null,
+    "plan_count": null,
+    "group_min_rank": 894,
+    "major_min_rank": null,
+    "safety_margin": "-98.3%"
+  },
+  {
+    "id": "result_002",
+    "trace": [
+      {
+        "status": "pass",
+        "text": "生源地 等于 广东"
+      },
+      {
+        "status": "pass",
+        "text": "科类 等于 物理"
+      },
+      {
+        "status": "pass",
+        "text": "专业名称 包含任一：软件工程；命中 软件工程"
+      }
+    ],
+    "year": 2024,
+    "batch": "本科批",
+    "university_code": "10698",
+    "university_name": "西安交通大学",
+    "group_code": "10698203",
+    "group_name": "203组",
+    "major_code": "022",
+    "major_name": "软件工程",
+    "full_major_name": "软件工程(软件工程专业后两年学费为16000元/学年，兴庆校区)",
+    "subject_requirement": "化学",
+    "province": "陕西",
+    "city": "西安",
+    "tuition": 6600.0,
+    "rank_2024": 3031,
+    "major_rank_2024": 2852,
+    "plan_count": null,
+    "group_min_rank": 3031,
+    "major_min_rank": 2852,
+    "safety_margin": "-94.2%"
+  },
+  {
+    "id": "result_003",
+    "trace": [
+      {
+        "status": "pass",
+        "text": "生源地 等于 广东"
+      },
+      {
+        "status": "pass",
+        "text": "科类 等于 物理"
+      },
+      {
+        "status": "pass",
+        "text": "专业名称 包含任一：软件工程；命中 软件工程"
+      }
+    ],
+    "year": 2024,
+    "batch": "本科批",
+    "university_code": "10558",
+    "university_name": "中山大学",
+    "group_code": "10558219",
+    "group_name": "219组",
+    "major_code": "094",
+    "major_name": "软件工程",
+    "full_major_name": "软件工程(珠海校区)",
+    "subject_requirement": "化学",
+    "province": "广东",
+    "city": "广州",
+    "tuition": 8000.0,
+    "rank_2024": 4019,
+    "major_rank_2024": 3777,
+    "plan_count": null,
+    "group_min_rank": 4019,
+    "major_min_rank": 3777,
+    "safety_margin": "-92.3%"
+  },
+  {
+    "id": "result_004",
+    "trace": [
+      {
+        "status": "pass",
+        "text": "生源地 等于 广东"
+      },
+      {
+        "status": "pass",
+        "text": "科类 等于 物理"
+      },
+      {
+        "status": "pass",
+        "text": "专业名称 包含任一：软件工程；命中 软件工程"
+      }
+    ],
+    "year": 2024,
+    "batch": "本科批",
+    "university_code": "19614",
+    "university_name": "电子科技大学(沙河校区)",
+    "group_code": "19614201",
+    "group_name": "201组",
+    "major_code": "004",
+    "major_name": "软件工程",
+    "full_major_name": "软件工程(国家示范性软件学院，沙河校区)",
+    "subject_requirement": "化学",
+    "province": "四川",
+    "city": "成都",
+    "tuition": 9800.0,
+    "rank_2024": 5650,
+    "major_rank_2024": 5716,
+    "plan_count": null,
+    "group_min_rank": 5650,
+    "major_min_rank": 5716,
+    "safety_margin": "-89.1%"
+  },
+  {
+    "id": "result_005",
+    "trace": [
+      {
+        "status": "pass",
+        "text": "生源地 等于 广东"
+      },
+      {
+        "status": "pass",
+        "text": "科类 等于 物理"
+      },
+      {
+        "status": "pass",
+        "text": "专业名称 包含任一：软件工程；命中 软件工程"
+      }
+    ],
+    "year": 2024,
+    "batch": "本科批",
+    "university_code": "19614",
+    "university_name": "电子科技大学(沙河校区)",
+    "group_code": "19614201",
+    "group_name": "201组",
+    "major_code": "005",
+    "major_name": "软件工程",
+    "full_major_name": "软件工程(互联网交叉培养实验班，沙河校区)",
+    "subject_requirement": "化学",
+    "province": "四川",
+    "city": "成都",
+    "tuition": 9800.0,
+    "rank_2024": 5650,
+    "major_rank_2024": 5716,
+    "plan_count": null,
+    "group_min_rank": 5650,
+    "major_min_rank": 5716,
+    "safety_margin": "-89.1%"
+  }
+]
+```
+### executed_filters
+```json
+[
+  {
+    "id": "e_source_province",
+    "label": "生源地 等于 广东",
+    "field": "生源地",
+    "operator": "eq",
+    "value": "广东",
+    "source_span": "广东"
+  },
+  {
+    "id": "e_subject_type",
+    "label": "科类 等于 物理",
+    "field": "科类",
+    "operator": "eq",
+    "value": "物理",
+    "source_span": "物理"
+  },
+  {
+    "id": "e_major_keyword",
+    "label": "专业名称 包含任一：软件工程",
+    "field": "专业名称",
+    "operator": "contains_any",
+    "value": [
+      "软件工程"
+    ],
+    "source_span": "软件工程"
+  }
+]
+```
+### candidates_to_confirm
+```json
+[]
+```
+### unexecuted_preferences
+```json
+[]
+```
+### SQL / params
+```json
+{
+  "sql": "WITH source AS (\n  SELECT row_number() OVER () AS \"__source_row_number\", *\n  FROM \"admissions\"\n),\nfiltered AS (\n  SELECT\n    source.*,\n    TRY_CAST(regexp_extract(REPLACE(CAST(\"专业组最低位次1\" AS VARCHAR), ',', ''), '\\d+(?:\\.\\d+)?') AS DOUBLE) AS \"__group_rank_num\",\n    TRY_CAST(regexp_extract(REPLACE(CAST(\"学费\" AS VARCHAR), ',', ''), '\\d+(?:\\.\\d+)?') AS DOUBLE) AS \"__tuition_num\",\n    TRY_CAST(regexp_extract(REPLACE(CAST(\"院校排名\" AS VARCHAR), ',', ''), '\\d+(?:\\.\\d+)?') AS DOUBLE) AS \"__school_rank_num\",\n    TRY_CAST(regexp_extract(REPLACE(CAST(\"ID\" AS VARCHAR), ',', ''), '\\d+(?:\\.\\d+)?') AS DOUBLE) AS \"__id_num\"\n  FROM source\n  WHERE CAST(\"生源地\" AS VARCHAR) = ? AND CAST(\"科类\" AS VARCHAR) = ? AND (STRPOS(CAST(\"专业名称\" AS VARCHAR), ?) > 0)\n),\nprojectable AS (\n  SELECT *\n  FROM filtered\n  WHERE TRUE\n    AND \"__group_rank_num\" IS NOT NULL\n    AND \"__tuition_num\" IS NOT NULL\n)\nSELECT *\nFROM projectable\nORDER BY\n  \"__group_rank_num\" ASC NULLS LAST,\n  \"__school_rank_num\" ASC NULLS LAST,\n  \"__id_num\" ASC NULLS LAST",
+  "params": [
+    "广东",
+    "物理",
+    "软件工程"
+  ]
+}
+```
+### EvidencePack
+```json
+{
+  "user_request": "广东物理，排位52000，软件工程，费用别太高。；偏好信息：偏好描述：广东物理，排位52000，软件工程，费用别太高。",
+  "executed_rules": [
+    {
+      "rule_id": "e_source_province",
+      "derived_from": "d_source_province",
+      "field": "生源地",
+      "operator": "eq",
+      "value": "广东",
+      "description": "生源地 等于 广东"
+    },
+    {
+      "rule_id": "e_subject_type",
+      "derived_from": "d_subject_type",
+      "field": "科类",
+      "operator": "eq",
+      "value": "物理",
+      "description": "科类 等于 物理"
+    },
+    {
+      "rule_id": "e_major_keyword",
+      "derived_from": "d_major_keyword",
+      "field": "专业名称",
+      "operator": "contains_any",
+      "value": [
+        "软件工程"
+      ],
+      "description": "专业名称 包含任一：软件工程"
+    }
+  ],
+  "candidate_confirmations": [],
+  "not_executed_preferences": [],
+  "result_count": 276,
+  "top_k_results": [
+    {
+      "rank": 1,
+      "院校名称": "南京大学",
+      "院校专业组代码": "10284203",
+      "专业代码": "030",
+      "专业名称": "软件工程",
+      "专业全称": "软件工程(国家特色化软件学院实验班，第三、四学年学费16000元/学年，第一学年鼓楼校区，、第二至四学年仙林校区)",
+      "选科要求": "化学",
+      "城市": "南京",
+      "学费": 6380.0,
+      "专业组最低位次": 894,
+      "safety_margin": "-98.28%",
+      "trace": [
+        {
+          "rule_id": "e_source_province",
+          "status": "pass",
+          "reason": "生源地 等于 广东"
+        },
+        {
+          "rule_id": "e_subject_type",
+          "status": "pass",
+          "reason": "科类 等于 物理"
+        },
+        {
+          "rule_id": "e_major_keyword",
+          "status": "pass",
+          "reason": "专业名称 包含任一：软件工程；命中 软件工程"
+        }
+      ]
+    },
+    {
+      "rank": 2,
+      "院校名称": "西安交通大学",
+      "院校专业组代码": "10698203",
+      "专业代码": "022",
+      "专业名称": "软件工程",
+      "专业全称": "软件工程(软件工程专业后两年学费为16000元/学年，兴庆校区)",
+      "选科要求": "化学",
+      "城市": "西安",
+      "学费": 6600.0,
+      "专业组最低位次": 3031,
+      "专业最低位次": 2852,
+      "safety_margin": "-94.17%",
+      "trace": [
+        {
+          "rule_id": "e_source_province",
+          "status": "pass",
+          "reason": "生源地 等于 广东"
+        },
+        {
+          "rule_id": "e_subject_type",
+          "status": "pass",
+          "reason": "科类 等于 物理"
+        },
+        {
+          "rule_id": "e_major_keyword",
+          "status": "pass",
+          "reason": "专业名称 包含任一：软件工程；命中 软件工程"
+        }
+      ]
+    },
+    {
+      "rank": 3,
+      "院校名称": "中山大学",
+      "院校专业组代码": "10558219",
+      "专业代码": "094",
+      "专业名称": "软件工程",
+      "专业全称": "软件工程(珠海校区)",
+      "选科要求": "化学",
+      "城市": "广州",
+      "学费": 8000.0,
+      "专业组最低位次": 4019,
+      "专业最低位次": 3777,
+      "safety_margin": "-92.27%",
+      "trace": [
+        {
+          "rule_id": "e_source_province",
+          "status": "pass",
+          "reason": "生源地 等于 广东"
+        },
+        {
+          "rule_id": "e_subject_type",
+          "status": "pass",
+          "reason": "科类 等于 物理"
+        },
+        {
+          "rule_id": "e_major_keyword",
+          "status": "pass",
+          "reason": "专业名称 包含任一：软件工程；命中 软件工程"
+        }
+      ]
+    },
+    {
+      "rank": 4,
+      "院校名称": "电子科技大学(沙河校区)",
+      "院校专业组代码": "19614201",
+      "专业代码": "004",
+      "专业名称": "软件工程",
+      "专业全称": "软件工程(国家示范性软件学院，沙河校区)",
+      "选科要求": "化学",
+      "城市": "成都",
+      "学费": 9800.0,
+      "专业组最低位次": 5650,
+      "专业最低位次": 5716,
+      "safety_margin": "-89.13%",
+      "trace": [
+        {
+          "rule_id": "e_source_province",
+          "status": "pass",
+          "reason": "生源地 等于 广东"
+        },
+        {
+          "rule_id": "e_subject_type",
+          "status": "pass",
+          "reason": "科类 等于 物理"
+        },
+        {
+          "rule_id": "e_major_keyword",
+          "status": "pass",
+          "reason": "专业名称 包含任一：软件工程；命中 软件工程"
+        }
+      ]
+    },
+    {
+      "rank": 5,
+      "院校名称": "电子科技大学(沙河校区)",
+      "院校专业组代码": "19614201",
+      "专业代码": "005",
+      "专业名称": "软件工程",
+      "专业全称": "软件工程(互联网交叉培养实验班，沙河校区)",
+      "选科要求": "化学",
+      "城市": "成都",
+      "学费": 9800.0,
+      "专业组最低位次": 5650,
+      "专业最低位次": 5716,
+      "safety_margin": "-89.13%",
+      "trace": [
+        {
+          "rule_id": "e_source_province",
+          "status": "pass",
+          "reason": "生源地 等于 广东"
+        },
+        {
+          "rule_id": "e_subject_type",
+          "status": "pass",
+          "reason": "科类 等于 物理"
+        },
+        {
+          "rule_id": "e_major_keyword",
+          "status": "pass",
+          "reason": "专业名称 包含任一：软件工程；命中 软件工程"
+        }
+      ]
+    }
+  ],
+  "trace_summary": {
+    "executed_rule_ids": [
+      "e_source_province",
+      "e_subject_type",
+      "e_major_keyword"
+    ],
+    "not_executed_preference_count": 0,
+    "traced_result_count": 276,
+    "top_k": 5,
+    "top_k_trace_status_counts": {
+      "pass": 15
+    },
+    "safety_warnings": [
+      "答案只能使用 evidence_pack 中的已验证规则、确认记录、结果摘要和 trace。",
+      "候选偏好在确认或模拟确认之前不得执行。"
+    ]
+  },
+  "extracted_preferences": [
+    {
+      "id": "pref_origin",
+      "slot": "生源地",
+      "value": "广东",
+      "source_span": "广东",
+      "status": "已对齐字段"
+    },
+    {
+      "id": "pref_track",
+      "slot": "科类",
+      "value": "物理",
+      "source_span": "物理",
+      "status": "已对齐字段"
+    },
+    {
+      "id": "pref_rank",
+      "slot": "排位",
+      "value": 52000,
+      "source_span": "排位52000",
+      "status": "已对齐字段"
+    },
+    {
+      "id": "pref_major",
+      "slot": "专业名称",
+      "value": [
+        "软件工程"
+      ],
+      "source_span": "软件工程",
+      "status": "已对齐字段"
+    },
+    {
+      "id": "pref_expensive",
+      "slot": "太贵",
+      "value": "费用别太高",
+      "source_span": "费用别太高",
+      "status": "待确认"
+    }
+  ],
+  "attribute_grounding_summary": {
+    "total_attributes": 6,
+    "status_counts": {
+      "schema_grounded": 4,
+      "context_only": 1,
+      "confirmable": 1
+    },
+    "value_index_status_counts": {
+      "matched": 4,
+      "outside_numeric_profile": 1
+    },
+    "unsafe_ungrounded_executable_attributes": 0
+  },
+  "proposed_rule_audit": [],
+  "execution_summary": {
+    "executor": "duckdb",
+    "sql": "WITH source AS (\n  SELECT row_number() OVER () AS \"__source_row_number\", *\n  FROM \"admissions\"\n),\nfiltered AS (\n  SELECT\n    source.*,\n    TRY_CAST(regexp_extract(REPLACE(CAST(\"专业组最低位次1\" AS VARCHAR), ',', ''), '\\d+(?:\\.\\d+)?') AS DOUBLE) AS \"__group_rank_num\",\n    TRY_CAST(regexp_extract(REPLACE(CAST(\"学费\" AS VARCHAR), ',', ''), '\\d+(?:\\.\\d+)?') AS DOUBLE) AS \"__tuition_num\",\n    TRY_CAST(regexp_extract(REPLACE(CAST(\"院校排名\" AS VARCHAR), ',', ''), '\\d+(?:\\.\\d+)?') AS DOUBLE) AS \"__school_rank_num\",\n    TRY_CAST(regexp_extract(REPLACE(CAST(\"ID\" AS VARCHAR), ',', ''), '\\d+(?:\\.\\d+)?') AS DOUBLE) AS \"__id_num\"\n  FROM source\n  WHERE CAST(\"生源地\" AS VARCHAR) = ? AND CAST(\"科类\" AS VARCHAR) = ? AND (STRPOS(CAST(\"专业名称\" AS VARCHAR), ?) > 0)\n),\nprojectable AS (\n  SELECT *\n  FROM filtered\n  WHERE TRUE\n    AND \"__group_rank_num\" IS NOT NULL\n    AND \"__tuition_num\" IS NOT NULL\n)\nSELECT *\nFROM projectable\nORDER BY\n  \"__group_rank_num\" ASC NULLS LAST,\n  \"__school_rank_num\" ASC NULLS LAST,\n  \"__id_num\" ASC NULLS LAST",
+    "params": [
+      "广东",
+      "物理",
+      "软件工程"
+    ],
+    "input_row_count": 30855,
+    "filtered_row_count": 276,
+    "sort_key": [
+      "专业组最低位次1 ASC NULLS LAST",
+      "院校排名 ASC NULLS LAST",
+      "ID ASC NULLS LAST"
+    ],
+    "top_k": 5,
+    "hard_rule_ids": [
+      "e_source_province",
+      "e_subject_type",
+      "e_major_keyword"
+    ],
+    "skipped_soft_rule_ids": []
+  },
+  "attribute_explanations": [
+    {
+      "source_text": "广东",
+      "slot_path": "user_context.source_province",
+      "field": "生源地",
+      "value": "广东",
+      "match_type": "exact_match",
+      "action": "executed",
+      "matched_values": [
+        "广东"
+      ],
+      "reason": "已匹配字段“生源地”，并已进入 hard filter。"
+    },
+    {
+      "source_text": "物理",
+      "slot_path": "user_context.subject_type",
+      "field": "科类",
+      "value": "物理",
+      "match_type": "exact_match",
+      "action": "executed",
+      "matched_values": [
+        "物理"
+      ],
+      "reason": "已匹配字段“科类”，并已进入 hard filter。"
+    },
+    {
+      "source_text": "软件工程",
+      "slot_path": "preferences.major_keyword",
+      "field": "专业名称",
+      "value": "软件工程",
+      "match_type": "exact_match",
+      "action": "executed",
+      "matched_values": [
+        "软件工程"
+      ],
+      "reason": "已匹配字段“专业名称”，并已进入 hard filter。"
+    },
+    {
+      "source_text": "费用别太高",
+      "slot_path": "preferences.tuition_preference_raw",
+      "field": "学费",
+      "value": "费用别太高",
+      "match_type": "partial_match",
+      "action": "needs_confirmation",
+      "matched_values": [],
+      "reason": "该属性有对应字段，但语义或边界需要确认。未进入 hard filter。"
+    }
+  ],
+  "confirmed_rules": [],
+  "confirmation_source": [],
+  "executed_after_confirmation": [],
+  "unconfirmed_candidates": [],
+  "no_schema_field_preferences": [],
+  "rejected_confirmations": []
+}
+```
+### answer
+
+根据已验证规则生成结果：
+
+用户需求：广东物理，排位52000，软件工程，费用别太高。；偏好信息：偏好描述：广东物理，排位52000，软件工程，费用别太高。
+共筛选到 276 条符合已执行规则的结果。
+
+抽取与结构化结果：
+- 生源地：广东；状态：已对齐字段；来源：广东
+- 科类：物理；状态：已对齐字段；来源：物理
+- 排位：52000；状态：已对齐字段；来源：排位52000
+- 专业名称：软件工程；状态：已对齐字段；来源：软件工程
+- 太贵：费用别太高；状态：待确认；来源：费用别太高
+
+字段值审计解释：
+- [已执行] 广东 -> 生源地：exact_match；索引命中：广东；已匹配字段“生源地”，并已进入 hard filter。
+- [已执行] 物理 -> 科类：exact_match；索引命中：物理；已匹配字段“科类”，并已进入 hard filter。
+- [已执行] 软件工程 -> 专业名称：exact_match；索引命中：软件工程；已匹配字段“专业名称”，并已进入 hard filter。
+- [需确认] 费用别太高 -> 学费：partial_match；该属性有对应字段，但语义或边界需要确认。未进入 hard filter。
+
+已执行规则：
+- e_source_province：生源地 等于 广东
+- e_subject_type：科类 等于 物理
+- e_major_keyword：专业名称 包含任一：软件工程
+
+候选偏好确认记录：
+
+未执行但已保留的偏好：
+- 无。
+
+前 5 条结果：
+- 1. 南京大学；专业组代码：10284203；专业代码：030；专业名称：软件工程；专业全称：软件工程(国家特色化软件学院实验班，第三、四学年学费16000元/学年，第一学年鼓楼校区，、第二至四学年仙林校区)；选科要求：化学；城市：南京；学费：6380 元/年；专业组最低位次：894。
+- 2. 西安交通大学；专业组代码：10698203；专业代码：022；专业名称：软件工程；专业全称：软件工程(软件工程专业后两年学费为16000元/学年，兴庆校区)；选科要求：化学；城市：西安；学费：6600 元/年；专业组最低位次：3031；专业最低位次：2852。
+- 3. 中山大学；专业组代码：10558219；专业代码：094；专业名称：软件工程；专业全称：软件工程(珠海校区)；选科要求：化学；城市：广州；学费：8000 元/年；专业组最低位次：4019；专业最低位次：3777。
+- 4. 电子科技大学(沙河校区)；专业组代码：19614201；专业代码：004；专业名称：软件工程；专业全称：软件工程(国家示范性软件学院，沙河校区)；选科要求：化学；城市：成都；学费：9800 元/年；专业组最低位次：5650；专业最低位次：5716。
+- 5. 电子科技大学(沙河校区)；专业组代码：19614201；专业代码：005；专业名称：软件工程；专业全称：软件工程(互联网交叉培养实验班，沙河校区)；选科要求：化学；城市：成都；学费：9800 元/年；专业组最低位次：5650；专业最低位次：5716。
+
+安全说明：
+- 答案只能使用 证据包 中的已验证规则、确认记录、结果摘要和 trace。
+- 候选偏好在确认或模拟确认之前不得执行。
+
+## admissions_14 `通过`
+
+- domain: `admissions`
+- query: 广东物理，排位42000，广州深圳都可以，人工智能。
+- status: `needs_confirmation`
+- pass/fail：`通过`
+
+### items
+```json
+[
+  {
+    "item_id": "result_001",
+    "title": "香港科技大学(广州)",
+    "subtitle": "人工智能(中外合作办学，领军人才班，入学不分专业，大二结束时，可在人工智能、数据科学与大数据技术、智能制造工程中选择，英文授课，具体培养模式和学习费用请查看学校网站，广州市)(请非英语语种的考生慎重报考，成绩要求：外语≥120)",
+    "primary_attributes": [
+      {
+        "key": "year",
+        "label": "year",
+        "value": 2024
+      },
+      {
+        "key": "batch",
+        "label": "batch",
+        "value": "本科提前批"
+      },
+      {
+        "key": "university_code",
+        "label": "university_code",
+        "value": "16412"
+      },
+      {
+        "key": "university_name",
+        "label": "university_name",
+        "value": "香港科技大学(广州)"
+      }
+    ],
+    "secondary_attributes": [
+      {
+        "key": "group_code",
+        "label": "group_code",
+        "value": "16412101"
+      },
+      {
+        "key": "group_name",
+        "label": "group_name",
+        "value": "101组(中外合作)"
+      },
+      {
+        "key": "major_code",
+        "label": "major_code",
+        "value": "001"
+      },
+      {
+        "key": "major_name",
+        "label": "major_name",
+        "value": "人工智能"
+      },
+      {
+        "key": "full_major_name",
+        "label": "full_major_name",
+        "value": "人工智能(中外合作办学，领军人才班，入学不分专业，大二结束时，可在人工智能、数据科学与大数据技术、智能制造工程中选择，英文授课，具体培养模式和学习费用请查看学校网站，广州市)(请非英语语种的考生慎重报考，成绩要求：外语≥120)"
+      },
+      {
+        "key": "subject_requirement",
+        "label": "subject_requirement",
+        "value": "化学"
+      },
+      {
+        "key": "province",
+        "label": "province",
+        "value": "广东"
+      },
+      {
+        "key": "city",
+        "label": "city",
+        "value": "广州"
+      },
+      {
+        "key": "tuition",
+        "label": "tuition",
+        "value": 50000.0
+      },
+      {
+        "key": "rank_2024",
+        "label": "rank_2024",
+        "value": 1424
+      },
+      {
+        "key": "group_min_rank",
+        "label": "group_min_rank",
+        "value": 1424
+      },
+      {
+        "key": "safety_margin",
+        "label": "safety_margin",
+        "value": "-96.6%"
+      }
+    ],
+    "matched_filters": [
+      {
+        "id": "e_source_province",
+        "field": "生源地",
+        "operator": "eq",
+        "value": "广东",
+        "matched": true,
+        "text": "生源地 等于 广东"
+      },
+      {
+        "id": "e_subject_type",
+        "field": "科类",
+        "operator": "eq",
+        "value": "物理",
+        "matched": true,
+        "text": "科类 等于 物理"
+      },
+      {
+        "id": "e_major_keyword",
+        "field": "专业名称",
+        "operator": "contains_any",
+        "value": [
+          "人工智能"
+        ],
+        "matched": true,
+        "text": "专业名称 包含任一：人工智能；命中 人工智能"
+      },
+      {
+        "id": "e_city",
+        "field": "城市",
+        "operator": "in_contains",
+        "value": [
+          "广州",
+          "深圳"
+        ],
+        "matched": true,
+        "text": "城市 包含任一：广州、深圳；命中 广州"
+      }
+    ],
+    "raw": {
+      "excel_row_number": 30311,
+      "ID": 30308,
+      "年份": 2024,
+      "批次": "本科提前批",
+      "院校代码": "16412",
+      "院校名称": "香港科技大学(广州)",
+      "院校专业组代码": "16412101",
+      "专业组名称": "101组(中外合作)",
+      "科类": "物理",
+      "选科要求": "化学",
+      "专业代码": "001",
+      "专业名称": "人工智能",
+      "专业全称": "人工智能(中外合作办学，领军人才班，入学不分专业，大二结束时，可在人工智能、数据科学与大数据技术、智能制造工程中选择，英文授课，具体培养模式和学习费用请查看学校网站，广州市)(请非英语语种的考生慎重报考，成绩要求：外语≥120)",
+      "所在省": "广东",
+      "城市": "广州",
+      "学费": 50000.0,
+      "专业组最低位次1": 1424,
+      "最低位次1": null,
+      "院校标签": null,
+      "院校排名": "/",
+      "ranking_key": -40576,
+      "safety_margin_pct": -0.9661,
+      "cooperation_filter_status": "not_executed_missing_cooperation_type_field",
+      "中外合作筛选状态": "未执行：缺少合作办学类型字段"
+    }
+  },
+  {
+    "item_id": "result_002",
+    "title": "中山大学",
+    "subtitle": "人工智能(珠海校区)",
+    "primary_attributes": [
+      {
+        "key": "year",
+        "label": "year",
+        "value": 2024
+      },
+      {
+        "key": "batch",
+        "label": "batch",
+        "value": "本科批"
+      },
+      {
+        "key": "university_code",
+        "label": "university_code",
+        "value": "10558"
+      },
+      {
+        "key": "university_name",
+        "label": "university_name",
+        "value": "中山大学"
+      }
+    ],
+    "secondary_attributes": [
+      {
+        "key": "group_code",
+        "label": "group_code",
+        "value": "10558219"
+      },
+      {
+        "key": "group_name",
+        "label": "group_name",
+        "value": "219组"
+      },
+      {
+        "key": "major_code",
+        "label": "major_code",
+        "value": "093"
+      },
+      {
+        "key": "major_name",
+        "label": "major_name",
+        "value": "人工智能"
+      },
+      {
+        "key": "full_major_name",
+        "label": "full_major_name",
+        "value": "人工智能(珠海校区)"
+      },
+      {
+        "key": "subject_requirement",
+        "label": "subject_requirement",
+        "value": "化学"
+      },
+      {
+        "key": "province",
+        "label": "province",
+        "value": "广东"
+      },
+      {
+        "key": "city",
+        "label": "city",
+        "value": "广州"
+      },
+      {
+        "key": "tuition",
+        "label": "tuition",
+        "value": 6850.0
+      },
+      {
+        "key": "rank_2024",
+        "label": "rank_2024",
+        "value": 4019
+      },
+      {
+        "key": "major_rank_2024",
+        "label": "major_rank_2024",
+        "value": 4193
+      },
+      {
+        "key": "group_min_rank",
+        "label": "group_min_rank",
+        "value": 4019
+      },
+      {
+        "key": "major_min_rank",
+        "label": "major_min_rank",
+        "value": 4193
+      },
+      {
+        "key": "safety_margin",
+        "label": "safety_margin",
+        "value": "-90.4%"
+      }
+    ],
+    "matched_filters": [
+      {
+        "id": "e_source_province",
+        "field": "生源地",
+        "operator": "eq",
+        "value": "广东",
+        "matched": true,
+        "text": "生源地 等于 广东"
+      },
+      {
+        "id": "e_subject_type",
+        "field": "科类",
+        "operator": "eq",
+        "value": "物理",
+        "matched": true,
+        "text": "科类 等于 物理"
+      },
+      {
+        "id": "e_major_keyword",
+        "field": "专业名称",
+        "operator": "contains_any",
+        "value": [
+          "人工智能"
+        ],
+        "matched": true,
+        "text": "专业名称 包含任一：人工智能；命中 人工智能"
+      },
+      {
+        "id": "e_city",
+        "field": "城市",
+        "operator": "in_contains",
+        "value": [
+          "广州",
+          "深圳"
+        ],
+        "matched": true,
+        "text": "城市 包含任一：广州、深圳；命中 广州"
+      }
+    ],
+    "raw": {
+      "excel_row_number": 6935,
+      "ID": 6932,
+      "年份": 2024,
+      "批次": "本科批",
+      "院校代码": "10558",
+      "院校名称": "中山大学",
+      "院校专业组代码": "10558219",
+      "专业组名称": "219组",
+      "科类": "物理",
+      "选科要求": "化学",
+      "专业代码": "093",
+      "专业名称": "人工智能",
+      "专业全称": "人工智能(珠海校区)",
+      "所在省": "广东",
+      "城市": "广州",
+      "学费": 6850.0,
+      "专业组最低位次1": 4019,
+      "最低位次1": 4193,
+      "院校标签": "985/211/双一流/国重点/保研资格",
+      "院校排名": "11",
+      "ranking_key": -37981,
+      "safety_margin_pct": -0.9043,
+      "cooperation_filter_status": "not_executed_missing_cooperation_type_field",
+      "中外合作筛选状态": "未执行：缺少合作办学类型字段"
+    }
+  },
+  {
+    "item_id": "result_003",
+    "title": "香港科技大学(广州)",
+    "subtitle": "人工智能(中外合作办学，科技创新班，入学不分专业，大二结束时，可在人工智能、数据科学与大数据技术、智能制造工程中选择，英文授课，具体培养模式和学习费用请查看学校网站，广州市)(请非英语语种的考生慎重报考，成绩要求：外语≥120)",
+    "primary_attributes": [
+      {
+        "key": "year",
+        "label": "year",
+        "value": 2024
+      },
+      {
+        "key": "batch",
+        "label": "batch",
+        "value": "本科提前批"
+      },
+      {
+        "key": "university_code",
+        "label": "university_code",
+        "value": "16412"
+      },
+      {
+        "key": "university_name",
+        "label": "university_name",
+        "value": "香港科技大学(广州)"
+      }
+    ],
+    "secondary_attributes": [
+      {
+        "key": "group_code",
+        "label": "group_code",
+        "value": "16412102"
+      },
+      {
+        "key": "group_name",
+        "label": "group_name",
+        "value": "102组(中外合作)"
+      },
+      {
+        "key": "major_code",
+        "label": "major_code",
+        "value": "002"
+      },
+      {
+        "key": "major_name",
+        "label": "major_name",
+        "value": "人工智能"
+      },
+      {
+        "key": "full_major_name",
+        "label": "full_major_name",
+        "value": "人工智能(中外合作办学，科技创新班，入学不分专业，大二结束时，可在人工智能、数据科学与大数据技术、智能制造工程中选择，英文授课，具体培养模式和学习费用请查看学校网站，广州市)(请非英语语种的考生慎重报考，成绩要求：外语≥120)"
+      },
+      {
+        "key": "subject_requirement",
+        "label": "subject_requirement",
+        "value": "化学"
+      },
+      {
+        "key": "province",
+        "label": "province",
+        "value": "广东"
+      },
+      {
+        "key": "city",
+        "label": "city",
+        "value": "广州"
+      },
+      {
+        "key": "tuition",
+        "label": "tuition",
+        "value": 100000.0
+      },
+      {
+        "key": "rank_2024",
+        "label": "rank_2024",
+        "value": 4503
+      },
+      {
+        "key": "group_min_rank",
+        "label": "group_min_rank",
+        "value": 4503
+      },
+      {
+        "key": "safety_margin",
+        "label": "safety_margin",
+        "value": "-89.3%"
+      }
+    ],
+    "matched_filters": [
+      {
+        "id": "e_source_province",
+        "field": "生源地",
+        "operator": "eq",
+        "value": "广东",
+        "matched": true,
+        "text": "生源地 等于 广东"
+      },
+      {
+        "id": "e_subject_type",
+        "field": "科类",
+        "operator": "eq",
+        "value": "物理",
+        "matched": true,
+        "text": "科类 等于 物理"
+      },
+      {
+        "id": "e_major_keyword",
+        "field": "专业名称",
+        "operator": "contains_any",
+        "value": [
+          "人工智能"
+        ],
+        "matched": true,
+        "text": "专业名称 包含任一：人工智能；命中 人工智能"
+      },
+      {
+        "id": "e_city",
+        "field": "城市",
+        "operator": "in_contains",
+        "value": [
+          "广州",
+          "深圳"
+        ],
+        "matched": true,
+        "text": "城市 包含任一：广州、深圳；命中 广州"
+      }
+    ],
+    "raw": {
+      "excel_row_number": 30312,
+      "ID": 30309,
+      "年份": 2024,
+      "批次": "本科提前批",
+      "院校代码": "16412",
+      "院校名称": "香港科技大学(广州)",
+      "院校专业组代码": "16412102",
+      "专业组名称": "102组(中外合作)",
+      "科类": "物理",
+      "选科要求": "化学",
+      "专业代码": "002",
+      "专业名称": "人工智能",
+      "专业全称": "人工智能(中外合作办学，科技创新班，入学不分专业，大二结束时，可在人工智能、数据科学与大数据技术、智能制造工程中选择，英文授课，具体培养模式和学习费用请查看学校网站，广州市)(请非英语语种的考生慎重报考，成绩要求：外语≥120)",
+      "所在省": "广东",
+      "城市": "广州",
+      "学费": 100000.0,
+      "专业组最低位次1": 4503,
+      "最低位次1": null,
+      "院校标签": null,
+      "院校排名": "/",
+      "ranking_key": -37497,
+      "safety_margin_pct": -0.8928,
+      "cooperation_filter_status": "not_executed_missing_cooperation_type_field",
+      "中外合作筛选状态": "未执行：缺少合作办学类型字段"
+    }
+  },
+  {
+    "item_id": "result_004",
+    "title": "深圳大学",
+    "subtitle": "人工智能(卓越班，粤海校区)",
+    "primary_attributes": [
+      {
+        "key": "year",
+        "label": "year",
+        "value": 2024
+      },
+      {
+        "key": "batch",
+        "label": "batch",
+        "value": "本科批"
+      },
+      {
+        "key": "university_code",
+        "label": "university_code",
+        "value": "10590"
+      },
+      {
+        "key": "university_name",
+        "label": "university_name",
+        "value": "深圳大学"
+      }
+    ],
+    "secondary_attributes": [
+      {
+        "key": "group_code",
+        "label": "group_code",
+        "value": "10590232"
+      },
+      {
+        "key": "group_name",
+        "label": "group_name",
+        "value": "232组"
+      },
+      {
+        "key": "major_code",
+        "label": "major_code",
+        "value": "241"
+      },
+      {
+        "key": "major_name",
+        "label": "major_name",
+        "value": "人工智能"
+      },
+      {
+        "key": "full_major_name",
+        "label": "full_major_name",
+        "value": "人工智能(卓越班，粤海校区)"
+      },
+      {
+        "key": "subject_requirement",
+        "label": "subject_requirement",
+        "value": "化学"
+      },
+      {
+        "key": "province",
+        "label": "province",
+        "value": "广东"
+      },
+      {
+        "key": "city",
+        "label": "city",
+        "value": "深圳"
+      },
+      {
+        "key": "tuition",
+        "label": "tuition",
+        "value": 6853.0
+      },
+      {
+        "key": "rank_2024",
+        "label": "rank_2024",
+        "value": 12064
+      },
+      {
+        "key": "major_rank_2024",
+        "label": "major_rank_2024",
+        "value": 9763
+      },
+      {
+        "key": "group_min_rank",
+        "label": "group_min_rank",
+        "value": 12064
+      },
+      {
+        "key": "major_min_rank",
+        "label": "major_min_rank",
+        "value": 9763
+      },
+      {
+        "key": "safety_margin",
+        "label": "safety_margin",
+        "value": "-71.3%"
+      }
+    ],
+    "matched_filters": [
+      {
+        "id": "e_source_province",
+        "field": "生源地",
+        "operator": "eq",
+        "value": "广东",
+        "matched": true,
+        "text": "生源地 等于 广东"
+      },
+      {
+        "id": "e_subject_type",
+        "field": "科类",
+        "operator": "eq",
+        "value": "物理",
+        "matched": true,
+        "text": "科类 等于 物理"
+      },
+      {
+        "id": "e_major_keyword",
+        "field": "专业名称",
+        "operator": "contains_any",
+        "value": [
+          "人工智能"
+        ],
+        "matched": true,
+        "text": "专业名称 包含任一：人工智能；命中 人工智能"
+      },
+      {
+        "id": "e_city",
+        "field": "城市",
+        "operator": "in_contains",
+        "value": [
+          "广州",
+          "深圳"
+        ],
+        "matched": true,
+        "text": "城市 包含任一：广州、深圳；命中 深圳"
+      }
+    ],
+    "raw": {
+      "excel_row_number": 8918,
+      "ID": 8915,
+      "年份": 2024,
+      "批次": "本科批",
+      "院校代码": "10590",
+      "院校名称": "深圳大学",
+      "院校专业组代码": "10590232",
+      "专业组名称": "232组",
+      "科类": "物理",
+      "选科要求": "化学",
+      "专业代码": "241",
+      "专业名称": "人工智能",
+      "专业全称": "人工智能(卓越班，粤海校区)",
+      "所在省": "广东",
+      "城市": "深圳",
+      "学费": 6853.0,
+      "专业组最低位次1": 12064,
+      "最低位次1": 9763,
+      "院校标签": "省重点/保研资格",
+      "院校排名": "72",
+      "ranking_key": -29936,
+      "safety_margin_pct": -0.7128,
+      "cooperation_filter_status": "not_executed_missing_cooperation_type_field",
+      "中外合作筛选状态": "未执行：缺少合作办学类型字段"
+    }
+  },
+  {
+    "item_id": "result_005",
+    "title": "深圳大学",
+    "subtitle": "人工智能(腾班，粤海校区)",
+    "primary_attributes": [
+      {
+        "key": "year",
+        "label": "year",
+        "value": 2024
+      },
+      {
+        "key": "batch",
+        "label": "batch",
+        "value": "本科批"
+      },
+      {
+        "key": "university_code",
+        "label": "university_code",
+        "value": "10590"
+      },
+      {
+        "key": "university_name",
+        "label": "university_name",
+        "value": "深圳大学"
+      }
+    ],
+    "secondary_attributes": [
+      {
+        "key": "group_code",
+        "label": "group_code",
+        "value": "10590232"
+      },
+      {
+        "key": "group_name",
+        "label": "group_name",
+        "value": "232组"
+      },
+      {
+        "key": "major_code",
+        "label": "major_code",
+        "value": "242"
+      },
+      {
+        "key": "major_name",
+        "label": "major_name",
+        "value": "人工智能"
+      },
+      {
+        "key": "full_major_name",
+        "label": "full_major_name",
+        "value": "人工智能(腾班，粤海校区)"
+      },
+      {
+        "key": "subject_requirement",
+        "label": "subject_requirement",
+        "value": "化学"
+      },
+      {
+        "key": "province",
+        "label": "province",
+        "value": "广东"
+      },
+      {
+        "key": "city",
+        "label": "city",
+        "value": "深圳"
+      },
+      {
+        "key": "tuition",
+        "label": "tuition",
+        "value": 6853.0
+      },
+      {
+        "key": "rank_2024",
+        "label": "rank_2024",
+        "value": 12064
+      },
+      {
+        "key": "major_rank_2024",
+        "label": "major_rank_2024",
+        "value": 8676
+      },
+      {
+        "key": "group_min_rank",
+        "label": "group_min_rank",
+        "value": 12064
+      },
+      {
+        "key": "major_min_rank",
+        "label": "major_min_rank",
+        "value": 8676
+      },
+      {
+        "key": "safety_margin",
+        "label": "safety_margin",
+        "value": "-71.3%"
+      }
+    ],
+    "matched_filters": [
+      {
+        "id": "e_source_province",
+        "field": "生源地",
+        "operator": "eq",
+        "value": "广东",
+        "matched": true,
+        "text": "生源地 等于 广东"
+      },
+      {
+        "id": "e_subject_type",
+        "field": "科类",
+        "operator": "eq",
+        "value": "物理",
+        "matched": true,
+        "text": "科类 等于 物理"
+      },
+      {
+        "id": "e_major_keyword",
+        "field": "专业名称",
+        "operator": "contains_any",
+        "value": [
+          "人工智能"
+        ],
+        "matched": true,
+        "text": "专业名称 包含任一：人工智能；命中 人工智能"
+      },
+      {
+        "id": "e_city",
+        "field": "城市",
+        "operator": "in_contains",
+        "value": [
+          "广州",
+          "深圳"
+        ],
+        "matched": true,
+        "text": "城市 包含任一：广州、深圳；命中 深圳"
+      }
+    ],
+    "raw": {
+      "excel_row_number": 8919,
+      "ID": 8916,
+      "年份": 2024,
+      "批次": "本科批",
+      "院校代码": "10590",
+      "院校名称": "深圳大学",
+      "院校专业组代码": "10590232",
+      "专业组名称": "232组",
+      "科类": "物理",
+      "选科要求": "化学",
+      "专业代码": "242",
+      "专业名称": "人工智能",
+      "专业全称": "人工智能(腾班，粤海校区)",
+      "所在省": "广东",
+      "城市": "深圳",
+      "学费": 6853.0,
+      "专业组最低位次1": 12064,
+      "最低位次1": 8676,
+      "院校标签": "省重点/保研资格",
+      "院校排名": "72",
+      "ranking_key": -29936,
+      "safety_margin_pct": -0.7128,
+      "cooperation_filter_status": "not_executed_missing_cooperation_type_field",
+      "中外合作筛选状态": "未执行：缺少合作办学类型字段"
+    }
+  }
+]
+```
+### top_results
+```json
+[
+  {
+    "id": "result_001",
+    "trace": [
+      {
+        "status": "pass",
+        "text": "生源地 等于 广东"
+      },
+      {
+        "status": "pass",
+        "text": "科类 等于 物理"
+      },
+      {
+        "status": "pass",
+        "text": "专业名称 包含任一：人工智能；命中 人工智能"
+      },
+      {
+        "status": "pass",
+        "text": "城市 包含任一：广州、深圳；命中 广州"
+      }
+    ],
+    "year": 2024,
+    "batch": "本科提前批",
+    "university_code": "16412",
+    "university_name": "香港科技大学(广州)",
+    "group_code": "16412101",
+    "group_name": "101组(中外合作)",
+    "major_code": "001",
+    "major_name": "人工智能",
+    "full_major_name": "人工智能(中外合作办学，领军人才班，入学不分专业，大二结束时，可在人工智能、数据科学与大数据技术、智能制造工程中选择，英文授课，具体培养模式和学习费用请查看学校网站，广州市)(请非英语语种的考生慎重报考，成绩要求：外语≥120)",
+    "subject_requirement": "化学",
+    "province": "广东",
+    "city": "广州",
+    "tuition": 50000.0,
+    "rank_2024": 1424,
+    "major_rank_2024": null,
+    "plan_count": null,
+    "group_min_rank": 1424,
+    "major_min_rank": null,
+    "safety_margin": "-96.6%"
+  },
+  {
+    "id": "result_002",
+    "trace": [
+      {
+        "status": "pass",
+        "text": "生源地 等于 广东"
+      },
+      {
+        "status": "pass",
+        "text": "科类 等于 物理"
+      },
+      {
+        "status": "pass",
+        "text": "专业名称 包含任一：人工智能；命中 人工智能"
+      },
+      {
+        "status": "pass",
+        "text": "城市 包含任一：广州、深圳；命中 广州"
+      }
+    ],
+    "year": 2024,
+    "batch": "本科批",
+    "university_code": "10558",
+    "university_name": "中山大学",
+    "group_code": "10558219",
+    "group_name": "219组",
+    "major_code": "093",
+    "major_name": "人工智能",
+    "full_major_name": "人工智能(珠海校区)",
+    "subject_requirement": "化学",
+    "province": "广东",
+    "city": "广州",
+    "tuition": 6850.0,
+    "rank_2024": 4019,
+    "major_rank_2024": 4193,
+    "plan_count": null,
+    "group_min_rank": 4019,
+    "major_min_rank": 4193,
+    "safety_margin": "-90.4%"
+  },
+  {
+    "id": "result_003",
+    "trace": [
+      {
+        "status": "pass",
+        "text": "生源地 等于 广东"
+      },
+      {
+        "status": "pass",
+        "text": "科类 等于 物理"
+      },
+      {
+        "status": "pass",
+        "text": "专业名称 包含任一：人工智能；命中 人工智能"
+      },
+      {
+        "status": "pass",
+        "text": "城市 包含任一：广州、深圳；命中 广州"
+      }
+    ],
+    "year": 2024,
+    "batch": "本科提前批",
+    "university_code": "16412",
+    "university_name": "香港科技大学(广州)",
+    "group_code": "16412102",
+    "group_name": "102组(中外合作)",
+    "major_code": "002",
+    "major_name": "人工智能",
+    "full_major_name": "人工智能(中外合作办学，科技创新班，入学不分专业，大二结束时，可在人工智能、数据科学与大数据技术、智能制造工程中选择，英文授课，具体培养模式和学习费用请查看学校网站，广州市)(请非英语语种的考生慎重报考，成绩要求：外语≥120)",
+    "subject_requirement": "化学",
+    "province": "广东",
+    "city": "广州",
+    "tuition": 100000.0,
+    "rank_2024": 4503,
+    "major_rank_2024": null,
+    "plan_count": null,
+    "group_min_rank": 4503,
+    "major_min_rank": null,
+    "safety_margin": "-89.3%"
+  },
+  {
+    "id": "result_004",
+    "trace": [
+      {
+        "status": "pass",
+        "text": "生源地 等于 广东"
+      },
+      {
+        "status": "pass",
+        "text": "科类 等于 物理"
+      },
+      {
+        "status": "pass",
+        "text": "专业名称 包含任一：人工智能；命中 人工智能"
+      },
+      {
+        "status": "pass",
+        "text": "城市 包含任一：广州、深圳；命中 深圳"
+      }
+    ],
+    "year": 2024,
+    "batch": "本科批",
+    "university_code": "10590",
+    "university_name": "深圳大学",
+    "group_code": "10590232",
+    "group_name": "232组",
+    "major_code": "241",
+    "major_name": "人工智能",
+    "full_major_name": "人工智能(卓越班，粤海校区)",
+    "subject_requirement": "化学",
+    "province": "广东",
+    "city": "深圳",
+    "tuition": 6853.0,
+    "rank_2024": 12064,
+    "major_rank_2024": 9763,
+    "plan_count": null,
+    "group_min_rank": 12064,
+    "major_min_rank": 9763,
+    "safety_margin": "-71.3%"
+  },
+  {
+    "id": "result_005",
+    "trace": [
+      {
+        "status": "pass",
+        "text": "生源地 等于 广东"
+      },
+      {
+        "status": "pass",
+        "text": "科类 等于 物理"
+      },
+      {
+        "status": "pass",
+        "text": "专业名称 包含任一：人工智能；命中 人工智能"
+      },
+      {
+        "status": "pass",
+        "text": "城市 包含任一：广州、深圳；命中 深圳"
+      }
+    ],
+    "year": 2024,
+    "batch": "本科批",
+    "university_code": "10590",
+    "university_name": "深圳大学",
+    "group_code": "10590232",
+    "group_name": "232组",
+    "major_code": "242",
+    "major_name": "人工智能",
+    "full_major_name": "人工智能(腾班，粤海校区)",
+    "subject_requirement": "化学",
+    "province": "广东",
+    "city": "深圳",
+    "tuition": 6853.0,
+    "rank_2024": 12064,
+    "major_rank_2024": 8676,
+    "plan_count": null,
+    "group_min_rank": 12064,
+    "major_min_rank": 8676,
+    "safety_margin": "-71.3%"
+  }
+]
+```
+### executed_filters
+```json
+[
+  {
+    "id": "e_source_province",
+    "label": "生源地 等于 广东",
+    "field": "生源地",
+    "operator": "eq",
+    "value": "广东",
+    "source_span": "广东"
+  },
+  {
+    "id": "e_subject_type",
+    "label": "科类 等于 物理",
+    "field": "科类",
+    "operator": "eq",
+    "value": "物理",
+    "source_span": "物理"
+  },
+  {
+    "id": "e_major_keyword",
+    "label": "专业名称 包含任一：人工智能",
+    "field": "专业名称",
+    "operator": "contains_any",
+    "value": [
+      "人工智能"
+    ],
+    "source_span": "人工智能"
+  },
+  {
+    "id": "e_city",
+    "label": "城市 包含任一：广州、深圳",
+    "field": "城市",
+    "operator": "in_contains",
+    "value": [
+      "广州",
+      "深圳"
+    ],
+    "source_span": "广州、深圳"
+  }
+]
+```
+### candidates_to_confirm
+```json
+[
+  {
+    "candidate_id": "cand_21f060d508d7268a",
+    "source_text": "相关专业",
+    "slot_path": "preferences.major_expansion_raw",
+    "field_id": "major_name",
+    "field": "专业名称",
+    "match_type": "partial_match",
+    "operator": "contains_any",
+    "value": [
+      "计算机",
+      "软件工程",
+      "人工智能",
+      "数据科学",
+      "网络空间安全"
+    ],
+    "label": "按计算机相关专业集合筛选",
+    "executable": true,
+    "reason": "相关专业是语义扩展，必须通过 candidate_id 确认后才执行专业过滤。",
+    "matched_values": []
+  }
+]
+```
+### unexecuted_preferences
+```json
+[]
+```
+### SQL / params
+```json
+{
+  "sql": "WITH source AS (\n  SELECT row_number() OVER () AS \"__source_row_number\", *\n  FROM \"admissions\"\n),\nfiltered AS (\n  SELECT\n    source.*,\n    TRY_CAST(regexp_extract(REPLACE(CAST(\"专业组最低位次1\" AS VARCHAR), ',', ''), '\\d+(?:\\.\\d+)?') AS DOUBLE) AS \"__group_rank_num\",\n    TRY_CAST(regexp_extract(REPLACE(CAST(\"学费\" AS VARCHAR), ',', ''), '\\d+(?:\\.\\d+)?') AS DOUBLE) AS \"__tuition_num\",\n    TRY_CAST(regexp_extract(REPLACE(CAST(\"院校排名\" AS VARCHAR), ',', ''), '\\d+(?:\\.\\d+)?') AS DOUBLE) AS \"__school_rank_num\",\n    TRY_CAST(regexp_extract(REPLACE(CAST(\"ID\" AS VARCHAR), ',', ''), '\\d+(?:\\.\\d+)?') AS DOUBLE) AS \"__id_num\"\n  FROM source\n  WHERE CAST(\"生源地\" AS VARCHAR) = ? AND CAST(\"科类\" AS VARCHAR) = ? AND (STRPOS(CAST(\"专业名称\" AS VARCHAR), ?) > 0) AND (STRPOS(CAST(\"城市\" AS VARCHAR), ?) > 0 OR STRPOS(CAST(\"城市\" AS VARCHAR), ?) > 0)\n),\nprojectable AS (\n  SELECT *\n  FROM filtered\n  WHERE TRUE\n    AND \"__group_rank_num\" IS NOT NULL\n    AND \"__tuition_num\" IS NOT NULL\n)\nSELECT *\nFROM projectable\nORDER BY\n  \"__group_rank_num\" ASC NULLS LAST,\n  \"__school_rank_num\" ASC NULLS LAST,\n  \"__id_num\" ASC NULLS LAST",
+  "params": [
+    "广东",
+    "物理",
+    "人工智能",
+    "广州",
+    "深圳"
+  ]
+}
+```
+### EvidencePack
+```json
+{
+  "user_request": "广东物理，排位42000，广州深圳都可以，人工智能。；偏好信息：偏好描述：广东物理，排位42000，广州深圳都可以，人工智能。",
+  "executed_rules": [
+    {
+      "rule_id": "e_source_province",
+      "derived_from": "d_source_province",
+      "field": "生源地",
+      "operator": "eq",
+      "value": "广东",
+      "description": "生源地 等于 广东"
+    },
+    {
+      "rule_id": "e_subject_type",
+      "derived_from": "d_subject_type",
+      "field": "科类",
+      "operator": "eq",
+      "value": "物理",
+      "description": "科类 等于 物理"
+    },
+    {
+      "rule_id": "e_major_keyword",
+      "derived_from": "d_major_keyword",
+      "field": "专业名称",
+      "operator": "contains_any",
+      "value": [
+        "人工智能"
+      ],
+      "description": "专业名称 包含任一：人工智能"
+    },
+    {
+      "rule_id": "e_city",
+      "derived_from": "d_city",
+      "field": "城市",
+      "operator": "in_contains",
+      "value": [
+        "广州",
+        "深圳"
+      ],
+      "description": "城市 包含任一：广州、深圳"
+    }
+  ],
+  "candidate_confirmations": [
+    {
+      "confirmation_id": "major_expansion",
+      "source_rule_id": "c_major_expansion",
+      "source_text": "计算机相关扩展",
+      "selected_label": "不扩展",
+      "selected_option": "none",
+      "status": "confirmed_without_expansion",
+      "expanded_terms": []
+    }
+  ],
+  "not_executed_preferences": [],
+  "result_count": 61,
+  "top_k_results": [
+    {
+      "rank": 1,
+      "院校名称": "香港科技大学(广州)",
+      "院校专业组代码": "16412101",
+      "专业代码": "001",
+      "专业名称": "人工智能",
+      "专业全称": "人工智能(中外合作办学，领军人才班，入学不分专业，大二结束时，可在人工智能、数据科学与大数据技术、智能制造工程中选择，英文授课，具体培养模式和学习费用请查看学校网站，广州市)(请非英语语种的考生慎重报考，成绩要求：外语≥120)",
+      "选科要求": "化学",
+      "城市": "广州",
+      "学费": 50000.0,
+      "专业组最低位次": 1424,
+      "safety_margin": "-96.61%",
+      "trace": [
+        {
+          "rule_id": "e_source_province",
+          "status": "pass",
+          "reason": "生源地 等于 广东"
+        },
+        {
+          "rule_id": "e_subject_type",
+          "status": "pass",
+          "reason": "科类 等于 物理"
+        },
+        {
+          "rule_id": "e_major_keyword",
+          "status": "pass",
+          "reason": "专业名称 包含任一：人工智能；命中 人工智能"
+        },
+        {
+          "rule_id": "e_city",
+          "status": "pass",
+          "reason": "城市 包含任一：广州、深圳；命中 广州"
+        }
+      ]
+    },
+    {
+      "rank": 2,
+      "院校名称": "中山大学",
+      "院校专业组代码": "10558219",
+      "专业代码": "093",
+      "专业名称": "人工智能",
+      "专业全称": "人工智能(珠海校区)",
+      "选科要求": "化学",
+      "城市": "广州",
+      "学费": 6850.0,
+      "专业组最低位次": 4019,
+      "专业最低位次": 4193,
+      "safety_margin": "-90.43%",
+      "trace": [
+        {
+          "rule_id": "e_source_province",
+          "status": "pass",
+          "reason": "生源地 等于 广东"
+        },
+        {
+          "rule_id": "e_subject_type",
+          "status": "pass",
+          "reason": "科类 等于 物理"
+        },
+        {
+          "rule_id": "e_major_keyword",
+          "status": "pass",
+          "reason": "专业名称 包含任一：人工智能；命中 人工智能"
+        },
+        {
+          "rule_id": "e_city",
+          "status": "pass",
+          "reason": "城市 包含任一：广州、深圳；命中 广州"
+        }
+      ]
+    },
+    {
+      "rank": 3,
+      "院校名称": "香港科技大学(广州)",
+      "院校专业组代码": "16412102",
+      "专业代码": "002",
+      "专业名称": "人工智能",
+      "专业全称": "人工智能(中外合作办学，科技创新班，入学不分专业，大二结束时，可在人工智能、数据科学与大数据技术、智能制造工程中选择，英文授课，具体培养模式和学习费用请查看学校网站，广州市)(请非英语语种的考生慎重报考，成绩要求：外语≥120)",
+      "选科要求": "化学",
+      "城市": "广州",
+      "学费": 100000.0,
+      "专业组最低位次": 4503,
+      "safety_margin": "-89.28%",
+      "trace": [
+        {
+          "rule_id": "e_source_province",
+          "status": "pass",
+          "reason": "生源地 等于 广东"
+        },
+        {
+          "rule_id": "e_subject_type",
+          "status": "pass",
+          "reason": "科类 等于 物理"
+        },
+        {
+          "rule_id": "e_major_keyword",
+          "status": "pass",
+          "reason": "专业名称 包含任一：人工智能；命中 人工智能"
+        },
+        {
+          "rule_id": "e_city",
+          "status": "pass",
+          "reason": "城市 包含任一：广州、深圳；命中 广州"
+        }
+      ]
+    },
+    {
+      "rank": 4,
+      "院校名称": "深圳大学",
+      "院校专业组代码": "10590232",
+      "专业代码": "241",
+      "专业名称": "人工智能",
+      "专业全称": "人工智能(卓越班，粤海校区)",
+      "选科要求": "化学",
+      "城市": "深圳",
+      "学费": 6853.0,
+      "专业组最低位次": 12064,
+      "专业最低位次": 9763,
+      "safety_margin": "-71.28%",
+      "trace": [
+        {
+          "rule_id": "e_source_province",
+          "status": "pass",
+          "reason": "生源地 等于 广东"
+        },
+        {
+          "rule_id": "e_subject_type",
+          "status": "pass",
+          "reason": "科类 等于 物理"
+        },
+        {
+          "rule_id": "e_major_keyword",
+          "status": "pass",
+          "reason": "专业名称 包含任一：人工智能；命中 人工智能"
+        },
+        {
+          "rule_id": "e_city",
+          "status": "pass",
+          "reason": "城市 包含任一：广州、深圳；命中 深圳"
+        }
+      ]
+    },
+    {
+      "rank": 5,
+      "院校名称": "深圳大学",
+      "院校专业组代码": "10590232",
+      "专业代码": "242",
+      "专业名称": "人工智能",
+      "专业全称": "人工智能(腾班，粤海校区)",
+      "选科要求": "化学",
+      "城市": "深圳",
+      "学费": 6853.0,
+      "专业组最低位次": 12064,
+      "专业最低位次": 8676,
+      "safety_margin": "-71.28%",
+      "trace": [
+        {
+          "rule_id": "e_source_province",
+          "status": "pass",
+          "reason": "生源地 等于 广东"
+        },
+        {
+          "rule_id": "e_subject_type",
+          "status": "pass",
+          "reason": "科类 等于 物理"
+        },
+        {
+          "rule_id": "e_major_keyword",
+          "status": "pass",
+          "reason": "专业名称 包含任一：人工智能；命中 人工智能"
+        },
+        {
+          "rule_id": "e_city",
+          "status": "pass",
+          "reason": "城市 包含任一：广州、深圳；命中 深圳"
+        }
+      ]
+    }
+  ],
+  "trace_summary": {
+    "executed_rule_ids": [
+      "e_source_province",
+      "e_subject_type",
+      "e_major_keyword",
+      "e_city"
+    ],
+    "not_executed_preference_count": 0,
+    "traced_result_count": 61,
+    "top_k": 5,
+    "top_k_trace_status_counts": {
+      "pass": 20
+    },
+    "safety_warnings": [
+      "答案只能使用 evidence_pack 中的已验证规则、确认记录、结果摘要和 trace。",
+      "候选偏好在确认或模拟确认之前不得执行。"
+    ]
+  },
+  "extracted_preferences": [
+    {
+      "id": "pref_origin",
+      "slot": "生源地",
+      "value": "广东",
+      "source_span": "广东",
+      "status": "已对齐字段"
+    },
+    {
+      "id": "pref_track",
+      "slot": "科类",
+      "value": "物理",
+      "source_span": "物理",
+      "status": "已对齐字段"
+    },
+    {
+      "id": "pref_rank",
+      "slot": "排位",
+      "value": 42000,
+      "source_span": "排位42000",
+      "status": "已对齐字段"
+    },
+    {
+      "id": "pref_major",
+      "slot": "专业名称",
+      "value": [
+        "人工智能"
+      ],
+      "source_span": "人工智能",
+      "status": "已对齐字段"
+    },
+    {
+      "id": "pref_city",
+      "slot": "城市",
+      "value": [
+        "广州",
+        "深圳"
+      ],
+      "source_span": "广州、深圳",
+      "status": "已对齐字段"
+    }
+  ],
+  "attribute_grounding_summary": {
+    "total_attributes": 7,
+    "status_counts": {
+      "schema_grounded": 5,
+      "context_only": 1,
+      "confirmable": 1
+    },
+    "value_index_status_counts": {
+      "matched": 5,
+      "not_found": 1
+    },
+    "unsafe_ungrounded_executable_attributes": 0
+  },
+  "proposed_rule_audit": [],
+  "execution_summary": {
+    "executor": "duckdb",
+    "sql": "WITH source AS (\n  SELECT row_number() OVER () AS \"__source_row_number\", *\n  FROM \"admissions\"\n),\nfiltered AS (\n  SELECT\n    source.*,\n    TRY_CAST(regexp_extract(REPLACE(CAST(\"专业组最低位次1\" AS VARCHAR), ',', ''), '\\d+(?:\\.\\d+)?') AS DOUBLE) AS \"__group_rank_num\",\n    TRY_CAST(regexp_extract(REPLACE(CAST(\"学费\" AS VARCHAR), ',', ''), '\\d+(?:\\.\\d+)?') AS DOUBLE) AS \"__tuition_num\",\n    TRY_CAST(regexp_extract(REPLACE(CAST(\"院校排名\" AS VARCHAR), ',', ''), '\\d+(?:\\.\\d+)?') AS DOUBLE) AS \"__school_rank_num\",\n    TRY_CAST(regexp_extract(REPLACE(CAST(\"ID\" AS VARCHAR), ',', ''), '\\d+(?:\\.\\d+)?') AS DOUBLE) AS \"__id_num\"\n  FROM source\n  WHERE CAST(\"生源地\" AS VARCHAR) = ? AND CAST(\"科类\" AS VARCHAR) = ? AND (STRPOS(CAST(\"专业名称\" AS VARCHAR), ?) > 0) AND (STRPOS(CAST(\"城市\" AS VARCHAR), ?) > 0 OR STRPOS(CAST(\"城市\" AS VARCHAR), ?) > 0)\n),\nprojectable AS (\n  SELECT *\n  FROM filtered\n  WHERE TRUE\n    AND \"__group_rank_num\" IS NOT NULL\n    AND \"__tuition_num\" IS NOT NULL\n)\nSELECT *\nFROM projectable\nORDER BY\n  \"__group_rank_num\" ASC NULLS LAST,\n  \"__school_rank_num\" ASC NULLS LAST,\n  \"__id_num\" ASC NULLS LAST",
+    "params": [
+      "广东",
+      "物理",
+      "人工智能",
+      "广州",
+      "深圳"
+    ],
+    "input_row_count": 30855,
+    "filtered_row_count": 61,
+    "sort_key": [
+      "专业组最低位次1 ASC NULLS LAST",
+      "院校排名 ASC NULLS LAST",
+      "ID ASC NULLS LAST"
+    ],
+    "top_k": 5,
+    "hard_rule_ids": [
+      "e_source_province",
+      "e_subject_type",
+      "e_major_keyword",
+      "e_city"
+    ],
+    "skipped_soft_rule_ids": []
+  },
+  "attribute_explanations": [
+    {
+      "source_text": "广东",
+      "slot_path": "user_context.source_province",
+      "field": "生源地",
+      "value": "广东",
+      "match_type": "exact_match",
+      "action": "executed",
+      "matched_values": [
+        "广东"
+      ],
+      "reason": "已匹配字段“生源地”，并已进入 hard filter。"
+    },
+    {
+      "source_text": "物理",
+      "slot_path": "user_context.subject_type",
+      "field": "科类",
+      "value": "物理",
+      "match_type": "exact_match",
+      "action": "executed",
+      "matched_values": [
+        "物理"
+      ],
+      "reason": "已匹配字段“科类”，并已进入 hard filter。"
+    },
+    {
+      "source_text": "人工智能",
+      "slot_path": "preferences.major_keyword",
+      "field": "专业名称",
+      "value": "人工智能",
+      "match_type": "exact_match",
+      "action": "executed",
+      "matched_values": [
+        "人工智能"
+      ],
+      "reason": "已匹配字段“专业名称”，并已进入 hard filter。"
+    },
+    {
+      "source_text": "广州深圳、广州、深圳",
+      "slot_path": "preferences.preferred_cities",
+      "field": "城市",
+      "value": [
+        "广州",
+        "深圳"
+      ],
+      "match_type": "exact_match",
+      "action": "executed",
+      "matched_values": [
+        "广州",
+        "深圳"
+      ],
+      "reason": "已匹配字段“城市”，并已进入 hard filter。"
+    },
+    {
+      "source_text": "相关专业",
+      "slot_path": "preferences.major_expansion_raw",
+      "field": "专业名称",
+      "value": "相关专业",
+      "match_type": "partial_match",
+      "action": "needs_confirmation",
+      "matched_values": [],
+      "reason": "该属性有对应字段，但语义或边界需要确认。未进入 hard filter。"
+    }
+  ],
+  "confirmed_rules": [],
+  "confirmation_source": [],
+  "executed_after_confirmation": [],
+  "unconfirmed_candidates": [
+    {
+      "candidate_id": "cand_21f060d508d7268a",
+      "source_text": "相关专业",
+      "slot_path": "preferences.major_expansion_raw",
+      "field_id": "major_name",
+      "field": "专业名称",
+      "match_type": "partial_match",
+      "operator": "contains_any",
+      "value": [
+        "计算机",
+        "软件工程",
+        "人工智能",
+        "数据科学",
+        "网络空间安全"
+      ],
+      "label": "按计算机相关专业集合筛选",
+      "executable": true,
+      "reason": "相关专业是语义扩展，必须通过 candidate_id 确认后才执行专业过滤。",
+      "matched_values": []
+    }
+  ],
+  "no_schema_field_preferences": [],
+  "rejected_confirmations": []
+}
+```
+### answer
+
+根据已验证规则生成结果：
+
+用户需求：广东物理，排位42000，广州深圳都可以，人工智能。；偏好信息：偏好描述：广东物理，排位42000，广州深圳都可以，人工智能。
+共筛选到 61 条符合已执行规则的结果。
+
+抽取与结构化结果：
+- 生源地：广东；状态：已对齐字段；来源：广东
+- 科类：物理；状态：已对齐字段；来源：物理
+- 排位：42000；状态：已对齐字段；来源：排位42000
+- 专业名称：人工智能；状态：已对齐字段；来源：人工智能
+- 城市：广州、深圳；状态：已对齐字段；来源：广州、深圳
+
+字段值审计解释：
+- [已执行] 广东 -> 生源地：exact_match；索引命中：广东；已匹配字段“生源地”，并已进入 hard filter。
+- [已执行] 物理 -> 科类：exact_match；索引命中：物理；已匹配字段“科类”，并已进入 hard filter。
+- [已执行] 人工智能 -> 专业名称：exact_match；索引命中：人工智能；已匹配字段“专业名称”，并已进入 hard filter。
+- [已执行] 广州深圳、广州、深圳 -> 城市：exact_match；索引命中：广州、深圳；已匹配字段“城市”，并已进入 hard filter。
+- [需确认] 相关专业 -> 专业名称：partial_match；该属性有对应字段，但语义或边界需要确认。未进入 hard filter。
+
+已执行规则：
+- e_source_province：生源地 等于 广东
+- e_subject_type：科类 等于 物理
+- e_major_keyword：专业名称 包含任一：人工智能
+- e_city：城市 包含任一：广州、深圳
+
+候选偏好确认记录：
+- 计算机相关扩展：已确认“不扩展”，未扩展专业关键词。
+
+candidate_id 确认状态：
+- cand_21f060d508d7268a：相关专业 仍待确认，未进入 hard filter；候选为 按计算机相关专业集合筛选。
+
+未执行但已保留的偏好：
+- 无。
+
+前 5 条结果：
+- 1. 香港科技大学(广州)；专业组代码：16412101；专业代码：001；专业名称：人工智能；专业全称：人工智能(中外合作办学，领军人才班，入学不分专业，大二结束时，可在人工智能、数据科学与大数据技术、智能制造工程中选择，英文授课，具体培养模式和学习费用请查看学校网站，广州市)(请非英语语种的考生慎重报考，成绩要求：外语≥120)；选科要求：化学；城市：广州；学费：50000 元/年；专业组最低位次：1424。
+- 2. 中山大学；专业组代码：10558219；专业代码：093；专业名称：人工智能；专业全称：人工智能(珠海校区)；选科要求：化学；城市：广州；学费：6850 元/年；专业组最低位次：4019；专业最低位次：4193。
+- 3. 香港科技大学(广州)；专业组代码：16412102；专业代码：002；专业名称：人工智能；专业全称：人工智能(中外合作办学，科技创新班，入学不分专业，大二结束时，可在人工智能、数据科学与大数据技术、智能制造工程中选择，英文授课，具体培养模式和学习费用请查看学校网站，广州市)(请非英语语种的考生慎重报考，成绩要求：外语≥120)；选科要求：化学；城市：广州；学费：100000 元/年；专业组最低位次：4503。
+- 4. 深圳大学；专业组代码：10590232；专业代码：241；专业名称：人工智能；专业全称：人工智能(卓越班，粤海校区)；选科要求：化学；城市：深圳；学费：6853 元/年；专业组最低位次：12064；专业最低位次：9763。
+- 5. 深圳大学；专业组代码：10590232；专业代码：242；专业名称：人工智能；专业全称：人工智能(腾班，粤海校区)；选科要求：化学；城市：深圳；学费：6853 元/年；专业组最低位次：12064；专业最低位次：8676。
+
+安全说明：
+- 答案只能使用 证据包 中的已验证规则、确认记录、结果摘要和 trace。
+- 候选偏好在确认或模拟确认之前不得执行。
+
+## admissions_15 `通过`
+
+- domain: `admissions`
+- query: 广东历史，排位18000，广州，汉语言文学。
+- status: `ok`
+- pass/fail：`通过`
+
+### items
+```json
+[
+  {
+    "item_id": "result_001",
+    "title": "中山大学",
+    "subtitle": "汉语言文学(广州，广州校区，南校园)",
+    "primary_attributes": [
+      {
+        "key": "year",
+        "label": "year",
+        "value": 2024
+      },
+      {
+        "key": "batch",
+        "label": "batch",
+        "value": "本科批"
+      },
+      {
+        "key": "university_code",
+        "label": "university_code",
+        "value": "10558"
+      },
+      {
+        "key": "university_name",
+        "label": "university_name",
+        "value": "中山大学"
+      }
+    ],
+    "secondary_attributes": [
+      {
+        "key": "group_code",
+        "label": "group_code",
+        "value": "10558201"
+      },
+      {
+        "key": "group_name",
+        "label": "group_name",
+        "value": "201组"
+      },
+      {
+        "key": "major_code",
+        "label": "major_code",
+        "value": "045"
+      },
+      {
+        "key": "major_name",
+        "label": "major_name",
+        "value": "汉语言文学"
+      },
+      {
+        "key": "full_major_name",
+        "label": "full_major_name",
+        "value": "汉语言文学(广州，广州校区，南校园)"
+      },
+      {
+        "key": "subject_requirement",
+        "label": "subject_requirement",
+        "value": "不限"
+      },
+      {
+        "key": "province",
+        "label": "province",
+        "value": "广东"
+      },
+      {
+        "key": "city",
+        "label": "city",
+        "value": "广州"
+      },
+      {
+        "key": "tuition",
+        "label": "tuition",
+        "value": 6060.0
+      },
+      {
+        "key": "rank_2024",
+        "label": "rank_2024",
+        "value": 1203
+      },
+      {
+        "key": "major_rank_2024",
+        "label": "major_rank_2024",
+        "value": 386
+      },
+      {
+        "key": "group_min_rank",
+        "label": "group_min_rank",
+        "value": 1203
+      },
+      {
+        "key": "major_min_rank",
+        "label": "major_min_rank",
+        "value": 386
+      },
+      {
+        "key": "safety_margin",
+        "label": "safety_margin",
+        "value": "-93.3%"
+      }
+    ],
+    "matched_filters": [
+      {
+        "id": "e_source_province",
+        "field": "生源地",
+        "operator": "eq",
+        "value": "广东",
+        "matched": true,
+        "text": "生源地 等于 广东"
+      },
+      {
+        "id": "e_subject_type",
+        "field": "科类",
+        "operator": "eq",
+        "value": "历史",
+        "matched": true,
+        "text": "科类 等于 历史"
+      },
+      {
+        "id": "e_major_keyword",
+        "field": "专业名称",
+        "operator": "contains_any",
+        "value": [
+          "汉语言文学"
+        ],
+        "matched": true,
+        "text": "专业名称 包含任一：汉语言文学；命中 汉语言文学"
+      },
+      {
+        "id": "e_city",
+        "field": "城市",
+        "operator": "in_contains",
+        "value": [
+          "广州"
+        ],
+        "matched": true,
+        "text": "城市 包含任一：广州；命中 广州"
+      }
+    ],
+    "raw": {
+      "excel_row_number": 6890,
+      "ID": 6887,
+      "年份": 2024,
+      "批次": "本科批",
+      "院校代码": "10558",
+      "院校名称": "中山大学",
+      "院校专业组代码": "10558201",
+      "专业组名称": "201组",
+      "科类": "历史",
+      "选科要求": "不限",
+      "专业代码": "045",
+      "专业名称": "汉语言文学",
+      "专业全称": "汉语言文学(广州，广州校区，南校园)",
+      "所在省": "广东",
+      "城市": "广州",
+      "学费": 6060.0,
+      "专业组最低位次1": 1203,
+      "最低位次1": 386,
+      "院校标签": "985/211/双一流/国重点/保研资格",
+      "院校排名": "11",
+      "ranking_key": -16797,
+      "safety_margin_pct": -0.9332,
+      "cooperation_filter_status": "not_executed_missing_cooperation_type_field",
+      "中外合作筛选状态": "未执行：缺少合作办学类型字段"
+    }
+  },
+  {
+    "item_id": "result_002",
+    "title": "中山大学",
+    "subtitle": "汉语言文学(珠海，珠海校区)",
+    "primary_attributes": [
+      {
+        "key": "year",
+        "label": "year",
+        "value": 2024
+      },
+      {
+        "key": "batch",
+        "label": "batch",
+        "value": "本科批"
+      },
+      {
+        "key": "university_code",
+        "label": "university_code",
+        "value": "10558"
+      },
+      {
+        "key": "university_name",
+        "label": "university_name",
+        "value": "中山大学"
+      }
+    ],
+    "secondary_attributes": [
+      {
+        "key": "group_code",
+        "label": "group_code",
+        "value": "10558201"
+      },
+      {
+        "key": "group_name",
+        "label": "group_name",
+        "value": "201组"
+      },
+      {
+        "key": "major_code",
+        "label": "major_code",
+        "value": "056"
+      },
+      {
+        "key": "major_name",
+        "label": "major_name",
+        "value": "汉语言文学"
+      },
+      {
+        "key": "full_major_name",
+        "label": "full_major_name",
+        "value": "汉语言文学(珠海，珠海校区)"
+      },
+      {
+        "key": "subject_requirement",
+        "label": "subject_requirement",
+        "value": "不限"
+      },
+      {
+        "key": "province",
+        "label": "province",
+        "value": "广东"
+      },
+      {
+        "key": "city",
+        "label": "city",
+        "value": "广州"
+      },
+      {
+        "key": "tuition",
+        "label": "tuition",
+        "value": 6060.0
+      },
+      {
+        "key": "rank_2024",
+        "label": "rank_2024",
+        "value": 1203
+      },
+      {
+        "key": "major_rank_2024",
+        "label": "major_rank_2024",
+        "value": 828
+      },
+      {
+        "key": "group_min_rank",
+        "label": "group_min_rank",
+        "value": 1203
+      },
+      {
+        "key": "major_min_rank",
+        "label": "major_min_rank",
+        "value": 828
+      },
+      {
+        "key": "safety_margin",
+        "label": "safety_margin",
+        "value": "-93.3%"
+      }
+    ],
+    "matched_filters": [
+      {
+        "id": "e_source_province",
+        "field": "生源地",
+        "operator": "eq",
+        "value": "广东",
+        "matched": true,
+        "text": "生源地 等于 广东"
+      },
+      {
+        "id": "e_subject_type",
+        "field": "科类",
+        "operator": "eq",
+        "value": "历史",
+        "matched": true,
+        "text": "科类 等于 历史"
+      },
+      {
+        "id": "e_major_keyword",
+        "field": "专业名称",
+        "operator": "contains_any",
+        "value": [
+          "汉语言文学"
+        ],
+        "matched": true,
+        "text": "专业名称 包含任一：汉语言文学；命中 汉语言文学"
+      },
+      {
+        "id": "e_city",
+        "field": "城市",
+        "operator": "in_contains",
+        "value": [
+          "广州"
+        ],
+        "matched": true,
+        "text": "城市 包含任一：广州；命中 广州"
+      }
+    ],
+    "raw": {
+      "excel_row_number": 6893,
+      "ID": 6890,
+      "年份": 2024,
+      "批次": "本科批",
+      "院校代码": "10558",
+      "院校名称": "中山大学",
+      "院校专业组代码": "10558201",
+      "专业组名称": "201组",
+      "科类": "历史",
+      "选科要求": "不限",
+      "专业代码": "056",
+      "专业名称": "汉语言文学",
+      "专业全称": "汉语言文学(珠海，珠海校区)",
+      "所在省": "广东",
+      "城市": "广州",
+      "学费": 6060.0,
+      "专业组最低位次1": 1203,
+      "最低位次1": 828,
+      "院校标签": "985/211/双一流/国重点/保研资格",
+      "院校排名": "11",
+      "ranking_key": -16797,
+      "safety_margin_pct": -0.9332,
+      "cooperation_filter_status": "not_executed_missing_cooperation_type_field",
+      "中外合作筛选状态": "未执行：缺少合作办学类型字段"
+    }
+  },
+  {
+    "item_id": "result_003",
+    "title": "华南师范大学",
+    "subtitle": "汉语言文学(师范，广州校区，大学城校园)",
+    "primary_attributes": [
+      {
+        "key": "year",
+        "label": "year",
+        "value": 2024
+      },
+      {
+        "key": "batch",
+        "label": "batch",
+        "value": "本科批"
+      },
+      {
+        "key": "university_code",
+        "label": "university_code",
+        "value": "10574"
+      },
+      {
+        "key": "university_name",
+        "label": "university_name",
+        "value": "华南师范大学"
+      }
+    ],
+    "secondary_attributes": [
+      {
+        "key": "group_code",
+        "label": "group_code",
+        "value": "10574201"
+      },
+      {
+        "key": "group_name",
+        "label": "group_name",
+        "value": "201组"
+      },
+      {
+        "key": "major_code",
+        "label": "major_code",
+        "value": "005"
+      },
+      {
+        "key": "major_name",
+        "label": "major_name",
+        "value": "汉语言文学"
+      },
+      {
+        "key": "full_major_name",
+        "label": "full_major_name",
+        "value": "汉语言文学(师范，广州校区，大学城校园)"
+      },
+      {
+        "key": "subject_requirement",
+        "label": "subject_requirement",
+        "value": "不限"
+      },
+      {
+        "key": "province",
+        "label": "province",
+        "value": "广东"
+      },
+      {
+        "key": "city",
+        "label": "city",
+        "value": "广州"
+      },
+      {
+        "key": "tuition",
+        "label": "tuition",
+        "value": 6060.0
+      },
+      {
+        "key": "rank_2024",
+        "label": "rank_2024",
+        "value": 4950
+      },
+      {
+        "key": "major_rank_2024",
+        "label": "major_rank_2024",
+        "value": 3709
+      },
+      {
+        "key": "group_min_rank",
+        "label": "group_min_rank",
+        "value": 4950
+      },
+      {
+        "key": "major_min_rank",
+        "label": "major_min_rank",
+        "value": 3709
+      },
+      {
+        "key": "safety_margin",
+        "label": "safety_margin",
+        "value": "-72.5%"
+      }
+    ],
+    "matched_filters": [
+      {
+        "id": "e_source_province",
+        "field": "生源地",
+        "operator": "eq",
+        "value": "广东",
+        "matched": true,
+        "text": "生源地 等于 广东"
+      },
+      {
+        "id": "e_subject_type",
+        "field": "科类",
+        "operator": "eq",
+        "value": "历史",
+        "matched": true,
+        "text": "科类 等于 历史"
+      },
+      {
+        "id": "e_major_keyword",
+        "field": "专业名称",
+        "operator": "contains_any",
+        "value": [
+          "汉语言文学"
+        ],
+        "matched": true,
+        "text": "专业名称 包含任一：汉语言文学；命中 汉语言文学"
+      },
+      {
+        "id": "e_city",
+        "field": "城市",
+        "operator": "in_contains",
+        "value": [
+          "广州"
+        ],
+        "matched": true,
+        "text": "城市 包含任一：广州；命中 广州"
+      }
+    ],
+    "raw": {
+      "excel_row_number": 7832,
+      "ID": 7829,
+      "年份": 2024,
+      "批次": "本科批",
+      "院校代码": "10574",
+      "院校名称": "华南师范大学",
+      "院校专业组代码": "10574201",
+      "专业组名称": "201组",
+      "科类": "历史",
+      "选科要求": "不限",
+      "专业代码": "005",
+      "专业名称": "汉语言文学",
+      "专业全称": "汉语言文学(师范，广州校区，大学城校园)",
+      "所在省": "广东",
+      "城市": "广州",
+      "学费": 6060.0,
+      "专业组最低位次1": 4950,
+      "最低位次1": 3709,
+      "院校标签": "211/双一流/省重点/保研资格",
+      "院校排名": "79",
+      "ranking_key": -13050,
+      "safety_margin_pct": -0.725,
+      "cooperation_filter_status": "not_executed_missing_cooperation_type_field",
+      "中外合作筛选状态": "未执行：缺少合作办学类型字段"
+    }
+  },
+  {
+    "item_id": "result_004",
+    "title": "暨南大学",
+    "subtitle": "汉语言文学(石牌校区)",
+    "primary_attributes": [
+      {
+        "key": "year",
+        "label": "year",
+        "value": 2024
+      },
+      {
+        "key": "batch",
+        "label": "batch",
+        "value": "本科批"
+      },
+      {
+        "key": "university_code",
+        "label": "university_code",
+        "value": "10559"
+      },
+      {
+        "key": "university_name",
+        "label": "university_name",
+        "value": "暨南大学"
+      }
+    ],
+    "secondary_attributes": [
+      {
+        "key": "group_code",
+        "label": "group_code",
+        "value": "10559217"
+      },
+      {
+        "key": "group_name",
+        "label": "group_name",
+        "value": "217组"
+      },
+      {
+        "key": "major_code",
+        "label": "major_code",
+        "value": "004"
+      },
+      {
+        "key": "major_name",
+        "label": "major_name",
+        "value": "汉语言文学"
+      },
+      {
+        "key": "full_major_name",
+        "label": "full_major_name",
+        "value": "汉语言文学(石牌校区)"
+      },
+      {
+        "key": "subject_requirement",
+        "label": "subject_requirement",
+        "value": "不限"
+      },
+      {
+        "key": "province",
+        "label": "province",
+        "value": "广东"
+      },
+      {
+        "key": "city",
+        "label": "city",
+        "value": "广州"
+      },
+      {
+        "key": "tuition",
+        "label": "tuition",
+        "value": 6060.0
+      },
+      {
+        "key": "rank_2024",
+        "label": "rank_2024",
+        "value": 5012
+      },
+      {
+        "key": "major_rank_2024",
+        "label": "major_rank_2024",
+        "value": 2817
+      },
+      {
+        "key": "group_min_rank",
+        "label": "group_min_rank",
+        "value": 5012
+      },
+      {
+        "key": "major_min_rank",
+        "label": "major_min_rank",
+        "value": 2817
+      },
+      {
+        "key": "safety_margin",
+        "label": "safety_margin",
+        "value": "-72.2%"
+      }
+    ],
+    "matched_filters": [
+      {
+        "id": "e_source_province",
+        "field": "生源地",
+        "operator": "eq",
+        "value": "广东",
+        "matched": true,
+        "text": "生源地 等于 广东"
+      },
+      {
+        "id": "e_subject_type",
+        "field": "科类",
+        "operator": "eq",
+        "value": "历史",
+        "matched": true,
+        "text": "科类 等于 历史"
+      },
+      {
+        "id": "e_major_keyword",
+        "field": "专业名称",
+        "operator": "contains_any",
+        "value": [
+          "汉语言文学"
+        ],
+        "matched": true,
+        "text": "专业名称 包含任一：汉语言文学；命中 汉语言文学"
+      },
+      {
+        "id": "e_city",
+        "field": "城市",
+        "operator": "in_contains",
+        "value": [
+          "广州"
+        ],
+        "matched": true,
+        "text": "城市 包含任一：广州；命中 广州"
+      }
+    ],
+    "raw": {
+      "excel_row_number": 7024,
+      "ID": 7021,
+      "年份": 2024,
+      "批次": "本科批",
+      "院校代码": "10559",
+      "院校名称": "暨南大学",
+      "院校专业组代码": "10559217",
+      "专业组名称": "217组",
+      "科类": "历史",
+      "选科要求": "不限",
+      "专业代码": "004",
+      "专业名称": "汉语言文学",
+      "专业全称": "汉语言文学(石牌校区)",
+      "所在省": "广东",
+      "城市": "广州",
+      "学费": 6060.0,
+      "专业组最低位次1": 5012,
+      "最低位次1": 2817,
+      "院校标签": "211/双一流/国重点/保研资格",
+      "院校排名": "51",
+      "ranking_key": -12988,
+      "safety_margin_pct": -0.7216,
+      "cooperation_filter_status": "not_executed_missing_cooperation_type_field",
+      "中外合作筛选状态": "未执行：缺少合作办学类型字段"
+    }
+  },
+  {
+    "item_id": "result_005",
+    "title": "暨南大学",
+    "subtitle": "汉语言文学(珠海校区)",
+    "primary_attributes": [
+      {
+        "key": "year",
+        "label": "year",
+        "value": 2024
+      },
+      {
+        "key": "batch",
+        "label": "batch",
+        "value": "本科批"
+      },
+      {
+        "key": "university_code",
+        "label": "university_code",
+        "value": "10559"
+      },
+      {
+        "key": "university_name",
+        "label": "university_name",
+        "value": "暨南大学"
+      }
+    ],
+    "secondary_attributes": [
+      {
+        "key": "group_code",
+        "label": "group_code",
+        "value": "10559217"
+      },
+      {
+        "key": "group_name",
+        "label": "group_name",
+        "value": "217组"
+      },
+      {
+        "key": "major_code",
+        "label": "major_code",
+        "value": "035"
+      },
+      {
+        "key": "major_name",
+        "label": "major_name",
+        "value": "汉语言文学"
+      },
+      {
+        "key": "full_major_name",
+        "label": "full_major_name",
+        "value": "汉语言文学(珠海校区)"
+      },
+      {
+        "key": "subject_requirement",
+        "label": "subject_requirement",
+        "value": "不限"
+      },
+      {
+        "key": "province",
+        "label": "province",
+        "value": "广东"
+      },
+      {
+        "key": "city",
+        "label": "city",
+        "value": "广州"
+      },
+      {
+        "key": "tuition",
+        "label": "tuition",
+        "value": 6060.0
+      },
+      {
+        "key": "rank_2024",
+        "label": "rank_2024",
+        "value": 5012
+      },
+      {
+        "key": "major_rank_2024",
+        "label": "major_rank_2024",
+        "value": 4189
+      },
+      {
+        "key": "group_min_rank",
+        "label": "group_min_rank",
+        "value": 5012
+      },
+      {
+        "key": "major_min_rank",
+        "label": "major_min_rank",
+        "value": 4189
+      },
+      {
+        "key": "safety_margin",
+        "label": "safety_margin",
+        "value": "-72.2%"
+      }
+    ],
+    "matched_filters": [
+      {
+        "id": "e_source_province",
+        "field": "生源地",
+        "operator": "eq",
+        "value": "广东",
+        "matched": true,
+        "text": "生源地 等于 广东"
+      },
+      {
+        "id": "e_subject_type",
+        "field": "科类",
+        "operator": "eq",
+        "value": "历史",
+        "matched": true,
+        "text": "科类 等于 历史"
+      },
+      {
+        "id": "e_major_keyword",
+        "field": "专业名称",
+        "operator": "contains_any",
+        "value": [
+          "汉语言文学"
+        ],
+        "matched": true,
+        "text": "专业名称 包含任一：汉语言文学；命中 汉语言文学"
+      },
+      {
+        "id": "e_city",
+        "field": "城市",
+        "operator": "in_contains",
+        "value": [
+          "广州"
+        ],
+        "matched": true,
+        "text": "城市 包含任一：广州；命中 广州"
+      }
+    ],
+    "raw": {
+      "excel_row_number": 7038,
+      "ID": 7035,
+      "年份": 2024,
+      "批次": "本科批",
+      "院校代码": "10559",
+      "院校名称": "暨南大学",
+      "院校专业组代码": "10559217",
+      "专业组名称": "217组",
+      "科类": "历史",
+      "选科要求": "不限",
+      "专业代码": "035",
+      "专业名称": "汉语言文学",
+      "专业全称": "汉语言文学(珠海校区)",
+      "所在省": "广东",
+      "城市": "广州",
+      "学费": 6060.0,
+      "专业组最低位次1": 5012,
+      "最低位次1": 4189,
+      "院校标签": "211/双一流/国重点/保研资格",
+      "院校排名": "51",
+      "ranking_key": -12988,
+      "safety_margin_pct": -0.7216,
+      "cooperation_filter_status": "not_executed_missing_cooperation_type_field",
+      "中外合作筛选状态": "未执行：缺少合作办学类型字段"
+    }
+  }
+]
+```
+### top_results
+```json
+[
+  {
+    "id": "result_001",
+    "trace": [
+      {
+        "status": "pass",
+        "text": "生源地 等于 广东"
+      },
+      {
+        "status": "pass",
+        "text": "科类 等于 历史"
+      },
+      {
+        "status": "pass",
+        "text": "专业名称 包含任一：汉语言文学；命中 汉语言文学"
+      },
+      {
+        "status": "pass",
+        "text": "城市 包含任一：广州；命中 广州"
+      }
+    ],
+    "year": 2024,
+    "batch": "本科批",
+    "university_code": "10558",
+    "university_name": "中山大学",
+    "group_code": "10558201",
+    "group_name": "201组",
+    "major_code": "045",
+    "major_name": "汉语言文学",
+    "full_major_name": "汉语言文学(广州，广州校区，南校园)",
+    "subject_requirement": "不限",
+    "province": "广东",
+    "city": "广州",
+    "tuition": 6060.0,
+    "rank_2024": 1203,
+    "major_rank_2024": 386,
+    "plan_count": null,
+    "group_min_rank": 1203,
+    "major_min_rank": 386,
+    "safety_margin": "-93.3%"
+  },
+  {
+    "id": "result_002",
+    "trace": [
+      {
+        "status": "pass",
+        "text": "生源地 等于 广东"
+      },
+      {
+        "status": "pass",
+        "text": "科类 等于 历史"
+      },
+      {
+        "status": "pass",
+        "text": "专业名称 包含任一：汉语言文学；命中 汉语言文学"
+      },
+      {
+        "status": "pass",
+        "text": "城市 包含任一：广州；命中 广州"
+      }
+    ],
+    "year": 2024,
+    "batch": "本科批",
+    "university_code": "10558",
+    "university_name": "中山大学",
+    "group_code": "10558201",
+    "group_name": "201组",
+    "major_code": "056",
+    "major_name": "汉语言文学",
+    "full_major_name": "汉语言文学(珠海，珠海校区)",
+    "subject_requirement": "不限",
+    "province": "广东",
+    "city": "广州",
+    "tuition": 6060.0,
+    "rank_2024": 1203,
+    "major_rank_2024": 828,
+    "plan_count": null,
+    "group_min_rank": 1203,
+    "major_min_rank": 828,
+    "safety_margin": "-93.3%"
+  },
+  {
+    "id": "result_003",
+    "trace": [
+      {
+        "status": "pass",
+        "text": "生源地 等于 广东"
+      },
+      {
+        "status": "pass",
+        "text": "科类 等于 历史"
+      },
+      {
+        "status": "pass",
+        "text": "专业名称 包含任一：汉语言文学；命中 汉语言文学"
+      },
+      {
+        "status": "pass",
+        "text": "城市 包含任一：广州；命中 广州"
+      }
+    ],
+    "year": 2024,
+    "batch": "本科批",
+    "university_code": "10574",
+    "university_name": "华南师范大学",
+    "group_code": "10574201",
+    "group_name": "201组",
+    "major_code": "005",
+    "major_name": "汉语言文学",
+    "full_major_name": "汉语言文学(师范，广州校区，大学城校园)",
+    "subject_requirement": "不限",
+    "province": "广东",
+    "city": "广州",
+    "tuition": 6060.0,
+    "rank_2024": 4950,
+    "major_rank_2024": 3709,
+    "plan_count": null,
+    "group_min_rank": 4950,
+    "major_min_rank": 3709,
+    "safety_margin": "-72.5%"
+  },
+  {
+    "id": "result_004",
+    "trace": [
+      {
+        "status": "pass",
+        "text": "生源地 等于 广东"
+      },
+      {
+        "status": "pass",
+        "text": "科类 等于 历史"
+      },
+      {
+        "status": "pass",
+        "text": "专业名称 包含任一：汉语言文学；命中 汉语言文学"
+      },
+      {
+        "status": "pass",
+        "text": "城市 包含任一：广州；命中 广州"
+      }
+    ],
+    "year": 2024,
+    "batch": "本科批",
+    "university_code": "10559",
+    "university_name": "暨南大学",
+    "group_code": "10559217",
+    "group_name": "217组",
+    "major_code": "004",
+    "major_name": "汉语言文学",
+    "full_major_name": "汉语言文学(石牌校区)",
+    "subject_requirement": "不限",
+    "province": "广东",
+    "city": "广州",
+    "tuition": 6060.0,
+    "rank_2024": 5012,
+    "major_rank_2024": 2817,
+    "plan_count": null,
+    "group_min_rank": 5012,
+    "major_min_rank": 2817,
+    "safety_margin": "-72.2%"
+  },
+  {
+    "id": "result_005",
+    "trace": [
+      {
+        "status": "pass",
+        "text": "生源地 等于 广东"
+      },
+      {
+        "status": "pass",
+        "text": "科类 等于 历史"
+      },
+      {
+        "status": "pass",
+        "text": "专业名称 包含任一：汉语言文学；命中 汉语言文学"
+      },
+      {
+        "status": "pass",
+        "text": "城市 包含任一：广州；命中 广州"
+      }
+    ],
+    "year": 2024,
+    "batch": "本科批",
+    "university_code": "10559",
+    "university_name": "暨南大学",
+    "group_code": "10559217",
+    "group_name": "217组",
+    "major_code": "035",
+    "major_name": "汉语言文学",
+    "full_major_name": "汉语言文学(珠海校区)",
+    "subject_requirement": "不限",
+    "province": "广东",
+    "city": "广州",
+    "tuition": 6060.0,
+    "rank_2024": 5012,
+    "major_rank_2024": 4189,
+    "plan_count": null,
+    "group_min_rank": 5012,
+    "major_min_rank": 4189,
+    "safety_margin": "-72.2%"
+  }
+]
+```
+### executed_filters
+```json
+[
+  {
+    "id": "e_source_province",
+    "label": "生源地 等于 广东",
+    "field": "生源地",
+    "operator": "eq",
+    "value": "广东",
+    "source_span": "广东"
+  },
+  {
+    "id": "e_subject_type",
+    "label": "科类 等于 历史",
+    "field": "科类",
+    "operator": "eq",
+    "value": "历史",
+    "source_span": "历史"
+  },
+  {
+    "id": "e_major_keyword",
+    "label": "专业名称 包含任一：汉语言文学",
+    "field": "专业名称",
+    "operator": "contains_any",
+    "value": [
+      "汉语言文学"
+    ],
+    "source_span": "汉语言文学"
+  },
+  {
+    "id": "e_city",
+    "label": "城市 包含任一：广州",
+    "field": "城市",
+    "operator": "in_contains",
+    "value": [
+      "广州"
+    ],
+    "source_span": "广州"
+  }
+]
+```
+### candidates_to_confirm
+```json
+[]
+```
+### unexecuted_preferences
+```json
+[]
+```
+### SQL / params
+```json
+{
+  "sql": "WITH source AS (\n  SELECT row_number() OVER () AS \"__source_row_number\", *\n  FROM \"admissions\"\n),\nfiltered AS (\n  SELECT\n    source.*,\n    TRY_CAST(regexp_extract(REPLACE(CAST(\"专业组最低位次1\" AS VARCHAR), ',', ''), '\\d+(?:\\.\\d+)?') AS DOUBLE) AS \"__group_rank_num\",\n    TRY_CAST(regexp_extract(REPLACE(CAST(\"学费\" AS VARCHAR), ',', ''), '\\d+(?:\\.\\d+)?') AS DOUBLE) AS \"__tuition_num\",\n    TRY_CAST(regexp_extract(REPLACE(CAST(\"院校排名\" AS VARCHAR), ',', ''), '\\d+(?:\\.\\d+)?') AS DOUBLE) AS \"__school_rank_num\",\n    TRY_CAST(regexp_extract(REPLACE(CAST(\"ID\" AS VARCHAR), ',', ''), '\\d+(?:\\.\\d+)?') AS DOUBLE) AS \"__id_num\"\n  FROM source\n  WHERE CAST(\"生源地\" AS VARCHAR) = ? AND CAST(\"科类\" AS VARCHAR) = ? AND (STRPOS(CAST(\"专业名称\" AS VARCHAR), ?) > 0) AND (STRPOS(CAST(\"城市\" AS VARCHAR), ?) > 0)\n),\nprojectable AS (\n  SELECT *\n  FROM filtered\n  WHERE TRUE\n    AND \"__group_rank_num\" IS NOT NULL\n    AND \"__tuition_num\" IS NOT NULL\n)\nSELECT *\nFROM projectable\nORDER BY\n  \"__group_rank_num\" ASC NULLS LAST,\n  \"__school_rank_num\" ASC NULLS LAST,\n  \"__id_num\" ASC NULLS LAST",
+  "params": [
+    "广东",
+    "历史",
+    "汉语言文学",
+    "广州"
+  ]
+}
+```
+### EvidencePack
+```json
+{
+  "user_request": "广东历史，排位18000，广州，汉语言文学。；偏好信息：偏好描述：广东历史，排位18000，广州，汉语言文学。",
+  "executed_rules": [
+    {
+      "rule_id": "e_source_province",
+      "derived_from": "d_source_province",
+      "field": "生源地",
+      "operator": "eq",
+      "value": "广东",
+      "description": "生源地 等于 广东"
+    },
+    {
+      "rule_id": "e_subject_type",
+      "derived_from": "d_subject_type",
+      "field": "科类",
+      "operator": "eq",
+      "value": "历史",
+      "description": "科类 等于 历史"
+    },
+    {
+      "rule_id": "e_major_keyword",
+      "derived_from": "d_major_keyword",
+      "field": "专业名称",
+      "operator": "contains_any",
+      "value": [
+        "汉语言文学"
+      ],
+      "description": "专业名称 包含任一：汉语言文学"
+    },
+    {
+      "rule_id": "e_city",
+      "derived_from": "d_city",
+      "field": "城市",
+      "operator": "in_contains",
+      "value": [
+        "广州"
+      ],
+      "description": "城市 包含任一：广州"
+    }
+  ],
+  "candidate_confirmations": [],
+  "not_executed_preferences": [],
+  "result_count": 30,
+  "top_k_results": [
+    {
+      "rank": 1,
+      "院校名称": "中山大学",
+      "院校专业组代码": "10558201",
+      "专业代码": "045",
+      "专业名称": "汉语言文学",
+      "专业全称": "汉语言文学(广州，广州校区，南校园)",
+      "选科要求": "不限",
+      "城市": "广州",
+      "学费": 6060.0,
+      "专业组最低位次": 1203,
+      "专业最低位次": 386,
+      "safety_margin": "-93.32%",
+      "trace": [
+        {
+          "rule_id": "e_source_province",
+          "status": "pass",
+          "reason": "生源地 等于 广东"
+        },
+        {
+          "rule_id": "e_subject_type",
+          "status": "pass",
+          "reason": "科类 等于 历史"
+        },
+        {
+          "rule_id": "e_major_keyword",
+          "status": "pass",
+          "reason": "专业名称 包含任一：汉语言文学；命中 汉语言文学"
+        },
+        {
+          "rule_id": "e_city",
+          "status": "pass",
+          "reason": "城市 包含任一：广州；命中 广州"
+        }
+      ]
+    },
+    {
+      "rank": 2,
+      "院校名称": "中山大学",
+      "院校专业组代码": "10558201",
+      "专业代码": "056",
+      "专业名称": "汉语言文学",
+      "专业全称": "汉语言文学(珠海，珠海校区)",
+      "选科要求": "不限",
+      "城市": "广州",
+      "学费": 6060.0,
+      "专业组最低位次": 1203,
+      "专业最低位次": 828,
+      "safety_margin": "-93.32%",
+      "trace": [
+        {
+          "rule_id": "e_source_province",
+          "status": "pass",
+          "reason": "生源地 等于 广东"
+        },
+        {
+          "rule_id": "e_subject_type",
+          "status": "pass",
+          "reason": "科类 等于 历史"
+        },
+        {
+          "rule_id": "e_major_keyword",
+          "status": "pass",
+          "reason": "专业名称 包含任一：汉语言文学；命中 汉语言文学"
+        },
+        {
+          "rule_id": "e_city",
+          "status": "pass",
+          "reason": "城市 包含任一：广州；命中 广州"
+        }
+      ]
+    },
+    {
+      "rank": 3,
+      "院校名称": "华南师范大学",
+      "院校专业组代码": "10574201",
+      "专业代码": "005",
+      "专业名称": "汉语言文学",
+      "专业全称": "汉语言文学(师范，广州校区，大学城校园)",
+      "选科要求": "不限",
+      "城市": "广州",
+      "学费": 6060.0,
+      "专业组最低位次": 4950,
+      "专业最低位次": 3709,
+      "safety_margin": "-72.50%",
+      "trace": [
+        {
+          "rule_id": "e_source_province",
+          "status": "pass",
+          "reason": "生源地 等于 广东"
+        },
+        {
+          "rule_id": "e_subject_type",
+          "status": "pass",
+          "reason": "科类 等于 历史"
+        },
+        {
+          "rule_id": "e_major_keyword",
+          "status": "pass",
+          "reason": "专业名称 包含任一：汉语言文学；命中 汉语言文学"
+        },
+        {
+          "rule_id": "e_city",
+          "status": "pass",
+          "reason": "城市 包含任一：广州；命中 广州"
+        }
+      ]
+    },
+    {
+      "rank": 4,
+      "院校名称": "暨南大学",
+      "院校专业组代码": "10559217",
+      "专业代码": "004",
+      "专业名称": "汉语言文学",
+      "专业全称": "汉语言文学(石牌校区)",
+      "选科要求": "不限",
+      "城市": "广州",
+      "学费": 6060.0,
+      "专业组最低位次": 5012,
+      "专业最低位次": 2817,
+      "safety_margin": "-72.16%",
+      "trace": [
+        {
+          "rule_id": "e_source_province",
+          "status": "pass",
+          "reason": "生源地 等于 广东"
+        },
+        {
+          "rule_id": "e_subject_type",
+          "status": "pass",
+          "reason": "科类 等于 历史"
+        },
+        {
+          "rule_id": "e_major_keyword",
+          "status": "pass",
+          "reason": "专业名称 包含任一：汉语言文学；命中 汉语言文学"
+        },
+        {
+          "rule_id": "e_city",
+          "status": "pass",
+          "reason": "城市 包含任一：广州；命中 广州"
+        }
+      ]
+    },
+    {
+      "rank": 5,
+      "院校名称": "暨南大学",
+      "院校专业组代码": "10559217",
+      "专业代码": "035",
+      "专业名称": "汉语言文学",
+      "专业全称": "汉语言文学(珠海校区)",
+      "选科要求": "不限",
+      "城市": "广州",
+      "学费": 6060.0,
+      "专业组最低位次": 5012,
+      "专业最低位次": 4189,
+      "safety_margin": "-72.16%",
+      "trace": [
+        {
+          "rule_id": "e_source_province",
+          "status": "pass",
+          "reason": "生源地 等于 广东"
+        },
+        {
+          "rule_id": "e_subject_type",
+          "status": "pass",
+          "reason": "科类 等于 历史"
+        },
+        {
+          "rule_id": "e_major_keyword",
+          "status": "pass",
+          "reason": "专业名称 包含任一：汉语言文学；命中 汉语言文学"
+        },
+        {
+          "rule_id": "e_city",
+          "status": "pass",
+          "reason": "城市 包含任一：广州；命中 广州"
+        }
+      ]
+    }
+  ],
+  "trace_summary": {
+    "executed_rule_ids": [
+      "e_source_province",
+      "e_subject_type",
+      "e_major_keyword",
+      "e_city"
+    ],
+    "not_executed_preference_count": 0,
+    "traced_result_count": 30,
+    "top_k": 5,
+    "top_k_trace_status_counts": {
+      "pass": 20
+    },
+    "safety_warnings": [
+      "答案只能使用 evidence_pack 中的已验证规则、确认记录、结果摘要和 trace。",
+      "候选偏好在确认或模拟确认之前不得执行。"
+    ]
+  },
+  "extracted_preferences": [
+    {
+      "id": "pref_origin",
+      "slot": "生源地",
+      "value": "广东",
+      "source_span": "广东",
+      "status": "已对齐字段"
+    },
+    {
+      "id": "pref_track",
+      "slot": "科类",
+      "value": "历史",
+      "source_span": "历史",
+      "status": "已对齐字段"
+    },
+    {
+      "id": "pref_rank",
+      "slot": "排位",
+      "value": 18000,
+      "source_span": "排位18000",
+      "status": "已对齐字段"
+    },
+    {
+      "id": "pref_major",
+      "slot": "专业名称",
+      "value": [
+        "汉语言文学"
+      ],
+      "source_span": "汉语言文学",
+      "status": "已对齐字段"
+    },
+    {
+      "id": "pref_city",
+      "slot": "城市",
+      "value": [
+        "广州"
+      ],
+      "source_span": "广州",
+      "status": "已对齐字段"
+    }
+  ],
+  "attribute_grounding_summary": {
+    "total_attributes": 6,
+    "status_counts": {
+      "schema_grounded": 5,
+      "context_only": 1
+    },
+    "value_index_status_counts": {
+      "matched": 5
+    },
+    "unsafe_ungrounded_executable_attributes": 0
+  },
+  "proposed_rule_audit": [],
+  "execution_summary": {
+    "executor": "duckdb",
+    "sql": "WITH source AS (\n  SELECT row_number() OVER () AS \"__source_row_number\", *\n  FROM \"admissions\"\n),\nfiltered AS (\n  SELECT\n    source.*,\n    TRY_CAST(regexp_extract(REPLACE(CAST(\"专业组最低位次1\" AS VARCHAR), ',', ''), '\\d+(?:\\.\\d+)?') AS DOUBLE) AS \"__group_rank_num\",\n    TRY_CAST(regexp_extract(REPLACE(CAST(\"学费\" AS VARCHAR), ',', ''), '\\d+(?:\\.\\d+)?') AS DOUBLE) AS \"__tuition_num\",\n    TRY_CAST(regexp_extract(REPLACE(CAST(\"院校排名\" AS VARCHAR), ',', ''), '\\d+(?:\\.\\d+)?') AS DOUBLE) AS \"__school_rank_num\",\n    TRY_CAST(regexp_extract(REPLACE(CAST(\"ID\" AS VARCHAR), ',', ''), '\\d+(?:\\.\\d+)?') AS DOUBLE) AS \"__id_num\"\n  FROM source\n  WHERE CAST(\"生源地\" AS VARCHAR) = ? AND CAST(\"科类\" AS VARCHAR) = ? AND (STRPOS(CAST(\"专业名称\" AS VARCHAR), ?) > 0) AND (STRPOS(CAST(\"城市\" AS VARCHAR), ?) > 0)\n),\nprojectable AS (\n  SELECT *\n  FROM filtered\n  WHERE TRUE\n    AND \"__group_rank_num\" IS NOT NULL\n    AND \"__tuition_num\" IS NOT NULL\n)\nSELECT *\nFROM projectable\nORDER BY\n  \"__group_rank_num\" ASC NULLS LAST,\n  \"__school_rank_num\" ASC NULLS LAST,\n  \"__id_num\" ASC NULLS LAST",
+    "params": [
+      "广东",
+      "历史",
+      "汉语言文学",
+      "广州"
+    ],
+    "input_row_count": 30855,
+    "filtered_row_count": 30,
+    "sort_key": [
+      "专业组最低位次1 ASC NULLS LAST",
+      "院校排名 ASC NULLS LAST",
+      "ID ASC NULLS LAST"
+    ],
+    "top_k": 5,
+    "hard_rule_ids": [
+      "e_source_province",
+      "e_subject_type",
+      "e_major_keyword",
+      "e_city"
+    ],
+    "skipped_soft_rule_ids": []
+  },
+  "attribute_explanations": [
+    {
+      "source_text": "广东",
+      "slot_path": "user_context.source_province",
+      "field": "生源地",
+      "value": "广东",
+      "match_type": "exact_match",
+      "action": "executed",
+      "matched_values": [
+        "广东"
+      ],
+      "reason": "已匹配字段“生源地”，并已进入 hard filter。"
+    },
+    {
+      "source_text": "历史",
+      "slot_path": "user_context.subject_type",
+      "field": "科类",
+      "value": "历史",
+      "match_type": "exact_match",
+      "action": "executed",
+      "matched_values": [
+        "历史"
+      ],
+      "reason": "已匹配字段“科类”，并已进入 hard filter。"
+    },
+    {
+      "source_text": "汉语言文学",
+      "slot_path": "preferences.major_keyword",
+      "field": "专业名称",
+      "value": "汉语言文学",
+      "match_type": "exact_match",
+      "action": "executed",
+      "matched_values": [
+        "汉语言文学"
+      ],
+      "reason": "已匹配字段“专业名称”，并已进入 hard filter。"
+    },
+    {
+      "source_text": "广州",
+      "slot_path": "preferences.preferred_cities",
+      "field": "城市",
+      "value": [
+        "广州"
+      ],
+      "match_type": "exact_match",
+      "action": "executed",
+      "matched_values": [
+        "广州"
+      ],
+      "reason": "已匹配字段“城市”，并已进入 hard filter。"
+    }
+  ],
+  "confirmed_rules": [],
+  "confirmation_source": [],
+  "executed_after_confirmation": [],
+  "unconfirmed_candidates": [],
+  "no_schema_field_preferences": [],
+  "rejected_confirmations": []
+}
+```
+### answer
+
+根据已验证规则生成结果：
+
+用户需求：广东历史，排位18000，广州，汉语言文学。；偏好信息：偏好描述：广东历史，排位18000，广州，汉语言文学。
+共筛选到 30 条符合已执行规则的结果。
+
+抽取与结构化结果：
+- 生源地：广东；状态：已对齐字段；来源：广东
+- 科类：历史；状态：已对齐字段；来源：历史
+- 排位：18000；状态：已对齐字段；来源：排位18000
+- 专业名称：汉语言文学；状态：已对齐字段；来源：汉语言文学
+- 城市：广州；状态：已对齐字段；来源：广州
+
+字段值审计解释：
+- [已执行] 广东 -> 生源地：exact_match；索引命中：广东；已匹配字段“生源地”，并已进入 hard filter。
+- [已执行] 历史 -> 科类：exact_match；索引命中：历史；已匹配字段“科类”，并已进入 hard filter。
+- [已执行] 汉语言文学 -> 专业名称：exact_match；索引命中：汉语言文学；已匹配字段“专业名称”，并已进入 hard filter。
+- [已执行] 广州 -> 城市：exact_match；索引命中：广州；已匹配字段“城市”，并已进入 hard filter。
+
+已执行规则：
+- e_source_province：生源地 等于 广东
+- e_subject_type：科类 等于 历史
+- e_major_keyword：专业名称 包含任一：汉语言文学
+- e_city：城市 包含任一：广州
+
+候选偏好确认记录：
+
+未执行但已保留的偏好：
+- 无。
+
+前 5 条结果：
+- 1. 中山大学；专业组代码：10558201；专业代码：045；专业名称：汉语言文学；专业全称：汉语言文学(广州，广州校区，南校园)；选科要求：不限；城市：广州；学费：6060 元/年；专业组最低位次：1203；专业最低位次：386。
+- 2. 中山大学；专业组代码：10558201；专业代码：056；专业名称：汉语言文学；专业全称：汉语言文学(珠海，珠海校区)；选科要求：不限；城市：广州；学费：6060 元/年；专业组最低位次：1203；专业最低位次：828。
+- 3. 华南师范大学；专业组代码：10574201；专业代码：005；专业名称：汉语言文学；专业全称：汉语言文学(师范，广州校区，大学城校园)；选科要求：不限；城市：广州；学费：6060 元/年；专业组最低位次：4950；专业最低位次：3709。
+- 4. 暨南大学；专业组代码：10559217；专业代码：004；专业名称：汉语言文学；专业全称：汉语言文学(石牌校区)；选科要求：不限；城市：广州；学费：6060 元/年；专业组最低位次：5012；专业最低位次：2817。
+- 5. 暨南大学；专业组代码：10559217；专业代码：035；专业名称：汉语言文学；专业全称：汉语言文学(珠海校区)；选科要求：不限；城市：广州；学费：6060 元/年；专业组最低位次：5012；专业最低位次：4189。
+
+安全说明：
+- 答案只能使用 证据包 中的已验证规则、确认记录、结果摘要和 trace。
+- 候选偏好在确认或模拟确认之前不得执行。
+
+## housing_01 `通过`
+
+- domain: `housing`
+- query: Austin, at least 2 bedrooms, under 1900, apartment or townhouse.
+- status: `ok`
+- pass/fail：`通过`
+
+### items
+```json
+[
+  {
+    "item_id": "result_001",
+    "title": "14",
+    "subtitle": "townhouse",
+    "primary_attributes": [
+      {
+        "key": "listing_id",
+        "label": "listing_id",
+        "value": 14
+      },
+      {
+        "key": "city",
+        "label": "city",
+        "value": "Austin"
+      },
+      {
+        "key": "bedrooms",
+        "label": "bedrooms",
+        "value": 2
+      },
+      {
+        "key": "rent_usd",
+        "label": "rent_usd",
+        "value": 1650.0
+      }
+    ],
+    "secondary_attributes": [
+      {
+        "key": "property_type",
+        "label": "property_type",
+        "value": "townhouse"
+      },
+      {
+        "key": "pet_policy",
+        "label": "pet_policy",
+        "value": "cats_only"
+      },
+      {
+        "key": "rating",
+        "label": "rating",
+        "value": 4.2
+      }
+    ],
+    "matched_filters": [
+      {
+        "id": "e_city",
+        "field": "city",
+        "operator": "in",
+        "value": [
+          "Austin"
+        ],
+        "matched": true,
+        "text": "city 属于：Austin"
+      },
+      {
+        "id": "e_bedrooms_min",
+        "field": "bedrooms",
+        "operator": ">=",
+        "value": 2,
+        "matched": true,
+        "text": "bedrooms 2 不低于 2"
+      },
+      {
+        "id": "e_rent_cap",
+        "field": "rent_usd",
+        "operator": "<=",
+        "value": 1900,
+        "matched": true,
+        "text": "rent_usd 1650 不高于 1900"
+      },
+      {
+        "id": "e_property_type",
+        "field": "property_type",
+        "operator": "in",
+        "value": [
+          "apartment",
+          "townhouse"
+        ],
+        "matched": true,
+        "text": "property_type 属于：apartment、townhouse"
+      }
+    ],
+    "raw": {
+      "source_row_number": 15,
+      "listing_id": 14,
+      "city": "Austin",
+      "bedrooms": 2,
+      "rent_usd": 1650.0,
+      "property_type": "townhouse",
+      "pet_policy": "cats_only",
+      "rating": 4.2
+    }
+  },
+  {
+    "item_id": "result_002",
+    "title": "9",
+    "subtitle": "apartment",
+    "primary_attributes": [
+      {
+        "key": "listing_id",
+        "label": "listing_id",
+        "value": 9
+      },
+      {
+        "key": "city",
+        "label": "city",
+        "value": "Austin"
+      },
+      {
+        "key": "bedrooms",
+        "label": "bedrooms",
+        "value": 2
+      },
+      {
+        "key": "rent_usd",
+        "label": "rent_usd",
+        "value": 1750.0
+      }
+    ],
+    "secondary_attributes": [
+      {
+        "key": "property_type",
+        "label": "property_type",
+        "value": "apartment"
+      },
+      {
+        "key": "pet_policy",
+        "label": "pet_policy",
+        "value": "not_allowed"
+      },
+      {
+        "key": "rating",
+        "label": "rating",
+        "value": 4.3
+      }
+    ],
+    "matched_filters": [
+      {
+        "id": "e_city",
+        "field": "city",
+        "operator": "in",
+        "value": [
+          "Austin"
+        ],
+        "matched": true,
+        "text": "city 属于：Austin"
+      },
+      {
+        "id": "e_bedrooms_min",
+        "field": "bedrooms",
+        "operator": ">=",
+        "value": 2,
+        "matched": true,
+        "text": "bedrooms 2 不低于 2"
+      },
+      {
+        "id": "e_rent_cap",
+        "field": "rent_usd",
+        "operator": "<=",
+        "value": 1900,
+        "matched": true,
+        "text": "rent_usd 1750 不高于 1900"
+      },
+      {
+        "id": "e_property_type",
+        "field": "property_type",
+        "operator": "in",
+        "value": [
+          "apartment",
+          "townhouse"
+        ],
+        "matched": true,
+        "text": "property_type 属于：apartment、townhouse"
+      }
+    ],
+    "raw": {
+      "source_row_number": 10,
+      "listing_id": 9,
+      "city": "Austin",
+      "bedrooms": 2,
+      "rent_usd": 1750.0,
+      "property_type": "apartment",
+      "pet_policy": "not_allowed",
+      "rating": 4.3
+    }
+  },
+  {
+    "item_id": "result_003",
+    "title": "2",
+    "subtitle": "apartment",
+    "primary_attributes": [
+      {
+        "key": "listing_id",
+        "label": "listing_id",
+        "value": 2
+      },
+      {
+        "key": "city",
+        "label": "city",
+        "value": "Austin"
+      },
+      {
+        "key": "bedrooms",
+        "label": "bedrooms",
+        "value": 2
+      },
+      {
+        "key": "rent_usd",
+        "label": "rent_usd",
+        "value": 1850.0
+      }
+    ],
+    "secondary_attributes": [
+      {
+        "key": "property_type",
+        "label": "property_type",
+        "value": "apartment"
+      },
+      {
+        "key": "pet_policy",
+        "label": "pet_policy",
+        "value": "allowed"
+      },
+      {
+        "key": "rating",
+        "label": "rating",
+        "value": 4.7
+      }
+    ],
+    "matched_filters": [
+      {
+        "id": "e_city",
+        "field": "city",
+        "operator": "in",
+        "value": [
+          "Austin"
+        ],
+        "matched": true,
+        "text": "city 属于：Austin"
+      },
+      {
+        "id": "e_bedrooms_min",
+        "field": "bedrooms",
+        "operator": ">=",
+        "value": 2,
+        "matched": true,
+        "text": "bedrooms 2 不低于 2"
+      },
+      {
+        "id": "e_rent_cap",
+        "field": "rent_usd",
+        "operator": "<=",
+        "value": 1900,
+        "matched": true,
+        "text": "rent_usd 1850 不高于 1900"
+      },
+      {
+        "id": "e_property_type",
+        "field": "property_type",
+        "operator": "in",
+        "value": [
+          "apartment",
+          "townhouse"
+        ],
+        "matched": true,
+        "text": "property_type 属于：apartment、townhouse"
+      }
+    ],
+    "raw": {
+      "source_row_number": 3,
+      "listing_id": 2,
+      "city": "Austin",
+      "bedrooms": 2,
+      "rent_usd": 1850.0,
+      "property_type": "apartment",
+      "pet_policy": "allowed",
+      "rating": 4.7
+    }
+  }
+]
+```
+### top_results
+```json
+[
+  {
+    "id": "result_001",
+    "trace": [
+      {
+        "status": "pass",
+        "text": "city 属于：Austin"
+      },
+      {
+        "status": "pass",
+        "text": "bedrooms 2 不低于 2"
+      },
+      {
+        "status": "pass",
+        "text": "rent_usd 1650 不高于 1900"
+      },
+      {
+        "status": "pass",
+        "text": "property_type 属于：apartment、townhouse"
+      }
+    ],
+    "listing_id": 14,
+    "city": "Austin",
+    "bedrooms": 2,
+    "rent_usd": 1650.0,
+    "property_type": "townhouse",
+    "pet_policy": "cats_only",
+    "rating": 4.2
+  },
+  {
+    "id": "result_002",
+    "trace": [
+      {
+        "status": "pass",
+        "text": "city 属于：Austin"
+      },
+      {
+        "status": "pass",
+        "text": "bedrooms 2 不低于 2"
+      },
+      {
+        "status": "pass",
+        "text": "rent_usd 1750 不高于 1900"
+      },
+      {
+        "status": "pass",
+        "text": "property_type 属于：apartment、townhouse"
+      }
+    ],
+    "listing_id": 9,
+    "city": "Austin",
+    "bedrooms": 2,
+    "rent_usd": 1750.0,
+    "property_type": "apartment",
+    "pet_policy": "not_allowed",
+    "rating": 4.3
+  },
+  {
+    "id": "result_003",
+    "trace": [
+      {
+        "status": "pass",
+        "text": "city 属于：Austin"
+      },
+      {
+        "status": "pass",
+        "text": "bedrooms 2 不低于 2"
+      },
+      {
+        "status": "pass",
+        "text": "rent_usd 1850 不高于 1900"
+      },
+      {
+        "status": "pass",
+        "text": "property_type 属于：apartment、townhouse"
+      }
+    ],
+    "listing_id": 2,
+    "city": "Austin",
+    "bedrooms": 2,
+    "rent_usd": 1850.0,
+    "property_type": "apartment",
+    "pet_policy": "allowed",
+    "rating": 4.7
+  }
+]
+```
+### executed_filters
+```json
+[
+  {
+    "id": "e_city",
+    "label": "city 属于：Austin",
+    "field": "city",
+    "operator": "in",
+    "value": [
+      "Austin"
+    ],
+    "source_span": "Austin"
+  },
+  {
+    "id": "e_bedrooms_min",
+    "label": "bedrooms 不低于 2",
+    "field": "bedrooms",
+    "operator": ">=",
+    "value": 2,
+    "source_span": "2"
+  },
+  {
+    "id": "e_rent_cap",
+    "label": "rent_usd 不高于 1900",
+    "field": "rent_usd",
+    "operator": "<=",
+    "value": 1900,
+    "source_span": "1900"
+  },
+  {
+    "id": "e_property_type",
+    "label": "property_type 属于：apartment、townhouse",
+    "field": "property_type",
+    "operator": "in",
+    "value": [
+      "apartment",
+      "townhouse"
+    ],
+    "source_span": "apartment、townhouse"
+  }
+]
+```
+### candidates_to_confirm
+```json
+[]
+```
+### unexecuted_preferences
+```json
+[]
+```
+### SQL / params
+```json
+{
+  "sql": "WITH source AS (\n  SELECT row_number() OVER () AS \"__source_row_number\", *\n  FROM \"housing\"\n),\nfiltered AS (\n  SELECT\n    source.*,\n    TRY_CAST(regexp_extract(REPLACE(CAST(\"rent_usd\" AS VARCHAR), ',', ''), '\\d+(?:\\.\\d+)?') AS DOUBLE) AS \"__rent_num\",\n    TRY_CAST(regexp_extract(REPLACE(CAST(\"rating\" AS VARCHAR), ',', ''), '\\d+(?:\\.\\d+)?') AS DOUBLE) AS \"__rating_num\",\n    TRY_CAST(regexp_extract(REPLACE(CAST(\"listing_id\" AS VARCHAR), ',', ''), '\\d+(?:\\.\\d+)?') AS DOUBLE) AS \"__listing_id_num\"\n  FROM source\n  WHERE CAST(\"city\" AS VARCHAR) IN (?) AND TRY_CAST(regexp_extract(REPLACE(CAST(\"bedrooms\" AS VARCHAR), ',', ''), '\\d+(?:\\.\\d+)?') AS DOUBLE) >= ? AND TRY_CAST(regexp_extract(REPLACE(CAST(\"rent_usd\" AS VARCHAR), ',', ''), '\\d+(?:\\.\\d+)?') AS DOUBLE) <= ? AND CAST(\"property_type\" AS VARCHAR) IN (?, ?)\n),\nprojectable AS (\n  SELECT *\n  FROM filtered\n  WHERE TRUE\n    AND \"__rent_num\" IS NOT NULL\n)\nSELECT *\nFROM projectable\nORDER BY\n  \"__rent_num\" ASC NULLS LAST,\n  \"__rating_num\" DESC NULLS LAST,\n  \"__listing_id_num\" ASC NULLS LAST",
+  "params": [
+    "Austin",
+    2.0,
+    1900.0,
+    "apartment",
+    "townhouse"
+  ]
+}
+```
+### EvidencePack
+```json
+{
+  "user_request": "Austin, at least 2 bedrooms, under 1900, apartment or townhouse.",
+  "executed_rules": [
+    {
+      "rule_id": "e_city",
+      "derived_from": "d_city",
+      "field": "city",
+      "operator": "in",
+      "value": [
+        "Austin"
+      ],
+      "description": "city 属于：Austin"
+    },
+    {
+      "rule_id": "e_bedrooms_min",
+      "derived_from": "d_bedrooms_min",
+      "field": "bedrooms",
+      "operator": ">=",
+      "value": 2,
+      "description": "bedrooms 不低于 2"
+    },
+    {
+      "rule_id": "e_rent_cap",
+      "derived_from": "d_rent_cap",
+      "field": "rent_usd",
+      "operator": "<=",
+      "value": 1900,
+      "description": "rent_usd 不高于 1900"
+    },
+    {
+      "rule_id": "e_property_type",
+      "derived_from": "d_property_type",
+      "field": "property_type",
+      "operator": "in",
+      "value": [
+        "apartment",
+        "townhouse"
+      ],
+      "description": "property_type 属于：apartment、townhouse"
+    }
+  ],
+  "candidate_confirmations": [],
+  "not_executed_preferences": [],
+  "result_count": 3,
+  "top_k_results": [
+    {
+      "rank": 1,
+      "房源编号": 14,
+      "城市": "Austin",
+      "卧室数": 2,
+      "月租": 1650.0,
+      "类型": "townhouse",
+      "评分": 4.2,
+      "safety_margin": null,
+      "trace": [
+        {
+          "rule_id": "e_city",
+          "status": "pass",
+          "reason": "city 属于：Austin"
+        },
+        {
+          "rule_id": "e_bedrooms_min",
+          "status": "pass",
+          "reason": "bedrooms 2 不低于 2"
+        },
+        {
+          "rule_id": "e_rent_cap",
+          "status": "pass",
+          "reason": "rent_usd 1650 不高于 1900"
+        },
+        {
+          "rule_id": "e_property_type",
+          "status": "pass",
+          "reason": "property_type 属于：apartment、townhouse"
+        }
+      ]
+    },
+    {
+      "rank": 2,
+      "房源编号": 9,
+      "城市": "Austin",
+      "卧室数": 2,
+      "月租": 1750.0,
+      "类型": "apartment",
+      "评分": 4.3,
+      "safety_margin": null,
+      "trace": [
+        {
+          "rule_id": "e_city",
+          "status": "pass",
+          "reason": "city 属于：Austin"
+        },
+        {
+          "rule_id": "e_bedrooms_min",
+          "status": "pass",
+          "reason": "bedrooms 2 不低于 2"
+        },
+        {
+          "rule_id": "e_rent_cap",
+          "status": "pass",
+          "reason": "rent_usd 1750 不高于 1900"
+        },
+        {
+          "rule_id": "e_property_type",
+          "status": "pass",
+          "reason": "property_type 属于：apartment、townhouse"
+        }
+      ]
+    },
+    {
+      "rank": 3,
+      "房源编号": 2,
+      "城市": "Austin",
+      "卧室数": 2,
+      "月租": 1850.0,
+      "类型": "apartment",
+      "评分": 4.7,
+      "safety_margin": null,
+      "trace": [
+        {
+          "rule_id": "e_city",
+          "status": "pass",
+          "reason": "city 属于：Austin"
+        },
+        {
+          "rule_id": "e_bedrooms_min",
+          "status": "pass",
+          "reason": "bedrooms 2 不低于 2"
+        },
+        {
+          "rule_id": "e_rent_cap",
+          "status": "pass",
+          "reason": "rent_usd 1850 不高于 1900"
+        },
+        {
+          "rule_id": "e_property_type",
+          "status": "pass",
+          "reason": "property_type 属于：apartment、townhouse"
+        }
+      ]
+    }
+  ],
+  "trace_summary": {
+    "executed_rule_ids": [
+      "e_city",
+      "e_bedrooms_min",
+      "e_rent_cap",
+      "e_property_type"
+    ],
+    "not_executed_preference_count": 0,
+    "traced_result_count": 3,
+    "top_k": 3,
+    "top_k_trace_status_counts": {
+      "pass": 12
+    },
+    "safety_warnings": [
+      "答案只能使用 evidence_pack 中的已验证规则、确认记录、结果摘要和 trace。",
+      "候选偏好在确认或模拟确认之前不得执行。"
+    ]
+  },
+  "extracted_preferences": [
+    {
+      "id": "pref_city",
+      "slot": "城市",
+      "value": [
+        "Austin"
+      ],
+      "source_span": "Austin",
+      "status": "已对齐字段"
+    },
+    {
+      "id": "pref_bedrooms",
+      "slot": "最少卧室数",
+      "value": 2,
+      "source_span": "2",
+      "status": "已对齐字段"
+    },
+    {
+      "id": "pref_rent",
+      "slot": "租金上限",
+      "value": 1900,
+      "source_span": "1900",
+      "status": "已对齐字段"
+    },
+    {
+      "id": "pref_property_type",
+      "slot": "房源类型",
+      "value": [
+        "apartment",
+        "townhouse"
+      ],
+      "source_span": "apartment、townhouse",
+      "status": "已对齐字段"
+    }
+  ],
+  "attribute_grounding_summary": {
+    "total_attributes": 4,
+    "status_counts": {
+      "schema_grounded": 4
+    },
+    "value_index_status_counts": {
+      "matched": 2,
+      "within_numeric_profile": 2
+    },
+    "unsafe_ungrounded_executable_attributes": 0
+  },
+  "proposed_rule_audit": [],
+  "execution_summary": {
+    "executor": "duckdb",
+    "sql": "WITH source AS (\n  SELECT row_number() OVER () AS \"__source_row_number\", *\n  FROM \"housing\"\n),\nfiltered AS (\n  SELECT\n    source.*,\n    TRY_CAST(regexp_extract(REPLACE(CAST(\"rent_usd\" AS VARCHAR), ',', ''), '\\d+(?:\\.\\d+)?') AS DOUBLE) AS \"__rent_num\",\n    TRY_CAST(regexp_extract(REPLACE(CAST(\"rating\" AS VARCHAR), ',', ''), '\\d+(?:\\.\\d+)?') AS DOUBLE) AS \"__rating_num\",\n    TRY_CAST(regexp_extract(REPLACE(CAST(\"listing_id\" AS VARCHAR), ',', ''), '\\d+(?:\\.\\d+)?') AS DOUBLE) AS \"__listing_id_num\"\n  FROM source\n  WHERE CAST(\"city\" AS VARCHAR) IN (?) AND TRY_CAST(regexp_extract(REPLACE(CAST(\"bedrooms\" AS VARCHAR), ',', ''), '\\d+(?:\\.\\d+)?') AS DOUBLE) >= ? AND TRY_CAST(regexp_extract(REPLACE(CAST(\"rent_usd\" AS VARCHAR), ',', ''), '\\d+(?:\\.\\d+)?') AS DOUBLE) <= ? AND CAST(\"property_type\" AS VARCHAR) IN (?, ?)\n),\nprojectable AS (\n  SELECT *\n  FROM filtered\n  WHERE TRUE\n    AND \"__rent_num\" IS NOT NULL\n)\nSELECT *\nFROM projectable\nORDER BY\n  \"__rent_num\" ASC NULLS LAST,\n  \"__rating_num\" DESC NULLS LAST,\n  \"__listing_id_num\" ASC NULLS LAST",
+    "params": [
+      "Austin",
+      2.0,
+      1900.0,
+      "apartment",
+      "townhouse"
+    ],
+    "input_row_count": 20,
+    "filtered_row_count": 3,
+    "sort_key": [
+      "rent_usd ASC NULLS LAST",
+      "rating DESC NULLS LAST",
+      "listing_id ASC NULLS LAST"
+    ],
+    "top_k": 5,
+    "hard_rule_ids": [
+      "e_city",
+      "e_bedrooms_min",
+      "e_rent_cap",
+      "e_property_type"
+    ],
+    "skipped_soft_rule_ids": []
+  },
+  "attribute_explanations": [
+    {
+      "source_text": "Austin",
+      "slot_path": "preferences.city",
+      "field": "city",
+      "value": [
+        "Austin"
+      ],
+      "match_type": "exact_match",
+      "action": "executed",
+      "matched_values": [
+        "Austin"
+      ],
+      "reason": "已匹配字段“city”，并已进入 hard filter。"
+    },
+    {
+      "source_text": "2",
+      "slot_path": "preferences.bedrooms_min",
+      "field": "bedrooms",
+      "value": 2,
+      "match_type": "exact_match",
+      "action": "executed",
+      "matched_values": [],
+      "reason": "已匹配字段“bedrooms”，并已进入 hard filter。"
+    },
+    {
+      "source_text": "1900",
+      "slot_path": "preferences.rent_cap",
+      "field": "rent_usd",
+      "value": 1900,
+      "match_type": "exact_match",
+      "action": "executed",
+      "matched_values": [],
+      "reason": "已匹配字段“rent_usd”，并已进入 hard filter。"
+    },
+    {
+      "source_text": "apartment、townhouse",
+      "slot_path": "preferences.property_types",
+      "field": "property_type",
+      "value": [
+        "apartment",
+        "townhouse"
+      ],
+      "match_type": "exact_match",
+      "action": "executed",
+      "matched_values": [
+        "apartment",
+        "townhouse"
+      ],
+      "reason": "已匹配字段“property_type”，并已进入 hard filter。"
+    }
+  ],
+  "confirmed_rules": [],
+  "confirmation_source": [],
+  "executed_after_confirmation": [],
+  "unconfirmed_candidates": [],
+  "no_schema_field_preferences": [],
+  "rejected_confirmations": []
+}
+```
+### answer
+
+根据已验证规则生成结果：
+
+用户需求：Austin, at least 2 bedrooms, under 1900, apartment or townhouse.
+共筛选到 3 条符合已执行规则的结果。
+
+抽取与结构化结果：
+- 城市：Austin；状态：已对齐字段；来源：Austin
+- 最少卧室数：2；状态：已对齐字段；来源：2
+- 租金上限：1900；状态：已对齐字段；来源：1900
+- 房源类型：apartment、townhouse；状态：已对齐字段；来源：apartment、townhouse
+
+字段值审计解释：
+- [已执行] Austin -> city：exact_match；索引命中：Austin；已匹配字段“city”，并已进入 hard filter。
+- [已执行] 2 -> bedrooms：exact_match；已匹配字段“bedrooms”，并已进入 hard filter。
+- [已执行] 1900 -> rent_usd：exact_match；已匹配字段“rent_usd”，并已进入 hard filter。
+- [已执行] apartment、townhouse -> property_type：exact_match；索引命中：apartment、townhouse；已匹配字段“property_type”，并已进入 hard filter。
+
+已执行规则：
+- e_city：city 属于：Austin
+- e_bedrooms_min：bedrooms 不低于 2
+- e_rent_cap：rent_usd 不高于 1900
+- e_property_type：property_type 属于：apartment、townhouse
+
+候选偏好确认记录：
+
+未执行但已保留的偏好：
+- 无。
+
+前 3 条结果：
+- 1. 14；城市：Austin；卧室数：2；月租：1650 元/年；类型：townhouse；评分：4.2。
+- 2. 9；城市：Austin；卧室数：2；月租：1750 元/年；类型：apartment；评分：4.3。
+- 3. 2；城市：Austin；卧室数：2；月租：1850 元/年；类型：apartment；评分：4.7。
+
+安全说明：
+- 答案只能使用 证据包 中的已验证规则、确认记录、结果摘要和 trace。
+- 候选偏好在确认或模拟确认之前不得执行。
+
+## housing_02 `通过`
+
+- domain: `housing`
+- query: Dallas condos under 1900.
+- status: `ok`
+- pass/fail：`通过`
+
+### items
+```json
+[
+  {
+    "item_id": "result_001",
+    "title": "11",
+    "subtitle": "condo",
+    "primary_attributes": [
+      {
+        "key": "listing_id",
+        "label": "listing_id",
+        "value": 11
+      },
+      {
+        "key": "city",
+        "label": "city",
+        "value": "Dallas"
+      },
+      {
+        "key": "bedrooms",
+        "label": "bedrooms",
+        "value": 1
+      },
+      {
+        "key": "rent_usd",
+        "label": "rent_usd",
+        "value": 1300.0
+      }
+    ],
+    "secondary_attributes": [
+      {
+        "key": "property_type",
+        "label": "property_type",
+        "value": "condo"
+      },
+      {
+        "key": "pet_policy",
+        "label": "pet_policy",
+        "value": "allowed"
+      },
+      {
+        "key": "rating",
+        "label": "rating",
+        "value": 4.0
+      }
+    ],
+    "matched_filters": [
+      {
+        "id": "e_city",
+        "field": "city",
+        "operator": "in",
+        "value": [
+          "Dallas"
+        ],
+        "matched": true,
+        "text": "city 属于：Dallas"
+      },
+      {
+        "id": "e_bedrooms_min",
+        "field": "bedrooms",
+        "operator": ">=",
+        "value": 1,
+        "matched": true,
+        "text": "bedrooms 1 不低于 1"
+      },
+      {
+        "id": "e_rent_cap",
+        "field": "rent_usd",
+        "operator": "<=",
+        "value": 1900,
+        "matched": true,
+        "text": "rent_usd 1300 不高于 1900"
+      },
+      {
+        "id": "e_property_type",
+        "field": "property_type",
+        "operator": "in",
+        "value": [
+          "condo"
+        ],
+        "matched": true,
+        "text": "property_type 属于：condo"
+      }
+    ],
+    "raw": {
+      "source_row_number": 12,
+      "listing_id": 11,
+      "city": "Dallas",
+      "bedrooms": 1,
+      "rent_usd": 1300.0,
+      "property_type": "condo",
+      "pet_policy": "allowed",
+      "rating": 4.0
+    }
+  },
+  {
+    "item_id": "result_002",
+    "title": "15",
+    "subtitle": "condo",
+    "primary_attributes": [
+      {
+        "key": "listing_id",
+        "label": "listing_id",
+        "value": 15
+      },
+      {
+        "key": "city",
+        "label": "city",
+        "value": "Dallas"
+      },
+      {
+        "key": "bedrooms",
+        "label": "bedrooms",
+        "value": 2
+      },
+      {
+        "key": "rent_usd",
+        "label": "rent_usd",
+        "value": 1800.0
+      }
+    ],
+    "secondary_attributes": [
+      {
+        "key": "property_type",
+        "label": "property_type",
+        "value": "condo"
+      },
+      {
+        "key": "pet_policy",
+        "label": "pet_policy",
+        "value": "allowed"
+      },
+      {
+        "key": "rating",
+        "label": "rating",
+        "value": 4.6
+      }
+    ],
+    "matched_filters": [
+      {
+        "id": "e_city",
+        "field": "city",
+        "operator": "in",
+        "value": [
+          "Dallas"
+        ],
+        "matched": true,
+        "text": "city 属于：Dallas"
+      },
+      {
+        "id": "e_bedrooms_min",
+        "field": "bedrooms",
+        "operator": ">=",
+        "value": 1,
+        "matched": true,
+        "text": "bedrooms 2 不低于 1"
+      },
+      {
+        "id": "e_rent_cap",
+        "field": "rent_usd",
+        "operator": "<=",
+        "value": 1900,
+        "matched": true,
+        "text": "rent_usd 1800 不高于 1900"
+      },
+      {
+        "id": "e_property_type",
+        "field": "property_type",
+        "operator": "in",
+        "value": [
+          "condo"
+        ],
+        "matched": true,
+        "text": "property_type 属于：condo"
+      }
+    ],
+    "raw": {
+      "source_row_number": 16,
+      "listing_id": 15,
+      "city": "Dallas",
+      "bedrooms": 2,
+      "rent_usd": 1800.0,
+      "property_type": "condo",
+      "pet_policy": "allowed",
+      "rating": 4.6
+    }
+  }
+]
+```
+### top_results
+```json
+[
+  {
+    "id": "result_001",
+    "trace": [
+      {
+        "status": "pass",
+        "text": "city 属于：Dallas"
+      },
+      {
+        "status": "pass",
+        "text": "bedrooms 1 不低于 1"
+      },
+      {
+        "status": "pass",
+        "text": "rent_usd 1300 不高于 1900"
+      },
+      {
+        "status": "pass",
+        "text": "property_type 属于：condo"
+      }
+    ],
+    "listing_id": 11,
+    "city": "Dallas",
+    "bedrooms": 1,
+    "rent_usd": 1300.0,
+    "property_type": "condo",
+    "pet_policy": "allowed",
+    "rating": 4.0
+  },
+  {
+    "id": "result_002",
+    "trace": [
+      {
+        "status": "pass",
+        "text": "city 属于：Dallas"
+      },
+      {
+        "status": "pass",
+        "text": "bedrooms 2 不低于 1"
+      },
+      {
+        "status": "pass",
+        "text": "rent_usd 1800 不高于 1900"
+      },
+      {
+        "status": "pass",
+        "text": "property_type 属于：condo"
+      }
+    ],
+    "listing_id": 15,
+    "city": "Dallas",
+    "bedrooms": 2,
+    "rent_usd": 1800.0,
+    "property_type": "condo",
+    "pet_policy": "allowed",
+    "rating": 4.6
+  }
+]
+```
+### executed_filters
+```json
+[
+  {
+    "id": "e_city",
+    "label": "city 属于：Dallas",
+    "field": "city",
+    "operator": "in",
+    "value": [
+      "Dallas"
+    ],
+    "source_span": "Dallas"
+  },
+  {
+    "id": "e_bedrooms_min",
+    "label": "bedrooms 不低于 1",
+    "field": "bedrooms",
+    "operator": ">=",
+    "value": 1,
+    "source_span": "1"
+  },
+  {
+    "id": "e_rent_cap",
+    "label": "rent_usd 不高于 1900",
+    "field": "rent_usd",
+    "operator": "<=",
+    "value": 1900,
+    "source_span": "1900"
+  },
+  {
+    "id": "e_property_type",
+    "label": "property_type 属于：condo",
+    "field": "property_type",
+    "operator": "in",
+    "value": [
+      "condo"
+    ],
+    "source_span": "condo"
+  }
+]
+```
+### candidates_to_confirm
+```json
+[]
+```
+### unexecuted_preferences
+```json
+[]
+```
+### SQL / params
+```json
+{
+  "sql": "WITH source AS (\n  SELECT row_number() OVER () AS \"__source_row_number\", *\n  FROM \"housing\"\n),\nfiltered AS (\n  SELECT\n    source.*,\n    TRY_CAST(regexp_extract(REPLACE(CAST(\"rent_usd\" AS VARCHAR), ',', ''), '\\d+(?:\\.\\d+)?') AS DOUBLE) AS \"__rent_num\",\n    TRY_CAST(regexp_extract(REPLACE(CAST(\"rating\" AS VARCHAR), ',', ''), '\\d+(?:\\.\\d+)?') AS DOUBLE) AS \"__rating_num\",\n    TRY_CAST(regexp_extract(REPLACE(CAST(\"listing_id\" AS VARCHAR), ',', ''), '\\d+(?:\\.\\d+)?') AS DOUBLE) AS \"__listing_id_num\"\n  FROM source\n  WHERE CAST(\"city\" AS VARCHAR) IN (?) AND TRY_CAST(regexp_extract(REPLACE(CAST(\"bedrooms\" AS VARCHAR), ',', ''), '\\d+(?:\\.\\d+)?') AS DOUBLE) >= ? AND TRY_CAST(regexp_extract(REPLACE(CAST(\"rent_usd\" AS VARCHAR), ',', ''), '\\d+(?:\\.\\d+)?') AS DOUBLE) <= ? AND CAST(\"property_type\" AS VARCHAR) IN (?)\n),\nprojectable AS (\n  SELECT *\n  FROM filtered\n  WHERE TRUE\n    AND \"__rent_num\" IS NOT NULL\n)\nSELECT *\nFROM projectable\nORDER BY\n  \"__rent_num\" ASC NULLS LAST,\n  \"__rating_num\" DESC NULLS LAST,\n  \"__listing_id_num\" ASC NULLS LAST",
+  "params": [
+    "Dallas",
+    1.0,
+    1900.0,
+    "condo"
+  ]
+}
+```
+### EvidencePack
+```json
+{
+  "user_request": "Dallas condos under 1900.",
+  "executed_rules": [
+    {
+      "rule_id": "e_city",
+      "derived_from": "d_city",
+      "field": "city",
+      "operator": "in",
+      "value": [
+        "Dallas"
+      ],
+      "description": "city 属于：Dallas"
+    },
+    {
+      "rule_id": "e_bedrooms_min",
+      "derived_from": "d_bedrooms_min",
+      "field": "bedrooms",
+      "operator": ">=",
+      "value": 1,
+      "description": "bedrooms 不低于 1"
+    },
+    {
+      "rule_id": "e_rent_cap",
+      "derived_from": "d_rent_cap",
+      "field": "rent_usd",
+      "operator": "<=",
+      "value": 1900,
+      "description": "rent_usd 不高于 1900"
+    },
+    {
+      "rule_id": "e_property_type",
+      "derived_from": "d_property_type",
+      "field": "property_type",
+      "operator": "in",
+      "value": [
+        "condo"
+      ],
+      "description": "property_type 属于：condo"
+    }
+  ],
+  "candidate_confirmations": [],
+  "not_executed_preferences": [],
+  "result_count": 2,
+  "top_k_results": [
+    {
+      "rank": 1,
+      "房源编号": 11,
+      "城市": "Dallas",
+      "卧室数": 1,
+      "月租": 1300.0,
+      "类型": "condo",
+      "评分": 4.0,
+      "safety_margin": null,
+      "trace": [
+        {
+          "rule_id": "e_city",
+          "status": "pass",
+          "reason": "city 属于：Dallas"
+        },
+        {
+          "rule_id": "e_bedrooms_min",
+          "status": "pass",
+          "reason": "bedrooms 1 不低于 1"
+        },
+        {
+          "rule_id": "e_rent_cap",
+          "status": "pass",
+          "reason": "rent_usd 1300 不高于 1900"
+        },
+        {
+          "rule_id": "e_property_type",
+          "status": "pass",
+          "reason": "property_type 属于：condo"
+        }
+      ]
+    },
+    {
+      "rank": 2,
+      "房源编号": 15,
+      "城市": "Dallas",
+      "卧室数": 2,
+      "月租": 1800.0,
+      "类型": "condo",
+      "评分": 4.6,
+      "safety_margin": null,
+      "trace": [
+        {
+          "rule_id": "e_city",
+          "status": "pass",
+          "reason": "city 属于：Dallas"
+        },
+        {
+          "rule_id": "e_bedrooms_min",
+          "status": "pass",
+          "reason": "bedrooms 2 不低于 1"
+        },
+        {
+          "rule_id": "e_rent_cap",
+          "status": "pass",
+          "reason": "rent_usd 1800 不高于 1900"
+        },
+        {
+          "rule_id": "e_property_type",
+          "status": "pass",
+          "reason": "property_type 属于：condo"
+        }
+      ]
+    }
+  ],
+  "trace_summary": {
+    "executed_rule_ids": [
+      "e_city",
+      "e_bedrooms_min",
+      "e_rent_cap",
+      "e_property_type"
+    ],
+    "not_executed_preference_count": 0,
+    "traced_result_count": 2,
+    "top_k": 2,
+    "top_k_trace_status_counts": {
+      "pass": 8
+    },
+    "safety_warnings": [
+      "答案只能使用 evidence_pack 中的已验证规则、确认记录、结果摘要和 trace。",
+      "候选偏好在确认或模拟确认之前不得执行。"
+    ]
+  },
+  "extracted_preferences": [
+    {
+      "id": "pref_city",
+      "slot": "城市",
+      "value": [
+        "Dallas"
+      ],
+      "source_span": "Dallas",
+      "status": "已对齐字段"
+    },
+    {
+      "id": "pref_bedrooms",
+      "slot": "最少卧室数",
+      "value": 1,
+      "source_span": "1",
+      "status": "已对齐字段"
+    },
+    {
+      "id": "pref_rent",
+      "slot": "租金上限",
+      "value": 1900,
+      "source_span": "1900",
+      "status": "已对齐字段"
+    },
+    {
+      "id": "pref_property_type",
+      "slot": "房源类型",
+      "value": [
+        "condo"
+      ],
+      "source_span": "condo",
+      "status": "已对齐字段"
+    }
+  ],
+  "attribute_grounding_summary": {
+    "total_attributes": 4,
+    "status_counts": {
+      "schema_grounded": 4
+    },
+    "value_index_status_counts": {
+      "matched": 2,
+      "within_numeric_profile": 2
+    },
+    "unsafe_ungrounded_executable_attributes": 0
+  },
+  "proposed_rule_audit": [],
+  "execution_summary": {
+    "executor": "duckdb",
+    "sql": "WITH source AS (\n  SELECT row_number() OVER () AS \"__source_row_number\", *\n  FROM \"housing\"\n),\nfiltered AS (\n  SELECT\n    source.*,\n    TRY_CAST(regexp_extract(REPLACE(CAST(\"rent_usd\" AS VARCHAR), ',', ''), '\\d+(?:\\.\\d+)?') AS DOUBLE) AS \"__rent_num\",\n    TRY_CAST(regexp_extract(REPLACE(CAST(\"rating\" AS VARCHAR), ',', ''), '\\d+(?:\\.\\d+)?') AS DOUBLE) AS \"__rating_num\",\n    TRY_CAST(regexp_extract(REPLACE(CAST(\"listing_id\" AS VARCHAR), ',', ''), '\\d+(?:\\.\\d+)?') AS DOUBLE) AS \"__listing_id_num\"\n  FROM source\n  WHERE CAST(\"city\" AS VARCHAR) IN (?) AND TRY_CAST(regexp_extract(REPLACE(CAST(\"bedrooms\" AS VARCHAR), ',', ''), '\\d+(?:\\.\\d+)?') AS DOUBLE) >= ? AND TRY_CAST(regexp_extract(REPLACE(CAST(\"rent_usd\" AS VARCHAR), ',', ''), '\\d+(?:\\.\\d+)?') AS DOUBLE) <= ? AND CAST(\"property_type\" AS VARCHAR) IN (?)\n),\nprojectable AS (\n  SELECT *\n  FROM filtered\n  WHERE TRUE\n    AND \"__rent_num\" IS NOT NULL\n)\nSELECT *\nFROM projectable\nORDER BY\n  \"__rent_num\" ASC NULLS LAST,\n  \"__rating_num\" DESC NULLS LAST,\n  \"__listing_id_num\" ASC NULLS LAST",
+    "params": [
+      "Dallas",
+      1.0,
+      1900.0,
+      "condo"
+    ],
+    "input_row_count": 20,
+    "filtered_row_count": 2,
+    "sort_key": [
+      "rent_usd ASC NULLS LAST",
+      "rating DESC NULLS LAST",
+      "listing_id ASC NULLS LAST"
+    ],
+    "top_k": 5,
+    "hard_rule_ids": [
+      "e_city",
+      "e_bedrooms_min",
+      "e_rent_cap",
+      "e_property_type"
+    ],
+    "skipped_soft_rule_ids": []
+  },
+  "attribute_explanations": [
+    {
+      "source_text": "Dallas",
+      "slot_path": "preferences.city",
+      "field": "city",
+      "value": [
+        "Dallas"
+      ],
+      "match_type": "exact_match",
+      "action": "executed",
+      "matched_values": [
+        "Dallas"
+      ],
+      "reason": "已匹配字段“city”，并已进入 hard filter。"
+    },
+    {
+      "source_text": "1",
+      "slot_path": "preferences.bedrooms_min",
+      "field": "bedrooms",
+      "value": 1,
+      "match_type": "exact_match",
+      "action": "executed",
+      "matched_values": [],
+      "reason": "已匹配字段“bedrooms”，并已进入 hard filter。"
+    },
+    {
+      "source_text": "1900",
+      "slot_path": "preferences.rent_cap",
+      "field": "rent_usd",
+      "value": 1900,
+      "match_type": "exact_match",
+      "action": "executed",
+      "matched_values": [],
+      "reason": "已匹配字段“rent_usd”，并已进入 hard filter。"
+    },
+    {
+      "source_text": "condo",
+      "slot_path": "preferences.property_types",
+      "field": "property_type",
+      "value": [
+        "condo"
+      ],
+      "match_type": "exact_match",
+      "action": "executed",
+      "matched_values": [
+        "condo"
+      ],
+      "reason": "已匹配字段“property_type”，并已进入 hard filter。"
+    }
+  ],
+  "confirmed_rules": [],
+  "confirmation_source": [],
+  "executed_after_confirmation": [],
+  "unconfirmed_candidates": [],
+  "no_schema_field_preferences": [],
+  "rejected_confirmations": []
+}
+```
+### answer
+
+根据已验证规则生成结果：
+
+用户需求：Dallas condos under 1900.
+共筛选到 2 条符合已执行规则的结果。
+
+抽取与结构化结果：
+- 城市：Dallas；状态：已对齐字段；来源：Dallas
+- 最少卧室数：1；状态：已对齐字段；来源：1
+- 租金上限：1900；状态：已对齐字段；来源：1900
+- 房源类型：condo；状态：已对齐字段；来源：condo
+
+字段值审计解释：
+- [已执行] Dallas -> city：exact_match；索引命中：Dallas；已匹配字段“city”，并已进入 hard filter。
+- [已执行] 1 -> bedrooms：exact_match；已匹配字段“bedrooms”，并已进入 hard filter。
+- [已执行] 1900 -> rent_usd：exact_match；已匹配字段“rent_usd”，并已进入 hard filter。
+- [已执行] condo -> property_type：exact_match；索引命中：condo；已匹配字段“property_type”，并已进入 hard filter。
+
+已执行规则：
+- e_city：city 属于：Dallas
+- e_bedrooms_min：bedrooms 不低于 1
+- e_rent_cap：rent_usd 不高于 1900
+- e_property_type：property_type 属于：condo
+
+候选偏好确认记录：
+
+未执行但已保留的偏好：
+- 无。
+
+前 2 条结果：
+- 1. 11；城市：Dallas；卧室数：1；月租：1300 元/年；类型：condo；评分：4.0。
+- 2. 15；城市：Dallas；卧室数：2；月租：1800 元/年；类型：condo；评分：4.6。
+
+安全说明：
+- 答案只能使用 证据包 中的已验证规则、确认记录、结果摘要和 trace。
+- 候选偏好在确认或模拟确认之前不得执行。
+
+## housing_03 `通过`
+
+- domain: `housing`
+- query: Houston, at least 2 bedrooms, under 1700.
+- status: `ok`
+- pass/fail：`通过`
+
+### items
+```json
+[
+  {
+    "item_id": "result_001",
+    "title": "5",
+    "subtitle": "apartment",
+    "primary_attributes": [
+      {
+        "key": "listing_id",
+        "label": "listing_id",
+        "value": 5
+      },
+      {
+        "key": "city",
+        "label": "city",
+        "value": "Houston"
+      },
+      {
+        "key": "bedrooms",
+        "label": "bedrooms",
+        "value": 2
+      },
+      {
+        "key": "rent_usd",
+        "label": "rent_usd",
+        "value": 1450.0
+      }
+    ],
+    "secondary_attributes": [
+      {
+        "key": "property_type",
+        "label": "property_type",
+        "value": "apartment"
+      },
+      {
+        "key": "pet_policy",
+        "label": "pet_policy",
+        "value": "not_allowed"
+      },
+      {
+        "key": "rating",
+        "label": "rating",
+        "value": 4.0
+      }
+    ],
+    "matched_filters": [
+      {
+        "id": "e_city",
+        "field": "city",
+        "operator": "in",
+        "value": [
+          "Houston"
+        ],
+        "matched": true,
+        "text": "city 属于：Houston"
+      },
+      {
+        "id": "e_bedrooms_min",
+        "field": "bedrooms",
+        "operator": ">=",
+        "value": 2,
+        "matched": true,
+        "text": "bedrooms 2 不低于 2"
+      },
+      {
+        "id": "e_rent_cap",
+        "field": "rent_usd",
+        "operator": "<=",
+        "value": 1700,
+        "matched": true,
+        "text": "rent_usd 1450 不高于 1700"
+      }
+    ],
+    "raw": {
+      "source_row_number": 6,
+      "listing_id": 5,
+      "city": "Houston",
+      "bedrooms": 2,
+      "rent_usd": 1450.0,
+      "property_type": "apartment",
+      "pet_policy": "not_allowed",
+      "rating": 4.0
+    }
+  },
+  {
+    "item_id": "result_002",
+    "title": "16",
+    "subtitle": "townhouse",
+    "primary_attributes": [
+      {
+        "key": "listing_id",
+        "label": "listing_id",
+        "value": 16
+      },
+      {
+        "key": "city",
+        "label": "city",
+        "value": "Houston"
+      },
+      {
+        "key": "bedrooms",
+        "label": "bedrooms",
+        "value": 2
+      },
+      {
+        "key": "rent_usd",
+        "label": "rent_usd",
+        "value": 1600.0
+      }
+    ],
+    "secondary_attributes": [
+      {
+        "key": "property_type",
+        "label": "property_type",
+        "value": "townhouse"
+      },
+      {
+        "key": "pet_policy",
+        "label": "pet_policy",
+        "value": "allowed"
+      },
+      {
+        "key": "rating",
+        "label": "rating",
+        "value": 4.1
+      }
+    ],
+    "matched_filters": [
+      {
+        "id": "e_city",
+        "field": "city",
+        "operator": "in",
+        "value": [
+          "Houston"
+        ],
+        "matched": true,
+        "text": "city 属于：Houston"
+      },
+      {
+        "id": "e_bedrooms_min",
+        "field": "bedrooms",
+        "operator": ">=",
+        "value": 2,
+        "matched": true,
+        "text": "bedrooms 2 不低于 2"
+      },
+      {
+        "id": "e_rent_cap",
+        "field": "rent_usd",
+        "operator": "<=",
+        "value": 1700,
+        "matched": true,
+        "text": "rent_usd 1600 不高于 1700"
+      }
+    ],
+    "raw": {
+      "source_row_number": 17,
+      "listing_id": 16,
+      "city": "Houston",
+      "bedrooms": 2,
+      "rent_usd": 1600.0,
+      "property_type": "townhouse",
+      "pet_policy": "allowed",
+      "rating": 4.1
+    }
+  }
+]
+```
+### top_results
+```json
+[
+  {
+    "id": "result_001",
+    "trace": [
+      {
+        "status": "pass",
+        "text": "city 属于：Houston"
+      },
+      {
+        "status": "pass",
+        "text": "bedrooms 2 不低于 2"
+      },
+      {
+        "status": "pass",
+        "text": "rent_usd 1450 不高于 1700"
+      }
+    ],
+    "listing_id": 5,
+    "city": "Houston",
+    "bedrooms": 2,
+    "rent_usd": 1450.0,
+    "property_type": "apartment",
+    "pet_policy": "not_allowed",
+    "rating": 4.0
+  },
+  {
+    "id": "result_002",
+    "trace": [
+      {
+        "status": "pass",
+        "text": "city 属于：Houston"
+      },
+      {
+        "status": "pass",
+        "text": "bedrooms 2 不低于 2"
+      },
+      {
+        "status": "pass",
+        "text": "rent_usd 1600 不高于 1700"
+      }
+    ],
+    "listing_id": 16,
+    "city": "Houston",
+    "bedrooms": 2,
+    "rent_usd": 1600.0,
+    "property_type": "townhouse",
+    "pet_policy": "allowed",
+    "rating": 4.1
+  }
+]
+```
+### executed_filters
+```json
+[
+  {
+    "id": "e_city",
+    "label": "city 属于：Houston",
+    "field": "city",
+    "operator": "in",
+    "value": [
+      "Houston"
+    ],
+    "source_span": "Houston"
+  },
+  {
+    "id": "e_bedrooms_min",
+    "label": "bedrooms 不低于 2",
+    "field": "bedrooms",
+    "operator": ">=",
+    "value": 2,
+    "source_span": "2"
+  },
+  {
+    "id": "e_rent_cap",
+    "label": "rent_usd 不高于 1700",
+    "field": "rent_usd",
+    "operator": "<=",
+    "value": 1700,
+    "source_span": "1700"
+  }
+]
+```
+### candidates_to_confirm
+```json
+[]
+```
+### unexecuted_preferences
+```json
+[]
+```
+### SQL / params
+```json
+{
+  "sql": "WITH source AS (\n  SELECT row_number() OVER () AS \"__source_row_number\", *\n  FROM \"housing\"\n),\nfiltered AS (\n  SELECT\n    source.*,\n    TRY_CAST(regexp_extract(REPLACE(CAST(\"rent_usd\" AS VARCHAR), ',', ''), '\\d+(?:\\.\\d+)?') AS DOUBLE) AS \"__rent_num\",\n    TRY_CAST(regexp_extract(REPLACE(CAST(\"rating\" AS VARCHAR), ',', ''), '\\d+(?:\\.\\d+)?') AS DOUBLE) AS \"__rating_num\",\n    TRY_CAST(regexp_extract(REPLACE(CAST(\"listing_id\" AS VARCHAR), ',', ''), '\\d+(?:\\.\\d+)?') AS DOUBLE) AS \"__listing_id_num\"\n  FROM source\n  WHERE CAST(\"city\" AS VARCHAR) IN (?) AND TRY_CAST(regexp_extract(REPLACE(CAST(\"bedrooms\" AS VARCHAR), ',', ''), '\\d+(?:\\.\\d+)?') AS DOUBLE) >= ? AND TRY_CAST(regexp_extract(REPLACE(CAST(\"rent_usd\" AS VARCHAR), ',', ''), '\\d+(?:\\.\\d+)?') AS DOUBLE) <= ?\n),\nprojectable AS (\n  SELECT *\n  FROM filtered\n  WHERE TRUE\n    AND \"__rent_num\" IS NOT NULL\n)\nSELECT *\nFROM projectable\nORDER BY\n  \"__rent_num\" ASC NULLS LAST,\n  \"__rating_num\" DESC NULLS LAST,\n  \"__listing_id_num\" ASC NULLS LAST",
+  "params": [
+    "Houston",
+    2.0,
+    1700.0
+  ]
+}
+```
+### EvidencePack
+```json
+{
+  "user_request": "Houston, at least 2 bedrooms, under 1700.",
+  "executed_rules": [
+    {
+      "rule_id": "e_city",
+      "derived_from": "d_city",
+      "field": "city",
+      "operator": "in",
+      "value": [
+        "Houston"
+      ],
+      "description": "city 属于：Houston"
+    },
+    {
+      "rule_id": "e_bedrooms_min",
+      "derived_from": "d_bedrooms_min",
+      "field": "bedrooms",
+      "operator": ">=",
+      "value": 2,
+      "description": "bedrooms 不低于 2"
+    },
+    {
+      "rule_id": "e_rent_cap",
+      "derived_from": "d_rent_cap",
+      "field": "rent_usd",
+      "operator": "<=",
+      "value": 1700,
+      "description": "rent_usd 不高于 1700"
+    }
+  ],
+  "candidate_confirmations": [],
+  "not_executed_preferences": [],
+  "result_count": 2,
+  "top_k_results": [
+    {
+      "rank": 1,
+      "房源编号": 5,
+      "城市": "Houston",
+      "卧室数": 2,
+      "月租": 1450.0,
+      "类型": "apartment",
+      "评分": 4.0,
+      "safety_margin": null,
+      "trace": [
+        {
+          "rule_id": "e_city",
+          "status": "pass",
+          "reason": "city 属于：Houston"
+        },
+        {
+          "rule_id": "e_bedrooms_min",
+          "status": "pass",
+          "reason": "bedrooms 2 不低于 2"
+        },
+        {
+          "rule_id": "e_rent_cap",
+          "status": "pass",
+          "reason": "rent_usd 1450 不高于 1700"
+        }
+      ]
+    },
+    {
+      "rank": 2,
+      "房源编号": 16,
+      "城市": "Houston",
+      "卧室数": 2,
+      "月租": 1600.0,
+      "类型": "townhouse",
+      "评分": 4.1,
+      "safety_margin": null,
+      "trace": [
+        {
+          "rule_id": "e_city",
+          "status": "pass",
+          "reason": "city 属于：Houston"
+        },
+        {
+          "rule_id": "e_bedrooms_min",
+          "status": "pass",
+          "reason": "bedrooms 2 不低于 2"
+        },
+        {
+          "rule_id": "e_rent_cap",
+          "status": "pass",
+          "reason": "rent_usd 1600 不高于 1700"
+        }
+      ]
+    }
+  ],
+  "trace_summary": {
+    "executed_rule_ids": [
+      "e_city",
+      "e_bedrooms_min",
+      "e_rent_cap"
+    ],
+    "not_executed_preference_count": 0,
+    "traced_result_count": 2,
+    "top_k": 2,
+    "top_k_trace_status_counts": {
+      "pass": 6
+    },
+    "safety_warnings": [
+      "答案只能使用 evidence_pack 中的已验证规则、确认记录、结果摘要和 trace。",
+      "候选偏好在确认或模拟确认之前不得执行。"
+    ]
+  },
+  "extracted_preferences": [
+    {
+      "id": "pref_city",
+      "slot": "城市",
+      "value": [
+        "Houston"
+      ],
+      "source_span": "Houston",
+      "status": "已对齐字段"
+    },
+    {
+      "id": "pref_bedrooms",
+      "slot": "最少卧室数",
+      "value": 2,
+      "source_span": "2",
+      "status": "已对齐字段"
+    },
+    {
+      "id": "pref_rent",
+      "slot": "租金上限",
+      "value": 1700,
+      "source_span": "1700",
+      "status": "已对齐字段"
+    }
+  ],
+  "attribute_grounding_summary": {
+    "total_attributes": 3,
+    "status_counts": {
+      "schema_grounded": 3
+    },
+    "value_index_status_counts": {
+      "matched": 1,
+      "within_numeric_profile": 2
+    },
+    "unsafe_ungrounded_executable_attributes": 0
+  },
+  "proposed_rule_audit": [],
+  "execution_summary": {
+    "executor": "duckdb",
+    "sql": "WITH source AS (\n  SELECT row_number() OVER () AS \"__source_row_number\", *\n  FROM \"housing\"\n),\nfiltered AS (\n  SELECT\n    source.*,\n    TRY_CAST(regexp_extract(REPLACE(CAST(\"rent_usd\" AS VARCHAR), ',', ''), '\\d+(?:\\.\\d+)?') AS DOUBLE) AS \"__rent_num\",\n    TRY_CAST(regexp_extract(REPLACE(CAST(\"rating\" AS VARCHAR), ',', ''), '\\d+(?:\\.\\d+)?') AS DOUBLE) AS \"__rating_num\",\n    TRY_CAST(regexp_extract(REPLACE(CAST(\"listing_id\" AS VARCHAR), ',', ''), '\\d+(?:\\.\\d+)?') AS DOUBLE) AS \"__listing_id_num\"\n  FROM source\n  WHERE CAST(\"city\" AS VARCHAR) IN (?) AND TRY_CAST(regexp_extract(REPLACE(CAST(\"bedrooms\" AS VARCHAR), ',', ''), '\\d+(?:\\.\\d+)?') AS DOUBLE) >= ? AND TRY_CAST(regexp_extract(REPLACE(CAST(\"rent_usd\" AS VARCHAR), ',', ''), '\\d+(?:\\.\\d+)?') AS DOUBLE) <= ?\n),\nprojectable AS (\n  SELECT *\n  FROM filtered\n  WHERE TRUE\n    AND \"__rent_num\" IS NOT NULL\n)\nSELECT *\nFROM projectable\nORDER BY\n  \"__rent_num\" ASC NULLS LAST,\n  \"__rating_num\" DESC NULLS LAST,\n  \"__listing_id_num\" ASC NULLS LAST",
+    "params": [
+      "Houston",
+      2.0,
+      1700.0
+    ],
+    "input_row_count": 20,
+    "filtered_row_count": 2,
+    "sort_key": [
+      "rent_usd ASC NULLS LAST",
+      "rating DESC NULLS LAST",
+      "listing_id ASC NULLS LAST"
+    ],
+    "top_k": 5,
+    "hard_rule_ids": [
+      "e_city",
+      "e_bedrooms_min",
+      "e_rent_cap"
+    ],
+    "skipped_soft_rule_ids": []
+  },
+  "attribute_explanations": [
+    {
+      "source_text": "Houston",
+      "slot_path": "preferences.city",
+      "field": "city",
+      "value": [
+        "Houston"
+      ],
+      "match_type": "exact_match",
+      "action": "executed",
+      "matched_values": [
+        "Houston"
+      ],
+      "reason": "已匹配字段“city”，并已进入 hard filter。"
+    },
+    {
+      "source_text": "2",
+      "slot_path": "preferences.bedrooms_min",
+      "field": "bedrooms",
+      "value": 2,
+      "match_type": "exact_match",
+      "action": "executed",
+      "matched_values": [],
+      "reason": "已匹配字段“bedrooms”，并已进入 hard filter。"
+    },
+    {
+      "source_text": "1700",
+      "slot_path": "preferences.rent_cap",
+      "field": "rent_usd",
+      "value": 1700,
+      "match_type": "exact_match",
+      "action": "executed",
+      "matched_values": [],
+      "reason": "已匹配字段“rent_usd”，并已进入 hard filter。"
+    }
+  ],
+  "confirmed_rules": [],
+  "confirmation_source": [],
+  "executed_after_confirmation": [],
+  "unconfirmed_candidates": [],
+  "no_schema_field_preferences": [],
+  "rejected_confirmations": []
+}
+```
+### answer
+
+根据已验证规则生成结果：
+
+用户需求：Houston, at least 2 bedrooms, under 1700.
+共筛选到 2 条符合已执行规则的结果。
+
+抽取与结构化结果：
+- 城市：Houston；状态：已对齐字段；来源：Houston
+- 最少卧室数：2；状态：已对齐字段；来源：2
+- 租金上限：1700；状态：已对齐字段；来源：1700
+
+字段值审计解释：
+- [已执行] Houston -> city：exact_match；索引命中：Houston；已匹配字段“city”，并已进入 hard filter。
+- [已执行] 2 -> bedrooms：exact_match；已匹配字段“bedrooms”，并已进入 hard filter。
+- [已执行] 1700 -> rent_usd：exact_match；已匹配字段“rent_usd”，并已进入 hard filter。
+
+已执行规则：
+- e_city：city 属于：Houston
+- e_bedrooms_min：bedrooms 不低于 2
+- e_rent_cap：rent_usd 不高于 1700
+
+候选偏好确认记录：
+
+未执行但已保留的偏好：
+- 无。
+
+前 2 条结果：
+- 1. 5；城市：Houston；卧室数：2；月租：1450 元/年；类型：apartment；评分：4.0。
+- 2. 16；城市：Houston；卧室数：2；月租：1600 元/年；类型：townhouse；评分：4.1。
+
+安全说明：
+- 答案只能使用 证据包 中的已验证规则、确认记录、结果摘要和 trace。
+- 候选偏好在确认或模拟确认之前不得执行。
+
+## housing_04 `通过`
+
+- domain: `housing`
+- query: Austin houses under 2500 with at least 3 bedrooms.
+- status: `ok`
+- pass/fail：`通过`
+
+### items
+```json
+[
+  {
+    "item_id": "result_001",
+    "title": "3",
+    "subtitle": "house",
+    "primary_attributes": [
+      {
+        "key": "listing_id",
+        "label": "listing_id",
+        "value": 3
+      },
+      {
+        "key": "city",
+        "label": "city",
+        "value": "Austin"
+      },
+      {
+        "key": "bedrooms",
+        "label": "bedrooms",
+        "value": 3
+      },
+      {
+        "key": "rent_usd",
+        "label": "rent_usd",
+        "value": 2400.0
+      }
+    ],
+    "secondary_attributes": [
+      {
+        "key": "property_type",
+        "label": "property_type",
+        "value": "house"
+      },
+      {
+        "key": "pet_policy",
+        "label": "pet_policy",
+        "value": "allowed"
+      },
+      {
+        "key": "rating",
+        "label": "rating",
+        "value": 4.8
+      }
+    ],
+    "matched_filters": [
+      {
+        "id": "e_city",
+        "field": "city",
+        "operator": "in",
+        "value": [
+          "Austin"
+        ],
+        "matched": true,
+        "text": "city 属于：Austin"
+      },
+      {
+        "id": "e_bedrooms_min",
+        "field": "bedrooms",
+        "operator": ">=",
+        "value": 3,
+        "matched": true,
+        "text": "bedrooms 3 不低于 3"
+      },
+      {
+        "id": "e_rent_cap",
+        "field": "rent_usd",
+        "operator": "<=",
+        "value": 2500,
+        "matched": true,
+        "text": "rent_usd 2400 不高于 2500"
+      },
+      {
+        "id": "e_property_type",
+        "field": "property_type",
+        "operator": "in",
+        "value": [
+          "house"
+        ],
+        "matched": true,
+        "text": "property_type 属于：house"
+      }
+    ],
+    "raw": {
+      "source_row_number": 4,
+      "listing_id": 3,
+      "city": "Austin",
+      "bedrooms": 3,
+      "rent_usd": 2400.0,
+      "property_type": "house",
+      "pet_policy": "allowed",
+      "rating": 4.8
+    }
+  }
+]
+```
+### top_results
+```json
+[
+  {
+    "id": "result_001",
+    "trace": [
+      {
+        "status": "pass",
+        "text": "city 属于：Austin"
+      },
+      {
+        "status": "pass",
+        "text": "bedrooms 3 不低于 3"
+      },
+      {
+        "status": "pass",
+        "text": "rent_usd 2400 不高于 2500"
+      },
+      {
+        "status": "pass",
+        "text": "property_type 属于：house"
+      }
+    ],
+    "listing_id": 3,
+    "city": "Austin",
+    "bedrooms": 3,
+    "rent_usd": 2400.0,
+    "property_type": "house",
+    "pet_policy": "allowed",
+    "rating": 4.8
+  }
+]
+```
+### executed_filters
+```json
+[
+  {
+    "id": "e_city",
+    "label": "city 属于：Austin",
+    "field": "city",
+    "operator": "in",
+    "value": [
+      "Austin"
+    ],
+    "source_span": "Austin"
+  },
+  {
+    "id": "e_bedrooms_min",
+    "label": "bedrooms 不低于 3",
+    "field": "bedrooms",
+    "operator": ">=",
+    "value": 3,
+    "source_span": "3"
+  },
+  {
+    "id": "e_rent_cap",
+    "label": "rent_usd 不高于 2500",
+    "field": "rent_usd",
+    "operator": "<=",
+    "value": 2500,
+    "source_span": "2500"
+  },
+  {
+    "id": "e_property_type",
+    "label": "property_type 属于：house",
+    "field": "property_type",
+    "operator": "in",
+    "value": [
+      "house"
+    ],
+    "source_span": "house"
+  }
+]
+```
+### candidates_to_confirm
+```json
+[]
+```
+### unexecuted_preferences
+```json
+[]
+```
+### SQL / params
+```json
+{
+  "sql": "WITH source AS (\n  SELECT row_number() OVER () AS \"__source_row_number\", *\n  FROM \"housing\"\n),\nfiltered AS (\n  SELECT\n    source.*,\n    TRY_CAST(regexp_extract(REPLACE(CAST(\"rent_usd\" AS VARCHAR), ',', ''), '\\d+(?:\\.\\d+)?') AS DOUBLE) AS \"__rent_num\",\n    TRY_CAST(regexp_extract(REPLACE(CAST(\"rating\" AS VARCHAR), ',', ''), '\\d+(?:\\.\\d+)?') AS DOUBLE) AS \"__rating_num\",\n    TRY_CAST(regexp_extract(REPLACE(CAST(\"listing_id\" AS VARCHAR), ',', ''), '\\d+(?:\\.\\d+)?') AS DOUBLE) AS \"__listing_id_num\"\n  FROM source\n  WHERE CAST(\"city\" AS VARCHAR) IN (?) AND TRY_CAST(regexp_extract(REPLACE(CAST(\"bedrooms\" AS VARCHAR), ',', ''), '\\d+(?:\\.\\d+)?') AS DOUBLE) >= ? AND TRY_CAST(regexp_extract(REPLACE(CAST(\"rent_usd\" AS VARCHAR), ',', ''), '\\d+(?:\\.\\d+)?') AS DOUBLE) <= ? AND CAST(\"property_type\" AS VARCHAR) IN (?)\n),\nprojectable AS (\n  SELECT *\n  FROM filtered\n  WHERE TRUE\n    AND \"__rent_num\" IS NOT NULL\n)\nSELECT *\nFROM projectable\nORDER BY\n  \"__rent_num\" ASC NULLS LAST,\n  \"__rating_num\" DESC NULLS LAST,\n  \"__listing_id_num\" ASC NULLS LAST",
+  "params": [
+    "Austin",
+    3.0,
+    2500.0,
+    "house"
+  ]
+}
+```
+### EvidencePack
+```json
+{
+  "user_request": "Austin houses under 2500 with at least 3 bedrooms.",
+  "executed_rules": [
+    {
+      "rule_id": "e_city",
+      "derived_from": "d_city",
+      "field": "city",
+      "operator": "in",
+      "value": [
+        "Austin"
+      ],
+      "description": "city 属于：Austin"
+    },
+    {
+      "rule_id": "e_bedrooms_min",
+      "derived_from": "d_bedrooms_min",
+      "field": "bedrooms",
+      "operator": ">=",
+      "value": 3,
+      "description": "bedrooms 不低于 3"
+    },
+    {
+      "rule_id": "e_rent_cap",
+      "derived_from": "d_rent_cap",
+      "field": "rent_usd",
+      "operator": "<=",
+      "value": 2500,
+      "description": "rent_usd 不高于 2500"
+    },
+    {
+      "rule_id": "e_property_type",
+      "derived_from": "d_property_type",
+      "field": "property_type",
+      "operator": "in",
+      "value": [
+        "house"
+      ],
+      "description": "property_type 属于：house"
+    }
+  ],
+  "candidate_confirmations": [],
+  "not_executed_preferences": [],
+  "result_count": 1,
+  "top_k_results": [
+    {
+      "rank": 1,
+      "房源编号": 3,
+      "城市": "Austin",
+      "卧室数": 3,
+      "月租": 2400.0,
+      "类型": "house",
+      "评分": 4.8,
+      "safety_margin": null,
+      "trace": [
+        {
+          "rule_id": "e_city",
+          "status": "pass",
+          "reason": "city 属于：Austin"
+        },
+        {
+          "rule_id": "e_bedrooms_min",
+          "status": "pass",
+          "reason": "bedrooms 3 不低于 3"
+        },
+        {
+          "rule_id": "e_rent_cap",
+          "status": "pass",
+          "reason": "rent_usd 2400 不高于 2500"
+        },
+        {
+          "rule_id": "e_property_type",
+          "status": "pass",
+          "reason": "property_type 属于：house"
+        }
+      ]
+    }
+  ],
+  "trace_summary": {
+    "executed_rule_ids": [
+      "e_city",
+      "e_bedrooms_min",
+      "e_rent_cap",
+      "e_property_type"
+    ],
+    "not_executed_preference_count": 0,
+    "traced_result_count": 1,
+    "top_k": 1,
+    "top_k_trace_status_counts": {
+      "pass": 4
+    },
+    "safety_warnings": [
+      "答案只能使用 evidence_pack 中的已验证规则、确认记录、结果摘要和 trace。",
+      "候选偏好在确认或模拟确认之前不得执行。"
+    ]
+  },
+  "extracted_preferences": [
+    {
+      "id": "pref_city",
+      "slot": "城市",
+      "value": [
+        "Austin"
+      ],
+      "source_span": "Austin",
+      "status": "已对齐字段"
+    },
+    {
+      "id": "pref_bedrooms",
+      "slot": "最少卧室数",
+      "value": 3,
+      "source_span": "3",
+      "status": "已对齐字段"
+    },
+    {
+      "id": "pref_rent",
+      "slot": "租金上限",
+      "value": 2500,
+      "source_span": "2500",
+      "status": "已对齐字段"
+    },
+    {
+      "id": "pref_property_type",
+      "slot": "房源类型",
+      "value": [
+        "house"
+      ],
+      "source_span": "house",
+      "status": "已对齐字段"
+    }
+  ],
+  "attribute_grounding_summary": {
+    "total_attributes": 4,
+    "status_counts": {
+      "schema_grounded": 4
+    },
+    "value_index_status_counts": {
+      "matched": 2,
+      "within_numeric_profile": 2
+    },
+    "unsafe_ungrounded_executable_attributes": 0
+  },
+  "proposed_rule_audit": [],
+  "execution_summary": {
+    "executor": "duckdb",
+    "sql": "WITH source AS (\n  SELECT row_number() OVER () AS \"__source_row_number\", *\n  FROM \"housing\"\n),\nfiltered AS (\n  SELECT\n    source.*,\n    TRY_CAST(regexp_extract(REPLACE(CAST(\"rent_usd\" AS VARCHAR), ',', ''), '\\d+(?:\\.\\d+)?') AS DOUBLE) AS \"__rent_num\",\n    TRY_CAST(regexp_extract(REPLACE(CAST(\"rating\" AS VARCHAR), ',', ''), '\\d+(?:\\.\\d+)?') AS DOUBLE) AS \"__rating_num\",\n    TRY_CAST(regexp_extract(REPLACE(CAST(\"listing_id\" AS VARCHAR), ',', ''), '\\d+(?:\\.\\d+)?') AS DOUBLE) AS \"__listing_id_num\"\n  FROM source\n  WHERE CAST(\"city\" AS VARCHAR) IN (?) AND TRY_CAST(regexp_extract(REPLACE(CAST(\"bedrooms\" AS VARCHAR), ',', ''), '\\d+(?:\\.\\d+)?') AS DOUBLE) >= ? AND TRY_CAST(regexp_extract(REPLACE(CAST(\"rent_usd\" AS VARCHAR), ',', ''), '\\d+(?:\\.\\d+)?') AS DOUBLE) <= ? AND CAST(\"property_type\" AS VARCHAR) IN (?)\n),\nprojectable AS (\n  SELECT *\n  FROM filtered\n  WHERE TRUE\n    AND \"__rent_num\" IS NOT NULL\n)\nSELECT *\nFROM projectable\nORDER BY\n  \"__rent_num\" ASC NULLS LAST,\n  \"__rating_num\" DESC NULLS LAST,\n  \"__listing_id_num\" ASC NULLS LAST",
+    "params": [
+      "Austin",
+      3.0,
+      2500.0,
+      "house"
+    ],
+    "input_row_count": 20,
+    "filtered_row_count": 1,
+    "sort_key": [
+      "rent_usd ASC NULLS LAST",
+      "rating DESC NULLS LAST",
+      "listing_id ASC NULLS LAST"
+    ],
+    "top_k": 5,
+    "hard_rule_ids": [
+      "e_city",
+      "e_bedrooms_min",
+      "e_rent_cap",
+      "e_property_type"
+    ],
+    "skipped_soft_rule_ids": []
+  },
+  "attribute_explanations": [
+    {
+      "source_text": "Austin",
+      "slot_path": "preferences.city",
+      "field": "city",
+      "value": [
+        "Austin"
+      ],
+      "match_type": "exact_match",
+      "action": "executed",
+      "matched_values": [
+        "Austin"
+      ],
+      "reason": "已匹配字段“city”，并已进入 hard filter。"
+    },
+    {
+      "source_text": "3",
+      "slot_path": "preferences.bedrooms_min",
+      "field": "bedrooms",
+      "value": 3,
+      "match_type": "exact_match",
+      "action": "executed",
+      "matched_values": [],
+      "reason": "已匹配字段“bedrooms”，并已进入 hard filter。"
+    },
+    {
+      "source_text": "2500",
+      "slot_path": "preferences.rent_cap",
+      "field": "rent_usd",
+      "value": 2500,
+      "match_type": "exact_match",
+      "action": "executed",
+      "matched_values": [],
+      "reason": "已匹配字段“rent_usd”，并已进入 hard filter。"
+    },
+    {
+      "source_text": "house",
+      "slot_path": "preferences.property_types",
+      "field": "property_type",
+      "value": [
+        "house"
+      ],
+      "match_type": "exact_match",
+      "action": "executed",
+      "matched_values": [
+        "house"
+      ],
+      "reason": "已匹配字段“property_type”，并已进入 hard filter。"
+    }
+  ],
+  "confirmed_rules": [],
+  "confirmation_source": [],
+  "executed_after_confirmation": [],
+  "unconfirmed_candidates": [],
+  "no_schema_field_preferences": [],
+  "rejected_confirmations": []
+}
+```
+### answer
+
+根据已验证规则生成结果：
+
+用户需求：Austin houses under 2500 with at least 3 bedrooms.
+共筛选到 1 条符合已执行规则的结果。
+
+抽取与结构化结果：
+- 城市：Austin；状态：已对齐字段；来源：Austin
+- 最少卧室数：3；状态：已对齐字段；来源：3
+- 租金上限：2500；状态：已对齐字段；来源：2500
+- 房源类型：house；状态：已对齐字段；来源：house
+
+字段值审计解释：
+- [已执行] Austin -> city：exact_match；索引命中：Austin；已匹配字段“city”，并已进入 hard filter。
+- [已执行] 3 -> bedrooms：exact_match；已匹配字段“bedrooms”，并已进入 hard filter。
+- [已执行] 2500 -> rent_usd：exact_match；已匹配字段“rent_usd”，并已进入 hard filter。
+- [已执行] house -> property_type：exact_match；索引命中：house；已匹配字段“property_type”，并已进入 hard filter。
+
+已执行规则：
+- e_city：city 属于：Austin
+- e_bedrooms_min：bedrooms 不低于 3
+- e_rent_cap：rent_usd 不高于 2500
+- e_property_type：property_type 属于：house
+
+候选偏好确认记录：
+
+未执行但已保留的偏好：
+- 无。
+
+前 1 条结果：
+- 1. 3；城市：Austin；卧室数：3；月租：2400 元/年；类型：house；评分：4.8。
+
+安全说明：
+- 答案只能使用 证据包 中的已验证规则、确认记录、结果摘要和 trace。
+- 候选偏好在确认或模拟确认之前不得执行。
+
+## housing_05 `通过`
+
+- domain: `housing`
+- query: Seattle under 1500.
+- status: `needs_confirmation`
+- pass/fail：`通过`
+
+### items
+```json
+[
+  {
+    "item_id": "result_001",
+    "title": "8",
+    "subtitle": "apartment",
+    "primary_attributes": [
+      {
+        "key": "listing_id",
+        "label": "listing_id",
+        "value": 8
+      },
+      {
+        "key": "city",
+        "label": "city",
+        "value": "Houston"
+      },
+      {
+        "key": "bedrooms",
+        "label": "bedrooms",
+        "value": 1
+      },
+      {
+        "key": "rent_usd",
+        "label": "rent_usd",
+        "value": 1200.0
+      }
+    ],
+    "secondary_attributes": [
+      {
+        "key": "property_type",
+        "label": "property_type",
+        "value": "apartment"
+      },
+      {
+        "key": "pet_policy",
+        "label": "pet_policy",
+        "value": "allowed"
+      },
+      {
+        "key": "rating",
+        "label": "rating",
+        "value": 3.9
+      }
+    ],
+    "matched_filters": [
+      {
+        "id": "e_rent_cap",
+        "field": "rent_usd",
+        "operator": "<=",
+        "value": 1500,
+        "matched": true,
+        "text": "rent_usd 1200 不高于 1500"
+      }
+    ],
+    "raw": {
+      "source_row_number": 9,
+      "listing_id": 8,
+      "city": "Houston",
+      "bedrooms": 1,
+      "rent_usd": 1200.0,
+      "property_type": "apartment",
+      "pet_policy": "allowed",
+      "rating": 3.9
+    }
+  },
+  {
+    "item_id": "result_002",
+    "title": "11",
+    "subtitle": "condo",
+    "primary_attributes": [
+      {
+        "key": "listing_id",
+        "label": "listing_id",
+        "value": 11
+      },
+      {
+        "key": "city",
+        "label": "city",
+        "value": "Dallas"
+      },
+      {
+        "key": "bedrooms",
+        "label": "bedrooms",
+        "value": 1
+      },
+      {
+        "key": "rent_usd",
+        "label": "rent_usd",
+        "value": 1300.0
+      }
+    ],
+    "secondary_attributes": [
+      {
+        "key": "property_type",
+        "label": "property_type",
+        "value": "condo"
+      },
+      {
+        "key": "pet_policy",
+        "label": "pet_policy",
+        "value": "allowed"
+      },
+      {
+        "key": "rating",
+        "label": "rating",
+        "value": 4.0
+      }
+    ],
+    "matched_filters": [
+      {
+        "id": "e_rent_cap",
+        "field": "rent_usd",
+        "operator": "<=",
+        "value": 1500,
+        "matched": true,
+        "text": "rent_usd 1300 不高于 1500"
+      }
+    ],
+    "raw": {
+      "source_row_number": 12,
+      "listing_id": 11,
+      "city": "Dallas",
+      "bedrooms": 1,
+      "rent_usd": 1300.0,
+      "property_type": "condo",
+      "pet_policy": "allowed",
+      "rating": 4.0
+    }
+  },
+  {
+    "item_id": "result_003",
+    "title": "1",
+    "subtitle": "apartment",
+    "primary_attributes": [
+      {
+        "key": "listing_id",
+        "label": "listing_id",
+        "value": 1
+      },
+      {
+        "key": "city",
+        "label": "city",
+        "value": "Austin"
+      },
+      {
+        "key": "bedrooms",
+        "label": "bedrooms",
+        "value": 1
+      },
+      {
+        "key": "rent_usd",
+        "label": "rent_usd",
+        "value": 1400.0
+      }
+    ],
+    "secondary_attributes": [
+      {
+        "key": "property_type",
+        "label": "property_type",
+        "value": "apartment"
+      },
+      {
+        "key": "pet_policy",
+        "label": "pet_policy",
+        "value": "allowed"
+      },
+      {
+        "key": "rating",
+        "label": "rating",
+        "value": 4.5
+      }
+    ],
+    "matched_filters": [
+      {
+        "id": "e_rent_cap",
+        "field": "rent_usd",
+        "operator": "<=",
+        "value": 1500,
+        "matched": true,
+        "text": "rent_usd 1400 不高于 1500"
+      }
+    ],
+    "raw": {
+      "source_row_number": 2,
+      "listing_id": 1,
+      "city": "Austin",
+      "bedrooms": 1,
+      "rent_usd": 1400.0,
+      "property_type": "apartment",
+      "pet_policy": "allowed",
+      "rating": 4.5
+    }
+  },
+  {
+    "item_id": "result_004",
+    "title": "5",
+    "subtitle": "apartment",
+    "primary_attributes": [
+      {
+        "key": "listing_id",
+        "label": "listing_id",
+        "value": 5
+      },
+      {
+        "key": "city",
+        "label": "city",
+        "value": "Houston"
+      },
+      {
+        "key": "bedrooms",
+        "label": "bedrooms",
+        "value": 2
+      },
+      {
+        "key": "rent_usd",
+        "label": "rent_usd",
+        "value": 1450.0
+      }
+    ],
+    "secondary_attributes": [
+      {
+        "key": "property_type",
+        "label": "property_type",
+        "value": "apartment"
+      },
+      {
+        "key": "pet_policy",
+        "label": "pet_policy",
+        "value": "not_allowed"
+      },
+      {
+        "key": "rating",
+        "label": "rating",
+        "value": 4.0
+      }
+    ],
+    "matched_filters": [
+      {
+        "id": "e_rent_cap",
+        "field": "rent_usd",
+        "operator": "<=",
+        "value": 1500,
+        "matched": true,
+        "text": "rent_usd 1450 不高于 1500"
+      }
+    ],
+    "raw": {
+      "source_row_number": 6,
+      "listing_id": 5,
+      "city": "Houston",
+      "bedrooms": 2,
+      "rent_usd": 1450.0,
+      "property_type": "apartment",
+      "pet_policy": "not_allowed",
+      "rating": 4.0
+    }
+  },
+  {
+    "item_id": "result_005",
+    "title": "4",
+    "subtitle": "apartment",
+    "primary_attributes": [
+      {
+        "key": "listing_id",
+        "label": "listing_id",
+        "value": 4
+      },
+      {
+        "key": "city",
+        "label": "city",
+        "value": "Dallas"
+      },
+      {
+        "key": "bedrooms",
+        "label": "bedrooms",
+        "value": 2
+      },
+      {
+        "key": "rent_usd",
+        "label": "rent_usd",
+        "value": 1500.0
+      }
+    ],
+    "secondary_attributes": [
+      {
+        "key": "property_type",
+        "label": "property_type",
+        "value": "apartment"
+      },
+      {
+        "key": "pet_policy",
+        "label": "pet_policy",
+        "value": "cats_only"
+      },
+      {
+        "key": "rating",
+        "label": "rating",
+        "value": 4.1
+      }
+    ],
+    "matched_filters": [
+      {
+        "id": "e_rent_cap",
+        "field": "rent_usd",
+        "operator": "<=",
+        "value": 1500,
+        "matched": true,
+        "text": "rent_usd 1500 不高于 1500"
+      }
+    ],
+    "raw": {
+      "source_row_number": 5,
+      "listing_id": 4,
+      "city": "Dallas",
+      "bedrooms": 2,
+      "rent_usd": 1500.0,
+      "property_type": "apartment",
+      "pet_policy": "cats_only",
+      "rating": 4.1
+    }
+  }
+]
+```
+### top_results
+```json
+[
+  {
+    "id": "result_001",
+    "trace": [
+      {
+        "status": "pass",
+        "text": "rent_usd 1200 不高于 1500"
+      }
+    ],
+    "listing_id": 8,
+    "city": "Houston",
+    "bedrooms": 1,
+    "rent_usd": 1200.0,
+    "property_type": "apartment",
+    "pet_policy": "allowed",
+    "rating": 3.9
+  },
+  {
+    "id": "result_002",
+    "trace": [
+      {
+        "status": "pass",
+        "text": "rent_usd 1300 不高于 1500"
+      }
+    ],
+    "listing_id": 11,
+    "city": "Dallas",
+    "bedrooms": 1,
+    "rent_usd": 1300.0,
+    "property_type": "condo",
+    "pet_policy": "allowed",
+    "rating": 4.0
+  },
+  {
+    "id": "result_003",
+    "trace": [
+      {
+        "status": "pass",
+        "text": "rent_usd 1400 不高于 1500"
+      }
+    ],
+    "listing_id": 1,
+    "city": "Austin",
+    "bedrooms": 1,
+    "rent_usd": 1400.0,
+    "property_type": "apartment",
+    "pet_policy": "allowed",
+    "rating": 4.5
+  },
+  {
+    "id": "result_004",
+    "trace": [
+      {
+        "status": "pass",
+        "text": "rent_usd 1450 不高于 1500"
+      }
+    ],
+    "listing_id": 5,
+    "city": "Houston",
+    "bedrooms": 2,
+    "rent_usd": 1450.0,
+    "property_type": "apartment",
+    "pet_policy": "not_allowed",
+    "rating": 4.0
+  },
+  {
+    "id": "result_005",
+    "trace": [
+      {
+        "status": "pass",
+        "text": "rent_usd 1500 不高于 1500"
+      }
+    ],
+    "listing_id": 4,
+    "city": "Dallas",
+    "bedrooms": 2,
+    "rent_usd": 1500.0,
+    "property_type": "apartment",
+    "pet_policy": "cats_only",
+    "rating": 4.1
+  }
+]
+```
+### executed_filters
+```json
+[
+  {
+    "id": "e_rent_cap",
+    "label": "rent_usd 不高于 1500",
+    "field": "rent_usd",
+    "operator": "<=",
+    "value": 1500,
+    "source_span": "1500"
+  }
+]
+```
+### candidates_to_confirm
+```json
+[]
+```
+### unexecuted_preferences
+```json
+[]
+```
+### SQL / params
+```json
+{
+  "sql": "WITH source AS (\n  SELECT row_number() OVER () AS \"__source_row_number\", *\n  FROM \"housing\"\n),\nfiltered AS (\n  SELECT\n    source.*,\n    TRY_CAST(regexp_extract(REPLACE(CAST(\"rent_usd\" AS VARCHAR), ',', ''), '\\d+(?:\\.\\d+)?') AS DOUBLE) AS \"__rent_num\",\n    TRY_CAST(regexp_extract(REPLACE(CAST(\"rating\" AS VARCHAR), ',', ''), '\\d+(?:\\.\\d+)?') AS DOUBLE) AS \"__rating_num\",\n    TRY_CAST(regexp_extract(REPLACE(CAST(\"listing_id\" AS VARCHAR), ',', ''), '\\d+(?:\\.\\d+)?') AS DOUBLE) AS \"__listing_id_num\"\n  FROM source\n  WHERE TRY_CAST(regexp_extract(REPLACE(CAST(\"rent_usd\" AS VARCHAR), ',', ''), '\\d+(?:\\.\\d+)?') AS DOUBLE) <= ?\n),\nprojectable AS (\n  SELECT *\n  FROM filtered\n  WHERE TRUE\n    AND \"__rent_num\" IS NOT NULL\n)\nSELECT *\nFROM projectable\nORDER BY\n  \"__rent_num\" ASC NULLS LAST,\n  \"__rating_num\" DESC NULLS LAST,\n  \"__listing_id_num\" ASC NULLS LAST",
+  "params": [
+    1500.0
+  ]
+}
+```
+### EvidencePack
+```json
+{
+  "user_request": "Seattle under 1500.",
+  "executed_rules": [
+    {
+      "rule_id": "e_rent_cap",
+      "derived_from": "d_rent_cap",
+      "field": "rent_usd",
+      "operator": "<=",
+      "value": 1500,
+      "description": "rent_usd 不高于 1500"
+    }
+  ],
+  "candidate_confirmations": [],
+  "not_executed_preferences": [],
+  "result_count": 5,
+  "top_k_results": [
+    {
+      "rank": 1,
+      "房源编号": 8,
+      "城市": "Houston",
+      "卧室数": 1,
+      "月租": 1200.0,
+      "类型": "apartment",
+      "评分": 3.9,
+      "safety_margin": null,
+      "trace": [
+        {
+          "rule_id": "e_rent_cap",
+          "status": "pass",
+          "reason": "rent_usd 1200 不高于 1500"
+        }
+      ]
+    },
+    {
+      "rank": 2,
+      "房源编号": 11,
+      "城市": "Dallas",
+      "卧室数": 1,
+      "月租": 1300.0,
+      "类型": "condo",
+      "评分": 4.0,
+      "safety_margin": null,
+      "trace": [
+        {
+          "rule_id": "e_rent_cap",
+          "status": "pass",
+          "reason": "rent_usd 1300 不高于 1500"
+        }
+      ]
+    },
+    {
+      "rank": 3,
+      "房源编号": 1,
+      "城市": "Austin",
+      "卧室数": 1,
+      "月租": 1400.0,
+      "类型": "apartment",
+      "评分": 4.5,
+      "safety_margin": null,
+      "trace": [
+        {
+          "rule_id": "e_rent_cap",
+          "status": "pass",
+          "reason": "rent_usd 1400 不高于 1500"
+        }
+      ]
+    },
+    {
+      "rank": 4,
+      "房源编号": 5,
+      "城市": "Houston",
+      "卧室数": 2,
+      "月租": 1450.0,
+      "类型": "apartment",
+      "评分": 4.0,
+      "safety_margin": null,
+      "trace": [
+        {
+          "rule_id": "e_rent_cap",
+          "status": "pass",
+          "reason": "rent_usd 1450 不高于 1500"
+        }
+      ]
+    },
+    {
+      "rank": 5,
+      "房源编号": 4,
+      "城市": "Dallas",
+      "卧室数": 2,
+      "月租": 1500.0,
+      "类型": "apartment",
+      "评分": 4.1,
+      "safety_margin": null,
+      "trace": [
+        {
+          "rule_id": "e_rent_cap",
+          "status": "pass",
+          "reason": "rent_usd 1500 不高于 1500"
+        }
+      ]
+    }
+  ],
+  "trace_summary": {
+    "executed_rule_ids": [
+      "e_rent_cap"
+    ],
+    "not_executed_preference_count": 0,
+    "traced_result_count": 5,
+    "top_k": 5,
+    "top_k_trace_status_counts": {
+      "pass": 5
+    },
+    "safety_warnings": [
+      "答案只能使用 evidence_pack 中的已验证规则、确认记录、结果摘要和 trace。",
+      "候选偏好在确认或模拟确认之前不得执行。"
+    ]
+  },
+  "extracted_preferences": [
+    {
+      "id": "pref_city",
+      "slot": "城市",
+      "value": [
+        "Seattle"
+      ],
+      "source_span": "Seattle",
+      "status": "已对齐字段"
+    },
+    {
+      "id": "pref_rent",
+      "slot": "租金上限",
+      "value": 1500,
+      "source_span": "1500",
+      "status": "已对齐字段"
+    }
+  ],
+  "attribute_grounding_summary": {
+    "total_attributes": 2,
+    "status_counts": {
+      "schema_grounded": 2
+    },
+    "value_index_status_counts": {
+      "not_found": 1,
+      "within_numeric_profile": 1
+    },
+    "unsafe_ungrounded_executable_attributes": 0
+  },
+  "proposed_rule_audit": [],
+  "execution_summary": {
+    "executor": "duckdb",
+    "sql": "WITH source AS (\n  SELECT row_number() OVER () AS \"__source_row_number\", *\n  FROM \"housing\"\n),\nfiltered AS (\n  SELECT\n    source.*,\n    TRY_CAST(regexp_extract(REPLACE(CAST(\"rent_usd\" AS VARCHAR), ',', ''), '\\d+(?:\\.\\d+)?') AS DOUBLE) AS \"__rent_num\",\n    TRY_CAST(regexp_extract(REPLACE(CAST(\"rating\" AS VARCHAR), ',', ''), '\\d+(?:\\.\\d+)?') AS DOUBLE) AS \"__rating_num\",\n    TRY_CAST(regexp_extract(REPLACE(CAST(\"listing_id\" AS VARCHAR), ',', ''), '\\d+(?:\\.\\d+)?') AS DOUBLE) AS \"__listing_id_num\"\n  FROM source\n  WHERE TRY_CAST(regexp_extract(REPLACE(CAST(\"rent_usd\" AS VARCHAR), ',', ''), '\\d+(?:\\.\\d+)?') AS DOUBLE) <= ?\n),\nprojectable AS (\n  SELECT *\n  FROM filtered\n  WHERE TRUE\n    AND \"__rent_num\" IS NOT NULL\n)\nSELECT *\nFROM projectable\nORDER BY\n  \"__rent_num\" ASC NULLS LAST,\n  \"__rating_num\" DESC NULLS LAST,\n  \"__listing_id_num\" ASC NULLS LAST",
+    "params": [
+      1500.0
+    ],
+    "input_row_count": 20,
+    "filtered_row_count": 5,
+    "sort_key": [
+      "rent_usd ASC NULLS LAST",
+      "rating DESC NULLS LAST",
+      "listing_id ASC NULLS LAST"
+    ],
+    "top_k": 5,
+    "hard_rule_ids": [
+      "e_rent_cap"
+    ],
+    "skipped_soft_rule_ids": [
+      "e_city"
+    ]
+  },
+  "attribute_explanations": [
+    {
+      "source_text": "Seattle",
+      "slot_path": "preferences.city",
+      "field": "city",
+      "value": [
+        "Seattle"
+      ],
+      "match_type": "partial_match",
+      "action": "needs_confirmation",
+      "matched_values": [],
+      "reason": "该属性已映射到当前数据字段，但仍需经过规则验证。未进入 hard filter。"
+    },
+    {
+      "source_text": "1500",
+      "slot_path": "preferences.rent_cap",
+      "field": "rent_usd",
+      "value": 1500,
+      "match_type": "exact_match",
+      "action": "executed",
+      "matched_values": [],
+      "reason": "已匹配字段“rent_usd”，并已进入 hard filter。"
+    }
+  ],
+  "confirmed_rules": [],
+  "confirmation_source": [],
+  "executed_after_confirmation": [],
+  "unconfirmed_candidates": [],
+  "no_schema_field_preferences": [],
+  "rejected_confirmations": []
+}
+```
+### answer
+
+根据已验证规则生成结果：
+
+用户需求：Seattle under 1500.
+共筛选到 5 条符合已执行规则的结果。
+
+抽取与结构化结果：
+- 城市：Seattle；状态：已对齐字段；来源：Seattle
+- 租金上限：1500；状态：已对齐字段；来源：1500
+
+字段值审计解释：
+- [需确认] Seattle -> city：partial_match；该属性已映射到当前数据字段，但仍需经过规则验证。未进入 hard filter。
+- [已执行] 1500 -> rent_usd：exact_match；已匹配字段“rent_usd”，并已进入 hard filter。
+
+已执行规则：
+- e_rent_cap：rent_usd 不高于 1500
+
+候选偏好确认记录：
+
+未执行但已保留的偏好：
+- 无。
+
+前 5 条结果：
+- 1. 8；城市：Houston；卧室数：1；月租：1200 元/年；类型：apartment；评分：3.9。
+- 2. 11；城市：Dallas；卧室数：1；月租：1300 元/年；类型：condo；评分：4.0。
+- 3. 1；城市：Austin；卧室数：1；月租：1400 元/年；类型：apartment；评分：4.5。
+- 4. 5；城市：Houston；卧室数：2；月租：1450 元/年；类型：apartment；评分：4.0。
+- 5. 4；城市：Dallas；卧室数：2；月租：1500 元/年；类型：apartment；评分：4.1。
+
+安全说明：
+- 答案只能使用 证据包 中的已验证规则、确认记录、结果摘要和 trace。
+- 候选偏好在确认或模拟确认之前不得执行。
+
+## products_01 `通过`
+
+- domain: `products`
+- query: Audio products under 100.
+- status: `ok`
+- pass/fail：`通过`
+
+### items
+```json
+[
+  {
+    "item_id": "result_001",
+    "title": "Speaker Mini",
+    "subtitle": "audio",
+    "primary_attributes": [
+      {
+        "key": "product_id",
+        "label": "product_id",
+        "value": 17
+      },
+      {
+        "key": "product_name",
+        "label": "product_name",
+        "value": "Speaker Mini"
+      },
+      {
+        "key": "category",
+        "label": "category",
+        "value": "audio"
+      },
+      {
+        "key": "price_usd",
+        "label": "price_usd",
+        "value": 49.0
+      }
+    ],
+    "secondary_attributes": [
+      {
+        "key": "rating",
+        "label": "rating",
+        "value": 4.2
+      },
+      {
+        "key": "stock_count",
+        "label": "stock_count",
+        "value": 44
+      },
+      {
+        "key": "brand",
+        "label": "brand",
+        "value": "Soundly"
+      }
+    ],
+    "matched_filters": [
+      {
+        "id": "e_category",
+        "field": "category",
+        "operator": "in",
+        "value": [
+          "audio"
+        ],
+        "matched": true,
+        "text": "category 属于：audio"
+      },
+      {
+        "id": "e_price_cap",
+        "field": "price_usd",
+        "operator": "<=",
+        "value": 100,
+        "matched": true,
+        "text": "price_usd 49 不高于 100"
+      }
+    ],
+    "raw": {
+      "source_row_number": 18,
+      "product_id": 17,
+      "product_name": "Speaker Mini",
+      "category": "audio",
+      "price_usd": 49.0,
+      "rating": 4.2,
+      "stock_count": 44,
+      "brand": "Soundly",
+      "description": "Portable speaker with clear voice"
+    }
+  },
+  {
+    "item_id": "result_002",
+    "title": "Headphones Air",
+    "subtitle": "audio",
+    "primary_attributes": [
+      {
+        "key": "product_id",
+        "label": "product_id",
+        "value": 19
+      },
+      {
+        "key": "product_name",
+        "label": "product_name",
+        "value": "Headphones Air"
+      },
+      {
+        "key": "category",
+        "label": "category",
+        "value": "audio"
+      },
+      {
+        "key": "price_usd",
+        "label": "price_usd",
+        "value": 89.0
+      }
+    ],
+    "secondary_attributes": [
+      {
+        "key": "rating",
+        "label": "rating",
+        "value": 4.1
+      },
+      {
+        "key": "stock_count",
+        "label": "stock_count",
+        "value": 70
+      },
+      {
+        "key": "brand",
+        "label": "brand",
+        "value": "Soundly"
+      }
+    ],
+    "matched_filters": [
+      {
+        "id": "e_category",
+        "field": "category",
+        "operator": "in",
+        "value": [
+          "audio"
+        ],
+        "matched": true,
+        "text": "category 属于：audio"
+      },
+      {
+        "id": "e_price_cap",
+        "field": "price_usd",
+        "operator": "<=",
+        "value": 100,
+        "matched": true,
+        "text": "price_usd 89 不高于 100"
+      }
+    ],
+    "raw": {
+      "source_row_number": 20,
+      "product_id": 19,
+      "product_name": "Headphones Air",
+      "category": "audio",
+      "price_usd": 89.0,
+      "rating": 4.1,
+      "stock_count": 70,
+      "brand": "Soundly",
+      "description": "Wireless headphones for commuting"
+    }
+  }
+]
+```
+### top_results
+```json
+[
+  {
+    "id": "result_001",
+    "trace": [
+      {
+        "status": "pass",
+        "text": "category 属于：audio"
+      },
+      {
+        "status": "pass",
+        "text": "price_usd 49 不高于 100"
+      }
+    ],
+    "product_id": 17,
+    "product_name": "Speaker Mini",
+    "category": "audio",
+    "price_usd": 49.0,
+    "rating": 4.2,
+    "stock_count": 44,
+    "brand": "Soundly"
+  },
+  {
+    "id": "result_002",
+    "trace": [
+      {
+        "status": "pass",
+        "text": "category 属于：audio"
+      },
+      {
+        "status": "pass",
+        "text": "price_usd 89 不高于 100"
+      }
+    ],
+    "product_id": 19,
+    "product_name": "Headphones Air",
+    "category": "audio",
+    "price_usd": 89.0,
+    "rating": 4.1,
+    "stock_count": 70,
+    "brand": "Soundly"
+  }
+]
+```
+### executed_filters
+```json
+[
+  {
+    "id": "e_category",
+    "label": "category 属于：audio",
+    "field": "category",
+    "operator": "in",
+    "value": [
+      "audio"
+    ],
+    "source_span": "audio"
+  },
+  {
+    "id": "e_price_cap",
+    "label": "price_usd 不高于 100",
+    "field": "price_usd",
+    "operator": "<=",
+    "value": 100,
+    "source_span": "100"
+  }
+]
+```
+### candidates_to_confirm
+```json
+[]
+```
+### unexecuted_preferences
+```json
+[]
+```
+### SQL / params
+```json
+{
+  "sql": "WITH source AS (\n  SELECT row_number() OVER () AS \"__source_row_number\", *\n  FROM \"products\"\n),\nfiltered AS (\n  SELECT\n    source.*,\n    TRY_CAST(regexp_extract(REPLACE(CAST(\"price_usd\" AS VARCHAR), ',', ''), '\\d+(?:\\.\\d+)?') AS DOUBLE) AS \"__price_num\",\n    TRY_CAST(regexp_extract(REPLACE(CAST(\"rating\" AS VARCHAR), ',', ''), '\\d+(?:\\.\\d+)?') AS DOUBLE) AS \"__rating_num\",\n    TRY_CAST(regexp_extract(REPLACE(CAST(\"product_id\" AS VARCHAR), ',', ''), '\\d+(?:\\.\\d+)?') AS DOUBLE) AS \"__product_id_num\"\n  FROM source\n  WHERE CAST(\"category\" AS VARCHAR) IN (?) AND TRY_CAST(regexp_extract(REPLACE(CAST(\"price_usd\" AS VARCHAR), ',', ''), '\\d+(?:\\.\\d+)?') AS DOUBLE) <= ?\n),\nprojectable AS (\n  SELECT *\n  FROM filtered\n  WHERE TRUE\n    AND \"__price_num\" IS NOT NULL\n)\nSELECT *\nFROM projectable\nORDER BY\n  \"__price_num\" ASC NULLS LAST,\n  \"__rating_num\" DESC NULLS LAST,\n  \"__product_id_num\" ASC NULLS LAST",
+  "params": [
+    "audio",
+    100.0
+  ]
+}
+```
+### EvidencePack
+```json
+{
+  "user_request": "Audio products under 100.",
+  "executed_rules": [
+    {
+      "rule_id": "e_category",
+      "derived_from": "d_category",
+      "field": "category",
+      "operator": "in",
+      "value": [
+        "audio"
+      ],
+      "description": "category 属于：audio"
+    },
+    {
+      "rule_id": "e_price_cap",
+      "derived_from": "d_price_cap",
+      "field": "price_usd",
+      "operator": "<=",
+      "value": 100,
+      "description": "price_usd 不高于 100"
+    }
+  ],
+  "candidate_confirmations": [],
+  "not_executed_preferences": [],
+  "result_count": 2,
+  "top_k_results": [
+    {
+      "rank": 1,
+      "商品编号": 17,
+      "商品": "Speaker Mini",
+      "类别": "audio",
+      "价格": 49.0,
+      "评分": 4.2,
+      "safety_margin": null,
+      "trace": [
+        {
+          "rule_id": "e_category",
+          "status": "pass",
+          "reason": "category 属于：audio"
+        },
+        {
+          "rule_id": "e_price_cap",
+          "status": "pass",
+          "reason": "price_usd 49 不高于 100"
+        }
+      ]
+    },
+    {
+      "rank": 2,
+      "商品编号": 19,
+      "商品": "Headphones Air",
+      "类别": "audio",
+      "价格": 89.0,
+      "评分": 4.1,
+      "safety_margin": null,
+      "trace": [
+        {
+          "rule_id": "e_category",
+          "status": "pass",
+          "reason": "category 属于：audio"
+        },
+        {
+          "rule_id": "e_price_cap",
+          "status": "pass",
+          "reason": "price_usd 89 不高于 100"
+        }
+      ]
+    }
+  ],
+  "trace_summary": {
+    "executed_rule_ids": [
+      "e_category",
+      "e_price_cap"
+    ],
+    "not_executed_preference_count": 0,
+    "traced_result_count": 2,
+    "top_k": 2,
+    "top_k_trace_status_counts": {
+      "pass": 4
+    },
+    "safety_warnings": [
+      "答案只能使用 evidence_pack 中的已验证规则、确认记录、结果摘要和 trace。",
+      "候选偏好在确认或模拟确认之前不得执行。"
+    ]
+  },
+  "extracted_preferences": [
+    {
+      "id": "pref_category",
+      "slot": "商品类别",
+      "value": [
+        "audio"
+      ],
+      "source_span": "audio",
+      "status": "已对齐字段"
+    },
+    {
+      "id": "pref_price",
+      "slot": "价格上限",
+      "value": 100,
+      "source_span": "100",
+      "status": "已对齐字段"
+    }
+  ],
+  "attribute_grounding_summary": {
+    "total_attributes": 2,
+    "status_counts": {
+      "schema_grounded": 2
+    },
+    "value_index_status_counts": {
+      "matched": 1,
+      "within_numeric_profile": 1
+    },
+    "unsafe_ungrounded_executable_attributes": 0
+  },
+  "proposed_rule_audit": [],
+  "execution_summary": {
+    "executor": "duckdb",
+    "sql": "WITH source AS (\n  SELECT row_number() OVER () AS \"__source_row_number\", *\n  FROM \"products\"\n),\nfiltered AS (\n  SELECT\n    source.*,\n    TRY_CAST(regexp_extract(REPLACE(CAST(\"price_usd\" AS VARCHAR), ',', ''), '\\d+(?:\\.\\d+)?') AS DOUBLE) AS \"__price_num\",\n    TRY_CAST(regexp_extract(REPLACE(CAST(\"rating\" AS VARCHAR), ',', ''), '\\d+(?:\\.\\d+)?') AS DOUBLE) AS \"__rating_num\",\n    TRY_CAST(regexp_extract(REPLACE(CAST(\"product_id\" AS VARCHAR), ',', ''), '\\d+(?:\\.\\d+)?') AS DOUBLE) AS \"__product_id_num\"\n  FROM source\n  WHERE CAST(\"category\" AS VARCHAR) IN (?) AND TRY_CAST(regexp_extract(REPLACE(CAST(\"price_usd\" AS VARCHAR), ',', ''), '\\d+(?:\\.\\d+)?') AS DOUBLE) <= ?\n),\nprojectable AS (\n  SELECT *\n  FROM filtered\n  WHERE TRUE\n    AND \"__price_num\" IS NOT NULL\n)\nSELECT *\nFROM projectable\nORDER BY\n  \"__price_num\" ASC NULLS LAST,\n  \"__rating_num\" DESC NULLS LAST,\n  \"__product_id_num\" ASC NULLS LAST",
+    "params": [
+      "audio",
+      100.0
+    ],
+    "input_row_count": 20,
+    "filtered_row_count": 2,
+    "sort_key": [
+      "price_usd ASC NULLS LAST",
+      "rating DESC NULLS LAST",
+      "product_id ASC NULLS LAST"
+    ],
+    "top_k": 5,
+    "hard_rule_ids": [
+      "e_category",
+      "e_price_cap"
+    ],
+    "skipped_soft_rule_ids": []
+  },
+  "attribute_explanations": [
+    {
+      "source_text": "audio",
+      "slot_path": "preferences.categories",
+      "field": "category",
+      "value": [
+        "audio"
+      ],
+      "match_type": "exact_match",
+      "action": "executed",
+      "matched_values": [
+        "audio"
+      ],
+      "reason": "已匹配字段“category”，并已进入 hard filter。"
+    },
+    {
+      "source_text": "100",
+      "slot_path": "preferences.price_cap",
+      "field": "price_usd",
+      "value": 100,
+      "match_type": "exact_match",
+      "action": "executed",
+      "matched_values": [],
+      "reason": "已匹配字段“price_usd”，并已进入 hard filter。"
+    }
+  ],
+  "confirmed_rules": [],
+  "confirmation_source": [],
+  "executed_after_confirmation": [],
+  "unconfirmed_candidates": [],
+  "no_schema_field_preferences": [],
+  "rejected_confirmations": []
+}
+```
+### answer
+
+根据已验证规则生成结果：
+
+用户需求：Audio products under 100.
+共筛选到 2 条符合已执行规则的结果。
+
+抽取与结构化结果：
+- 商品类别：audio；状态：已对齐字段；来源：audio
+- 价格上限：100；状态：已对齐字段；来源：100
+
+字段值审计解释：
+- [已执行] audio -> category：exact_match；索引命中：audio；已匹配字段“category”，并已进入 hard filter。
+- [已执行] 100 -> price_usd：exact_match；已匹配字段“price_usd”，并已进入 hard filter。
+
+已执行规则：
+- e_category：category 属于：audio
+- e_price_cap：price_usd 不高于 100
+
+候选偏好确认记录：
+
+未执行但已保留的偏好：
+- 无。
+
+前 2 条结果：
+- 1. 17；商品：Speaker Mini；类别：audio；价格：49 元/年；评分：4.2。
+- 2. 19；商品：Headphones Air；类别：audio；价格：89 元/年；评分：4.1。
+
+安全说明：
+- 答案只能使用 证据包 中的已验证规则、确认记录、结果摘要和 trace。
+- 候选偏好在确认或模拟确认之前不得执行。
+
+## products_02 `通过`
+
+- domain: `products`
+- query: Laptops under 1000 with rating at least 4.0.
+- status: `ok`
+- pass/fail：`通过`
+
+### items
+```json
+[
+  {
+    "item_id": "result_001",
+    "title": "Notebook Alpha",
+    "subtitle": "laptop",
+    "primary_attributes": [
+      {
+        "key": "product_id",
+        "label": "product_id",
+        "value": 1
+      },
+      {
+        "key": "product_name",
+        "label": "product_name",
+        "value": "Notebook Alpha"
+      },
+      {
+        "key": "category",
+        "label": "category",
+        "value": "laptop"
+      },
+      {
+        "key": "price_usd",
+        "label": "price_usd",
+        "value": 899.0
+      }
+    ],
+    "secondary_attributes": [
+      {
+        "key": "rating",
+        "label": "rating",
+        "value": 4.5
+      },
+      {
+        "key": "stock_count",
+        "label": "stock_count",
+        "value": 12
+      },
+      {
+        "key": "brand",
+        "label": "brand",
+        "value": "Acme"
+      }
+    ],
+    "matched_filters": [
+      {
+        "id": "e_category",
+        "field": "category",
+        "operator": "in",
+        "value": [
+          "laptop"
+        ],
+        "matched": true,
+        "text": "category 属于：laptop"
+      },
+      {
+        "id": "e_price_cap",
+        "field": "price_usd",
+        "operator": "<=",
+        "value": 1000,
+        "matched": true,
+        "text": "price_usd 899 不高于 1000"
+      },
+      {
+        "id": "e_rating_min",
+        "field": "rating",
+        "operator": ">=",
+        "value": 4.0,
+        "matched": true,
+        "text": "rating 4.5 不低于 4"
+      }
+    ],
+    "raw": {
+      "source_row_number": 2,
+      "product_id": 1,
+      "product_name": "Notebook Alpha",
+      "category": "laptop",
+      "price_usd": 899.0,
+      "rating": 4.5,
+      "stock_count": 12,
+      "brand": "Acme",
+      "description": "Lightweight laptop for students"
+    }
+  }
+]
+```
+### top_results
+```json
+[
+  {
+    "id": "result_001",
+    "trace": [
+      {
+        "status": "pass",
+        "text": "category 属于：laptop"
+      },
+      {
+        "status": "pass",
+        "text": "price_usd 899 不高于 1000"
+      },
+      {
+        "status": "pass",
+        "text": "rating 4.5 不低于 4"
+      }
+    ],
+    "product_id": 1,
+    "product_name": "Notebook Alpha",
+    "category": "laptop",
+    "price_usd": 899.0,
+    "rating": 4.5,
+    "stock_count": 12,
+    "brand": "Acme"
+  }
+]
+```
+### executed_filters
+```json
+[
+  {
+    "id": "e_category",
+    "label": "category 属于：laptop",
+    "field": "category",
+    "operator": "in",
+    "value": [
+      "laptop"
+    ],
+    "source_span": "laptop"
+  },
+  {
+    "id": "e_price_cap",
+    "label": "price_usd 不高于 1000",
+    "field": "price_usd",
+    "operator": "<=",
+    "value": 1000,
+    "source_span": "1000"
+  },
+  {
+    "id": "e_rating_min",
+    "label": "rating 不低于 4",
+    "field": "rating",
+    "operator": ">=",
+    "value": 4.0,
+    "source_span": "4.0"
+  }
+]
+```
+### candidates_to_confirm
+```json
+[]
+```
+### unexecuted_preferences
+```json
+[]
+```
+### SQL / params
+```json
+{
+  "sql": "WITH source AS (\n  SELECT row_number() OVER () AS \"__source_row_number\", *\n  FROM \"products\"\n),\nfiltered AS (\n  SELECT\n    source.*,\n    TRY_CAST(regexp_extract(REPLACE(CAST(\"price_usd\" AS VARCHAR), ',', ''), '\\d+(?:\\.\\d+)?') AS DOUBLE) AS \"__price_num\",\n    TRY_CAST(regexp_extract(REPLACE(CAST(\"rating\" AS VARCHAR), ',', ''), '\\d+(?:\\.\\d+)?') AS DOUBLE) AS \"__rating_num\",\n    TRY_CAST(regexp_extract(REPLACE(CAST(\"product_id\" AS VARCHAR), ',', ''), '\\d+(?:\\.\\d+)?') AS DOUBLE) AS \"__product_id_num\"\n  FROM source\n  WHERE CAST(\"category\" AS VARCHAR) IN (?) AND TRY_CAST(regexp_extract(REPLACE(CAST(\"price_usd\" AS VARCHAR), ',', ''), '\\d+(?:\\.\\d+)?') AS DOUBLE) <= ? AND TRY_CAST(regexp_extract(REPLACE(CAST(\"rating\" AS VARCHAR), ',', ''), '\\d+(?:\\.\\d+)?') AS DOUBLE) >= ?\n),\nprojectable AS (\n  SELECT *\n  FROM filtered\n  WHERE TRUE\n    AND \"__price_num\" IS NOT NULL\n)\nSELECT *\nFROM projectable\nORDER BY\n  \"__price_num\" ASC NULLS LAST,\n  \"__rating_num\" DESC NULLS LAST,\n  \"__product_id_num\" ASC NULLS LAST",
+  "params": [
+    "laptop",
+    1000.0,
+    4.0
+  ]
+}
+```
+### EvidencePack
+```json
+{
+  "user_request": "Laptops under 1000 with rating at least 4.0.",
+  "executed_rules": [
+    {
+      "rule_id": "e_category",
+      "derived_from": "d_category",
+      "field": "category",
+      "operator": "in",
+      "value": [
+        "laptop"
+      ],
+      "description": "category 属于：laptop"
+    },
+    {
+      "rule_id": "e_price_cap",
+      "derived_from": "d_price_cap",
+      "field": "price_usd",
+      "operator": "<=",
+      "value": 1000,
+      "description": "price_usd 不高于 1000"
+    },
+    {
+      "rule_id": "e_rating_min",
+      "derived_from": "d_rating_min",
+      "field": "rating",
+      "operator": ">=",
+      "value": 4.0,
+      "description": "rating 不低于 4"
+    }
+  ],
+  "candidate_confirmations": [],
+  "not_executed_preferences": [],
+  "result_count": 1,
+  "top_k_results": [
+    {
+      "rank": 1,
+      "商品编号": 1,
+      "商品": "Notebook Alpha",
+      "类别": "laptop",
+      "价格": 899.0,
+      "评分": 4.5,
+      "safety_margin": null,
+      "trace": [
+        {
+          "rule_id": "e_category",
+          "status": "pass",
+          "reason": "category 属于：laptop"
+        },
+        {
+          "rule_id": "e_price_cap",
+          "status": "pass",
+          "reason": "price_usd 899 不高于 1000"
+        },
+        {
+          "rule_id": "e_rating_min",
+          "status": "pass",
+          "reason": "rating 4.5 不低于 4"
+        }
+      ]
+    }
+  ],
+  "trace_summary": {
+    "executed_rule_ids": [
+      "e_category",
+      "e_price_cap",
+      "e_rating_min"
+    ],
+    "not_executed_preference_count": 0,
+    "traced_result_count": 1,
+    "top_k": 1,
+    "top_k_trace_status_counts": {
+      "pass": 3
+    },
+    "safety_warnings": [
+      "答案只能使用 evidence_pack 中的已验证规则、确认记录、结果摘要和 trace。",
+      "候选偏好在确认或模拟确认之前不得执行。"
+    ]
+  },
+  "extracted_preferences": [
+    {
+      "id": "pref_category",
+      "slot": "商品类别",
+      "value": [
+        "laptop"
+      ],
+      "source_span": "laptop",
+      "status": "已对齐字段"
+    },
+    {
+      "id": "pref_price",
+      "slot": "价格上限",
+      "value": 1000,
+      "source_span": "1000",
+      "status": "已对齐字段"
+    },
+    {
+      "id": "pref_rating",
+      "slot": "最低评分",
+      "value": 4.0,
+      "source_span": "4.0",
+      "status": "已对齐字段"
+    }
+  ],
+  "attribute_grounding_summary": {
+    "total_attributes": 3,
+    "status_counts": {
+      "schema_grounded": 3
+    },
+    "value_index_status_counts": {
+      "matched": 1,
+      "within_numeric_profile": 2
+    },
+    "unsafe_ungrounded_executable_attributes": 0
+  },
+  "proposed_rule_audit": [],
+  "execution_summary": {
+    "executor": "duckdb",
+    "sql": "WITH source AS (\n  SELECT row_number() OVER () AS \"__source_row_number\", *\n  FROM \"products\"\n),\nfiltered AS (\n  SELECT\n    source.*,\n    TRY_CAST(regexp_extract(REPLACE(CAST(\"price_usd\" AS VARCHAR), ',', ''), '\\d+(?:\\.\\d+)?') AS DOUBLE) AS \"__price_num\",\n    TRY_CAST(regexp_extract(REPLACE(CAST(\"rating\" AS VARCHAR), ',', ''), '\\d+(?:\\.\\d+)?') AS DOUBLE) AS \"__rating_num\",\n    TRY_CAST(regexp_extract(REPLACE(CAST(\"product_id\" AS VARCHAR), ',', ''), '\\d+(?:\\.\\d+)?') AS DOUBLE) AS \"__product_id_num\"\n  FROM source\n  WHERE CAST(\"category\" AS VARCHAR) IN (?) AND TRY_CAST(regexp_extract(REPLACE(CAST(\"price_usd\" AS VARCHAR), ',', ''), '\\d+(?:\\.\\d+)?') AS DOUBLE) <= ? AND TRY_CAST(regexp_extract(REPLACE(CAST(\"rating\" AS VARCHAR), ',', ''), '\\d+(?:\\.\\d+)?') AS DOUBLE) >= ?\n),\nprojectable AS (\n  SELECT *\n  FROM filtered\n  WHERE TRUE\n    AND \"__price_num\" IS NOT NULL\n)\nSELECT *\nFROM projectable\nORDER BY\n  \"__price_num\" ASC NULLS LAST,\n  \"__rating_num\" DESC NULLS LAST,\n  \"__product_id_num\" ASC NULLS LAST",
+    "params": [
+      "laptop",
+      1000.0,
+      4.0
+    ],
+    "input_row_count": 20,
+    "filtered_row_count": 1,
+    "sort_key": [
+      "price_usd ASC NULLS LAST",
+      "rating DESC NULLS LAST",
+      "product_id ASC NULLS LAST"
+    ],
+    "top_k": 5,
+    "hard_rule_ids": [
+      "e_category",
+      "e_price_cap",
+      "e_rating_min"
+    ],
+    "skipped_soft_rule_ids": []
+  },
+  "attribute_explanations": [
+    {
+      "source_text": "laptop",
+      "slot_path": "preferences.categories",
+      "field": "category",
+      "value": [
+        "laptop"
+      ],
+      "match_type": "exact_match",
+      "action": "executed",
+      "matched_values": [
+        "laptop"
+      ],
+      "reason": "已匹配字段“category”，并已进入 hard filter。"
+    },
+    {
+      "source_text": "1000",
+      "slot_path": "preferences.price_cap",
+      "field": "price_usd",
+      "value": 1000,
+      "match_type": "exact_match",
+      "action": "executed",
+      "matched_values": [],
+      "reason": "已匹配字段“price_usd”，并已进入 hard filter。"
+    },
+    {
+      "source_text": "4.0",
+      "slot_path": "preferences.rating_min",
+      "field": "rating",
+      "value": 4.0,
+      "match_type": "exact_match",
+      "action": "executed",
+      "matched_values": [],
+      "reason": "已匹配字段“rating”，并已进入 hard filter。"
+    }
+  ],
+  "confirmed_rules": [],
+  "confirmation_source": [],
+  "executed_after_confirmation": [],
+  "unconfirmed_candidates": [],
+  "no_schema_field_preferences": [],
+  "rejected_confirmations": []
+}
+```
+### answer
+
+根据已验证规则生成结果：
+
+用户需求：Laptops under 1000 with rating at least 4.0.
+共筛选到 1 条符合已执行规则的结果。
+
+抽取与结构化结果：
+- 商品类别：laptop；状态：已对齐字段；来源：laptop
+- 价格上限：1000；状态：已对齐字段；来源：1000
+- 最低评分：4.0；状态：已对齐字段；来源：4.0
+
+字段值审计解释：
+- [已执行] laptop -> category：exact_match；索引命中：laptop；已匹配字段“category”，并已进入 hard filter。
+- [已执行] 1000 -> price_usd：exact_match；已匹配字段“price_usd”，并已进入 hard filter。
+- [已执行] 4.0 -> rating：exact_match；已匹配字段“rating”，并已进入 hard filter。
+
+已执行规则：
+- e_category：category 属于：laptop
+- e_price_cap：price_usd 不高于 1000
+- e_rating_min：rating 不低于 4
+
+候选偏好确认记录：
+
+未执行但已保留的偏好：
+- 无。
+
+前 1 条结果：
+- 1. 1；商品：Notebook Alpha；类别：laptop；价格：899 元/年；评分：4.5。
+
+安全说明：
+- 答案只能使用 证据包 中的已验证规则、确认记录、结果摘要和 trace。
+- 候选偏好在确认或模拟确认之前不得执行。
+
+## products_03 `通过`
+
+- domain: `products`
+- query: Tablets under 500.
+- status: `ok`
+- pass/fail：`通过`
+
+### items
+```json
+[
+  {
+    "item_id": "result_001",
+    "title": "Tablet Mini",
+    "subtitle": "tablet",
+    "primary_attributes": [
+      {
+        "key": "product_id",
+        "label": "product_id",
+        "value": 3
+      },
+      {
+        "key": "product_name",
+        "label": "product_name",
+        "value": "Tablet Mini"
+      },
+      {
+        "key": "category",
+        "label": "category",
+        "value": "tablet"
+      },
+      {
+        "key": "price_usd",
+        "label": "price_usd",
+        "value": 399.0
+      }
+    ],
+    "secondary_attributes": [
+      {
+        "key": "rating",
+        "label": "rating",
+        "value": 4.2
+      },
+      {
+        "key": "stock_count",
+        "label": "stock_count",
+        "value": 30
+      },
+      {
+        "key": "brand",
+        "label": "brand",
+        "value": "Orion"
+      }
+    ],
+    "matched_filters": [
+      {
+        "id": "e_category",
+        "field": "category",
+        "operator": "in",
+        "value": [
+          "tablet"
+        ],
+        "matched": true,
+        "text": "category 属于：tablet"
+      },
+      {
+        "id": "e_price_cap",
+        "field": "price_usd",
+        "operator": "<=",
+        "value": 500,
+        "matched": true,
+        "text": "price_usd 399 不高于 500"
+      }
+    ],
+    "raw": {
+      "source_row_number": 4,
+      "product_id": 3,
+      "product_name": "Tablet Mini",
+      "category": "tablet",
+      "price_usd": 399.0,
+      "rating": 4.2,
+      "stock_count": 30,
+      "brand": "Orion",
+      "description": "Compact tablet for reading"
+    }
+  }
+]
+```
+### top_results
+```json
+[
+  {
+    "id": "result_001",
+    "trace": [
+      {
+        "status": "pass",
+        "text": "category 属于：tablet"
+      },
+      {
+        "status": "pass",
+        "text": "price_usd 399 不高于 500"
+      }
+    ],
+    "product_id": 3,
+    "product_name": "Tablet Mini",
+    "category": "tablet",
+    "price_usd": 399.0,
+    "rating": 4.2,
+    "stock_count": 30,
+    "brand": "Orion"
+  }
+]
+```
+### executed_filters
+```json
+[
+  {
+    "id": "e_category",
+    "label": "category 属于：tablet",
+    "field": "category",
+    "operator": "in",
+    "value": [
+      "tablet"
+    ],
+    "source_span": "tablet"
+  },
+  {
+    "id": "e_price_cap",
+    "label": "price_usd 不高于 500",
+    "field": "price_usd",
+    "operator": "<=",
+    "value": 500,
+    "source_span": "500"
+  }
+]
+```
+### candidates_to_confirm
+```json
+[]
+```
+### unexecuted_preferences
+```json
+[]
+```
+### SQL / params
+```json
+{
+  "sql": "WITH source AS (\n  SELECT row_number() OVER () AS \"__source_row_number\", *\n  FROM \"products\"\n),\nfiltered AS (\n  SELECT\n    source.*,\n    TRY_CAST(regexp_extract(REPLACE(CAST(\"price_usd\" AS VARCHAR), ',', ''), '\\d+(?:\\.\\d+)?') AS DOUBLE) AS \"__price_num\",\n    TRY_CAST(regexp_extract(REPLACE(CAST(\"rating\" AS VARCHAR), ',', ''), '\\d+(?:\\.\\d+)?') AS DOUBLE) AS \"__rating_num\",\n    TRY_CAST(regexp_extract(REPLACE(CAST(\"product_id\" AS VARCHAR), ',', ''), '\\d+(?:\\.\\d+)?') AS DOUBLE) AS \"__product_id_num\"\n  FROM source\n  WHERE CAST(\"category\" AS VARCHAR) IN (?) AND TRY_CAST(regexp_extract(REPLACE(CAST(\"price_usd\" AS VARCHAR), ',', ''), '\\d+(?:\\.\\d+)?') AS DOUBLE) <= ?\n),\nprojectable AS (\n  SELECT *\n  FROM filtered\n  WHERE TRUE\n    AND \"__price_num\" IS NOT NULL\n)\nSELECT *\nFROM projectable\nORDER BY\n  \"__price_num\" ASC NULLS LAST,\n  \"__rating_num\" DESC NULLS LAST,\n  \"__product_id_num\" ASC NULLS LAST",
+  "params": [
+    "tablet",
+    500.0
+  ]
+}
+```
+### EvidencePack
+```json
+{
+  "user_request": "Tablets under 500.",
+  "executed_rules": [
+    {
+      "rule_id": "e_category",
+      "derived_from": "d_category",
+      "field": "category",
+      "operator": "in",
+      "value": [
+        "tablet"
+      ],
+      "description": "category 属于：tablet"
+    },
+    {
+      "rule_id": "e_price_cap",
+      "derived_from": "d_price_cap",
+      "field": "price_usd",
+      "operator": "<=",
+      "value": 500,
+      "description": "price_usd 不高于 500"
+    }
+  ],
+  "candidate_confirmations": [],
+  "not_executed_preferences": [],
+  "result_count": 1,
+  "top_k_results": [
+    {
+      "rank": 1,
+      "商品编号": 3,
+      "商品": "Tablet Mini",
+      "类别": "tablet",
+      "价格": 399.0,
+      "评分": 4.2,
+      "safety_margin": null,
+      "trace": [
+        {
+          "rule_id": "e_category",
+          "status": "pass",
+          "reason": "category 属于：tablet"
+        },
+        {
+          "rule_id": "e_price_cap",
+          "status": "pass",
+          "reason": "price_usd 399 不高于 500"
+        }
+      ]
+    }
+  ],
+  "trace_summary": {
+    "executed_rule_ids": [
+      "e_category",
+      "e_price_cap"
+    ],
+    "not_executed_preference_count": 0,
+    "traced_result_count": 1,
+    "top_k": 1,
+    "top_k_trace_status_counts": {
+      "pass": 2
+    },
+    "safety_warnings": [
+      "答案只能使用 evidence_pack 中的已验证规则、确认记录、结果摘要和 trace。",
+      "候选偏好在确认或模拟确认之前不得执行。"
+    ]
+  },
+  "extracted_preferences": [
+    {
+      "id": "pref_category",
+      "slot": "商品类别",
+      "value": [
+        "tablet"
+      ],
+      "source_span": "tablet",
+      "status": "已对齐字段"
+    },
+    {
+      "id": "pref_price",
+      "slot": "价格上限",
+      "value": 500,
+      "source_span": "500",
+      "status": "已对齐字段"
+    }
+  ],
+  "attribute_grounding_summary": {
+    "total_attributes": 2,
+    "status_counts": {
+      "schema_grounded": 2
+    },
+    "value_index_status_counts": {
+      "matched": 1,
+      "within_numeric_profile": 1
+    },
+    "unsafe_ungrounded_executable_attributes": 0
+  },
+  "proposed_rule_audit": [],
+  "execution_summary": {
+    "executor": "duckdb",
+    "sql": "WITH source AS (\n  SELECT row_number() OVER () AS \"__source_row_number\", *\n  FROM \"products\"\n),\nfiltered AS (\n  SELECT\n    source.*,\n    TRY_CAST(regexp_extract(REPLACE(CAST(\"price_usd\" AS VARCHAR), ',', ''), '\\d+(?:\\.\\d+)?') AS DOUBLE) AS \"__price_num\",\n    TRY_CAST(regexp_extract(REPLACE(CAST(\"rating\" AS VARCHAR), ',', ''), '\\d+(?:\\.\\d+)?') AS DOUBLE) AS \"__rating_num\",\n    TRY_CAST(regexp_extract(REPLACE(CAST(\"product_id\" AS VARCHAR), ',', ''), '\\d+(?:\\.\\d+)?') AS DOUBLE) AS \"__product_id_num\"\n  FROM source\n  WHERE CAST(\"category\" AS VARCHAR) IN (?) AND TRY_CAST(regexp_extract(REPLACE(CAST(\"price_usd\" AS VARCHAR), ',', ''), '\\d+(?:\\.\\d+)?') AS DOUBLE) <= ?\n),\nprojectable AS (\n  SELECT *\n  FROM filtered\n  WHERE TRUE\n    AND \"__price_num\" IS NOT NULL\n)\nSELECT *\nFROM projectable\nORDER BY\n  \"__price_num\" ASC NULLS LAST,\n  \"__rating_num\" DESC NULLS LAST,\n  \"__product_id_num\" ASC NULLS LAST",
+    "params": [
+      "tablet",
+      500.0
+    ],
+    "input_row_count": 20,
+    "filtered_row_count": 1,
+    "sort_key": [
+      "price_usd ASC NULLS LAST",
+      "rating DESC NULLS LAST",
+      "product_id ASC NULLS LAST"
+    ],
+    "top_k": 5,
+    "hard_rule_ids": [
+      "e_category",
+      "e_price_cap"
+    ],
+    "skipped_soft_rule_ids": []
+  },
+  "attribute_explanations": [
+    {
+      "source_text": "tablet",
+      "slot_path": "preferences.categories",
+      "field": "category",
+      "value": [
+        "tablet"
+      ],
+      "match_type": "exact_match",
+      "action": "executed",
+      "matched_values": [
+        "tablet"
+      ],
+      "reason": "已匹配字段“category”，并已进入 hard filter。"
+    },
+    {
+      "source_text": "500",
+      "slot_path": "preferences.price_cap",
+      "field": "price_usd",
+      "value": 500,
+      "match_type": "exact_match",
+      "action": "executed",
+      "matched_values": [],
+      "reason": "已匹配字段“price_usd”，并已进入 hard filter。"
+    }
+  ],
+  "confirmed_rules": [],
+  "confirmation_source": [],
+  "executed_after_confirmation": [],
+  "unconfirmed_candidates": [],
+  "no_schema_field_preferences": [],
+  "rejected_confirmations": []
+}
+```
+### answer
+
+根据已验证规则生成结果：
+
+用户需求：Tablets under 500.
+共筛选到 1 条符合已执行规则的结果。
+
+抽取与结构化结果：
+- 商品类别：tablet；状态：已对齐字段；来源：tablet
+- 价格上限：500；状态：已对齐字段；来源：500
+
+字段值审计解释：
+- [已执行] tablet -> category：exact_match；索引命中：tablet；已匹配字段“category”，并已进入 hard filter。
+- [已执行] 500 -> price_usd：exact_match；已匹配字段“price_usd”，并已进入 hard filter。
+
+已执行规则：
+- e_category：category 属于：tablet
+- e_price_cap：price_usd 不高于 500
+
+候选偏好确认记录：
+
+未执行但已保留的偏好：
+- 无。
+
+前 1 条结果：
+- 1. 3；商品：Tablet Mini；类别：tablet；价格：399 元/年；评分：4.2。
+
+安全说明：
+- 答案只能使用 证据包 中的已验证规则、确认记录、结果摘要和 trace。
+- 候选偏好在确认或模拟确认之前不得执行。
+
+## products_04 `通过`
+
+- domain: `products`
+- query: Accessories under 50.
+- status: `ok`
+- pass/fail：`通过`
+
+### items
+```json
+[
+  {
+    "item_id": "result_001",
+    "title": "Mouse Mini",
+    "subtitle": "accessory",
+    "primary_attributes": [
+      {
+        "key": "product_id",
+        "label": "product_id",
+        "value": 11
+      },
+      {
+        "key": "product_name",
+        "label": "product_name",
+        "value": "Mouse Mini"
+      },
+      {
+        "key": "category",
+        "label": "category",
+        "value": "accessory"
+      },
+      {
+        "key": "price_usd",
+        "label": "price_usd",
+        "value": 19.0
+      }
+    ],
+    "secondary_attributes": [
+      {
+        "key": "rating",
+        "label": "rating",
+        "value": 3.8
+      },
+      {
+        "key": "stock_count",
+        "label": "stock_count",
+        "value": 120
+      },
+      {
+        "key": "brand",
+        "label": "brand",
+        "value": "Clicker"
+      }
+    ],
+    "matched_filters": [
+      {
+        "id": "e_category",
+        "field": "category",
+        "operator": "in",
+        "value": [
+          "accessory"
+        ],
+        "matched": true,
+        "text": "category 属于：accessory"
+      },
+      {
+        "id": "e_price_cap",
+        "field": "price_usd",
+        "operator": "<=",
+        "value": 50,
+        "matched": true,
+        "text": "price_usd 19 不高于 50"
+      }
+    ],
+    "raw": {
+      "source_row_number": 12,
+      "product_id": 11,
+      "product_name": "Mouse Mini",
+      "category": "accessory",
+      "price_usd": 19.0,
+      "rating": 3.8,
+      "stock_count": 120,
+      "brand": "Clicker",
+      "description": "Small wireless mouse"
+    }
+  },
+  {
+    "item_id": "result_002",
+    "title": "Keyboard Basic",
+    "subtitle": "accessory",
+    "primary_attributes": [
+      {
+        "key": "product_id",
+        "label": "product_id",
+        "value": 9
+      },
+      {
+        "key": "product_name",
+        "label": "product_name",
+        "value": "Keyboard Basic"
+      },
+      {
+        "key": "category",
+        "label": "category",
+        "value": "accessory"
+      },
+      {
+        "key": "price_usd",
+        "label": "price_usd",
+        "value": 29.0
+      }
+    ],
+    "secondary_attributes": [
+      {
+        "key": "rating",
+        "label": "rating",
+        "value": 3.9
+      },
+      {
+        "key": "stock_count",
+        "label": "stock_count",
+        "value": 100
+      },
+      {
+        "key": "brand",
+        "label": "brand",
+        "value": "KeyLab"
+      }
+    ],
+    "matched_filters": [
+      {
+        "id": "e_category",
+        "field": "category",
+        "operator": "in",
+        "value": [
+          "accessory"
+        ],
+        "matched": true,
+        "text": "category 属于：accessory"
+      },
+      {
+        "id": "e_price_cap",
+        "field": "price_usd",
+        "operator": "<=",
+        "value": 50,
+        "matched": true,
+        "text": "price_usd 29 不高于 50"
+      }
+    ],
+    "raw": {
+      "source_row_number": 10,
+      "product_id": 9,
+      "product_name": "Keyboard Basic",
+      "category": "accessory",
+      "price_usd": 29.0,
+      "rating": 3.9,
+      "stock_count": 100,
+      "brand": "KeyLab",
+      "description": "Simple keyboard for daily work"
+    }
+  }
+]
+```
+### top_results
+```json
+[
+  {
+    "id": "result_001",
+    "trace": [
+      {
+        "status": "pass",
+        "text": "category 属于：accessory"
+      },
+      {
+        "status": "pass",
+        "text": "price_usd 19 不高于 50"
+      }
+    ],
+    "product_id": 11,
+    "product_name": "Mouse Mini",
+    "category": "accessory",
+    "price_usd": 19.0,
+    "rating": 3.8,
+    "stock_count": 120,
+    "brand": "Clicker"
+  },
+  {
+    "id": "result_002",
+    "trace": [
+      {
+        "status": "pass",
+        "text": "category 属于：accessory"
+      },
+      {
+        "status": "pass",
+        "text": "price_usd 29 不高于 50"
+      }
+    ],
+    "product_id": 9,
+    "product_name": "Keyboard Basic",
+    "category": "accessory",
+    "price_usd": 29.0,
+    "rating": 3.9,
+    "stock_count": 100,
+    "brand": "KeyLab"
+  }
+]
+```
+### executed_filters
+```json
+[
+  {
+    "id": "e_category",
+    "label": "category 属于：accessory",
+    "field": "category",
+    "operator": "in",
+    "value": [
+      "accessory"
+    ],
+    "source_span": "accessory"
+  },
+  {
+    "id": "e_price_cap",
+    "label": "price_usd 不高于 50",
+    "field": "price_usd",
+    "operator": "<=",
+    "value": 50,
+    "source_span": "50"
+  }
+]
+```
+### candidates_to_confirm
+```json
+[]
+```
+### unexecuted_preferences
+```json
+[]
+```
+### SQL / params
+```json
+{
+  "sql": "WITH source AS (\n  SELECT row_number() OVER () AS \"__source_row_number\", *\n  FROM \"products\"\n),\nfiltered AS (\n  SELECT\n    source.*,\n    TRY_CAST(regexp_extract(REPLACE(CAST(\"price_usd\" AS VARCHAR), ',', ''), '\\d+(?:\\.\\d+)?') AS DOUBLE) AS \"__price_num\",\n    TRY_CAST(regexp_extract(REPLACE(CAST(\"rating\" AS VARCHAR), ',', ''), '\\d+(?:\\.\\d+)?') AS DOUBLE) AS \"__rating_num\",\n    TRY_CAST(regexp_extract(REPLACE(CAST(\"product_id\" AS VARCHAR), ',', ''), '\\d+(?:\\.\\d+)?') AS DOUBLE) AS \"__product_id_num\"\n  FROM source\n  WHERE CAST(\"category\" AS VARCHAR) IN (?) AND TRY_CAST(regexp_extract(REPLACE(CAST(\"price_usd\" AS VARCHAR), ',', ''), '\\d+(?:\\.\\d+)?') AS DOUBLE) <= ?\n),\nprojectable AS (\n  SELECT *\n  FROM filtered\n  WHERE TRUE\n    AND \"__price_num\" IS NOT NULL\n)\nSELECT *\nFROM projectable\nORDER BY\n  \"__price_num\" ASC NULLS LAST,\n  \"__rating_num\" DESC NULLS LAST,\n  \"__product_id_num\" ASC NULLS LAST",
+  "params": [
+    "accessory",
+    50.0
+  ]
+}
+```
+### EvidencePack
+```json
+{
+  "user_request": "Accessories under 50.",
+  "executed_rules": [
+    {
+      "rule_id": "e_category",
+      "derived_from": "d_category",
+      "field": "category",
+      "operator": "in",
+      "value": [
+        "accessory"
+      ],
+      "description": "category 属于：accessory"
+    },
+    {
+      "rule_id": "e_price_cap",
+      "derived_from": "d_price_cap",
+      "field": "price_usd",
+      "operator": "<=",
+      "value": 50,
+      "description": "price_usd 不高于 50"
+    }
+  ],
+  "candidate_confirmations": [],
+  "not_executed_preferences": [],
+  "result_count": 2,
+  "top_k_results": [
+    {
+      "rank": 1,
+      "商品编号": 11,
+      "商品": "Mouse Mini",
+      "类别": "accessory",
+      "价格": 19.0,
+      "评分": 3.8,
+      "safety_margin": null,
+      "trace": [
+        {
+          "rule_id": "e_category",
+          "status": "pass",
+          "reason": "category 属于：accessory"
+        },
+        {
+          "rule_id": "e_price_cap",
+          "status": "pass",
+          "reason": "price_usd 19 不高于 50"
+        }
+      ]
+    },
+    {
+      "rank": 2,
+      "商品编号": 9,
+      "商品": "Keyboard Basic",
+      "类别": "accessory",
+      "价格": 29.0,
+      "评分": 3.9,
+      "safety_margin": null,
+      "trace": [
+        {
+          "rule_id": "e_category",
+          "status": "pass",
+          "reason": "category 属于：accessory"
+        },
+        {
+          "rule_id": "e_price_cap",
+          "status": "pass",
+          "reason": "price_usd 29 不高于 50"
+        }
+      ]
+    }
+  ],
+  "trace_summary": {
+    "executed_rule_ids": [
+      "e_category",
+      "e_price_cap"
+    ],
+    "not_executed_preference_count": 0,
+    "traced_result_count": 2,
+    "top_k": 2,
+    "top_k_trace_status_counts": {
+      "pass": 4
+    },
+    "safety_warnings": [
+      "答案只能使用 evidence_pack 中的已验证规则、确认记录、结果摘要和 trace。",
+      "候选偏好在确认或模拟确认之前不得执行。"
+    ]
+  },
+  "extracted_preferences": [
+    {
+      "id": "pref_category",
+      "slot": "商品类别",
+      "value": [
+        "accessory"
+      ],
+      "source_span": "accessory",
+      "status": "已对齐字段"
+    },
+    {
+      "id": "pref_price",
+      "slot": "价格上限",
+      "value": 50,
+      "source_span": "50",
+      "status": "已对齐字段"
+    }
+  ],
+  "attribute_grounding_summary": {
+    "total_attributes": 2,
+    "status_counts": {
+      "schema_grounded": 2
+    },
+    "value_index_status_counts": {
+      "matched": 1,
+      "within_numeric_profile": 1
+    },
+    "unsafe_ungrounded_executable_attributes": 0
+  },
+  "proposed_rule_audit": [],
+  "execution_summary": {
+    "executor": "duckdb",
+    "sql": "WITH source AS (\n  SELECT row_number() OVER () AS \"__source_row_number\", *\n  FROM \"products\"\n),\nfiltered AS (\n  SELECT\n    source.*,\n    TRY_CAST(regexp_extract(REPLACE(CAST(\"price_usd\" AS VARCHAR), ',', ''), '\\d+(?:\\.\\d+)?') AS DOUBLE) AS \"__price_num\",\n    TRY_CAST(regexp_extract(REPLACE(CAST(\"rating\" AS VARCHAR), ',', ''), '\\d+(?:\\.\\d+)?') AS DOUBLE) AS \"__rating_num\",\n    TRY_CAST(regexp_extract(REPLACE(CAST(\"product_id\" AS VARCHAR), ',', ''), '\\d+(?:\\.\\d+)?') AS DOUBLE) AS \"__product_id_num\"\n  FROM source\n  WHERE CAST(\"category\" AS VARCHAR) IN (?) AND TRY_CAST(regexp_extract(REPLACE(CAST(\"price_usd\" AS VARCHAR), ',', ''), '\\d+(?:\\.\\d+)?') AS DOUBLE) <= ?\n),\nprojectable AS (\n  SELECT *\n  FROM filtered\n  WHERE TRUE\n    AND \"__price_num\" IS NOT NULL\n)\nSELECT *\nFROM projectable\nORDER BY\n  \"__price_num\" ASC NULLS LAST,\n  \"__rating_num\" DESC NULLS LAST,\n  \"__product_id_num\" ASC NULLS LAST",
+    "params": [
+      "accessory",
+      50.0
+    ],
+    "input_row_count": 20,
+    "filtered_row_count": 2,
+    "sort_key": [
+      "price_usd ASC NULLS LAST",
+      "rating DESC NULLS LAST",
+      "product_id ASC NULLS LAST"
+    ],
+    "top_k": 5,
+    "hard_rule_ids": [
+      "e_category",
+      "e_price_cap"
+    ],
+    "skipped_soft_rule_ids": []
+  },
+  "attribute_explanations": [
+    {
+      "source_text": "accessory",
+      "slot_path": "preferences.categories",
+      "field": "category",
+      "value": [
+        "accessory"
+      ],
+      "match_type": "exact_match",
+      "action": "executed",
+      "matched_values": [
+        "accessory"
+      ],
+      "reason": "已匹配字段“category”，并已进入 hard filter。"
+    },
+    {
+      "source_text": "50",
+      "slot_path": "preferences.price_cap",
+      "field": "price_usd",
+      "value": 50,
+      "match_type": "exact_match",
+      "action": "executed",
+      "matched_values": [],
+      "reason": "已匹配字段“price_usd”，并已进入 hard filter。"
+    }
+  ],
+  "confirmed_rules": [],
+  "confirmation_source": [],
+  "executed_after_confirmation": [],
+  "unconfirmed_candidates": [],
+  "no_schema_field_preferences": [],
+  "rejected_confirmations": []
+}
+```
+### answer
+
+根据已验证规则生成结果：
+
+用户需求：Accessories under 50.
+共筛选到 2 条符合已执行规则的结果。
+
+抽取与结构化结果：
+- 商品类别：accessory；状态：已对齐字段；来源：accessory
+- 价格上限：50；状态：已对齐字段；来源：50
+
+字段值审计解释：
+- [已执行] accessory -> category：exact_match；索引命中：accessory；已匹配字段“category”，并已进入 hard filter。
+- [已执行] 50 -> price_usd：exact_match；已匹配字段“price_usd”，并已进入 hard filter。
+
+已执行规则：
+- e_category：category 属于：accessory
+- e_price_cap：price_usd 不高于 50
+
+候选偏好确认记录：
+
+未执行但已保留的偏好：
+- 无。
+
+前 2 条结果：
+- 1. 11；商品：Mouse Mini；类别：accessory；价格：19 元/年；评分：3.8。
+- 2. 9；商品：Keyboard Basic；类别：accessory；价格：29 元/年；评分：3.9。
+
+安全说明：
+- 答案只能使用 证据包 中的已验证规则、确认记录、结果摘要和 trace。
+- 候选偏好在确认或模拟确认之前不得执行。
+
+## products_05 `通过`
+
+- domain: `products`
+- query: Cameras under 100.
+- status: `no_results`
+- pass/fail：`通过`
+
+### items
+```json
+[]
+```
+### top_results
+```json
+[]
+```
+### executed_filters
+```json
+[
+  {
+    "id": "e_category",
+    "label": "category 属于：camera",
+    "field": "category",
+    "operator": "in",
+    "value": [
+      "camera"
+    ],
+    "source_span": "camera"
+  },
+  {
+    "id": "e_price_cap",
+    "label": "price_usd 不高于 100",
+    "field": "price_usd",
+    "operator": "<=",
+    "value": 100,
+    "source_span": "100"
+  }
+]
+```
+### candidates_to_confirm
+```json
+[]
+```
+### unexecuted_preferences
+```json
+[]
+```
+### SQL / params
+```json
+{
+  "sql": "WITH source AS (\n  SELECT row_number() OVER () AS \"__source_row_number\", *\n  FROM \"products\"\n),\nfiltered AS (\n  SELECT\n    source.*,\n    TRY_CAST(regexp_extract(REPLACE(CAST(\"price_usd\" AS VARCHAR), ',', ''), '\\d+(?:\\.\\d+)?') AS DOUBLE) AS \"__price_num\",\n    TRY_CAST(regexp_extract(REPLACE(CAST(\"rating\" AS VARCHAR), ',', ''), '\\d+(?:\\.\\d+)?') AS DOUBLE) AS \"__rating_num\",\n    TRY_CAST(regexp_extract(REPLACE(CAST(\"product_id\" AS VARCHAR), ',', ''), '\\d+(?:\\.\\d+)?') AS DOUBLE) AS \"__product_id_num\"\n  FROM source\n  WHERE CAST(\"category\" AS VARCHAR) IN (?) AND TRY_CAST(regexp_extract(REPLACE(CAST(\"price_usd\" AS VARCHAR), ',', ''), '\\d+(?:\\.\\d+)?') AS DOUBLE) <= ?\n),\nprojectable AS (\n  SELECT *\n  FROM filtered\n  WHERE TRUE\n    AND \"__price_num\" IS NOT NULL\n)\nSELECT *\nFROM projectable\nORDER BY\n  \"__price_num\" ASC NULLS LAST,\n  \"__rating_num\" DESC NULLS LAST,\n  \"__product_id_num\" ASC NULLS LAST",
+  "params": [
+    "camera",
+    100.0
+  ]
+}
+```
+### EvidencePack
+```json
+{
+  "user_request": "Cameras under 100.",
+  "executed_rules": [
+    {
+      "rule_id": "e_category",
+      "derived_from": "d_category",
+      "field": "category",
+      "operator": "in",
+      "value": [
+        "camera"
+      ],
+      "description": "category 属于：camera"
+    },
+    {
+      "rule_id": "e_price_cap",
+      "derived_from": "d_price_cap",
+      "field": "price_usd",
+      "operator": "<=",
+      "value": 100,
+      "description": "price_usd 不高于 100"
+    }
+  ],
+  "candidate_confirmations": [],
+  "not_executed_preferences": [],
+  "result_count": 0,
+  "top_k_results": [],
+  "trace_summary": {
+    "executed_rule_ids": [
+      "e_category",
+      "e_price_cap"
+    ],
+    "not_executed_preference_count": 0,
+    "traced_result_count": 0,
+    "top_k": 0,
+    "top_k_trace_status_counts": {},
+    "safety_warnings": [
+      "答案只能使用 evidence_pack 中的已验证规则、确认记录、结果摘要和 trace。",
+      "候选偏好在确认或模拟确认之前不得执行。"
+    ]
+  },
+  "extracted_preferences": [
+    {
+      "id": "pref_category",
+      "slot": "商品类别",
+      "value": [
+        "camera"
+      ],
+      "source_span": "camera",
+      "status": "已对齐字段"
+    },
+    {
+      "id": "pref_price",
+      "slot": "价格上限",
+      "value": 100,
+      "source_span": "100",
+      "status": "已对齐字段"
+    }
+  ],
+  "attribute_grounding_summary": {
+    "total_attributes": 2,
+    "status_counts": {
+      "schema_grounded": 2
+    },
+    "value_index_status_counts": {
+      "matched": 1,
+      "within_numeric_profile": 1
+    },
+    "unsafe_ungrounded_executable_attributes": 0
+  },
+  "proposed_rule_audit": [],
+  "execution_summary": {
+    "executor": "duckdb",
+    "sql": "WITH source AS (\n  SELECT row_number() OVER () AS \"__source_row_number\", *\n  FROM \"products\"\n),\nfiltered AS (\n  SELECT\n    source.*,\n    TRY_CAST(regexp_extract(REPLACE(CAST(\"price_usd\" AS VARCHAR), ',', ''), '\\d+(?:\\.\\d+)?') AS DOUBLE) AS \"__price_num\",\n    TRY_CAST(regexp_extract(REPLACE(CAST(\"rating\" AS VARCHAR), ',', ''), '\\d+(?:\\.\\d+)?') AS DOUBLE) AS \"__rating_num\",\n    TRY_CAST(regexp_extract(REPLACE(CAST(\"product_id\" AS VARCHAR), ',', ''), '\\d+(?:\\.\\d+)?') AS DOUBLE) AS \"__product_id_num\"\n  FROM source\n  WHERE CAST(\"category\" AS VARCHAR) IN (?) AND TRY_CAST(regexp_extract(REPLACE(CAST(\"price_usd\" AS VARCHAR), ',', ''), '\\d+(?:\\.\\d+)?') AS DOUBLE) <= ?\n),\nprojectable AS (\n  SELECT *\n  FROM filtered\n  WHERE TRUE\n    AND \"__price_num\" IS NOT NULL\n)\nSELECT *\nFROM projectable\nORDER BY\n  \"__price_num\" ASC NULLS LAST,\n  \"__rating_num\" DESC NULLS LAST,\n  \"__product_id_num\" ASC NULLS LAST",
+    "params": [
+      "camera",
+      100.0
+    ],
+    "input_row_count": 20,
+    "filtered_row_count": 0,
+    "sort_key": [
+      "price_usd ASC NULLS LAST",
+      "rating DESC NULLS LAST",
+      "product_id ASC NULLS LAST"
+    ],
+    "top_k": 5,
+    "hard_rule_ids": [
+      "e_category",
+      "e_price_cap"
+    ],
+    "skipped_soft_rule_ids": []
+  },
+  "attribute_explanations": [
+    {
+      "source_text": "camera",
+      "slot_path": "preferences.categories",
+      "field": "category",
+      "value": [
+        "camera"
+      ],
+      "match_type": "exact_match",
+      "action": "executed",
+      "matched_values": [
+        "camera"
+      ],
+      "reason": "已匹配字段“category”，并已进入 hard filter。"
+    },
+    {
+      "source_text": "100",
+      "slot_path": "preferences.price_cap",
+      "field": "price_usd",
+      "value": 100,
+      "match_type": "exact_match",
+      "action": "executed",
+      "matched_values": [],
+      "reason": "已匹配字段“price_usd”，并已进入 hard filter。"
+    }
+  ],
+  "confirmed_rules": [],
+  "confirmation_source": [],
+  "executed_after_confirmation": [],
+  "unconfirmed_candidates": [],
+  "no_schema_field_preferences": [],
+  "rejected_confirmations": []
+}
+```
+### answer
+
+根据已验证规则生成结果：
+
+用户需求：Cameras under 100.
+共筛选到 0 条符合已执行规则的结果。
+
+抽取与结构化结果：
+- 商品类别：camera；状态：已对齐字段；来源：camera
+- 价格上限：100；状态：已对齐字段；来源：100
+
+字段值审计解释：
+- [已执行] camera -> category：exact_match；索引命中：camera；已匹配字段“category”，并已进入 hard filter。
+- [已执行] 100 -> price_usd：exact_match；已匹配字段“price_usd”，并已进入 hard filter。
+
+已执行规则：
+- e_category：category 属于：camera
+- e_price_cap：price_usd 不高于 100
+
+候选偏好确认记录：
+
+未执行但已保留的偏好：
+- 无。
+
+前 0 条结果：
+
+安全说明：
+- 答案只能使用 证据包 中的已验证规则、确认记录、结果摘要和 trace。
+- 候选偏好在确认或模拟确认之前不得执行。
