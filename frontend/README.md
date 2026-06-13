@@ -36,6 +36,8 @@ npm run build
 
 页面中的“中外合作未执行：缺少合作办学类型字段”是安全约束展示项，不代表已过滤中外合作。
 
+新增的“上传数据集接入流程”面板调用 `/datasets` 和 `/workbench/query`：上传 CSV/Excel、展示 schema profile、展示 review summary、执行 approve/block、构建 warehouse，并把 uploaded dataset 的 `WorkbenchResponse` 中的 `items`、`top_results`、`result_sections`、`EvidencePack` 和 warnings 展示出来。该面板不在前端生成 hard filter。
+
 ## API 模式
 
 启动后端：
@@ -45,3 +47,4 @@ python3 -m uvicorn src.api.server:app --reload --port 8001
 ```
 
 API 模式只暴露受控选项：规则提取方式、证据回答方式和 LLM 模型。选择 LLM 辅助解析软偏好或 LLM 证据回答时，后端会返回 token 用量并在页面展示。
+Vite 会把 `/api`、`/datasets` 和 `/workbench` 代理到本地后端。

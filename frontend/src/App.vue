@@ -4,6 +4,7 @@ import { DocumentChecked, WarningFilled } from '@element-plus/icons-vue';
 
 import UserInputPanel from './components/UserInputPanel.vue';
 import WorkbenchModePanel from './components/WorkbenchModePanel.vue';
+import DatasetIngestionPanel from './components/DatasetIngestionPanel.vue';
 import ExtractedPreferences from './components/ExtractedPreferences.vue';
 import VerificationAudit from './components/VerificationAudit.vue';
 import RuleSummaryCards from './components/RuleSummaryCards.vue';
@@ -147,6 +148,8 @@ function openTrace(result) {
       v-model:generator="generator"
       v-model:model="model"
     />
+
+    <DatasetIngestionPanel />
 
     <UserInputPanel
       :default-hard-filters="defaultHardFilters"

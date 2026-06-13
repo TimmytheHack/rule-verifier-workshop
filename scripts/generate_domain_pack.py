@@ -145,13 +145,14 @@ def generate_domain_pack(
     domain_name: str,
     output_root: str | Path = ROOT_DIR / "domains",
     llm: str = "off",
+    sheet_name: str | None = None,
 ) -> DomainPackGenerationResult:
     """生成 draft domain pack，并复用 DuckDB warehouse ingestion。"""
 
     if llm not in {"off", "deepseek"}:
         raise ValueError("--llm must be one of: off, deepseek")
     domain_id = _normalize_domain_name(domain_name)
-    dataset = load_source_dataset(source_path)
+    dataset = load_source_dataset(source_path, sheet_name=sheet_name)
     profile = profile_dataset(dataset, domain_id)
     domain_dir = Path(output_root) / domain_id
     domain_dir.mkdir(parents=True, exist_ok=True)
@@ -191,7 +192,10 @@ def generate_domain_pack(
     )
 
 
-def load_source_dataset(source_path: str | Path) -> ExcelDataSet:
+def load_source_dataset(
+    source_path: str | Path,
+    sheet_name: str | None = None,
+) -> ExcelDataSet:
     """读取 CSV/Excel 为统一 dataset 结构。"""
 
     path = Path(source_path)
@@ -202,13 +206,18 @@ def load_source_dataset(source_path: str | Path) -> ExcelDataSet:
         raise ValueError(f"Unsupported source extension: {suffix}")
     if suffix == ".csv":
         dataframe = pd.read_csv(path)
-        sheet_name = path.stem
+        selected_sheet = path.stem
     else:
         with pd.ExcelFile(path) as excel_file:
-            sheet_name = excel_file.sheet_names[0]
+            selected_sheet = sheet_name or excel_file.sheet_names[0]
+            if selected_sheet not in excel_file.sheet_names:
+                raise ValueError(
+                    f"Sheet not found: {selected_sheet}. "
+                    f"Available sheets: {', '.join(excel_file.sheet_names)}"
+                )
             dataframe = pd.read_excel(
                 excel_file,
-                sheet_name=sheet_name,
+                sheet_name=selected_sheet,
                 dtype=object,
             )
     dataframe = dataframe.dropna(how="all")
@@ -216,7 +225,7 @@ def load_source_dataset(source_path: str | Path) -> ExcelDataSet:
     headers = [column for column in dataframe.columns if column]
     return ExcelDataSet(
         workbook_path=path,
-        sheet_name=sheet_name,
+        sheet_name=selected_sheet,
         header_row=1,
         headers=headers,
         header_index={name: index for index, name in enumerate(headers)},
@@ -1186,6 +1195,11 @@ def _build_arg_parser() -> argparse.ArgumentParser:
         default="off",
         help="Optional candidate config generation. Default is off.",
     )
+    parser.add_argument(
+        "--sheet-name",
+        default=None,
+        help="Excel sheet name to read. CSV input ignores this option.",
+    )
     return parser
 
 
@@ -1197,6 +1211,7 @@ def main(argv: list[str] | None = None) -> int:
         domain_name=args.domain_name,
         output_root=args.output_root,
         llm=args.llm,
+        sheet_name=args.sheet_name,
     )
     print(json.dumps(result.to_dict(), ensure_ascii=False, indent=2))
     return 0

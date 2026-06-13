@@ -1,11 +1,12 @@
 # Demo Acceptance 验收报告
 
-- 生成时间：`2026-06-13T15:04:45.808066Z`
-- 总记录数：`27`
-- 通过：`27`
+- 生成时间：`2026-06-13T15:40:06.403596Z`
+- 总记录数：`29`
+- 通过：`29`
 - 失败：`0`
-- 按 domain 统计：`{"admissions": 17, "housing": 5, "products": 5}`
-- 按 status 统计：`{"needs_confirmation": 8, "no_results": 2, "ok": 17}`
+- 按 domain 统计：`{"admissions": 19, "housing": 5, "products": 5}`
+- 按验收组统计：`{"builtin_domain_acceptance": 27, "uploaded_dataset_acceptance": 2}`
+- 按 status 统计：`{"needs_confirmation": 8, "no_results": 2, "ok": 19}`
 
 | Case | Domain | Status | Result Count | 是否通过 |
 |---|---|---|---:|---:|
@@ -36,10 +37,13 @@
 | products_03 | products | ok | 1 | 通过 |
 | products_04 | products | ok | 2 | 通过 |
 | products_05 | products | no_results | 0 | 通过 |
+| uploaded_dataset_01_group_detail_excel | admissions | ok | 1 | 通过 |
+| uploaded_dataset_02_recommendation_csv | admissions | ok | 3 | 通过 |
 
 ## admissions_01 `通过`
 
 - domain: `admissions`
+- acceptance_group: `builtin_domain_acceptance`
 - query: 广东物理，排位32000，想学计算机，广深优先。
 - status: `ok`
 - query_type: `verified_filter`
@@ -1112,6 +1116,10 @@
   ]
 }
 ```
+### uploaded dataset flow
+```json
+{}
+```
 ### EvidencePack
 ```json
 {
@@ -1546,6 +1554,7 @@
 ## admissions_02 `通过`
 
 - domain: `admissions`
+- acceptance_group: `builtin_domain_acceptance`
 - query: 广东历史类，排位20000，想读法学。
 - status: `ok`
 - query_type: `verified_filter`
@@ -2510,6 +2519,10 @@
   ]
 }
 ```
+### uploaded dataset flow
+```json
+{}
+```
 ### EvidencePack
 ```json
 {
@@ -2869,6 +2882,7 @@
 ## admissions_03 `通过`
 
 - domain: `admissions`
+- acceptance_group: `builtin_domain_acceptance`
 - query: 广东物理，排位30000，深圳，软件工程。
 - status: `ok`
 - query_type: `verified_filter`
@@ -3141,6 +3155,10 @@
     "深圳"
   ]
 }
+```
+### uploaded dataset flow
+```json
+{}
 ```
 ### EvidencePack
 ```json
@@ -3421,6 +3439,7 @@
 ## admissions_04 `通过`
 
 - domain: `admissions`
+- acceptance_group: `builtin_domain_acceptance`
 - query: 广东物理，物化生，排位32000，想学计科，广深优先。
 - status: `needs_confirmation`
 - query_type: `verified_filter`
@@ -4529,6 +4548,10 @@
   ]
 }
 ```
+### uploaded dataset flow
+```json
+{}
+```
 ### EvidencePack
 ```json
 {
@@ -5013,6 +5036,7 @@ candidate_id 确认状态：
 ## admissions_05 `通过`
 
 - domain: `admissions`
+- acceptance_group: `builtin_domain_acceptance`
 - query: 广东物理，排名3.2万，计算机相关，珠三角优先，不要校企合作。
 - status: `needs_confirmation`
 - query_type: `verified_filter`
@@ -6051,6 +6075,10 @@ candidate_id 确认状态：
   ]
 }
 ```
+### uploaded dataset flow
+```json
+{}
+```
 ### EvidencePack
 ```json
 {
@@ -6582,6 +6610,7 @@ candidate_id 确认状态：
 ## admissions_06 `通过`
 
 - domain: `admissions`
+- acceptance_group: `builtin_domain_acceptance`
 - query: 广东物理，排位90000，想学网络安全，深圳。
 - status: `no_results`
 - query_type: `verified_filter`
@@ -6659,6 +6688,10 @@ candidate_id 确认状态：
     "深圳"
   ]
 }
+```
+### uploaded dataset flow
+```json
+{}
 ```
 ### EvidencePack
 ```json
@@ -6900,6 +6933,7 @@ candidate_id 确认状态：
 ## admissions_07 `通过`
 
 - domain: `admissions`
+- acceptance_group: `builtin_domain_acceptance`
 - query: 广东物理，排位32000，不要中外合作。
 - status: `ok`
 - query_type: `verified_filter`
@@ -7812,6 +7846,10 @@ candidate_id 确认状态：
   ]
 }
 ```
+### uploaded dataset flow
+```json
+{}
+```
 ### EvidencePack
 ```json
 {
@@ -8194,6 +8232,7 @@ candidate_id 确认状态：
 ## admissions_08 `通过`
 
 - domain: `admissions`
+- acceptance_group: `builtin_domain_acceptance`
 - query: 广东物理，排位60000，不想太贵。
 - status: `needs_confirmation`
 - query_type: `verified_filter`
@@ -9077,6 +9116,10 @@ candidate_id 确认状态：
   ]
 }
 ```
+### uploaded dataset flow
+```json
+{}
+```
 ### EvidencePack
 ```json
 {
@@ -9395,6 +9438,7 @@ candidate_id 确认状态：
 ## admissions_09 `通过`
 
 - domain: `admissions`
+- acceptance_group: `builtin_domain_acceptance`
 - query: 广东物理，排位32000，想冲一冲计算机。
 - status: `needs_confirmation`
 - query_type: `verified_filter`
@@ -10359,6 +10403,10 @@ candidate_id 确认状态：
   ]
 }
 ```
+### uploaded dataset flow
+```json
+{}
+```
 ### EvidencePack
 ```json
 {
@@ -10743,6 +10791,7 @@ candidate_id 确认状态：
 ## admissions_10 `通过`
 
 - domain: `admissions`
+- acceptance_group: `builtin_domain_acceptance`
 - query: 广东历史，排位25000，法学，预算有限。
 - status: `needs_confirmation`
 - query_type: `verified_filter`
@@ -11707,6 +11756,10 @@ candidate_id 确认状态：
   ]
 }
 ```
+### uploaded dataset flow
+```json
+{}
+```
 ### EvidencePack
 ```json
 {
@@ -12087,6 +12140,7 @@ candidate_id 确认状态：
 ## admissions_11 `通过`
 
 - domain: `admissions`
+- acceptance_group: `builtin_domain_acceptance`
 - query: 广东物理，排位40000，想要就业前景好。
 - status: `ok`
 - query_type: `verified_filter`
@@ -12999,6 +13053,10 @@ candidate_id 确认状态：
   ]
 }
 ```
+### uploaded dataset flow
+```json
+{}
+```
 ### EvidencePack
 ```json
 {
@@ -13373,6 +13431,7 @@ candidate_id 确认状态：
 ## admissions_12 `通过`
 
 - domain: `admissions`
+- acceptance_group: `builtin_domain_acceptance`
 - query: 广东物理，排位35000，人工智能，好就业。
 - status: `ok`
 - query_type: `verified_filter`
@@ -14366,6 +14425,10 @@ candidate_id 确认状态：
   ]
 }
 ```
+### uploaded dataset flow
+```json
+{}
+```
 ### EvidencePack
 ```json
 {
@@ -14802,6 +14865,7 @@ candidate_id 确认状态：
 ## admissions_13 `通过`
 
 - domain: `admissions`
+- acceptance_group: `builtin_domain_acceptance`
 - query: 广东物理，排位52000，软件工程，费用别太高。
 - status: `needs_confirmation`
 - query_type: `verified_filter`
@@ -15806,6 +15870,10 @@ candidate_id 确认状态：
   ]
 }
 ```
+### uploaded dataset flow
+```json
+{}
+```
 ### EvidencePack
 ```json
 {
@@ -16190,6 +16258,7 @@ candidate_id 确认状态：
 ## admissions_14 `通过`
 
 - domain: `admissions`
+- acceptance_group: `builtin_domain_acceptance`
 - query: 广东物理，排位42000，广州深圳都可以，人工智能。
 - status: `needs_confirmation`
 - query_type: `verified_filter`
@@ -17293,6 +17362,10 @@ candidate_id 确认状态：
   ]
 }
 ```
+### uploaded dataset flow
+```json
+{}
+```
 ### EvidencePack
 ```json
 {
@@ -17772,6 +17845,7 @@ candidate_id 确认状态：
 ## admissions_15 `通过`
 
 - domain: `admissions`
+- acceptance_group: `builtin_domain_acceptance`
 - query: 广东历史，排位18000，广州，汉语言文学。
 - status: `ok`
 - query_type: `verified_filter`
@@ -18867,6 +18941,10 @@ candidate_id 确认状态：
   ]
 }
 ```
+### uploaded dataset flow
+```json
+{}
+```
 ### EvidencePack
 ```json
 {
@@ -19295,6 +19373,7 @@ candidate_id 确认状态：
 ## admissions_16_group_detail `通过`
 
 - domain: `admissions`
+- acceptance_group: `builtin_domain_acceptance`
 - query: 列出 2025 年深圳大学录取最高的专业组及专业组里面的各个专业最低录取分数
 - status: `ok`
 - query_type: `group_detail_report`
@@ -19953,6 +20032,10 @@ candidate_id 确认状态：
   ]
 }
 ```
+### uploaded dataset flow
+```json
+{}
+```
 ### EvidencePack
 ```json
 {
@@ -20313,6 +20396,7 @@ candidate_id 确认状态：
 ## admissions_17_recommendation_policy `通过`
 
 - domain: `admissions`
+- acceptance_group: `builtin_domain_acceptance`
 - query: 我今年高考分数 630，想读人工智能、计算机，不想去国外，想留在广东省
 - status: `ok`
 - query_type: `recommendation`
@@ -21393,6 +21477,10 @@ candidate_id 确认状态：
   ]
 }
 ```
+### uploaded dataset flow
+```json
+{}
+```
 ### EvidencePack
 ```json
 {
@@ -21870,6 +21958,7 @@ candidate_id 确认状态：
 ## housing_01 `通过`
 
 - domain: `housing`
+- acceptance_group: `builtin_domain_acceptance`
 - query: Austin, at least 2 bedrooms, under 1900, apartment or townhouse.
 - status: `ok`
 - query_type: `verified_filter`
@@ -22315,6 +22404,10 @@ candidate_id 确认状态：
   ]
 }
 ```
+### uploaded dataset flow
+```json
+{}
+```
 ### EvidencePack
 ```json
 {
@@ -22652,6 +22745,7 @@ candidate_id 确认状态：
 ## housing_02 `通过`
 
 - domain: `housing`
+- acceptance_group: `builtin_domain_acceptance`
 - query: Dallas condos under 1900.
 - status: `ok`
 - query_type: `verified_filter`
@@ -22972,6 +23066,10 @@ candidate_id 确认状态：
   ]
 }
 ```
+### uploaded dataset flow
+```json
+{}
+```
 ### EvidencePack
 ```json
 {
@@ -23271,6 +23369,7 @@ candidate_id 确认状态：
 ## housing_03 `通过`
 
 - domain: `housing`
+- acceptance_group: `builtin_domain_acceptance`
 - query: Houston, at least 2 bedrooms, under 1700.
 - status: `ok`
 - query_type: `verified_filter`
@@ -23552,6 +23651,10 @@ candidate_id 确认状态：
   ]
 }
 ```
+### uploaded dataset flow
+```json
+{}
+```
 ### EvidencePack
 ```json
 {
@@ -23802,6 +23905,7 @@ candidate_id 确认状态：
 ## housing_04 `通过`
 
 - domain: `housing`
+- acceptance_group: `builtin_domain_acceptance`
 - query: Austin houses under 2500 with at least 3 bedrooms.
 - status: `ok`
 - query_type: `verified_filter`
@@ -24001,6 +24105,10 @@ candidate_id 确认状态：
     "house"
   ]
 }
+```
+### uploaded dataset flow
+```json
+{}
 ```
 ### EvidencePack
 ```json
@@ -24268,6 +24376,7 @@ candidate_id 确认状态：
 ## housing_05 `通过`
 
 - domain: `housing`
+- acceptance_group: `builtin_domain_acceptance`
 - query: Seattle under 1500.
 - status: `needs_confirmation`
 - query_type: `verified_filter`
@@ -24717,6 +24826,10 @@ candidate_id 确认状态：
   ]
 }
 ```
+### uploaded dataset flow
+```json
+{}
+```
 ### EvidencePack
 ```json
 {
@@ -24956,6 +25069,7 @@ candidate_id 确认状态：
 ## products_01 `通过`
 
 - domain: `products`
+- acceptance_group: `builtin_domain_acceptance`
 - query: Audio products under 100.
 - status: `ok`
 - query_type: `verified_filter`
@@ -25206,6 +25320,10 @@ candidate_id 确认状态：
   ]
 }
 ```
+### uploaded dataset flow
+```json
+{}
+```
 ### EvidencePack
 ```json
 {
@@ -25413,6 +25531,7 @@ candidate_id 确认状态：
 ## products_02 `通过`
 
 - domain: `products`
+- acceptance_group: `builtin_domain_acceptance`
 - query: Laptops under 1000 with rating at least 4.0.
 - status: `ok`
 - query_type: `verified_filter`
@@ -25588,6 +25707,10 @@ candidate_id 确认状态：
     4.0
   ]
 }
+```
+### uploaded dataset flow
+```json
+{}
 ```
 ### EvidencePack
 ```json
@@ -25810,6 +25933,7 @@ candidate_id 确认状态：
 ## products_03 `通过`
 
 - domain: `products`
+- acceptance_group: `builtin_domain_acceptance`
 - query: Tablets under 500.
 - status: `ok`
 - query_type: `verified_filter`
@@ -25964,6 +26088,10 @@ candidate_id 确认状态：
     500.0
   ]
 }
+```
+### uploaded dataset flow
+```json
+{}
 ```
 ### EvidencePack
 ```json
@@ -26150,6 +26278,7 @@ candidate_id 确认状态：
 ## products_04 `通过`
 
 - domain: `products`
+- acceptance_group: `builtin_domain_acceptance`
 - query: Accessories under 50.
 - status: `ok`
 - query_type: `verified_filter`
@@ -26400,6 +26529,10 @@ candidate_id 确认状态：
   ]
 }
 ```
+### uploaded dataset flow
+```json
+{}
+```
 ### EvidencePack
 ```json
 {
@@ -26607,6 +26740,7 @@ candidate_id 确认状态：
 ## products_05 `通过`
 
 - domain: `products`
+- acceptance_group: `builtin_domain_acceptance`
 - query: Cameras under 100.
 - status: `no_results`
 - query_type: `verified_filter`
@@ -26664,6 +26798,10 @@ candidate_id 确认状态：
     100.0
   ]
 }
+```
+### uploaded dataset flow
+```json
+{}
 ```
 ### EvidencePack
 ```json
@@ -26821,3 +26959,1284 @@ candidate_id 确认状态：
 安全说明：
 - 答案只能使用 证据包 中的已验证规则、确认记录、结果摘要和 trace。
 - 候选偏好在确认或模拟确认之前不得执行。
+
+## uploaded_dataset_01_group_detail_excel `通过`
+
+- domain: `admissions`
+- acceptance_group: `uploaded_dataset_acceptance`
+- query: 列出 2025 年深圳大学录取最高的专业组及专业组里面的各个专业最低录取分数
+- status: `ok`
+- query_type: `group_detail_report`
+- pass/fail：`通过`
+
+### items
+```json
+[
+  {
+    "item_id": "result_001",
+    "title": "深圳大学",
+    "subtitle": "物理221组（2 个专业）",
+    "primary_attributes": [
+      {
+        "key": "year",
+        "label": "year",
+        "value": 2024
+      },
+      {
+        "key": "university_name",
+        "label": "university_name",
+        "value": "深圳大学"
+      },
+      {
+        "key": "group_code",
+        "label": "group_code",
+        "value": "10590221"
+      },
+      {
+        "key": "group_name",
+        "label": "group_name",
+        "value": "物理221组"
+      }
+    ],
+    "secondary_attributes": [
+      {
+        "key": "major_name",
+        "label": "major_name",
+        "value": "物理221组（2 个专业）"
+      },
+      {
+        "key": "rank_2024",
+        "label": "rank_2024",
+        "value": 9000
+      },
+      {
+        "key": "group_min_rank",
+        "label": "group_min_rank",
+        "value": 9000
+      }
+    ],
+    "matched_filters": [
+      {
+        "id": "planned_year",
+        "field": "年份",
+        "operator": "eq",
+        "value": 2024,
+        "matched": false,
+        "text": ""
+      },
+      {
+        "id": "planned_university_name",
+        "field": "院校名称",
+        "operator": "contains",
+        "value": "深圳大学",
+        "matched": false,
+        "text": ""
+      }
+    ],
+    "raw": {
+      "年份": 2024,
+      "院校名称": "深圳大学",
+      "院校专业组代码": "10590221",
+      "专业组名称": "物理221组",
+      "专业组最低分1": 628,
+      "专业组最低位次1": 9000,
+      "专业名称": "物理221组（2 个专业）"
+    }
+  }
+]
+```
+### top_results
+```json
+[
+  {
+    "id": "result_001",
+    "trace": [],
+    "year": 2024,
+    "batch": null,
+    "university_code": null,
+    "university_name": "深圳大学",
+    "group_code": "10590221",
+    "group_name": "物理221组",
+    "major_code": null,
+    "major_name": "物理221组（2 个专业）",
+    "full_major_name": null,
+    "subject_requirement": null,
+    "province": null,
+    "city": null,
+    "tuition": null,
+    "rank_2024": 9000,
+    "major_rank_2024": null,
+    "plan_count": null,
+    "group_min_rank": 9000,
+    "major_min_rank": null,
+    "safety_margin": ""
+  }
+]
+```
+### result_sections
+```json
+{
+  "groups": [
+    {
+      "group_code": "10590221",
+      "group_title": "物理221组",
+      "group_metric_score": 628,
+      "group_min_rank": 9000,
+      "major_count": 2,
+      "majors": [
+        {
+          "major_code": "080901",
+          "major_name": "计算机科学与技术",
+          "full_major_name": "计算机科学与技术",
+          "min_score": 626,
+          "min_rank": 8800,
+          "max_score": 640,
+          "plan_count": 30
+        },
+        {
+          "major_code": "080717",
+          "major_name": "人工智能",
+          "full_major_name": "人工智能",
+          "min_score": 625,
+          "min_rank": 9100,
+          "max_score": 638,
+          "plan_count": 20
+        }
+      ]
+    }
+  ]
+}
+```
+### executed_filters
+```json
+[
+  {
+    "id": "planned_year",
+    "label": "年份 等于 2024",
+    "field": "年份",
+    "operator": "eq",
+    "value": 2024,
+    "source_span": "2024"
+  },
+  {
+    "id": "planned_university_name",
+    "label": "院校名称 包含 深圳大学",
+    "field": "院校名称",
+    "operator": "contains",
+    "value": "深圳大学",
+    "source_span": "深圳大学"
+  }
+]
+```
+### candidates_to_confirm
+```json
+[]
+```
+### unexecuted_preferences
+```json
+[]
+```
+### SQL / params
+```json
+{
+  "sql": "SELECT\n  CAST(\"院校专业组代码\" AS VARCHAR) AS group_code,\n  ANY_VALUE(CAST(\"专业组名称\" AS VARCHAR)) AS group_title,\n  MAX(TRY_CAST(regexp_extract(REPLACE(CAST(\"专业组最低分1\" AS VARCHAR), ',', ''), '\\d+(?:\\.\\d+)?') AS DOUBLE)) AS group_metric_score,\n  MIN(TRY_CAST(regexp_extract(REPLACE(CAST(\"专业组最低位次1\" AS VARCHAR), ',', ''), '\\d+(?:\\.\\d+)?') AS DOUBLE)) AS group_min_rank,\n  COUNT(*) AS major_count\nFROM \"admissions\"\nWHERE TRY_CAST(regexp_extract(REPLACE(CAST(\"年份\" AS VARCHAR), ',', ''), '\\d+(?:\\.\\d+)?') AS DOUBLE) = ?\n  AND STRPOS(CAST(\"院校名称\" AS VARCHAR), ?) > 0\n  AND \"院校专业组代码\" IS NOT NULL\nGROUP BY CAST(\"院校专业组代码\" AS VARCHAR)\nORDER BY group_metric_score DESC NULLS LAST, group_code ASC\nLIMIT ?",
+  "params": [
+    2024,
+    "深圳大学",
+    5
+  ]
+}
+```
+### uploaded dataset flow
+```json
+{
+  "dataset_id": "ds_demo_uploaded_excel",
+  "upload_status": "uploaded",
+  "generate_status": "needs_review",
+  "approve_ok": true,
+  "build_status": "queryable",
+  "source_fingerprint": "05a02b09976a4e7fa5deee4911fb7c21ce3adad45d115fa3fa046478233c32af"
+}
+```
+### EvidencePack
+```json
+{
+  "user_request": "列出 2025 年深圳大学录取最高的专业组及专业组里面的各个专业最低录取分数",
+  "query_type": "group_detail_report",
+  "executed_rules": [
+    {
+      "rule_id": "planned_year",
+      "field": "年份",
+      "operator": "eq",
+      "value": 2024
+    },
+    {
+      "rule_id": "planned_university_name",
+      "field": "院校名称",
+      "operator": "contains",
+      "value": "深圳大学"
+    }
+  ],
+  "candidate_confirmations": [],
+  "not_executed_preferences": [],
+  "result_count": 1,
+  "top_k_results": [
+    {
+      "id": "result_001",
+      "trace": [],
+      "year": 2024,
+      "batch": null,
+      "university_code": null,
+      "university_name": "深圳大学",
+      "group_code": "10590221",
+      "group_name": "物理221组",
+      "major_code": null,
+      "major_name": "物理221组（2 个专业）",
+      "full_major_name": null,
+      "subject_requirement": null,
+      "province": null,
+      "city": null,
+      "tuition": null,
+      "rank_2024": 9000,
+      "major_rank_2024": null,
+      "plan_count": null,
+      "group_min_rank": 9000,
+      "major_min_rank": null,
+      "safety_margin": ""
+    }
+  ],
+  "result_sections": {
+    "groups": [
+      {
+        "group_code": "10590221",
+        "group_title": "物理221组",
+        "group_metric_score": 628,
+        "group_min_rank": 9000,
+        "major_count": 2,
+        "majors": [
+          {
+            "major_code": "080901",
+            "major_name": "计算机科学与技术",
+            "full_major_name": "计算机科学与技术",
+            "min_score": 626,
+            "min_rank": 8800,
+            "max_score": 640,
+            "plan_count": 30
+          },
+          {
+            "major_code": "080717",
+            "major_name": "人工智能",
+            "full_major_name": "人工智能",
+            "min_score": 625,
+            "min_rank": 9100,
+            "max_score": 638,
+            "plan_count": 20
+          }
+        ]
+      }
+    ]
+  },
+  "trace_summary": {
+    "top_k": 5,
+    "query_type": "group_detail_report",
+    "result_count": 1
+  },
+  "extracted_preferences": [
+    {
+      "id": "query_type",
+      "slot": "query_type",
+      "value": "group_detail_report",
+      "status": "planned"
+    }
+  ],
+  "attribute_grounding_summary": {},
+  "proposed_rule_audit": [],
+  "execution_summary": {
+    "executor": "duckdb",
+    "query_type": "group_detail_report",
+    "sql": "SELECT\n  CAST(\"院校专业组代码\" AS VARCHAR) AS group_code,\n  ANY_VALUE(CAST(\"专业组名称\" AS VARCHAR)) AS group_title,\n  MAX(TRY_CAST(regexp_extract(REPLACE(CAST(\"专业组最低分1\" AS VARCHAR), ',', ''), '\\d+(?:\\.\\d+)?') AS DOUBLE)) AS group_metric_score,\n  MIN(TRY_CAST(regexp_extract(REPLACE(CAST(\"专业组最低位次1\" AS VARCHAR), ',', ''), '\\d+(?:\\.\\d+)?') AS DOUBLE)) AS group_min_rank,\n  COUNT(*) AS major_count\nFROM \"admissions\"\nWHERE TRY_CAST(regexp_extract(REPLACE(CAST(\"年份\" AS VARCHAR), ',', ''), '\\d+(?:\\.\\d+)?') AS DOUBLE) = ?\n  AND STRPOS(CAST(\"院校名称\" AS VARCHAR), ?) > 0\n  AND \"院校专业组代码\" IS NOT NULL\nGROUP BY CAST(\"院校专业组代码\" AS VARCHAR)\nORDER BY group_metric_score DESC NULLS LAST, group_code ASC\nLIMIT ?",
+    "params": [
+      2024,
+      "深圳大学",
+      5
+    ],
+    "detail_sql": "SELECT\n  CAST(\"院校专业组代码\" AS VARCHAR) AS group_code,\n  CAST(\"专业组名称\" AS VARCHAR) AS group_title,\n  CAST(\"专业代码\" AS VARCHAR) AS major_code,\n  CAST(\"专业名称\" AS VARCHAR) AS major_name,\n  CAST(\"专业全称\" AS VARCHAR) AS full_major_name,\n  TRY_CAST(regexp_extract(REPLACE(CAST(\"最低分1\" AS VARCHAR), ',', ''), '\\d+(?:\\.\\d+)?') AS DOUBLE) AS min_score,\n  TRY_CAST(regexp_extract(REPLACE(CAST(\"最低位次1\" AS VARCHAR), ',', ''), '\\d+(?:\\.\\d+)?') AS DOUBLE) AS min_rank,\n  TRY_CAST(regexp_extract(REPLACE(CAST(\"最高分1\" AS VARCHAR), ',', ''), '\\d+(?:\\.\\d+)?') AS DOUBLE) AS max_score,\n  TRY_CAST(regexp_extract(REPLACE(CAST(\"计划人数\" AS VARCHAR), ',', ''), '\\d+(?:\\.\\d+)?') AS DOUBLE) AS plan_count\nFROM \"admissions\"\nWHERE TRY_CAST(regexp_extract(REPLACE(CAST(\"年份\" AS VARCHAR), ',', ''), '\\d+(?:\\.\\d+)?') AS DOUBLE) = ?\n  AND STRPOS(CAST(\"院校名称\" AS VARCHAR), ?) > 0\n  AND CAST(\"院校专业组代码\" AS VARCHAR) IN (?)\nORDER BY group_code ASC, min_score DESC NULLS LAST, major_code ASC",
+    "detail_params": [
+      2024,
+      "深圳大学",
+      "10590221"
+    ],
+    "input_row_count": 4,
+    "filtered_row_count": 1,
+    "nested_result_count": 2,
+    "group_by": [
+      "院校专业组代码",
+      "专业组名称"
+    ],
+    "metric": {
+      "field_id": "group_min_score_2024",
+      "field": "专业组最低分1",
+      "direction": "DESC"
+    },
+    "sort": [
+      {
+        "field": "专业组最低分1",
+        "direction": "DESC"
+      }
+    ],
+    "top_k": 5,
+    "hard_rule_ids": [
+      "planned_year",
+      "planned_university_name"
+    ],
+    "skipped_soft_rule_ids": [],
+    "warnings": [
+      {
+        "code": "requested_year_unavailable",
+        "severity": "warning",
+        "message": "请求年份 2025 不在当前 warehouse 中，改用 2024。",
+        "requested_year": 2025,
+        "year": 2024
+      },
+      {
+        "code": "metric_default_used",
+        "severity": "warning",
+        "message": "“录取最高”按 domain pack 默认指标：专业组最低分最高。",
+        "metric": "group_min_score_2024",
+        "sort": "DESC"
+      }
+    ]
+  },
+  "attribute_explanations": [],
+  "confirmed_rules": [],
+  "confirmation_source": [],
+  "executed_after_confirmation": [],
+  "unconfirmed_candidates": [],
+  "no_schema_field_preferences": [],
+  "rejected_confirmations": []
+}
+```
+### answer
+
+按 2025 年请求已改用当前可用的 2024 年 数据，深圳大学 录取分数最高的专业组是 10590221（物理221组），专业组最低分为 628。以下 sections.groups 展开了组内专业最低分。
+
+## uploaded_dataset_02_recommendation_csv `通过`
+
+- domain: `admissions`
+- acceptance_group: `uploaded_dataset_acceptance`
+- query: 我今年高考分数 630，想读人工智能、计算机，不想去国外，想留在广东省
+- status: `ok`
+- query_type: `recommendation`
+- pass/fail：`通过`
+
+### items
+```json
+[
+  {
+    "item_id": "result_001",
+    "title": "中山大学",
+    "subtitle": "计算机类",
+    "primary_attributes": [
+      {
+        "key": "year",
+        "label": "year",
+        "value": 2024
+      },
+      {
+        "key": "university_name",
+        "label": "university_name",
+        "value": "中山大学"
+      },
+      {
+        "key": "group_code",
+        "label": "group_code",
+        "value": 10558219
+      },
+      {
+        "key": "group_name",
+        "label": "group_name",
+        "value": "物理219组"
+      }
+    ],
+    "secondary_attributes": [
+      {
+        "key": "major_code",
+        "label": "major_code",
+        "value": 80901
+      },
+      {
+        "key": "major_name",
+        "label": "major_name",
+        "value": "计算机类"
+      },
+      {
+        "key": "full_major_name",
+        "label": "full_major_name",
+        "value": "计算机类"
+      },
+      {
+        "key": "province",
+        "label": "province",
+        "value": "广东"
+      },
+      {
+        "key": "city",
+        "label": "city",
+        "value": "广州"
+      },
+      {
+        "key": "tuition",
+        "label": "tuition",
+        "value": 6850
+      },
+      {
+        "key": "rank_2024",
+        "label": "rank_2024",
+        "value": 5000
+      },
+      {
+        "key": "major_rank_2024",
+        "label": "major_rank_2024",
+        "value": 5000
+      },
+      {
+        "key": "plan_count",
+        "label": "plan_count",
+        "value": 40
+      },
+      {
+        "key": "group_min_rank",
+        "label": "group_min_rank",
+        "value": 5000
+      },
+      {
+        "key": "major_min_rank",
+        "label": "major_min_rank",
+        "value": 5000
+      }
+    ],
+    "matched_filters": [
+      {
+        "id": "planned_year",
+        "field": "年份",
+        "operator": "eq",
+        "value": 2024,
+        "matched": false,
+        "text": ""
+      },
+      {
+        "id": "planned_major_keywords",
+        "field": "专业名称",
+        "operator": "contains_any",
+        "value": [
+          "计算机",
+          "人工智能"
+        ],
+        "matched": false,
+        "text": ""
+      },
+      {
+        "id": "planned_school_province",
+        "field": "所在省",
+        "operator": "in",
+        "value": [
+          "广东"
+        ],
+        "matched": false,
+        "text": ""
+      }
+    ],
+    "raw": {
+      "年份": 2024,
+      "院校名称": "中山大学",
+      "院校专业组代码": 10558219,
+      "专业组名称": "物理219组",
+      "专业代码": 80901,
+      "专业名称": "计算机类",
+      "专业全称": "计算机类",
+      "所在省": "广东",
+      "城市": "广州",
+      "学费": 6850,
+      "专业组最低位次1": 5000,
+      "最低位次1": 5000,
+      "计划人数": 40,
+      "group_min_score": 650,
+      "score_margin": -20,
+      "rank_margin": null
+    }
+  },
+  {
+    "item_id": "result_002",
+    "title": "深圳大学",
+    "subtitle": "计算机科学与技术",
+    "primary_attributes": [
+      {
+        "key": "year",
+        "label": "year",
+        "value": 2024
+      },
+      {
+        "key": "university_name",
+        "label": "university_name",
+        "value": "深圳大学"
+      },
+      {
+        "key": "group_code",
+        "label": "group_code",
+        "value": 10590221
+      },
+      {
+        "key": "group_name",
+        "label": "group_name",
+        "value": "物理221组"
+      }
+    ],
+    "secondary_attributes": [
+      {
+        "key": "major_code",
+        "label": "major_code",
+        "value": 80901
+      },
+      {
+        "key": "major_name",
+        "label": "major_name",
+        "value": "计算机科学与技术"
+      },
+      {
+        "key": "full_major_name",
+        "label": "full_major_name",
+        "value": "计算机科学与技术"
+      },
+      {
+        "key": "province",
+        "label": "province",
+        "value": "广东"
+      },
+      {
+        "key": "city",
+        "label": "city",
+        "value": "深圳"
+      },
+      {
+        "key": "tuition",
+        "label": "tuition",
+        "value": 6850
+      },
+      {
+        "key": "rank_2024",
+        "label": "rank_2024",
+        "value": 9000
+      },
+      {
+        "key": "major_rank_2024",
+        "label": "major_rank_2024",
+        "value": 8800
+      },
+      {
+        "key": "plan_count",
+        "label": "plan_count",
+        "value": 30
+      },
+      {
+        "key": "group_min_rank",
+        "label": "group_min_rank",
+        "value": 9000
+      },
+      {
+        "key": "major_min_rank",
+        "label": "major_min_rank",
+        "value": 8800
+      }
+    ],
+    "matched_filters": [
+      {
+        "id": "planned_year",
+        "field": "年份",
+        "operator": "eq",
+        "value": 2024,
+        "matched": false,
+        "text": ""
+      },
+      {
+        "id": "planned_major_keywords",
+        "field": "专业名称",
+        "operator": "contains_any",
+        "value": [
+          "计算机",
+          "人工智能"
+        ],
+        "matched": false,
+        "text": ""
+      },
+      {
+        "id": "planned_school_province",
+        "field": "所在省",
+        "operator": "in",
+        "value": [
+          "广东"
+        ],
+        "matched": false,
+        "text": ""
+      }
+    ],
+    "raw": {
+      "年份": 2024,
+      "院校名称": "深圳大学",
+      "院校专业组代码": 10590221,
+      "专业组名称": "物理221组",
+      "专业代码": 80901,
+      "专业名称": "计算机科学与技术",
+      "专业全称": "计算机科学与技术",
+      "所在省": "广东",
+      "城市": "深圳",
+      "学费": 6850,
+      "专业组最低位次1": 9000,
+      "最低位次1": 8800,
+      "计划人数": 30,
+      "group_min_score": 628,
+      "score_margin": 2,
+      "rank_margin": null
+    }
+  },
+  {
+    "item_id": "result_003",
+    "title": "深圳大学",
+    "subtitle": "人工智能",
+    "primary_attributes": [
+      {
+        "key": "year",
+        "label": "year",
+        "value": 2024
+      },
+      {
+        "key": "university_name",
+        "label": "university_name",
+        "value": "深圳大学"
+      },
+      {
+        "key": "group_code",
+        "label": "group_code",
+        "value": 10590221
+      },
+      {
+        "key": "group_name",
+        "label": "group_name",
+        "value": "物理221组"
+      }
+    ],
+    "secondary_attributes": [
+      {
+        "key": "major_code",
+        "label": "major_code",
+        "value": 80717
+      },
+      {
+        "key": "major_name",
+        "label": "major_name",
+        "value": "人工智能"
+      },
+      {
+        "key": "full_major_name",
+        "label": "full_major_name",
+        "value": "人工智能"
+      },
+      {
+        "key": "province",
+        "label": "province",
+        "value": "广东"
+      },
+      {
+        "key": "city",
+        "label": "city",
+        "value": "深圳"
+      },
+      {
+        "key": "tuition",
+        "label": "tuition",
+        "value": 6850
+      },
+      {
+        "key": "rank_2024",
+        "label": "rank_2024",
+        "value": 9000
+      },
+      {
+        "key": "major_rank_2024",
+        "label": "major_rank_2024",
+        "value": 9100
+      },
+      {
+        "key": "plan_count",
+        "label": "plan_count",
+        "value": 20
+      },
+      {
+        "key": "group_min_rank",
+        "label": "group_min_rank",
+        "value": 9000
+      },
+      {
+        "key": "major_min_rank",
+        "label": "major_min_rank",
+        "value": 9100
+      }
+    ],
+    "matched_filters": [
+      {
+        "id": "planned_year",
+        "field": "年份",
+        "operator": "eq",
+        "value": 2024,
+        "matched": false,
+        "text": ""
+      },
+      {
+        "id": "planned_major_keywords",
+        "field": "专业名称",
+        "operator": "contains_any",
+        "value": [
+          "计算机",
+          "人工智能"
+        ],
+        "matched": false,
+        "text": ""
+      },
+      {
+        "id": "planned_school_province",
+        "field": "所在省",
+        "operator": "in",
+        "value": [
+          "广东"
+        ],
+        "matched": false,
+        "text": ""
+      }
+    ],
+    "raw": {
+      "年份": 2024,
+      "院校名称": "深圳大学",
+      "院校专业组代码": 10590221,
+      "专业组名称": "物理221组",
+      "专业代码": 80717,
+      "专业名称": "人工智能",
+      "专业全称": "人工智能",
+      "所在省": "广东",
+      "城市": "深圳",
+      "学费": 6850,
+      "专业组最低位次1": 9000,
+      "最低位次1": 9100,
+      "计划人数": 20,
+      "group_min_score": 628,
+      "score_margin": 2,
+      "rank_margin": null
+    }
+  }
+]
+```
+### top_results
+```json
+[
+  {
+    "id": "result_001",
+    "trace": [],
+    "year": 2024,
+    "batch": null,
+    "university_code": null,
+    "university_name": "中山大学",
+    "group_code": 10558219,
+    "group_name": "物理219组",
+    "major_code": 80901,
+    "major_name": "计算机类",
+    "full_major_name": "计算机类",
+    "subject_requirement": null,
+    "province": "广东",
+    "city": "广州",
+    "tuition": 6850,
+    "rank_2024": 5000,
+    "major_rank_2024": 5000,
+    "plan_count": 40,
+    "group_min_rank": 5000,
+    "major_min_rank": 5000,
+    "safety_margin": ""
+  },
+  {
+    "id": "result_002",
+    "trace": [],
+    "year": 2024,
+    "batch": null,
+    "university_code": null,
+    "university_name": "深圳大学",
+    "group_code": 10590221,
+    "group_name": "物理221组",
+    "major_code": 80901,
+    "major_name": "计算机科学与技术",
+    "full_major_name": "计算机科学与技术",
+    "subject_requirement": null,
+    "province": "广东",
+    "city": "深圳",
+    "tuition": 6850,
+    "rank_2024": 9000,
+    "major_rank_2024": 8800,
+    "plan_count": 30,
+    "group_min_rank": 9000,
+    "major_min_rank": 8800,
+    "safety_margin": ""
+  },
+  {
+    "id": "result_003",
+    "trace": [],
+    "year": 2024,
+    "batch": null,
+    "university_code": null,
+    "university_name": "深圳大学",
+    "group_code": 10590221,
+    "group_name": "物理221组",
+    "major_code": 80717,
+    "major_name": "人工智能",
+    "full_major_name": "人工智能",
+    "subject_requirement": null,
+    "province": "广东",
+    "city": "深圳",
+    "tuition": 6850,
+    "rank_2024": 9000,
+    "major_rank_2024": 9100,
+    "plan_count": 20,
+    "group_min_rank": 9000,
+    "major_min_rank": 9100,
+    "safety_margin": ""
+  }
+]
+```
+### result_sections
+```json
+{
+  "reach": {
+    "label": "冲",
+    "items": [
+      {
+        "year": 2024,
+        "university_name": "中山大学",
+        "group_code": 10558219,
+        "group_title": "物理219组",
+        "major_code": 80901,
+        "major_name": "计算机类",
+        "full_major_name": "计算机类",
+        "school_province": "广东",
+        "city": "广州",
+        "tuition": 6850,
+        "group_min_score": 650,
+        "group_min_rank": 5000,
+        "major_min_score": 650,
+        "major_min_rank": 5000,
+        "plan_count": 40,
+        "score_margin": -20
+      }
+    ]
+  },
+  "match": {
+    "label": "稳",
+    "items": [
+      {
+        "year": 2024,
+        "university_name": "深圳大学",
+        "group_code": 10590221,
+        "group_title": "物理221组",
+        "major_code": 80901,
+        "major_name": "计算机科学与技术",
+        "full_major_name": "计算机科学与技术",
+        "school_province": "广东",
+        "city": "深圳",
+        "tuition": 6850,
+        "group_min_score": 628,
+        "group_min_rank": 9000,
+        "major_min_score": 626,
+        "major_min_rank": 8800,
+        "plan_count": 30,
+        "score_margin": 2
+      },
+      {
+        "year": 2024,
+        "university_name": "深圳大学",
+        "group_code": 10590221,
+        "group_title": "物理221组",
+        "major_code": 80717,
+        "major_name": "人工智能",
+        "full_major_name": "人工智能",
+        "school_province": "广东",
+        "city": "深圳",
+        "tuition": 6850,
+        "group_min_score": 628,
+        "group_min_rank": 9000,
+        "major_min_score": 625,
+        "major_min_rank": 9100,
+        "plan_count": 20,
+        "score_margin": 2
+      }
+    ]
+  },
+  "safety": {
+    "label": "保",
+    "items": []
+  }
+}
+```
+### executed_filters
+```json
+[
+  {
+    "id": "planned_year",
+    "label": "年份 等于 2024",
+    "field": "年份",
+    "operator": "eq",
+    "value": 2024,
+    "source_span": "2024"
+  },
+  {
+    "id": "planned_major_keywords",
+    "label": "专业名称 包含任一：计算机、人工智能",
+    "field": "专业名称",
+    "operator": "contains_any",
+    "value": [
+      "计算机",
+      "人工智能"
+    ],
+    "source_span": "计算机、人工智能"
+  },
+  {
+    "id": "planned_school_province",
+    "label": "所在省 属于：广东",
+    "field": "所在省",
+    "operator": "in",
+    "value": [
+      "广东"
+    ],
+    "source_span": "广东"
+  }
+]
+```
+### candidates_to_confirm
+```json
+[]
+```
+### unexecuted_preferences
+```json
+[
+  {
+    "id": "planned_not_exec_1",
+    "preference": "不想去国外",
+    "display": "不想去国外未执行：当前 domain pack 未启用境外办学字段，不能执行该排除条件。",
+    "reason": "当前 domain pack 未启用境外办学字段，不能执行该排除条件。",
+    "missing_field": "school_country_or_region",
+    "source_span": "不想去国外"
+  }
+]
+```
+### SQL / params
+```json
+{
+  "sql": "SELECT\n  \"年份\" AS year,\n  \"院校名称\" AS university_name,\n  \"院校专业组代码\" AS group_code,\n  \"专业组名称\" AS group_title,\n  \"专业代码\" AS major_code,\n  \"专业名称\" AS major_name,\n  \"专业全称\" AS full_major_name,\n  \"所在省\" AS school_province,\n  \"城市\" AS city,\n  \"学费\" AS tuition,\n  TRY_CAST(regexp_extract(REPLACE(CAST(\"专业组最低分1\" AS VARCHAR), ',', ''), '\\d+(?:\\.\\d+)?') AS DOUBLE) AS group_min_score,\n  TRY_CAST(regexp_extract(REPLACE(CAST(\"专业组最低位次1\" AS VARCHAR), ',', ''), '\\d+(?:\\.\\d+)?') AS DOUBLE) AS group_min_rank,\n  TRY_CAST(regexp_extract(REPLACE(CAST(\"最低分1\" AS VARCHAR), ',', ''), '\\d+(?:\\.\\d+)?') AS DOUBLE) AS major_min_score,\n  TRY_CAST(regexp_extract(REPLACE(CAST(\"最低位次1\" AS VARCHAR), ',', ''), '\\d+(?:\\.\\d+)?') AS DOUBLE) AS major_min_rank,\n  TRY_CAST(regexp_extract(REPLACE(CAST(\"计划人数\" AS VARCHAR), ',', ''), '\\d+(?:\\.\\d+)?') AS DOUBLE) AS plan_count\nFROM \"admissions\"\nWHERE TRY_CAST(regexp_extract(REPLACE(CAST(\"年份\" AS VARCHAR), ',', ''), '\\d+(?:\\.\\d+)?') AS DOUBLE) = ? AND CAST(\"所在省\" AS VARCHAR) IN (?) AND (STRPOS(CAST(\"专业名称\" AS VARCHAR), ?) > 0 OR STRPOS(CAST(\"专业名称\" AS VARCHAR), ?) > 0) AND TRY_CAST(regexp_extract(REPLACE(CAST(\"专业组最低分1\" AS VARCHAR), ',', ''), '\\d+(?:\\.\\d+)?') AS DOUBLE) BETWEEN ? AND ?\nORDER BY ABS(? - TRY_CAST(regexp_extract(REPLACE(CAST(\"专业组最低分1\" AS VARCHAR), ',', ''), '\\d+(?:\\.\\d+)?') AS DOUBLE)) ASC NULLS LAST, group_min_score DESC NULLS LAST\nLIMIT ?",
+  "params": [
+    2024,
+    "广东",
+    "计算机",
+    "人工智能",
+    600,
+    660,
+    630,
+    30
+  ]
+}
+```
+### uploaded dataset flow
+```json
+{
+  "dataset_id": "ds_demo_uploaded_csv",
+  "upload_status": "uploaded",
+  "generate_status": "needs_review",
+  "approve_ok": true,
+  "build_status": "queryable",
+  "source_fingerprint": "8cffbd836d28a8da6055a1ff61d7408a7935b3dcf445a0843d25bb44b0e61065"
+}
+```
+### EvidencePack
+```json
+{
+  "user_request": "我今年高考分数 630，想读人工智能、计算机，不想去国外，想留在广东省",
+  "query_type": "recommendation",
+  "executed_rules": [
+    {
+      "rule_id": "planned_year",
+      "field": "年份",
+      "operator": "eq",
+      "value": 2024
+    },
+    {
+      "rule_id": "planned_major_keywords",
+      "field": "专业名称",
+      "operator": "contains_any",
+      "value": [
+        "计算机",
+        "人工智能"
+      ]
+    },
+    {
+      "rule_id": "planned_school_province",
+      "field": "所在省",
+      "operator": "in",
+      "value": [
+        "广东"
+      ]
+    }
+  ],
+  "candidate_confirmations": [],
+  "not_executed_preferences": [
+    {
+      "source_text": "不想去国外",
+      "field_id": "school_country_or_region",
+      "field": "无可执行字段",
+      "match_type": "no_schema_field",
+      "executable": false,
+      "reason": "当前 domain pack 未启用境外办学字段，不能执行该排除条件。"
+    }
+  ],
+  "result_count": 3,
+  "top_k_results": [
+    {
+      "id": "result_001",
+      "trace": [],
+      "year": 2024,
+      "batch": null,
+      "university_code": null,
+      "university_name": "中山大学",
+      "group_code": 10558219,
+      "group_name": "物理219组",
+      "major_code": 80901,
+      "major_name": "计算机类",
+      "full_major_name": "计算机类",
+      "subject_requirement": null,
+      "province": "广东",
+      "city": "广州",
+      "tuition": 6850,
+      "rank_2024": 5000,
+      "major_rank_2024": 5000,
+      "plan_count": 40,
+      "group_min_rank": 5000,
+      "major_min_rank": 5000,
+      "safety_margin": ""
+    },
+    {
+      "id": "result_002",
+      "trace": [],
+      "year": 2024,
+      "batch": null,
+      "university_code": null,
+      "university_name": "深圳大学",
+      "group_code": 10590221,
+      "group_name": "物理221组",
+      "major_code": 80901,
+      "major_name": "计算机科学与技术",
+      "full_major_name": "计算机科学与技术",
+      "subject_requirement": null,
+      "province": "广东",
+      "city": "深圳",
+      "tuition": 6850,
+      "rank_2024": 9000,
+      "major_rank_2024": 8800,
+      "plan_count": 30,
+      "group_min_rank": 9000,
+      "major_min_rank": 8800,
+      "safety_margin": ""
+    },
+    {
+      "id": "result_003",
+      "trace": [],
+      "year": 2024,
+      "batch": null,
+      "university_code": null,
+      "university_name": "深圳大学",
+      "group_code": 10590221,
+      "group_name": "物理221组",
+      "major_code": 80717,
+      "major_name": "人工智能",
+      "full_major_name": "人工智能",
+      "subject_requirement": null,
+      "province": "广东",
+      "city": "深圳",
+      "tuition": 6850,
+      "rank_2024": 9000,
+      "major_rank_2024": 9100,
+      "plan_count": 20,
+      "group_min_rank": 9000,
+      "major_min_rank": 9100,
+      "safety_margin": ""
+    }
+  ],
+  "result_sections": {
+    "reach": {
+      "label": "冲",
+      "items": [
+        {
+          "year": 2024,
+          "university_name": "中山大学",
+          "group_code": 10558219,
+          "group_title": "物理219组",
+          "major_code": 80901,
+          "major_name": "计算机类",
+          "full_major_name": "计算机类",
+          "school_province": "广东",
+          "city": "广州",
+          "tuition": 6850,
+          "group_min_score": 650,
+          "group_min_rank": 5000,
+          "major_min_score": 650,
+          "major_min_rank": 5000,
+          "plan_count": 40,
+          "score_margin": -20
+        }
+      ]
+    },
+    "match": {
+      "label": "稳",
+      "items": [
+        {
+          "year": 2024,
+          "university_name": "深圳大学",
+          "group_code": 10590221,
+          "group_title": "物理221组",
+          "major_code": 80901,
+          "major_name": "计算机科学与技术",
+          "full_major_name": "计算机科学与技术",
+          "school_province": "广东",
+          "city": "深圳",
+          "tuition": 6850,
+          "group_min_score": 628,
+          "group_min_rank": 9000,
+          "major_min_score": 626,
+          "major_min_rank": 8800,
+          "plan_count": 30,
+          "score_margin": 2
+        },
+        {
+          "year": 2024,
+          "university_name": "深圳大学",
+          "group_code": 10590221,
+          "group_title": "物理221组",
+          "major_code": 80717,
+          "major_name": "人工智能",
+          "full_major_name": "人工智能",
+          "school_province": "广东",
+          "city": "深圳",
+          "tuition": 6850,
+          "group_min_score": 628,
+          "group_min_rank": 9000,
+          "major_min_score": 625,
+          "major_min_rank": 9100,
+          "plan_count": 20,
+          "score_margin": 2
+        }
+      ]
+    },
+    "safety": {
+      "label": "保",
+      "items": []
+    }
+  },
+  "trace_summary": {
+    "top_k": 5,
+    "query_type": "recommendation",
+    "result_count": 3
+  },
+  "extracted_preferences": [
+    {
+      "id": "pref_major",
+      "slot": "专业名称",
+      "value": [
+        "计算机",
+        "人工智能"
+      ],
+      "status": "已对齐字段"
+    },
+    {
+      "id": "pref_score",
+      "slot": "分数",
+      "value": 630,
+      "status": "仅用于 score_margin"
+    },
+    {
+      "id": "pref_school_province",
+      "slot": "院校所在地省份",
+      "value": [
+        "广东"
+      ],
+      "status": "已对齐字段"
+    }
+  ],
+  "attribute_grounding_summary": {},
+  "proposed_rule_audit": [],
+  "execution_summary": {
+    "executor": "duckdb",
+    "query_type": "recommendation",
+    "sql": "SELECT\n  \"年份\" AS year,\n  \"院校名称\" AS university_name,\n  \"院校专业组代码\" AS group_code,\n  \"专业组名称\" AS group_title,\n  \"专业代码\" AS major_code,\n  \"专业名称\" AS major_name,\n  \"专业全称\" AS full_major_name,\n  \"所在省\" AS school_province,\n  \"城市\" AS city,\n  \"学费\" AS tuition,\n  TRY_CAST(regexp_extract(REPLACE(CAST(\"专业组最低分1\" AS VARCHAR), ',', ''), '\\d+(?:\\.\\d+)?') AS DOUBLE) AS group_min_score,\n  TRY_CAST(regexp_extract(REPLACE(CAST(\"专业组最低位次1\" AS VARCHAR), ',', ''), '\\d+(?:\\.\\d+)?') AS DOUBLE) AS group_min_rank,\n  TRY_CAST(regexp_extract(REPLACE(CAST(\"最低分1\" AS VARCHAR), ',', ''), '\\d+(?:\\.\\d+)?') AS DOUBLE) AS major_min_score,\n  TRY_CAST(regexp_extract(REPLACE(CAST(\"最低位次1\" AS VARCHAR), ',', ''), '\\d+(?:\\.\\d+)?') AS DOUBLE) AS major_min_rank,\n  TRY_CAST(regexp_extract(REPLACE(CAST(\"计划人数\" AS VARCHAR), ',', ''), '\\d+(?:\\.\\d+)?') AS DOUBLE) AS plan_count\nFROM \"admissions\"\nWHERE TRY_CAST(regexp_extract(REPLACE(CAST(\"年份\" AS VARCHAR), ',', ''), '\\d+(?:\\.\\d+)?') AS DOUBLE) = ? AND CAST(\"所在省\" AS VARCHAR) IN (?) AND (STRPOS(CAST(\"专业名称\" AS VARCHAR), ?) > 0 OR STRPOS(CAST(\"专业名称\" AS VARCHAR), ?) > 0) AND TRY_CAST(regexp_extract(REPLACE(CAST(\"专业组最低分1\" AS VARCHAR), ',', ''), '\\d+(?:\\.\\d+)?') AS DOUBLE) BETWEEN ? AND ?\nORDER BY ABS(? - TRY_CAST(regexp_extract(REPLACE(CAST(\"专业组最低分1\" AS VARCHAR), ',', ''), '\\d+(?:\\.\\d+)?') AS DOUBLE)) ASC NULLS LAST, group_min_score DESC NULLS LAST\nLIMIT ?",
+    "params": [
+      2024,
+      "广东",
+      "计算机",
+      "人工智能",
+      600,
+      660,
+      630,
+      30
+    ],
+    "input_row_count": 4,
+    "filtered_row_count": 3,
+    "group_by": [],
+    "metric": "score_margin",
+    "sort": [
+      {
+        "field": "score_margin",
+        "direction": "ASC"
+      }
+    ],
+    "top_k": 30,
+    "hard_rule_ids": [
+      "planned_year",
+      "planned_major_keywords",
+      "planned_school_province"
+    ],
+    "skipped_soft_rule_ids": [],
+    "nested_result_count": 0,
+    "warnings": [
+      {
+        "code": "default_year_used",
+        "severity": "warning",
+        "message": "未指定年份，默认使用 latest_available_year=2024。",
+        "year": 2024
+      },
+      {
+        "code": "score_without_rank",
+        "severity": "warning",
+        "message": "只提供分数没有位次；系统只按历史最低分 margin 分组，不能判断录取概率。"
+      }
+    ]
+  },
+  "attribute_explanations": [],
+  "confirmed_rules": [],
+  "confirmation_source": [],
+  "executed_after_confirmation": [],
+  "unconfirmed_candidates": [],
+  "no_schema_field_preferences": [
+    {
+      "source_text": "不想去国外",
+      "field_id": "school_country_or_region",
+      "field": "无可执行字段",
+      "match_type": "no_schema_field",
+      "executable": false,
+      "reason": "当前 domain pack 未启用境外办学字段，不能执行该排除条件。"
+    }
+  ],
+  "rejected_confirmations": []
+}
+```
+### answer
+
+基于历史最低分/最低位次和分数 630，按分数 margin分为冲、稳、保，共返回 3 条分组结果。该分组不是录取概率判断；未指定年份，默认使用 latest_available_year=2024。；只提供分数没有位次；系统只按历史最低分 margin 分组，不能判断录取概率。。

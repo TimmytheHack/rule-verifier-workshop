@@ -92,6 +92,20 @@ python scripts/run_quality_gate.py
 
 `review_domain_pack.py` 默认 dry-run，只有显式 `--write` 才会写入 `review.yaml`、runtime schema、rule taxonomy、attribute grounding、`top_result_mapping.yaml` 和 domain status。PII、高基数字段、自由文本 contains/keyword filter、未通过数值范围 sanity check 的字段都不能自动 approve。`draft` / `needs_review` pack 即使已有 seed candidate ops，也会在 Workbench 中返回 `blocked`，不执行 SQL；只有 `approved` pack 才能进入 demo acceptance、quality gate 和生产使用。`run_quality_gate.py` 会统一运行 Python 语法检查、unit tests、regex evaluator、demo acceptance、domain pack validate、warehouse fingerprint guard、`git diff --check` 和前端 build，并输出 `outputs/quality_gate/report.md` 与 `outputs/quality_gate/report.json`。
 
+后端现在也提供 uploaded dataset 产品流，把上述 CLI 能力接成 API/service：
+
+```text
+uploaded
+-> profiled
+-> draft_domain_generated
+-> needs_review
+-> approved
+-> warehouse_ready
+-> queryable
+```
+
+核心 endpoint 包括 `POST /datasets/upload`、`POST /datasets/{dataset_id}/generate-domain-pack`、`GET /datasets/{dataset_id}/profile`、`GET /datasets/{dataset_id}/review-summary`、`POST /datasets/{dataset_id}/approve-field`、`POST /datasets/{dataset_id}/approve-op`、`POST /datasets/{dataset_id}/block-field`、`POST /datasets/{dataset_id}/approve-domain`、`POST /datasets/{dataset_id}/build-warehouse` 和 `POST /workbench/query`。上传文件保存在 `outputs/uploaded_datasets/<dataset_id>/`，不会覆盖内置 `admissions`、`housing`、`products` domain pack。未 approved 的 pack、stale warehouse fingerprint、非法 `dataset_id` 或缺失 warehouse 都返回结构化 `blocked` / error，不执行 SQL。前端新增“上传数据集接入流程”面板，只调用这些 API 并展示 profile、review summary、`items`、`top_results`、`result_sections`、`EvidencePack` 和 warnings，不在前端生成推荐逻辑。
+
 Workbench API 响应已经固定为 multi-domain `WorkbenchResponse` contract。前端应依赖 `schema_version`、`domain`、`domain_version`、`domain_pack_status`、`status`、`query_type`、`query`、`answer`、`items`、`top_results`、`result_sections`、`result_count`、`executed_filters`、`candidates_to_confirm`、`confirmed_rules`、`unconfirmed_candidates`、`unexecuted_preferences`、`no_schema_field_preferences`、`rejected_confirmations`、`warnings`、`evidence_pack` 和 `debug_trace`。`status` 只能是 `ok`、`needs_confirmation`、`no_results`、`blocked`、`error`；`items` 是跨领域稳定 item card，`top_results` 只作为 domain-specific 兼容层，由 `domains/<domain>/top_result_mapping.yaml` 生成。admissions 额外支持 `group_detail_report` 和 `recommendation` 两类 `query_type`，通过 `result_sections` 返回专业组明细或冲/稳/保分组。draft/needs_review domain pack 默认返回 `blocked`，不执行 SQL。详见 [Workbench API 响应契约](docs/api_contract.md)。
 
 Workbench 还支持 candidate_id confirmation loop：
@@ -164,6 +178,7 @@ http://127.0.0.1:5173
 ```
 
 Vite 已配置把 `/api` 代理到 `http://127.0.0.1:8001`。如果只看 demo 模式，前端可以不启动后端；如果切到 API 模式，需要后端正在运行。
+上传数据集面板还会调用 `/datasets` 和 `/workbench`，同样由 Vite 代理到后端。
 
 ## 如何测试工作台
 

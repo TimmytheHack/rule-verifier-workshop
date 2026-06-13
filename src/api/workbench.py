@@ -100,6 +100,7 @@ class WorkbenchConfig:
     confirmed_candidates: list[str] = field(default_factory=list)
     domain_name: str = "admissions"
     domain_path: str | None = None
+    dataset_id: str | None = None
 
 
 @dataclass(frozen=True)
@@ -186,21 +187,28 @@ def _domain_config(config: WorkbenchConfig) -> DomainConfig:
 
 
 def _workbook_path(domain_config: DomainConfig) -> Path:
-    if domain_config.domain_id == ADMISSIONS_DOMAIN.domain_id:
+    if _is_builtin_admissions_domain(domain_config):
         return Path(WORKBOOK_NAME)
     return domain_config.workbook_path
 
 
 def _warehouse_database_path(domain_config: DomainConfig) -> Path:
-    if domain_config.domain_id == ADMISSIONS_DOMAIN.domain_id:
+    if _is_builtin_admissions_domain(domain_config):
         return Path(WAREHOUSE_DATABASE_PATH)
     return domain_config.warehouse_database_path
 
 
 def _warehouse_value_index_path(domain_config: DomainConfig) -> Path:
-    if domain_config.domain_id == ADMISSIONS_DOMAIN.domain_id:
+    if _is_builtin_admissions_domain(domain_config):
         return Path(WAREHOUSE_VALUE_INDEX_PATH)
     return domain_config.value_index_path
+
+
+def _is_builtin_admissions_domain(domain_config: DomainConfig) -> bool:
+    return (
+        domain_config.domain_id == ADMISSIONS_DOMAIN.domain_id
+        and domain_config.root.resolve() == ADMISSIONS_DOMAIN.root.resolve()
+    )
 
 
 def run_workbench(config: WorkbenchConfig) -> dict[str, Any]:
@@ -1238,6 +1246,7 @@ def _contract_query(config: WorkbenchConfig) -> dict[str, Any]:
     return {
         "text": _compose_user_request(config),
         "domain": config.domain_name,
+        "dataset_id": config.dataset_id,
         "query_type": config.hard_filters.get("query_type"),
         "hard_filters": dict(config.hard_filters),
         "soft_preferences": dict(config.soft_preferences),

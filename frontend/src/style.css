@@ -230,6 +230,96 @@ input {
   background: #ffffff;
 }
 
+.dataset-card {
+  border-color: #d8e4df;
+}
+
+.dataset-flow-grid,
+.dataset-json-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.dataset-flow-grid {
+  margin-top: 14px;
+}
+
+.dataset-panel {
+  padding: 14px;
+  border: 1px solid #dce8e2;
+  border-radius: 8px;
+  background: #fbfefd;
+}
+
+.dataset-panel h3,
+.dataset-json-grid h3 {
+  margin: 0 0 12px;
+  color: #1e333d;
+  font-size: 17px;
+}
+
+.query-panel {
+  background: #fffdf8;
+  border-color: #ead59b;
+}
+
+.compact-controls,
+.button-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.compact-controls .el-input {
+  flex: 1 1 160px;
+}
+
+.wide-button {
+  width: 100%;
+  margin-top: 12px;
+}
+
+.dataset-json-grid {
+  margin-top: 16px;
+}
+
+.dataset-json-grid article {
+  min-width: 0;
+  padding: 12px;
+  border: 1px solid #dfe8ec;
+  border-radius: 8px;
+  background: #fbfdff;
+}
+
+.dataset-json-grid pre {
+  max-height: 280px;
+  margin: 0;
+  overflow: auto;
+  color: #263944;
+  font-family:
+    "SFMono-Regular", Consolas, "Liberation Mono", "PingFang SC",
+    "Microsoft YaHei", monospace;
+  font-size: 12px;
+  line-height: 1.6;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.result-json-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.review-table {
+  width: 100%;
+  margin-top: 16px;
+}
+
+.field-tag {
+  margin: 2px 4px 2px 0;
+}
+
 .preference-grid,
 .confirmation-grid {
   display: grid;
@@ -721,6 +811,8 @@ input {
   .preference-grid,
   .confirmation-grid,
   .verification-grid,
+  .dataset-flow-grid,
+  .dataset-json-grid,
   .mode-grid,
   .hard-form-grid,
   .soft-form-grid,
@@ -752,6 +844,8 @@ input {
   .preference-grid,
   .confirmation-grid,
   .verification-grid,
+  .dataset-flow-grid,
+  .dataset-json-grid,
   .mode-grid,
   .hard-form-grid,
   .soft-form-grid,

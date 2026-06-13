@@ -1,6 +1,6 @@
 # Workbench API 响应契约
 
-本文固定 `/api/workbench/run` 的多领域响应契约。前端应优先读取统一 `items`
+本文固定 `/api/workbench/run` 和 `/workbench/query` 的多领域响应契约。前端应优先读取统一 `items`
 层；`top_results` 仅作为 domain-specific 兼容层保留。`debug_trace` 内保留旧调试
 结构，用于排查，不应作为主展示字段来源。
 
@@ -69,6 +69,47 @@ regex evaluator、API contract tests、demo acceptance、domain pack validate、
 workflow smoke、warehouse fingerprint guard、`git diff --check` 和可选前端 build。门禁报告写入
 `outputs/quality_gate/report.md` 和 `outputs/quality_gate/report.json`；任何 required check
 失败时，release 不应继续。
+
+## Uploaded Dataset / Ingestion API
+
+上传数据集产品流复用 `generate_domain_pack.py`、`review_domain_pack.py`、warehouse
+ingestion、fingerprint guard、`DomainConfig` 和 `WorkbenchResponse`，不复制执行逻辑。
+状态流转固定为：
+
+```text
+uploaded
+-> profiled
+-> draft_domain_generated
+-> needs_review
+-> approved
+-> warehouse_ready
+-> queryable
+-> blocked/error
+```
+
+endpoint：
+
+| endpoint | 含义 |
+|---|---|
+| `POST /datasets/upload?filename=...` | 上传 CSV/Excel 原始 body，保存到托管目录，返回 `dataset_id` 和 `source_fingerprint`。 |
+| `POST /datasets/{dataset_id}/generate-domain-pack` | 生成 draft domain pack、schema profile、schema/value index 和 ingestion summary。 |
+| `GET /datasets/{dataset_id}/profile` | 返回字段类型、空值率、唯一值数量、样例值和风险标记。 |
+| `GET /datasets/{dataset_id}/review-summary` | 返回可审查字段、seed ops、PII / high-cardinality / text 风险。 |
+| `POST /datasets/{dataset_id}/approve-field` | 调用 review workflow 批准字段，并写入审计记录。 |
+| `POST /datasets/{dataset_id}/approve-op` | 调用 review workflow 批准字段的特定 op，并写入审计记录。 |
+| `POST /datasets/{dataset_id}/block-field` | 调用 review workflow 阻断字段，并写入审计记录。 |
+| `POST /datasets/{dataset_id}/approve-domain` | required checks 通过后批准 domain pack。 |
+| `POST /datasets/{dataset_id}/build-warehouse` | 基于 approved pack 构建 DuckDB warehouse 和 value index。 |
+| `POST /workbench/query` | 支持 `dataset_id` / `domain_name`，返回同一 `WorkbenchResponse` contract。 |
+
+安全语义：
+
+- `dataset_id` 只能包含字母、数字、下划线和连字符，禁止目录穿越；上传数据不能覆盖内置 `admissions`、`housing`、`products`。
+- 上传文件会检查扩展名、大小、sheet、行数和列数，并返回 structured warning/error。
+- `draft` / `needs_review` pack 必须返回 `blocked`，不执行 SQL。
+- `warehouse` metadata、schema/value index metadata 和源文件 fingerprint 不一致时返回 `blocked`。
+- `POST /workbench/query` 仍走 `DomainConfig`、`RuleVerifier`、confirmation loop 和参数化 DuckDB SQL；前端自然语言不能直接生成 hard filter。
+- uploaded admissions 数据集可以复用已审查 `admissions` domain pack，但仍必须先 `approve-domain` 并重建 warehouse。
 
 ## 固定顶层字段
 

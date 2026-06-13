@@ -10,7 +10,10 @@ outputs/eval/fuzzy_deepseek_extractor_results.json
 outputs/data/*.duckdb
 outputs/data/*.duckdb.wal
 outputs/demo_acceptance/warehouses/
+outputs/demo_acceptance/uploaded_datasets/
+outputs/demo_acceptance/uploaded_sources/
 outputs/quality_gate/warehouses/
 outputs/quality_gate/tmp/
+outputs/uploaded_datasets/
 domains/**/*.duckdb
 domains/**/*.duckdb.wal
