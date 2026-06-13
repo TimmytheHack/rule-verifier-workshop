@@ -3,7 +3,8 @@ from __future__ import annotations
 import unittest
 from unittest.mock import patch
 
-from src.api.workbench import WorkbenchConfig, run_workbench
+from src.api.workbench import WorkbenchConfig
+from tests.warehouse_test_utils import run_workbench_with_test_warehouse
 
 
 FRONTEND_TOP_RESULT_KEYS = {
@@ -485,7 +486,7 @@ GOLDEN_CASES = [
 
 
 def _run_case(prompt: str, extractor: str = "regex") -> dict[str, object]:
-    return run_workbench(
+    return run_workbench_with_test_warehouse(
         WorkbenchConfig(
             user_input=prompt,
             extractor=extractor,

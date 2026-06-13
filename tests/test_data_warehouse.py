@@ -79,6 +79,13 @@ class DataWarehouseTest(unittest.TestCase):
 
         self.assertEqual(result.row_count, 2)
         self.assertEqual(result.column_count, 6)
+        summary = result.to_dict()
+        self.assertEqual(summary["source_path"], str(workbook_path))
+        self.assertEqual(summary["fingerprint"], result.source_fingerprint)
+        self.assertEqual(summary["row_count"], 2)
+        self.assertEqual(summary["column_count"], 6)
+        self.assertIn("major_name", summary["field_profiles"])
+        self.assertIsInstance(summary["created_at"], str)
         self.assertEqual(len(loaded.dataframe), 2)
         self.assertIn("major_name", index_payload["fields"])
         self.assertTrue(index_payload["fields"]["major_name"]["active"])

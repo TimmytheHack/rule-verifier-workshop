@@ -7,6 +7,7 @@ import json
 import math
 import re
 from dataclasses import dataclass
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -28,18 +29,25 @@ class WarehouseBuildResult:
     database_path: Path
     index_path: Path
     table_name: str
+    source_path: Path
     row_count: int
     column_count: int
     source_fingerprint: str
+    field_profiles: dict[str, Any]
+    created_at: str
 
     def to_dict(self) -> dict[str, Any]:
         return {
+            "source_path": str(self.source_path),
+            "fingerprint": self.source_fingerprint,
+            "source_fingerprint": self.source_fingerprint,
             "database_path": str(self.database_path),
             "index_path": str(self.index_path),
             "table_name": self.table_name,
             "row_count": self.row_count,
             "column_count": self.column_count,
-            "source_fingerprint": self.source_fingerprint,
+            "field_profiles": self.field_profiles,
+            "created_at": self.created_at,
         }
 
 
@@ -58,12 +66,20 @@ def build_structured_store(
     index_path = Path(index_path)
     database_path.parent.mkdir(parents=True, exist_ok=True)
     index_path.parent.mkdir(parents=True, exist_ok=True)
+    created_at = _utc_timestamp()
+    source_fingerprint = _file_fingerprint(Path(workbook_path))
 
     with duckdb.connect(str(database_path)) as connection:
         connection.register("source_dataframe", dataset.dataframe)
         quoted_table = _quote_identifier(table_name)
         connection.execute(f"CREATE OR REPLACE TABLE {quoted_table} AS SELECT * FROM source_dataframe")
-        _write_metadata(connection, dataset, table_name)
+        _write_metadata(
+            connection,
+            dataset,
+            table_name,
+            source_fingerprint=source_fingerprint,
+            created_at=created_at,
+        )
 
     registry = SchemaRegistry.from_file(schema_path, dataset.headers)
     index_payload = build_schema_value_index(
@@ -71,6 +87,8 @@ def build_structured_store(
         schema_registry=registry,
         database_path=database_path,
         table_name=table_name,
+        source_fingerprint=source_fingerprint,
+        created_at=created_at,
     )
     index_path.write_text(
         json.dumps(index_payload, ensure_ascii=False, indent=2),
@@ -81,9 +99,12 @@ def build_structured_store(
         database_path=database_path,
         index_path=index_path,
         table_name=table_name,
+        source_path=Path(workbook_path),
         row_count=len(dataset.dataframe),
         column_count=len(dataset.dataframe.columns),
-        source_fingerprint=_file_fingerprint(Path(workbook_path)),
+        source_fingerprint=source_fingerprint,
+        field_profiles=index_payload.get("fields", {}),
+        created_at=created_at,
     )
 
 
@@ -124,9 +145,13 @@ def build_schema_value_index(
     table_name: str = DEFAULT_TABLE_NAME,
     top_k: int = 30,
     lookup_limit: int = DEFAULT_LOOKUP_LIMIT,
+    source_fingerprint: str | None = None,
+    created_at: str | None = None,
 ) -> dict[str, Any]:
     """生成字段级 value dictionary，供抽取和审查参考。"""
 
+    source_fingerprint = source_fingerprint or _file_fingerprint(dataset.workbook_path)
+    created_at = created_at or _utc_timestamp()
     fields = {}
     for field_id, spec in schema_registry.configured_fields.items():
         source_column = spec.get("source_column")
@@ -152,19 +177,214 @@ def build_schema_value_index(
 
     return {
         "source": {
+            "source_path": str(dataset.workbook_path),
             "workbook_path": str(dataset.workbook_path),
             "sheet_name": dataset.sheet_name,
             "header_row": dataset.header_row,
-            "source_fingerprint": _file_fingerprint(dataset.workbook_path),
+            "fingerprint": source_fingerprint,
+            "source_fingerprint": source_fingerprint,
+            "created_at": created_at,
         },
         "warehouse": {
             "database_path": str(database_path),
             "table_name": table_name,
             "row_count": len(dataset.dataframe),
             "column_count": len(dataset.dataframe.columns),
+            "created_at": created_at,
         },
         "fields": fields,
     }
+
+
+def audit_data_warehouse_fingerprints(
+    workbook_path: str | Path,
+    database_path: str | Path,
+    index_path: str | Path,
+    table_name: str = DEFAULT_TABLE_NAME,
+) -> dict[str, Any]:
+    """校验 DuckDB、schema/value index 和源 Excel 是否来自同一版本。"""
+
+    workbook_path = Path(workbook_path)
+    database_path = Path(database_path)
+    index_path = Path(index_path)
+    warnings: list[dict[str, Any]] = []
+
+    source_fingerprint = None
+    if workbook_path.exists():
+        source_fingerprint = _file_fingerprint(workbook_path)
+    else:
+        warnings.append(
+            _warehouse_warning(
+                "missing_source_excel",
+                f"源 Excel 不存在：{workbook_path}",
+                expected=str(workbook_path),
+                actual=None,
+            )
+        )
+
+    warehouse_metadata: dict[str, Any] = {}
+    warehouse_profile: dict[str, Any] = {}
+    if not database_path.exists():
+        warnings.append(
+            _warehouse_warning(
+                "missing_warehouse",
+                f"DuckDB 数据仓库不存在：{database_path}",
+                expected=str(database_path),
+                actual=None,
+            )
+        )
+    else:
+        try:
+            warehouse_metadata = read_warehouse_metadata(database_path)
+            warehouse_profile = _read_table_profile(database_path, table_name)
+        except Exception as exc:
+            warnings.append(
+                _warehouse_warning(
+                    "unreadable_warehouse_metadata",
+                    f"DuckDB metadata 读取失败：{exc}",
+                    expected=str(database_path),
+                    actual=type(exc).__name__,
+                )
+            )
+        if database_path.exists() and not warehouse_metadata:
+            warnings.append(
+                _warehouse_warning(
+                    "missing_warehouse_metadata",
+                    "DuckDB 缺少 __metadata 表，不能验证数据来源。",
+                    expected="__metadata",
+                    actual=None,
+                )
+            )
+
+    value_index_payload: dict[str, Any] = {}
+    if not index_path.exists():
+        warnings.append(
+            _warehouse_warning(
+                "missing_value_index",
+                f"schema/value index 不存在：{index_path}",
+                expected=str(index_path),
+                actual=None,
+            )
+        )
+    else:
+        try:
+            loaded_index = json.loads(index_path.read_text(encoding="utf-8"))
+            if isinstance(loaded_index, dict):
+                value_index_payload = loaded_index
+            else:
+                warnings.append(
+                    _warehouse_warning(
+                        "invalid_value_index_metadata",
+                        "schema/value index JSON 不是对象，不能验证 metadata。",
+                        expected="object",
+                        actual=type(loaded_index).__name__,
+                    )
+                )
+        except Exception as exc:
+            warnings.append(
+                _warehouse_warning(
+                    "unreadable_value_index",
+                    f"schema/value index 读取失败：{exc}",
+                    expected=str(index_path),
+                    actual=type(exc).__name__,
+                )
+            )
+
+    warehouse_fingerprint = _metadata_fingerprint(warehouse_metadata)
+    value_index_source = value_index_payload.get("source") or {}
+    value_index_warehouse = value_index_payload.get("warehouse") or {}
+    value_index_fingerprint = _metadata_fingerprint(value_index_source)
+
+    if source_fingerprint and warehouse_metadata:
+        if not warehouse_fingerprint:
+            warnings.append(
+                _warehouse_warning(
+                    "missing_warehouse_fingerprint",
+                    "DuckDB metadata 缺少 source_fingerprint。",
+                    expected=source_fingerprint,
+                    actual=None,
+                )
+            )
+        elif warehouse_fingerprint != source_fingerprint:
+            warnings.append(
+                _warehouse_warning(
+                    "warehouse_fingerprint_mismatch",
+                    "DuckDB metadata fingerprint 与源 Excel fingerprint 不一致。",
+                    expected=source_fingerprint,
+                    actual=warehouse_fingerprint,
+                )
+            )
+
+    if source_fingerprint and value_index_payload:
+        if not value_index_fingerprint:
+            warnings.append(
+                _warehouse_warning(
+                    "missing_value_index_fingerprint",
+                    "schema/value index 缺少 source fingerprint。",
+                    expected=source_fingerprint,
+                    actual=None,
+                )
+            )
+        elif value_index_fingerprint != source_fingerprint:
+            warnings.append(
+                _warehouse_warning(
+                    "value_index_fingerprint_mismatch",
+                    "schema/value index fingerprint 与源 Excel fingerprint 不一致。",
+                    expected=source_fingerprint,
+                    actual=value_index_fingerprint,
+                )
+            )
+
+    if warehouse_fingerprint and value_index_fingerprint:
+        if warehouse_fingerprint != value_index_fingerprint:
+            warnings.append(
+                _warehouse_warning(
+                    "warehouse_value_index_fingerprint_mismatch",
+                    "DuckDB metadata 与 schema/value index fingerprint 不一致。",
+                    expected=warehouse_fingerprint,
+                    actual=value_index_fingerprint,
+                )
+            )
+
+    warnings.extend(
+        _count_mismatch_warnings(
+            warehouse_metadata=warehouse_metadata,
+            warehouse_profile=warehouse_profile,
+            value_index_warehouse=value_index_warehouse,
+        )
+    )
+
+    return {
+        "status": "ok" if not warnings else "warning",
+        "ok": not warnings,
+        "warnings": warnings,
+        "source": {
+            "path": str(workbook_path),
+            "exists": workbook_path.exists(),
+            "fingerprint": source_fingerprint,
+        },
+        "duckdb": {
+            "path": str(database_path),
+            "exists": database_path.exists(),
+            "metadata": warehouse_metadata,
+            "profile": warehouse_profile,
+            "fingerprint": warehouse_fingerprint,
+        },
+        "schema_value_index": {
+            "path": str(index_path),
+            "exists": index_path.exists(),
+            "source": value_index_source,
+            "warehouse": value_index_warehouse,
+            "fingerprint": value_index_fingerprint,
+        },
+    }
+
+
+def read_warehouse_metadata(database_path: str | Path) -> dict[str, str]:
+    """读取 DuckDB 仓库的 metadata 表。"""
+
+    with duckdb.connect(str(database_path), read_only=True) as connection:
+        return _read_metadata(connection)
 
 
 class SchemaValueIndex:
@@ -304,7 +524,11 @@ def _write_metadata(
     connection: duckdb.DuckDBPyConnection,
     dataset: ExcelDataSet,
     table_name: str,
+    source_fingerprint: str | None = None,
+    created_at: str | None = None,
 ) -> None:
+    source_fingerprint = source_fingerprint or _file_fingerprint(dataset.workbook_path)
+    created_at = created_at or _utc_timestamp()
     metadata = pd.DataFrame(
         [
             {"key": "source_path", "value": str(dataset.workbook_path)},
@@ -312,7 +536,10 @@ def _write_metadata(
             {"key": "header_row", "value": str(dataset.header_row)},
             {"key": "table_name", "value": table_name},
             {"key": "row_count", "value": str(len(dataset.dataframe))},
-            {"key": "source_fingerprint", "value": _file_fingerprint(dataset.workbook_path)},
+            {"key": "column_count", "value": str(len(dataset.dataframe.columns))},
+            {"key": "fingerprint", "value": source_fingerprint},
+            {"key": "source_fingerprint", "value": source_fingerprint},
+            {"key": "created_at", "value": created_at},
         ]
     )
     connection.register("metadata_dataframe", metadata)
@@ -327,6 +554,118 @@ def _read_metadata(connection: duckdb.DuckDBPyConnection) -> dict[str, str]:
     except duckdb.CatalogException:
         return {}
     return {str(key): str(value) for key, value in rows}
+
+
+def _read_table_profile(
+    database_path: Path,
+    table_name: str,
+) -> dict[str, Any]:
+    with duckdb.connect(str(database_path), read_only=True) as connection:
+        table_sql = _quote_identifier(table_name)
+        row_count = int(connection.execute(f"SELECT count(*) FROM {table_sql}").fetchone()[0])
+        columns = connection.execute(f"DESCRIBE {table_sql}").fetchall()
+    return {
+        "table_name": table_name,
+        "row_count": row_count,
+        "column_count": len(columns),
+    }
+
+
+def _count_mismatch_warnings(
+    warehouse_metadata: dict[str, Any],
+    warehouse_profile: dict[str, Any],
+    value_index_warehouse: dict[str, Any],
+) -> list[dict[str, Any]]:
+    warnings = []
+    metadata_row_count = _metadata_int(warehouse_metadata.get("row_count"))
+    metadata_column_count = _metadata_int(warehouse_metadata.get("column_count"))
+    profile_row_count = _metadata_int(warehouse_profile.get("row_count"))
+    profile_column_count = _metadata_int(warehouse_profile.get("column_count"))
+    value_index_row_count = _metadata_int(value_index_warehouse.get("row_count"))
+    value_index_column_count = _metadata_int(value_index_warehouse.get("column_count"))
+
+    if (
+        metadata_row_count is not None
+        and profile_row_count is not None
+        and metadata_row_count != profile_row_count
+    ):
+        warnings.append(
+            _warehouse_warning(
+                "warehouse_row_count_mismatch",
+                "DuckDB metadata row_count 与实际表行数不一致。",
+                expected=metadata_row_count,
+                actual=profile_row_count,
+            )
+        )
+    if (
+        metadata_column_count is not None
+        and profile_column_count is not None
+        and metadata_column_count != profile_column_count
+    ):
+        warnings.append(
+            _warehouse_warning(
+                "warehouse_column_count_mismatch",
+                "DuckDB metadata column_count 与实际表列数不一致。",
+                expected=metadata_column_count,
+                actual=profile_column_count,
+            )
+        )
+    if (
+        metadata_row_count is not None
+        and value_index_row_count is not None
+        and metadata_row_count != value_index_row_count
+    ):
+        warnings.append(
+            _warehouse_warning(
+                "value_index_row_count_mismatch",
+                "DuckDB metadata row_count 与 schema/value index row_count 不一致。",
+                expected=metadata_row_count,
+                actual=value_index_row_count,
+            )
+        )
+    if (
+        metadata_column_count is not None
+        and value_index_column_count is not None
+        and metadata_column_count != value_index_column_count
+    ):
+        warnings.append(
+            _warehouse_warning(
+                "value_index_column_count_mismatch",
+                "DuckDB metadata column_count 与 schema/value index column_count 不一致。",
+                expected=metadata_column_count,
+                actual=value_index_column_count,
+            )
+        )
+    return warnings
+
+
+def _metadata_fingerprint(metadata: dict[str, Any]) -> str | None:
+    value = metadata.get("fingerprint") or metadata.get("source_fingerprint")
+    return str(value) if value else None
+
+
+def _metadata_int(value: Any) -> int | None:
+    if value in (None, ""):
+        return None
+    try:
+        return int(value)
+    except (TypeError, ValueError):
+        return None
+
+
+def _warehouse_warning(
+    code: str,
+    message: str,
+    expected: Any,
+    actual: Any,
+) -> dict[str, Any]:
+    return {
+        "code": code,
+        "severity": "error",
+        "message": message,
+        "expected": expected,
+        "actual": actual,
+    }
 
 
 def _series_value_profile(
@@ -425,6 +764,10 @@ def _file_fingerprint(path: str | Path) -> str:
         for chunk in iter(lambda: handle.read(1024 * 1024), b""):
             digest.update(chunk)
     return digest.hexdigest()
+
+
+def _utc_timestamp() -> str:
+    return datetime.now(UTC).isoformat().replace("+00:00", "Z")
 
 
 def _quote_identifier(identifier: str) -> str:

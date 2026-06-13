@@ -17,8 +17,12 @@ from scripts.run_mvp_demo import (
     TAXONOMY_PATH,
     WORKBOOK_NAME,
 )
-from src.adapters.data_warehouse import SchemaValueIndex, load_structured_dataset
-from src.adapters.excel_adapter import ExcelAdapter, ExcelDataSet
+from src.adapters.data_warehouse import (
+    SchemaValueIndex,
+    audit_data_warehouse_fingerprints,
+    load_structured_dataset,
+)
+from src.adapters.excel_adapter import ExcelDataSet
 from src.executors.duckdb_executor import (
     DuckDBExecutor,
     ExecutionAudit,
@@ -105,6 +109,9 @@ def run_workbench(config: WorkbenchConfig) -> dict[str, Any]:
     """Run the verified pipeline and return UI-ready artifacts."""
 
     _validate_config(config)
+    warehouse_audit = _data_warehouse_audit()
+    if not warehouse_audit["ok"]:
+        return _data_warehouse_warning_payload(config, warehouse_audit)
 
     dataset = _load_dataset()
     schema_registry = _load_schema_registry(tuple(dataset.headers))
@@ -165,7 +172,9 @@ def run_workbench(config: WorkbenchConfig) -> dict[str, Any]:
 
     return {
         "mode": "api",
+        "status": "ok",
         "user_input": _compose_user_request(config),
+        "data_warehouse": warehouse_audit,
         "hard_filters": _display_hard_filters(config.hard_filters),
         "soft_preferences": _display_soft_preferences(config.soft_preferences),
         "selected_options": {
@@ -196,21 +205,93 @@ def run_workbench(config: WorkbenchConfig) -> dict[str, Any]:
             "generator": generator_usage,
             "total": _sum_usage([extractor_usage, generator_usage]),
         },
+}
+
+
+def _data_warehouse_audit() -> dict[str, Any]:
+    return audit_data_warehouse_fingerprints(
+        workbook_path=WORKBOOK_NAME,
+        database_path=WAREHOUSE_DATABASE_PATH,
+        index_path=WAREHOUSE_VALUE_INDEX_PATH,
+    )
+
+
+def _data_warehouse_warning_payload(
+    config: WorkbenchConfig,
+    warehouse_audit: dict[str, Any],
+) -> dict[str, Any]:
+    messages = [
+        str(warning.get("message"))
+        for warning in warehouse_audit.get("warnings", [])
+    ]
+    full_text = "\n".join(
+        ["数据仓库 fingerprint guard 未通过，未执行筛选。"]
+        + [f"- {message}" for message in messages]
+    )
+    return {
+        "mode": "api",
+        "status": "blocked",
+        "warning_type": "data_warehouse_fingerprint_guard",
+        "user_input": _compose_user_request(config),
+        "data_warehouse": warehouse_audit,
+        "structured_warnings": warehouse_audit.get("warnings", []),
+        "warnings": warehouse_audit.get("warnings", []),
+        "hard_filters": _display_hard_filters(config.hard_filters),
+        "soft_preferences": _display_soft_preferences(config.soft_preferences),
+        "selected_options": {
+            "extractor": EXTRACTOR_OPTIONS[config.extractor],
+            "generator": GENERATOR_OPTIONS[config.generator],
+            "model": MODEL_OPTIONS[config.model],
+        },
+        "extracted_preferences": [],
+        "extracted_slots": {},
+        "attribute_grounding": {"summary": {}, "attributes": []},
+        "proposed_rules": [],
+        "deterministic_rules": [],
+        "candidate_rules": [],
+        "not_executed_preferences": [],
+        "simulated_confirmations": {},
+        "executable_rules": [],
+        "execution": {
+            "executor": None,
+            "sql": "",
+            "params": [],
+            "input_row_count": 0,
+            "filtered_row_count": 0,
+            "sort_key": [],
+            "top_k": EVIDENCE_TOP_K,
+            "hard_rule_ids": [],
+            "skipped_soft_rule_ids": [],
+        },
+        "result_count": 0,
+        "top_results": [],
+        "trace": {},
+        "evidence_pack": {},
+        "natural_language_report": {
+            "title": "数据仓库需要重建",
+            "summary": "DuckDB、schema/value index 与源 Excel 未通过一致性校验。",
+            "full_text": full_text,
+            "result_count_text": "当前未执行筛选，结果数为 0。",
+            "executed_rules": [],
+            "attribute_explanations": [],
+            "top_results": [],
+            "warnings": messages,
+            "disclaimer": "请先重建数据仓库，再运行规则验证。",
+        },
+        "token_usage": {
+            "extractor": None,
+            "generator": None,
+            "total": {"prompt_tokens": 0, "completion_tokens": 0, "total_tokens": 0},
+        },
     }
 
 
 def _load_dataset() -> ExcelDataSet:
-    if WAREHOUSE_DATABASE_PATH.exists():
-        stat = WAREHOUSE_DATABASE_PATH.stat()
-        return _load_warehouse_dataset_cached(
-            str(WAREHOUSE_DATABASE_PATH),
-            stat.st_mtime_ns,
-            stat.st_size,
-        )
-    workbook_path = Path(WORKBOOK_NAME)
-    stat = workbook_path.stat()
-    return _load_dataset_cached(
-        str(workbook_path),
+    if not WAREHOUSE_DATABASE_PATH.exists():
+        raise RuntimeError("DuckDB 数据仓库不存在，Workbench 不执行静默 Excel 回退。")
+    stat = WAREHOUSE_DATABASE_PATH.stat()
+    return _load_warehouse_dataset_cached(
+        str(WAREHOUSE_DATABASE_PATH),
         stat.st_mtime_ns,
         stat.st_size,
     )
@@ -224,16 +305,6 @@ def _load_warehouse_dataset_cached(
 ) -> ExcelDataSet:
     _ = (modified_ns, file_size)
     return load_structured_dataset(database_path, REQUIRED_COLUMNS)
-
-
-@lru_cache(maxsize=1)
-def _load_dataset_cached(
-    workbook_path: str,
-    modified_ns: int,
-    file_size: int,
-) -> ExcelDataSet:
-    _ = (modified_ns, file_size)
-    return ExcelAdapter(workbook_path, REQUIRED_COLUMNS).load()
 
 
 def _execute_verified_hard_rules(

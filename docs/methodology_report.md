@@ -361,7 +361,8 @@ Excel 只是第一个 case study。方法论将 rule verification 和 data execu
 当前 executor：
 
 ```text
-pandas executor for Excel/CSV
+DuckDB executor for verified hard rules
+pandas executor for Excel/CSV fallback/testing comparison
 ```
 
 未来 executor 可以包括：
@@ -373,6 +374,16 @@ API executor for tool-backed data
 ```
 
 非结构化文本和 PDF 不能被确定性执行，除非先抽取并验证结构化 schema。
+
+Workbench API 启动执行前会先做 data warehouse fingerprint guard：
+
+- DuckDB `__metadata` 必须存在，并记录源 Excel fingerprint。
+- `schema_value_index.json` 必须记录同一个源 Excel fingerprint。
+- 当前源 Excel 的 fingerprint 必须同时匹配 DuckDB metadata 和 schema/value index metadata。
+- row count / column count metadata 不一致时也会阻断执行。
+- guard 未通过时返回 structured warning，不静默回退到 raw Excel / pandas execution。
+
+`scripts/build_data_warehouse.py` 负责重建 DuckDB、schema/value index，并输出 `outputs/data/ingestion_summary.json`，其中包含 source path、fingerprint、row/column count、field profiles 和 created_at。
 
 ## 9. LLM 边界
 

@@ -2,12 +2,13 @@ from __future__ import annotations
 
 import unittest
 
-from src.api.workbench import WorkbenchConfig, run_workbench
+from src.api.workbench import WorkbenchConfig
+from tests.warehouse_test_utils import run_workbench_with_test_warehouse
 
 
 class ApiWorkbenchTest(unittest.TestCase):
     def test_workbench_top_results_use_frontend_field_names(self) -> None:
-        result = run_workbench(WorkbenchConfig())
+        result = run_workbench_with_test_warehouse(WorkbenchConfig())
 
         self.assertGreater(result["result_count"], 0)
         top_result = result["top_results"][0]

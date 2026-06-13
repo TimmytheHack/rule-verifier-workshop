@@ -17,6 +17,7 @@ from src.adapters.data_warehouse import build_structured_store
 OUTPUT_DIR = Path("outputs/data")
 DATABASE_PATH = OUTPUT_DIR / "guangdong_admissions.duckdb"
 VALUE_INDEX_PATH = OUTPUT_DIR / "schema_value_index.json"
+INGESTION_SUMMARY_PATH = OUTPUT_DIR / "ingestion_summary.json"
 
 
 def main() -> None:
@@ -27,7 +28,12 @@ def main() -> None:
         database_path=DATABASE_PATH,
         index_path=VALUE_INDEX_PATH,
     )
-    print(json.dumps(result.to_dict(), ensure_ascii=False, indent=2))
+    summary = result.to_dict()
+    INGESTION_SUMMARY_PATH.write_text(
+        json.dumps(summary, ensure_ascii=False, indent=2),
+        encoding="utf-8",
+    )
+    print(json.dumps(summary, ensure_ascii=False, indent=2))
 
 
 if __name__ == "__main__":

@@ -2,11 +2,12 @@ from __future__ import annotations
 
 import unittest
 
-from src.api.workbench import WorkbenchConfig, run_workbench
+from src.api.workbench import WorkbenchConfig
+from tests.warehouse_test_utils import run_workbench_with_test_warehouse
 
 
 def _run_regex_workbench(prompt: str) -> dict[str, object]:
-    return run_workbench(
+    return run_workbench_with_test_warehouse(
         WorkbenchConfig(
             user_input=prompt,
             extractor="regex",

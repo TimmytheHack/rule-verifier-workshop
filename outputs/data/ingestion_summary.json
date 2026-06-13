@@ -1,21 +1,13 @@
 {
-  "source": {
-    "source_path": "广东省2025年志愿填报大数据（24-25）0523.xlsx",
-    "workbook_path": "广东省2025年志愿填报大数据（24-25）0523.xlsx",
-    "sheet_name": "Sheet1",
-    "header_row": 3,
-    "fingerprint": "38cdba7f2b9f5c05d52f8285df5df4fc622d7cd67e2e179cb0a0912d41dba5b3",
-    "source_fingerprint": "38cdba7f2b9f5c05d52f8285df5df4fc622d7cd67e2e179cb0a0912d41dba5b3",
-    "created_at": "2026-06-13T09:48:46.311175Z"
-  },
-  "warehouse": {
-    "database_path": "outputs/data/guangdong_admissions.duckdb",
-    "table_name": "admissions",
-    "row_count": 30855,
-    "column_count": 57,
-    "created_at": "2026-06-13T09:48:46.311175Z"
-  },
-  "fields": {
+  "source_path": "广东省2025年志愿填报大数据（24-25）0523.xlsx",
+  "fingerprint": "38cdba7f2b9f5c05d52f8285df5df4fc622d7cd67e2e179cb0a0912d41dba5b3",
+  "source_fingerprint": "38cdba7f2b9f5c05d52f8285df5df4fc622d7cd67e2e179cb0a0912d41dba5b3",
+  "database_path": "outputs/data/guangdong_admissions.duckdb",
+  "index_path": "outputs/data/schema_value_index.json",
+  "table_name": "admissions",
+  "row_count": 30855,
+  "column_count": 57,
+  "field_profiles": {
     "source_province": {
       "source_column": "生源地",
       "active": true,
@@ -3084,5 +3076,6 @@
         "不想去国外"
       ]
     }
-  }
+  },
+  "created_at": "2026-06-13T09:48:46.311175Z"
 }
