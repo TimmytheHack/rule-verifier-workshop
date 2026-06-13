@@ -53,27 +53,27 @@ GOLDEN_CASES = [
         "input": "广东物理，物化生，排位32000，想学计科，广深优先。",
         "slots": {
             "user_context.reselected_subjects": ["化学", "生物"],
-            "preferences.major_exact_terms": ["计算机"],
+            "preferences.major_exact_terms": [],
+            "preferences.major_expansion_raw": "计科",
             "preferences.preferred_cities": ["广州", "深圳"],
         },
         "hard_rule_ids": [
             "e_source_province",
             "e_subject_type",
             "e_subject_requirement",
-            "e_major_keyword",
             "e_city",
         ],
-        "result_count": 149,
+        "result_count": 3962,
         "top": {
-            "university_name": "中山大学",
-            "group_code": "10558219",
-            "major_name": "计算机类",
-            "city": "广州",
-            "group_min_rank": 4019,
+            "university_name": "香港中文大学(深圳)",
+            "group_code": "16407101",
+            "major_name": "理科试验班",
+            "city": "深圳",
+            "group_min_rank": 968,
         },
         "answer_contains": [
             "[已执行] 物化生 -> 选科要求：exact_match",
-            "[已执行] 计科 -> 专业名称：exact_match",
+            "[需确认] 计科 -> 专业名称：partial_match",
         ],
     },
     {
@@ -605,11 +605,10 @@ class WorkbenchGoldenE2ETest(unittest.TestCase):
                 "e_source_province",
                 "e_subject_type",
                 "e_subject_requirement",
-                "e_major_keyword",
                 "e_city",
             ],
         )
-        self.assertEqual(result["result_count"], 149)
+        self.assertEqual(result["result_count"], 3962)
 
 
 if __name__ == "__main__":

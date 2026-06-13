@@ -60,6 +60,12 @@ Keep these boundaries intact:
   and execution level.
 - Candidate rules must not execute before confirmation or simulated
   confirmation.
+- Runtime confirmation must reference a system-generated `candidate_id` from the
+  previous Workbench response. Do not compile free-form second-turn user text
+  into SQL.
+- `partial_match` value-index candidates may become hard rules only after their
+  `candidate_id` is confirmed and rechecked. `no_schema_field` preferences must
+  remain non-executable even if the user tries to confirm them.
 - Missing-schema or external-info preferences must be preserved but not
   executed.
 - LLM-only baselines are evaluation baselines, not production execution paths.
@@ -68,6 +74,9 @@ Keep these boundaries intact:
   and focused tests; Workbench must not silently fall back from DuckDB to raw
   Excel/Pandas execution.
 - `EvidencePack` is the only input to answer generation; raw Excel is not.
+- `EvidencePack` must preserve confirmation evidence: confirmed rules,
+  confirmation source, executed-after-confirmation rule IDs, unconfirmed
+  candidates, and no-schema preferences.
 - `TemplateReportBuilder` is deterministic and uses no LLM.
 - `DeepSeekAnswerGenerator` is optional and evidence-only.
 - `SchemaProfiler` is an offline schema-review tool, not runtime.

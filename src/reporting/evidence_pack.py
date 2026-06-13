@@ -26,6 +26,12 @@ class EvidencePack:
     proposed_rule_audit: list[dict[str, Any]] = field(default_factory=list)
     execution_summary: dict[str, Any] = field(default_factory=dict)
     attribute_explanations: list[dict[str, Any]] = field(default_factory=list)
+    confirmed_rules: list[dict[str, Any]] = field(default_factory=list)
+    confirmation_source: list[dict[str, Any]] = field(default_factory=list)
+    executed_after_confirmation: list[str] = field(default_factory=list)
+    unconfirmed_candidates: list[dict[str, Any]] = field(default_factory=list)
+    no_schema_field_preferences: list[dict[str, Any]] = field(default_factory=list)
+    rejected_confirmations: list[dict[str, Any]] = field(default_factory=list)
 
     @classmethod
     def from_verified_pipeline(
@@ -39,11 +45,13 @@ class EvidencePack:
         attribute_grounding: dict[str, Any] | None = None,
         proposed_rules: list[dict[str, Any]] | None = None,
         execution_summary: dict[str, Any] | None = None,
+        confirmation_state: dict[str, Any] | None = None,
     ) -> "EvidencePack":
         """Build an answer-safe evidence pack from post-execution artifacts."""
 
         compact_rules = [_compact_rule(rule) for rule in executed_rules]
         execution = execution_summary or {}
+        confirmation = confirmation_state or classified_rules.get("confirmation_state") or {}
         confirmations = _candidate_confirmations(classified_rules, execution)
         not_executed = _not_executed_preferences(classified_rules)
         top_results = [
@@ -59,6 +67,7 @@ class EvidencePack:
         explanations = _attribute_explanations(
             attribute_grounding=attribute_grounding or {},
             executed_rules=compact_rules,
+            confirmation_state=confirmation,
         )
         return cls(
             user_request=user_request,
@@ -73,6 +82,21 @@ class EvidencePack:
             proposed_rule_audit=_compact_proposed_rule_audit(proposed_rules or []),
             execution_summary=execution,
             attribute_explanations=explanations,
+            confirmed_rules=[
+                _compact_rule(rule)
+                for rule in confirmation.get("confirmed_rules", [])
+            ],
+            confirmation_source=confirmation.get("confirmation_source", []),
+            executed_after_confirmation=confirmation.get(
+                "executed_after_confirmation",
+                [],
+            ),
+            unconfirmed_candidates=confirmation.get("unconfirmed_candidates", []),
+            no_schema_field_preferences=confirmation.get(
+                "no_schema_field_preferences",
+                [],
+            ),
+            rejected_confirmations=confirmation.get("rejected_candidates", []),
         )
 
     def to_dict(self) -> dict[str, Any]:
@@ -95,7 +119,7 @@ def _compact_rule(rule: dict[str, Any]) -> dict[str, Any]:
         "operator": rule.get("operator"),
         "value": rule.get("value"),
     }
-    for optional_key in ["confirmation", "normalization"]:
+    for optional_key in ["confirmation", "confirmation_source", "normalization"]:
         if optional_key in rule:
             compact[optional_key] = rule[optional_key]
     compact["description"] = _rule_description(compact)
@@ -123,11 +147,17 @@ def _compact_proposed_rule_audit(rules: list[dict[str, Any]]) -> list[dict[str, 
 def _attribute_explanations(
     attribute_grounding: dict[str, Any],
     executed_rules: list[dict[str, Any]],
+    confirmation_state: dict[str, Any] | None = None,
 ) -> list[dict[str, Any]]:
     executed_fields = {
         rule.get("field")
         for rule in executed_rules
         if rule.get("field")
+    }
+    confirmed_source_texts = {
+        str(source.get("source_text"))
+        for source in (confirmation_state or {}).get("confirmation_source", [])
+        if source.get("source_text")
     }
     explanations = []
     seen: set[tuple[str, str, str]] = set()
@@ -146,6 +176,8 @@ def _attribute_explanations(
             category=category,
             field=field,
             executed_fields=executed_fields,
+            source_text=source_text,
+            confirmed_source_texts=confirmed_source_texts,
         )
         explanations.append(
             {
@@ -193,10 +225,14 @@ def _attribute_action(
     category: str,
     field: str,
     executed_fields: set[Any],
+    source_text: str,
+    confirmed_source_texts: set[str],
 ) -> str:
     if category == "exact_match":
         return "executed" if field in executed_fields else "executable"
     if category == "partial_match":
+        if source_text in confirmed_source_texts:
+            return "confirmed_executed"
         return "needs_confirmation"
     return "not_executed"
 
@@ -211,6 +247,8 @@ def _attribute_reason(
         return f"已匹配字段“{field}”，并已进入 hard filter。"
     if category == "exact_match":
         return f"已匹配字段“{field}”，可执行但本次未作为 hard filter 使用。"
+    if category == "partial_match" and action == "confirmed_executed":
+        return f"已通过 candidate_id 确认，并已进入字段“{field}”的 hard filter。"
     if category == "partial_match":
         reason = _user_facing_reason(record.get("reason")) or "需要确认具体边界。"
         return f"{reason}未进入 hard filter。"

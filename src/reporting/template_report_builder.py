@@ -50,6 +50,30 @@ class TemplateReportBuilder:
             _confirmation_line(confirmation)
             for confirmation in evidence["candidate_confirmations"]
         )
+        if evidence.get("confirmed_rules") or evidence.get("unconfirmed_candidates"):
+            lines.extend(["", "candidate_id 确认状态："])
+            if evidence.get("confirmed_rules"):
+                lines.extend(
+                    _confirmed_rule_line(rule, evidence)
+                    for rule in evidence["confirmed_rules"]
+                )
+            if evidence.get("unconfirmed_candidates"):
+                lines.extend(
+                    _unconfirmed_candidate_line(candidate)
+                    for candidate in evidence["unconfirmed_candidates"]
+                )
+        if evidence.get("rejected_confirmations"):
+            lines.extend(["", "被拒绝的确认："])
+            lines.extend(
+                f"- {item.get('candidate_id')}：{item.get('reason')}"
+                for item in evidence["rejected_confirmations"]
+            )
+        if evidence.get("no_schema_field_preferences"):
+            lines.extend(["", "缺少字段，不能确认执行："])
+            lines.extend(
+                _no_schema_candidate_line(candidate)
+                for candidate in evidence["no_schema_field_preferences"]
+            )
 
         lines.extend(["", "未执行但已保留的偏好："])
         if evidence["not_executed_preferences"]:
@@ -91,6 +115,46 @@ def _confirmation_line(confirmation: dict[str, Any]) -> str:
     return f"- {source_text}：未执行，原因：{reason}。"
 
 
+def _confirmed_rule_line(
+    rule: dict[str, Any],
+    evidence: dict[str, Any],
+) -> str:
+    source = _confirmation_source_for_rule(rule, evidence)
+    executed = rule.get("rule_id") in set(
+        evidence.get("executed_after_confirmation") or []
+    )
+    status = "已确认并进入 hard filter" if executed else "已确认但未执行"
+    return (
+        f"- {source.get('candidate_id')}：{status}；来源："
+        f"{source.get('source_text')}；执行为 {rule.get('description')}。"
+    )
+
+
+def _confirmation_source_for_rule(
+    rule: dict[str, Any],
+    evidence: dict[str, Any],
+) -> dict[str, Any]:
+    candidate_id = rule.get("derived_from")
+    for source in evidence.get("confirmation_source") or []:
+        if source.get("candidate_id") == candidate_id:
+            return source
+    return {"candidate_id": candidate_id, "source_text": "未知候选"}
+
+
+def _unconfirmed_candidate_line(candidate: dict[str, Any]) -> str:
+    return (
+        f"- {candidate.get('candidate_id')}：{candidate.get('source_text')} "
+        f"仍待确认，未进入 hard filter；候选为 {candidate.get('label')}。"
+    )
+
+
+def _no_schema_candidate_line(candidate: dict[str, Any]) -> str:
+    return (
+        f"- {candidate.get('source_text')}：{candidate.get('reason')}；"
+        "即使提交该 candidate_id 也不能执行。"
+    )
+
+
 def _extracted_preference_line(preference: dict[str, Any]) -> str:
     value = preference.get("value")
     if isinstance(value, list):
@@ -115,6 +179,7 @@ def _proposed_rule_line(rule: dict[str, Any]) -> str:
 def _attribute_explanation_line(explanation: dict[str, Any]) -> str:
     label = {
         "executed": "已执行",
+        "confirmed_executed": "确认执行",
         "executable": "可执行",
         "needs_confirmation": "需确认",
         "not_executed": "未执行",

@@ -43,6 +43,7 @@ class WorkbenchRunRequest(BaseModel):
     extractor: str = "hybrid"
     generator: str = "template_evidence"
     model: str = "deepseek-v4-flash"
+    confirmed_candidates: list[str] = Field(default_factory=list)
 
 
 app = FastAPI(title="Preference-to-Rule Workbench API")
@@ -84,6 +85,7 @@ def run(request: WorkbenchRunRequest) -> dict[str, object]:
             extractor=request.extractor,
             generator=request.generator,
             model=request.model,
+            confirmed_candidates=request.confirmed_candidates,
         )
         return run_workbench(config)
     except ValueError as exc:

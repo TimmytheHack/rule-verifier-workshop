@@ -138,6 +138,32 @@ def _evidence_coverage_appendix(evidence: dict[str, Any]) -> str:
         f"  - {_confirmation_text(confirmation)}"
         for confirmation in evidence["candidate_confirmations"]
     )
+    lines.extend(["- candidate_id 确认状态："])
+    if evidence.get("confirmed_rules"):
+        lines.extend(
+            f"  - {rule.get('derived_from')}：已确认；"
+            f"执行状态：{rule.get('rule_id') in set(evidence.get('executed_after_confirmation') or [])}；"
+            f"{rule.get('description')}"
+            for rule in evidence["confirmed_rules"]
+        )
+    else:
+        lines.append("  - 无已确认 candidate。")
+    if evidence.get("unconfirmed_candidates"):
+        lines.extend(
+            f"  - 未确认：{candidate.get('candidate_id')} "
+            f"{candidate.get('source_text')}，未进入 hard filter。"
+            for candidate in evidence["unconfirmed_candidates"]
+        )
+    if evidence.get("no_schema_field_preferences"):
+        lines.extend(
+            f"  - 缺少字段：{candidate.get('source_text')}，不能确认执行。"
+            for candidate in evidence["no_schema_field_preferences"]
+        )
+    if evidence.get("rejected_confirmations"):
+        lines.extend(
+            f"  - 已拒绝：{item.get('candidate_id')}，原因：{item.get('reason')}"
+            for item in evidence["rejected_confirmations"]
+        )
     lines.extend(["- 前置结果："])
     lines.extend(_top_result_text(row) for row in evidence["top_k_results"])
     lines.extend(["- 未执行偏好："])

@@ -40,8 +40,8 @@ class AnswerValueIndexSnapshotTest(unittest.TestCase):
                     "- [已执行] 广东 -> 生源地：exact_match；索引命中：广东；已匹配字段“生源地”，并已进入 hard filter。",
                     "- [已执行] 物理 -> 科类：exact_match；索引命中：物理；已匹配字段“科类”，并已进入 hard filter。",
                     "- [已执行] 物化生 -> 选科要求：exact_match；索引命中：化学、生物；已匹配字段“选科要求”，并已进入 hard filter。",
-                    "- [已执行] 计科 -> 专业名称：exact_match；索引命中：计算机类、计算机科学与技术、计算机应用技术、电子与计算机工程、计算机网络技术；已匹配字段“专业名称”，并已进入 hard filter。",
                     "- [已执行] 广深 -> 城市：exact_match；索引命中：广州、深圳；已匹配字段“城市”，并已进入 hard filter。",
+                    "- [需确认] 计科 -> 专业名称：partial_match；该属性有对应字段，但语义或边界需要确认。未进入 hard filter。",
                 ]
             ),
         )
@@ -51,7 +51,6 @@ class AnswerValueIndexSnapshotTest(unittest.TestCase):
                 "e_source_province",
                 "e_subject_type",
                 "e_subject_requirement",
-                "e_major_keyword",
                 "e_city",
             ],
         )

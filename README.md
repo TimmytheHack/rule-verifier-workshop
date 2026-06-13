@@ -60,6 +60,14 @@ python scripts/build_data_warehouse.py
 
 Workbench API 每次执行前都会校验 DuckDB metadata、schema/value index metadata 和源 Excel fingerprint 是否一致；不一致时返回结构化 warning，不会静默回退到 raw Excel/Pandas 执行。
 
+Workbench 还支持 candidate_id confirmation loop：
+
+- 第一次运行时，`partial_match` 偏好只返回 `confirmation_candidates`，不会进入 hard filter。
+- 用户确认时只能提交上一轮响应里的 `candidate_id`，不能提交新的文本条件。
+- 后端会按当前 query 重新生成候选并校验 `candidate_id`；伪造、过期或不属于当前 query 的 id 会被拒绝。
+- 确认通过后，系统只把该 candidate 对应的已审查字段和值编译成参数化 DuckDB SQL。
+- `no_schema_field` 偏好即使被提交确认也不会执行，只会保留在证据包中解释。
+
 ## 启动后端
 
 在仓库根目录创建并启用 Python 虚拟环境：

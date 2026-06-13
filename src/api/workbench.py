@@ -6,6 +6,8 @@ the UI. It does not add verifier, promoter, executor, or recommendation logic.
 
 from __future__ import annotations
 
+import hashlib
+import json
 from dataclasses import dataclass, field
 from functools import lru_cache
 from pathlib import Path
@@ -79,6 +81,24 @@ NOT_EXECUTED_COOPERATION_REASON = (
 )
 WAREHOUSE_DATABASE_PATH = Path("outputs/data/guangdong_admissions.duckdb")
 WAREHOUSE_VALUE_INDEX_PATH = Path("outputs/data/schema_value_index.json")
+PEARL_RIVER_DELTA_CITIES = [
+    "广州",
+    "深圳",
+    "佛山",
+    "东莞",
+    "珠海",
+    "惠州",
+    "中山",
+    "江门",
+    "肇庆",
+]
+COMPUTER_RELATED_CONFIRMATION_TERMS = [
+    "计算机",
+    "软件工程",
+    "人工智能",
+    "数据科学",
+    "网络空间安全",
+]
 
 
 @dataclass(frozen=True)
@@ -91,6 +111,7 @@ class WorkbenchConfig:
     extractor: str = "hybrid"
     generator: str = "template_evidence"
     model: str = "deepseek-v4-flash"
+    confirmed_candidates: list[str] = field(default_factory=list)
 
 
 def available_options() -> dict[str, Any]:
@@ -120,6 +141,15 @@ def run_workbench(config: WorkbenchConfig) -> dict[str, Any]:
         schema_registry,
         value_index=value_index,
     ).ground(slots)
+    confirmation_candidates = _build_confirmation_candidates(
+        user_request=_compose_user_request(config),
+        attribute_grounding=attribute_grounding,
+    )
+    confirmation_state = _resolve_confirmed_candidates(
+        confirmed_candidates=config.confirmed_candidates,
+        confirmation_candidates=confirmation_candidates,
+        verifier=verifier,
+    )
     proposed_rules = verifier.audit_proposed_rules(slots.get("proposed_rules", []))
     classified_rules = RuleClassifier(TAXONOMY_PATH, verifier).classify(slots)
     classified_rules = _append_unmapped_preferences(classified_rules, slots)
@@ -129,11 +159,13 @@ def run_workbench(config: WorkbenchConfig) -> dict[str, Any]:
     )
     classified_rules["attribute_grounding"] = attribute_grounding
     classified_rules["proposed_rules"] = proposed_rules
+    classified_rules["confirmation_state"] = confirmation_state
     classified_rules = _apply_soft_confirmations(classified_rules, config, slots)
     final_rules = RulePromoter(
         TAXONOMY_PATH,
         simulated_confirmation_enabled=True,
     ).final_executable_rules(classified_rules)
+    final_rules.extend(confirmation_state["confirmed_rules"])
     final_rules = _apply_value_index_hard_filter_guard(
         final_rules,
         attribute_grounding,
@@ -144,6 +176,11 @@ def run_workbench(config: WorkbenchConfig) -> dict[str, Any]:
         user_rank=slots.get("user_context", {}).get("user_rank"),
         top_k=EVIDENCE_TOP_K,
     )
+    confirmation_state = _finalize_confirmation_execution(
+        confirmation_state,
+        execution.audit.to_dict(),
+    )
+    classified_rules["confirmation_state"] = confirmation_state
     traced_results = TraceGenerator().add_traces(
         execution.rows,
         executable_rules=hard_rules,
@@ -160,6 +197,7 @@ def run_workbench(config: WorkbenchConfig) -> dict[str, Any]:
         attribute_grounding=attribute_grounding,
         proposed_rules=proposed_rules,
         execution_summary=execution.audit.to_dict(),
+        confirmation_state=confirmation_state,
     )
     report, generator_usage = _generate_report(
         config=config,
@@ -182,6 +220,8 @@ def run_workbench(config: WorkbenchConfig) -> dict[str, Any]:
         "extracted_preferences": extracted_preferences,
         "extracted_slots": slots,
         "attribute_grounding": _display_attribute_grounding(attribute_grounding),
+        "confirmation_candidates": confirmation_candidates,
+        "confirmation_state": _display_confirmation_state(confirmation_state),
         "proposed_rules": _display_proposed_rules(proposed_rules),
         "deterministic_rules": [_display_rule(rule) for rule in classified_rules["deterministic_rules"]],
         "candidate_rules": _candidate_rules(classified_rules),
@@ -585,6 +625,319 @@ def _apply_soft_confirmations(
 
     updated["simulated_confirmations"] = simulated
     return updated
+
+
+def _build_confirmation_candidates(
+    user_request: str,
+    attribute_grounding: dict[str, Any],
+) -> list[dict[str, Any]]:
+    candidates = []
+    seen: set[tuple[str, str, str]] = set()
+    for record in attribute_grounding.get("attributes", []):
+        match_type = _confirmation_match_type(record)
+        if match_type not in {"partial_match", "no_schema_field"}:
+            continue
+        source_text = _display_record_source_text(record)
+        field = record.get("source_column")
+        field_id = record.get("field_id")
+        mapping = _reviewed_candidate_mapping(record)
+        if match_type == "partial_match" and not mapping:
+            continue
+        executable = bool(match_type == "partial_match" and mapping)
+        if executable:
+            operator = mapping["operator"]
+            value = mapping["value"]
+            label = mapping["label"]
+            reason = mapping["reason"]
+        else:
+            operator = None
+            value = None
+            label = "不可执行"
+            reason = _no_candidate_execution_reason(record, match_type)
+        key = (str(field_id), source_text, _stable_value(value))
+        if key in seen:
+            continue
+        seen.add(key)
+        candidate = {
+            "candidate_id": _confirmation_candidate_id(
+                user_request=user_request,
+                source_text=source_text,
+                field_id=field_id,
+                field=field,
+                operator=operator,
+                value=value,
+            ),
+            "source_text": source_text,
+            "slot_path": record.get("slot_path"),
+            "field_id": field_id,
+            "field": field or "无可执行字段",
+            "match_type": match_type,
+            "operator": operator,
+            "value": value,
+            "label": label,
+            "executable": executable,
+            "reason": reason,
+            "matched_values": _value_index_matched_values(
+                record.get("value_index_audit") or {}
+            ),
+        }
+        candidates.append(candidate)
+    return candidates
+
+
+def _resolve_confirmed_candidates(
+    confirmed_candidates: list[str],
+    confirmation_candidates: list[dict[str, Any]],
+    verifier: RuleVerifier,
+) -> dict[str, Any]:
+    requested_ids = _clean_confirmed_candidate_ids(confirmed_candidates)
+    candidates_by_id = {
+        candidate["candidate_id"]: candidate
+        for candidate in confirmation_candidates
+    }
+    confirmed_rules = []
+    confirmation_source = []
+    rejected_candidates = []
+    accepted_ids: set[str] = set()
+
+    for candidate_id in requested_ids:
+        candidate = candidates_by_id.get(candidate_id)
+        if candidate is None:
+            rejected_candidates.append(
+                {
+                    "candidate_id": candidate_id,
+                    "reason": "candidate_id 不属于当前 query，或不是系统上一轮生成的候选。",
+                }
+            )
+            continue
+        if not candidate.get("executable"):
+            rejected_candidates.append(
+                {
+                    "candidate_id": candidate_id,
+                    "source_text": candidate.get("source_text"),
+                    "reason": candidate.get("reason") or "该候选不能执行。",
+                }
+            )
+            continue
+        rule = _candidate_to_rule(candidate)
+        verified = verifier.attach_verification(
+            {
+                "rule_id": rule["rule_id"],
+                "field_id": candidate.get("field_id"),
+                "field": rule["field"],
+                "operator": rule["operator"],
+                "value": rule["value"],
+            }
+        )
+        if not verified.get("verification", {}).get("executable"):
+            rejected_candidates.append(
+                {
+                    "candidate_id": candidate_id,
+                    "source_text": candidate.get("source_text"),
+                    "reason": "候选规则未通过 RuleVerifier，不能执行。",
+                }
+            )
+            continue
+        accepted_ids.add(candidate_id)
+        confirmed_rules.append(rule)
+        confirmation_source.append(
+            {
+                "candidate_id": candidate_id,
+                "source_text": candidate.get("source_text"),
+                "field": candidate.get("field"),
+                "operator": candidate.get("operator"),
+                "value": candidate.get("value"),
+                "source": "confirmed_candidates",
+                "status": "accepted",
+            }
+        )
+
+    unconfirmed = [
+        candidate
+        for candidate in confirmation_candidates
+        if candidate.get("executable")
+        and candidate.get("candidate_id") not in accepted_ids
+    ]
+    no_schema = [
+        candidate
+        for candidate in confirmation_candidates
+        if candidate.get("match_type") == "no_schema_field"
+    ]
+    return {
+        "requested_candidate_ids": requested_ids,
+        "accepted_candidate_ids": sorted(accepted_ids),
+        "rejected_candidates": rejected_candidates,
+        "confirmed_rules": confirmed_rules,
+        "confirmation_source": confirmation_source,
+        "executed_after_confirmation": [],
+        "unconfirmed_candidates": unconfirmed,
+        "no_schema_field_preferences": no_schema,
+    }
+
+
+def _finalize_confirmation_execution(
+    confirmation_state: dict[str, Any],
+    execution_summary: dict[str, Any],
+) -> dict[str, Any]:
+    executed_rule_ids = set(execution_summary.get("hard_rule_ids") or [])
+    updated = dict(confirmation_state)
+    updated["executed_after_confirmation"] = [
+        rule["rule_id"]
+        for rule in confirmation_state.get("confirmed_rules", [])
+        if rule.get("rule_id") in executed_rule_ids
+    ]
+    return updated
+
+
+def _clean_confirmed_candidate_ids(value: Any) -> list[str]:
+    if value in (None, ""):
+        return []
+    if isinstance(value, dict):
+        raw_values = value.get("candidate_ids") or value.get("confirmed_candidates") or []
+    elif isinstance(value, str):
+        raw_values = [value]
+    else:
+        try:
+            raw_values = list(value)
+        except TypeError:
+            raw_values = [value]
+    cleaned = []
+    for item in raw_values:
+        candidate_id = None
+        if isinstance(item, dict):
+            candidate_id = item.get("candidate_id")
+        else:
+            candidate_id = item
+        text = _clean_text(candidate_id)
+        if text and text not in cleaned:
+            cleaned.append(text)
+    return cleaned
+
+
+def _candidate_to_rule(candidate: dict[str, Any]) -> dict[str, Any]:
+    suffix = str(candidate["candidate_id"]).replace("cand_", "")
+    return {
+        "rule_id": f"e_confirmed_{suffix}",
+        "derived_from": candidate["candidate_id"],
+        "field": candidate["field"],
+        "operator": candidate["operator"],
+        "value": candidate["value"],
+        "confirmation": "用户通过 candidate_id 确认",
+        "confirmation_source": {
+            "type": "confirmed_candidates",
+            "candidate_id": candidate["candidate_id"],
+            "source_text": candidate["source_text"],
+        },
+    }
+
+
+def _confirmation_match_type(record: dict[str, Any]) -> str | None:
+    status = record.get("status")
+    audit_status = (record.get("value_index_audit") or {}).get("status")
+    if status == "context_only":
+        return None
+    if (
+        status in {"missing_schema", "ignored_not_schema_mapped", "unmapped_attribute"}
+        or not record.get("field_exists_in_excel_schema")
+        or audit_status == "field_inactive"
+    ):
+        return "no_schema_field"
+    if status == "confirmable" or record.get("requires_human_confirmation"):
+        return "partial_match"
+    if audit_status in {
+        "partial_match",
+        "not_found",
+        "not_found_in_partial_index",
+        "partial_numeric_profile",
+        "outside_numeric_profile",
+    }:
+        return "partial_match"
+    return None
+
+
+def _reviewed_candidate_mapping(record: dict[str, Any]) -> dict[str, Any] | None:
+    field_id = record.get("field_id")
+    source_text = _display_record_source_text(record)
+    if field_id == "city" and source_text == "珠三角":
+        return {
+            "operator": "in_contains",
+            "value": PEARL_RIVER_DELTA_CITIES,
+            "label": "按珠三角城市集合筛选",
+            "reason": "珠三角是区域集合，必须通过 candidate_id 确认后才执行城市过滤。",
+        }
+    if field_id == "major_name" and source_text == "计科":
+        return {
+            "operator": "contains_any",
+            "value": ["计算机"],
+            "label": "按计算机专业关键词筛选",
+            "reason": "计科是缩写，必须通过 candidate_id 确认后才执行专业过滤。",
+        }
+    if field_id == "major_name" and source_text in {"计算机相关", "相关专业"}:
+        return {
+            "operator": "contains_any",
+            "value": COMPUTER_RELATED_CONFIRMATION_TERMS,
+            "label": "按计算机相关专业集合筛选",
+            "reason": "相关专业是语义扩展，必须通过 candidate_id 确认后才执行专业过滤。",
+        }
+    return None
+
+
+def _no_candidate_execution_reason(
+    record: dict[str, Any],
+    match_type: str,
+) -> str:
+    if match_type == "no_schema_field":
+        return _grounding_reason(record.get("reason")) or "缺少可执行字段。"
+    return "缺少已审查的候选值映射，不能执行。"
+
+
+def _confirmation_candidate_id(
+    user_request: str,
+    source_text: str,
+    field_id: Any,
+    field: Any,
+    operator: Any,
+    value: Any,
+) -> str:
+    payload = {
+        "user_request": user_request,
+        "source_text": source_text,
+        "field_id": field_id,
+        "field": field,
+        "operator": operator,
+        "value": value,
+    }
+    encoded = json.dumps(payload, ensure_ascii=False, sort_keys=True)
+    digest = hashlib.sha256(encoded.encode("utf-8")).hexdigest()[:16]
+    return f"cand_{digest}"
+
+
+def _display_record_source_text(record: dict[str, Any]) -> str:
+    source_text = record.get("source_text")
+    if isinstance(source_text, list):
+        return "、".join(str(item) for item in source_text)
+    if source_text not in (None, ""):
+        return str(source_text)
+    value = record.get("value")
+    if isinstance(value, list):
+        return "、".join(str(item) for item in value)
+    return str(value)
+
+
+def _display_confirmation_state(state: dict[str, Any]) -> dict[str, Any]:
+    return {
+        "requested_candidate_ids": state.get("requested_candidate_ids", []),
+        "accepted_candidate_ids": state.get("accepted_candidate_ids", []),
+        "rejected_candidates": state.get("rejected_candidates", []),
+        "confirmed_rules": [
+            _display_rule(rule)
+            for rule in state.get("confirmed_rules", [])
+        ],
+        "confirmation_source": state.get("confirmation_source", []),
+        "executed_after_confirmation": state.get("executed_after_confirmation", []),
+        "unconfirmed_candidates": state.get("unconfirmed_candidates", []),
+        "no_schema_field_preferences": state.get("no_schema_field_preferences", []),
+    }
 
 
 def _append_unmapped_preferences(

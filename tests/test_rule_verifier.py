@@ -270,7 +270,8 @@ class RuleVerifierTest(unittest.TestCase):
         self.assertEqual(slots["user_context"]["source_province"], "广东")
         self.assertEqual(slots["user_context"]["subject_type"], "物理")
         self.assertEqual(slots["user_context"]["user_rank"], 32000)
-        self.assertEqual(slots["preferences"]["major_exact_terms"], ["计算机"])
+        self.assertEqual(slots["preferences"]["major_exact_terms"], [])
+        self.assertEqual(slots["preferences"]["major_expansion_raw"], "计科")
         self.assertEqual(slots["preferences"]["preferred_cities"], ["广州", "深圳"])
         self.assertEqual(slots["preferences"]["tuition_cap_yuan"], 20000)
 

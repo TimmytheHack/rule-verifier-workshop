@@ -46,6 +46,7 @@ Extractor
 - Executor 只接收已验证的可执行规则。
 - Workbench hard rules 由 DuckDB executor 执行；pandas executor 只作为 MVP demo、评估对照和测试工具。
 - Workbench 执行前必须通过 DuckDB metadata、schema/value index metadata 和源 Excel fingerprint 一致性校验；校验失败时返回 structured warning，不静默回退。
+- Confirmation loop 只能使用上一轮系统生成的 `candidate_id`；确认后也只能执行该 candidate 对应的已审查字段和值，不能执行用户二次输入的自由文本。
 
 ## 离线工具
 
@@ -105,6 +106,19 @@ deterministic over-promotion rate
 - non-executable rejection accuracy；
 - trace completeness；
 - token budget 下的 task success。
+
+## 当前主线优先级
+
+当前主线按以下顺序推进：
+
+| 优先级 | 任务 | 状态 |
+|---|---|---|
+| P0 | confirmation loop：`partial_match` 通过 `candidate_id` 确认后才可进入 hard filter | 已实现基础闭环 |
+| P1 | API response contract freeze + snapshot tests | 待做 |
+| P2 | demo acceptance script，导出 10-20 条真实咨询的 Markdown/JSON 验收报告 | 待做 |
+| P3 | 多数据源 ingestion 规范，支持新 Excel / CSV 进入同一 warehouse schema | 待做 |
+| P4 | 非结构化政策/章程小型知识库，只做解释和候选，不进执行 | 待做 |
+| P5 | 可选模型/embedding 接入 | 暂不接入 |
 
 ## 后续研究方向
 

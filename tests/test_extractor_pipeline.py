@@ -61,7 +61,8 @@ class ExtractorFallbackPipelineTest(unittest.TestCase):
         ).extract("广东物理类，排位32000，想学计科，广深优先。")
 
         self.assertFalse(slots["fallback_extraction"]["used"])
-        self.assertEqual(slots["preferences"]["major_exact_terms"], ["计算机"])
+        self.assertEqual(slots["preferences"]["major_exact_terms"], [])
+        self.assertEqual(slots["preferences"]["major_expansion_raw"], "计科")
         self.assertEqual(slots["preferences"]["preferred_cities"], ["广州", "深圳"])
 
 

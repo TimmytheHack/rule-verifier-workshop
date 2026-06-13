@@ -385,6 +385,15 @@ Workbench API 启动执行前会先做 data warehouse fingerprint guard：
 
 `scripts/build_data_warehouse.py` 负责重建 DuckDB、schema/value index，并输出 `outputs/data/ingestion_summary.json`，其中包含 source path、fingerprint、row/column count、field profiles 和 created_at。
 
+Workbench 的 confirmation loop 也属于执行边界：
+
+- `value_index_audit` 为 `partial_match` 的候选只返回系统生成的 `candidate_id` 和已审查候选值。
+- 用户确认只能引用上一轮返回的 `candidate_id`，不能把二次输入文本直接变成 SQL 条件。
+- 后端会根据当前 query 重新生成候选；伪造、过期或不属于当前 query 的 `candidate_id` 会被拒绝。
+- 已确认 candidate 会重新经过规则形状检查，然后才编译成参数化 DuckDB SQL。
+- `no_schema_field` 偏好即使被用户确认也不执行，例如当前没有合作办学类型字段时，`校企合作` / `中外合作` 只能保留为未执行偏好。
+- EvidencePack 会记录 `confirmed_rules`、`confirmation_source`、`executed_after_confirmation`、`unconfirmed_candidates` 和 `no_schema_field_preferences`。
+
 ## 9. LLM 边界
 
 可选 DeepSeek extractor 只用于 preference extraction 和 source spans。

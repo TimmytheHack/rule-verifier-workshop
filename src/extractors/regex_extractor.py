@@ -40,9 +40,16 @@ class RegexExtractor:
         reselected_subjects = self._reselected_subjects(text)
         preferred_cities = self._preferred_cities(text)
         major_exact_terms = self._major_exact_terms(text)
+        major_abbreviation_candidate = self._major_abbreviation_candidate(text)
+        if major_abbreviation_candidate:
+            major_exact_terms = [
+                term
+                for term in major_exact_terms
+                if term != "计算机"
+            ]
         major_keyword = major_exact_terms[0] if major_exact_terms else None
         tuition_cap_yuan = self._tuition_cap_yuan(text)
-        major_expansion_raw = self._major_expansion(text)
+        major_expansion_raw = major_abbreviation_candidate or self._major_expansion(text)
         cooperation_preference_raw = self._first_present(
             text,
             self.aliases["cooperation_terms"],
@@ -142,6 +149,11 @@ class RegexExtractor:
                 return f"{term}相关"
         if any(token in text for token in ["相关", "都可以", "或者", "、", "/", "互联网"]):
             return "相关专业"
+        return None
+
+    def _major_abbreviation_candidate(self, text: str) -> str | None:
+        if "计科" in text and "计算机" not in text:
+            return "计科"
         return None
 
     def _first_present(self, text: str, candidates: list[str]) -> str | None:

@@ -83,12 +83,21 @@ def missing_slot_paths(slots: dict[str, Any], text: str) -> list[str]:
         token in text for token in ["物理", "历史", "物化", "史政", "物生", "史化"]
     ):
         missing.append("user_context.subject_type")
-    if not _present(preferences.get("major_exact_terms")) and any(
-        token in text for token in ["想学", "想读", "专业", "方向", "相关"]
+    has_major_confirmation_candidate = _present(preferences.get("major_expansion_raw"))
+    if (
+        not _present(preferences.get("major_exact_terms"))
+        and not has_major_confirmation_candidate
+        and any(token in text for token in ["想学", "想读", "专业", "方向", "相关"])
     ):
         missing.append("preferences.major_exact_terms")
-    if not _present(preferences.get("preferred_cities")) and any(
-        token in text for token in ["城市", "周边", "附近", "珠三角", "广深"]
+    has_city_confirmation_candidate = any(
+        term in {"珠三角", "一线城市", "大城市", "发达城市"}
+        for term in preferences.get("other_vague_preferences") or []
+    )
+    if (
+        not _present(preferences.get("preferred_cities"))
+        and not has_city_confirmation_candidate
+        and any(token in text for token in ["城市", "周边", "附近", "珠三角", "广深"])
     ):
         missing.append("preferences.preferred_cities")
     return missing
