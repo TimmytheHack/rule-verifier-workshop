@@ -17,7 +17,7 @@ from scripts.run_mvp_demo import (
     TAXONOMY_PATH,
     WORKBOOK_NAME,
 )
-from src.adapters.data_warehouse import load_structured_dataset
+from src.adapters.data_warehouse import SchemaValueIndex, load_structured_dataset
 from src.adapters.excel_adapter import ExcelAdapter, ExcelDataSet
 from src.executors.pandas_executor import PandasExecutor
 from src.extractors.deepseek_extractor import (
@@ -69,6 +69,7 @@ NOT_EXECUTED_COOPERATION_REASON = (
     "“排除中外合作”。"
 )
 WAREHOUSE_DATABASE_PATH = Path("outputs/data/guangdong_admissions.duckdb")
+WAREHOUSE_VALUE_INDEX_PATH = Path("outputs/data/schema_value_index.json")
 
 
 @dataclass(frozen=True)
@@ -100,9 +101,13 @@ def run_workbench(config: WorkbenchConfig) -> dict[str, Any]:
 
     dataset = _load_dataset()
     schema_registry = _load_schema_registry(tuple(dataset.headers))
+    value_index = _load_value_index()
     slots, extractor_usage = _extract_slots(config, schema_registry=schema_registry)
     verifier = RuleVerifier(schema_registry)
-    attribute_grounding = AttributeGrounder(schema_registry).ground(slots)
+    attribute_grounding = AttributeGrounder(
+        schema_registry,
+        value_index=value_index,
+    ).ground(slots)
     proposed_rules = verifier.audit_proposed_rules(slots.get("proposed_rules", []))
     classified_rules = RuleClassifier(TAXONOMY_PATH, verifier).classify(slots)
     classified_rules = _append_unmapped_preferences(classified_rules, slots)
@@ -234,6 +239,27 @@ def _load_schema_registry_cached(
 ) -> SchemaRegistry:
     _ = (modified_ns, file_size)
     return SchemaRegistry.from_file(Path(schema_path), list(headers))
+
+
+def _load_value_index() -> SchemaValueIndex | None:
+    if not WAREHOUSE_VALUE_INDEX_PATH.exists():
+        return None
+    stat = WAREHOUSE_VALUE_INDEX_PATH.stat()
+    return _load_value_index_cached(
+        str(WAREHOUSE_VALUE_INDEX_PATH),
+        stat.st_mtime_ns,
+        stat.st_size,
+    )
+
+
+@lru_cache(maxsize=1)
+def _load_value_index_cached(
+    index_path: str,
+    modified_ns: int,
+    file_size: int,
+) -> SchemaValueIndex:
+    _ = (modified_ns, file_size)
+    return SchemaValueIndex.from_file(index_path)
 
 
 def _validate_config(config: WorkbenchConfig) -> None:
@@ -824,10 +850,69 @@ def _display_attribute_grounding(grounding: dict[str, Any]) -> dict[str, Any]:
                 "status": _grounding_status_label(record.get("status")),
                 "status_type": _grounding_status_type(record.get("status")),
                 "reason": _grounding_reason(record.get("reason")),
+                "value_index": _display_value_index_audit(
+                    record.get("value_index_audit")
+                ),
             }
             for record in grounding.get("attributes", [])
         ],
     }
+
+
+def _display_value_index_audit(audit: Any) -> dict[str, Any] | None:
+    if not isinstance(audit, dict):
+        return None
+    status = audit.get("status")
+    return {
+        "status": _value_index_status_label(status),
+        "status_type": _value_index_status_type(status),
+        "profile_kind": audit.get("profile_kind"),
+        "lookup_complete": audit.get("lookup_complete"),
+        "matched_values": _value_index_matched_values(audit),
+        "numeric": audit.get("numeric"),
+    }
+
+
+def _value_index_matched_values(audit: dict[str, Any]) -> list[str]:
+    matched = []
+    for check in audit.get("checks") or []:
+        for value in check.get("matched_values") or []:
+            text = str(value)
+            if text not in matched:
+                matched.append(text)
+    return matched[:5]
+
+
+def _value_index_status_label(status: Any) -> str:
+    labels = {
+        "matched": "值已在索引中匹配",
+        "partial_match": "部分值在索引中匹配",
+        "not_found": "值未在完整索引中命中",
+        "not_found_in_partial_index": "值未在部分索引中命中",
+        "within_numeric_profile": "数值在历史字段范围内",
+        "partial_numeric_profile": "部分数值在历史字段范围内",
+        "outside_numeric_profile": "数值超出历史字段范围",
+        "lookup_unavailable": "字段值索引不可用",
+        "field_inactive": "字段未启用",
+        "field_not_indexed": "字段未索引",
+        "empty_value": "值为空",
+        "not_applicable": "不适用",
+    }
+    return labels.get(str(status), str(status))
+
+
+def _value_index_status_type(status: Any) -> str:
+    if status in {"matched", "within_numeric_profile"}:
+        return "success"
+    if status in {
+        "partial_match",
+        "not_found_in_partial_index",
+        "partial_numeric_profile",
+        "lookup_unavailable",
+        "not_applicable",
+    }:
+        return "warning"
+    return "danger"
 
 
 def _display_proposed_rules(rules: list[dict[str, Any]]) -> list[dict[str, Any]]:

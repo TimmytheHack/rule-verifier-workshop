@@ -16,6 +16,17 @@ class ApiWorkbenchTest(unittest.TestCase):
         self.assertIn("major_name", top_result)
         self.assertNotIn("院校名称", top_result)
         self.assertIsInstance(result["natural_language_report"]["top_results"], list)
+        value_index_counts = result["attribute_grounding"]["summary"].get(
+            "value_index_status_counts",
+            {},
+        )
+        self.assertTrue(value_index_counts)
+        self.assertTrue(
+            any(
+                record.get("value_index")
+                for record in result["attribute_grounding"]["attributes"]
+            )
+        )
 
 
 if __name__ == "__main__":

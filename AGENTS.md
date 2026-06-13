@@ -105,6 +105,20 @@ safety margin
   `离家近` remain candidate or external-info needs until their boundaries are
   confirmed.
 
+## Data Parsing And Knowledge Base Policy
+
+- Whenever parsing Excel, CSV, or other large structured data, explicitly judge
+  whether a knowledge base is needed before adding one.
+- Prefer structured storage plus `schema/value index` for tabular admissions
+  data. Do not embed or vectorize the full table by default.
+- Use a knowledge base only for reviewed unstructured or semi-structured
+  material that requires semantic retrieval, such as policy text, official
+  notices, school descriptions, or documentation.
+- A knowledge base hit may supply evidence or candidate context, but it must not
+  bypass `AttributeGrounder`, `RuleVerifier`, or the evidence-pack boundary.
+- Keep raw large files and local database artifacts out of commits unless the
+  repository explicitly tracks that artifact class.
+
 ## Verification Guardrails
 
 - Prefer deterministic execution paths for rule execution.

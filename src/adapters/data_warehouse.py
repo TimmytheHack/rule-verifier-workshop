@@ -18,6 +18,7 @@ from src.schema.schema_registry import SchemaRegistry
 
 
 DEFAULT_TABLE_NAME = "admissions"
+DEFAULT_LOOKUP_LIMIT = 2000
 
 
 @dataclass(frozen=True)
@@ -122,6 +123,7 @@ def build_schema_value_index(
     database_path: str | Path,
     table_name: str = DEFAULT_TABLE_NAME,
     top_k: int = 30,
+    lookup_limit: int = DEFAULT_LOOKUP_LIMIT,
 ) -> dict[str, Any]:
     """生成字段级 value dictionary，供抽取和审查参考。"""
 
@@ -138,7 +140,14 @@ def build_schema_value_index(
         }
         if active and source_column in dataset.dataframe.columns:
             series = dataset.dataframe[source_column]
-            field_record.update(_series_value_profile(series, spec, top_k=top_k))
+            field_record.update(
+                _series_value_profile(
+                    series,
+                    spec,
+                    top_k=top_k,
+                    lookup_limit=lookup_limit,
+                )
+            )
         fields[field_id] = field_record
 
     return {
@@ -156,6 +165,139 @@ def build_schema_value_index(
         },
         "fields": fields,
     }
+
+
+class SchemaValueIndex:
+    """只读字段值索引，用于接地审计，不参与规则执行。"""
+
+    def __init__(self, payload: dict[str, Any]) -> None:
+        self.payload = payload
+        self.fields = payload.get("fields", {})
+
+    @classmethod
+    def from_file(cls, path: str | Path) -> "SchemaValueIndex":
+        payload = json.loads(Path(path).read_text(encoding="utf-8"))
+        return cls(payload)
+
+    def audit_value(self, field_id: str | None, value: Any) -> dict[str, Any]:
+        """检查抽取值是否能在离线 value index 中找到证据。"""
+
+        if not field_id:
+            return {
+                "field_id": field_id,
+                "status": "not_applicable",
+                "reason": "没有字段映射，无法做值索引审计。",
+            }
+        field = self.fields.get(field_id)
+        if not field:
+            return {
+                "field_id": field_id,
+                "status": "field_not_indexed",
+                "reason": "schema/value index 中没有该字段。",
+            }
+        if not field.get("active"):
+            return {
+                "field_id": field_id,
+                "source_column": field.get("source_column"),
+                "status": "field_inactive",
+                "reason": "该字段未进入当前可执行 schema。",
+            }
+        values = _value_list(value)
+        if not values:
+            return {
+                "field_id": field_id,
+                "source_column": field.get("source_column"),
+                "status": "empty_value",
+                "reason": "抽取值为空，无法做值索引审计。",
+            }
+        if field.get("numeric"):
+            return self._audit_numeric(field_id, field, values)
+        return self._audit_text(field_id, field, values)
+
+    def _audit_numeric(
+        self,
+        field_id: str,
+        field: dict[str, Any],
+        values: list[Any],
+    ) -> dict[str, Any]:
+        numeric = field.get("numeric") or {}
+        minimum = _parse_number(numeric.get("min"))
+        maximum = _parse_number(numeric.get("max"))
+        parsed_values = [_parse_number(value) for value in values]
+        checks = []
+        for original, parsed in zip(values, parsed_values, strict=True):
+            within_range = (
+                parsed is not None
+                and minimum is not None
+                and maximum is not None
+                and minimum <= parsed <= maximum
+            )
+            checks.append(
+                {
+                    "value": original,
+                    "parsed_value": parsed,
+                    "status": (
+                        "within_numeric_profile"
+                        if within_range
+                        else "outside_numeric_profile"
+                    ),
+                }
+            )
+        if all(check["status"] == "within_numeric_profile" for check in checks):
+            status = "within_numeric_profile"
+        elif any(check["status"] == "within_numeric_profile" for check in checks):
+            status = "partial_numeric_profile"
+        else:
+            status = "outside_numeric_profile"
+        return {
+            "field_id": field_id,
+            "source_column": field.get("source_column"),
+            "status": status,
+            "profile_kind": "numeric",
+            "numeric": numeric,
+            "checks": checks,
+        }
+
+    def _audit_text(
+        self,
+        field_id: str,
+        field: dict[str, Any],
+        values: list[Any],
+    ) -> dict[str, Any]:
+        lookup_values = [str(item) for item in field.get("lookup_values") or []]
+        lookup_complete = bool(field.get("lookup_complete"))
+        if not lookup_values:
+            return {
+                "field_id": field_id,
+                "source_column": field.get("source_column"),
+                "status": "lookup_unavailable",
+                "profile_kind": "text",
+                "lookup_complete": lookup_complete,
+                "reason": "该字段没有可用于运行时审计的值列表。",
+            }
+
+        checks = [
+            _match_text_value(value, lookup_values, lookup_complete)
+            for value in values
+        ]
+        statuses = {check["status"] for check in checks}
+        if statuses <= {"exact_match", "contains_match"}:
+            status = "matched"
+        elif statuses & {"exact_match", "contains_match"}:
+            status = "partial_match"
+        elif lookup_complete:
+            status = "not_found"
+        else:
+            status = "not_found_in_partial_index"
+        return {
+            "field_id": field_id,
+            "source_column": field.get("source_column"),
+            "status": status,
+            "profile_kind": "text",
+            "lookup_complete": lookup_complete,
+            "distinct_count": field.get("distinct_count"),
+            "checks": checks,
+        }
 
 
 def _write_metadata(
@@ -191,9 +333,11 @@ def _series_value_profile(
     series: pd.Series,
     spec: dict[str, Any],
     top_k: int,
+    lookup_limit: int,
 ) -> dict[str, Any]:
     cleaned = series.dropna().map(cell_text)
     cleaned = cleaned[cleaned != ""]
+    distinct_values = [str(value) for value in cleaned.drop_duplicates()]
     top_values = [
         {"value": str(value), "count": int(count)}
         for value, count in cleaned.value_counts().head(top_k).items()
@@ -202,8 +346,11 @@ def _series_value_profile(
         "non_null_count": int(cleaned.shape[0]),
         "distinct_count": int(cleaned.nunique()),
         "top_values": top_values,
-        "sample_values": [str(value) for value in cleaned.drop_duplicates().head(10)],
+        "sample_values": distinct_values[:10],
+        "lookup_complete": len(distinct_values) <= lookup_limit,
     }
+    if profile["lookup_complete"]:
+        profile["lookup_values"] = distinct_values
     if spec.get("type") in {"number", "number_from_string"}:
         numbers = cleaned.map(_parse_number).dropna()
         if not numbers.empty:
@@ -212,6 +359,46 @@ def _series_value_profile(
                 "max": _clean_number(numbers.max()),
             }
     return profile
+
+
+def _value_list(value: Any) -> list[Any]:
+    if value is None:
+        return []
+    values = value if isinstance(value, list) else [value]
+    return [item for item in values if cell_text(item)]
+
+
+def _match_text_value(
+    value: Any,
+    lookup_values: list[str],
+    lookup_complete: bool,
+) -> dict[str, Any]:
+    text = cell_text(value)
+    if not text:
+        return {"value": value, "status": "empty_value", "matched_values": []}
+    exact = [candidate for candidate in lookup_values if candidate == text]
+    if exact:
+        return {
+            "value": value,
+            "status": "exact_match",
+            "matched_values": exact[:5],
+        }
+    contains = [
+        candidate
+        for candidate in lookup_values
+        if text in candidate or candidate in text
+    ]
+    if contains:
+        return {
+            "value": value,
+            "status": "contains_match",
+            "matched_values": contains[:5],
+        }
+    return {
+        "value": value,
+        "status": "not_found" if lookup_complete else "not_found_in_partial_index",
+        "matched_values": [],
+    }
 
 
 def _parse_number(value: Any) -> float | None:

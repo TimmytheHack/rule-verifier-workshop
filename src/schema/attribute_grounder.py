@@ -11,6 +11,7 @@ import json
 from pathlib import Path
 from typing import Any
 
+from src.adapters.data_warehouse import SchemaValueIndex
 from src.schema.schema_registry import SchemaRegistry
 
 
@@ -43,8 +44,10 @@ class AttributeGrounder:
         self,
         schema_registry: SchemaRegistry,
         policy_path: str | Path = DEFAULT_POLICY_PATH,
+        value_index: SchemaValueIndex | None = None,
     ) -> None:
         self.schema_registry = schema_registry
+        self.value_index = value_index
         payload = json.loads(Path(policy_path).read_text(encoding="utf-8"))
         self.slot_policies = {
             tuple(path.split(".")): policy
@@ -109,6 +112,7 @@ class AttributeGrounder:
             "execution_allowed_without_rule_verification": False,
             "can_become_executable_rule": execution_allowed or status == "confirmable",
             "reason": policy.get("reason", self._reason(status)),
+            "value_index_audit": self._value_index_audit(field_id, value),
         }
 
     def _unknown_preference_records(
@@ -147,6 +151,13 @@ class AttributeGrounder:
         statuses = {}
         for record in records:
             statuses[record["status"]] = statuses.get(record["status"], 0) + 1
+        value_statuses = {}
+        for record in records:
+            value_audit = record.get("value_index_audit") or {}
+            status = value_audit.get("status")
+            if not status:
+                continue
+            value_statuses[status] = value_statuses.get(status, 0) + 1
         unsafe = [
             record
             for record in records
@@ -156,8 +167,18 @@ class AttributeGrounder:
         return {
             "total_attributes": len(records),
             "status_counts": statuses,
+            "value_index_status_counts": value_statuses,
             "unsafe_ungrounded_executable_attributes": len(unsafe),
         }
+
+    def _value_index_audit(
+        self,
+        field_id: str | None,
+        value: Any,
+    ) -> dict[str, Any] | None:
+        if self.value_index is None or not field_id:
+            return None
+        return self.value_index.audit_value(field_id, value)
 
     def _reason(self, status: str) -> str:
         if status == "schema_grounded":

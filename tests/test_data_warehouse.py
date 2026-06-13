@@ -8,9 +8,12 @@ from tempfile import TemporaryDirectory
 import pandas as pd
 
 from src.adapters.data_warehouse import (
+    SchemaValueIndex,
     build_structured_store,
     load_structured_dataset,
 )
+from src.schema.attribute_grounder import AttributeGrounder
+from src.schema.schema_registry import SchemaRegistry
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -56,12 +59,39 @@ class DataWarehouseTest(unittest.TestCase):
             )
             loaded = load_structured_dataset(database_path, REQUIRED_COLUMNS)
             index_payload = json.loads(index_path.read_text(encoding="utf-8"))
+            value_index = SchemaValueIndex.from_file(index_path)
+            registry = SchemaRegistry.from_file(SCHEMA_PATH, loaded.headers)
+            grounding = AttributeGrounder(
+                registry,
+                value_index=value_index,
+            ).ground(
+                {
+                    "user_context": {},
+                    "preferences": {
+                        "major_exact_terms": ["计算机"],
+                        "preferred_cities": ["广州", "深圳"],
+                    },
+                }
+            )
+            major_audit = value_index.audit_value("major_name", "计算机")
+            city_audit = value_index.audit_value("city", ["广州", "深圳"])
+            missing_city_audit = value_index.audit_value("city", "珠海")
 
         self.assertEqual(result.row_count, 2)
         self.assertEqual(result.column_count, 6)
         self.assertEqual(len(loaded.dataframe), 2)
         self.assertIn("major_name", index_payload["fields"])
         self.assertTrue(index_payload["fields"]["major_name"]["active"])
+        self.assertTrue(index_payload["fields"]["major_name"]["lookup_complete"])
+        self.assertIn("计算机科学与技术", index_payload["fields"]["major_name"]["lookup_values"])
+        self.assertEqual(major_audit["status"], "matched")
+        self.assertEqual(major_audit["checks"][0]["status"], "contains_match")
+        self.assertEqual(city_audit["status"], "matched")
+        self.assertEqual(missing_city_audit["status"], "not_found")
+        self.assertEqual(
+            grounding["summary"]["value_index_status_counts"],
+            {"matched": 2},
+        )
         self.assertEqual(
             index_payload["fields"]["tuition_yuan_per_year"]["numeric"],
             {"min": 6850, "max": 8000},
