@@ -129,6 +129,8 @@ deterministic over-promotion rate
 | P5 | 非结构化政策/章程小型知识库，只做解释和候选，不进执行 | 已实现轻量 reference-only lexical 层，不接 LLM/BGE/向量库，不改变 SQL/result_count/buckets |
 | P6 | 可选模型/embedding 接入 | 暂不接入 |
 
+近期执行路线见 `docs/next_route.md`。在进入 Optional LLM Slot Adapter 之前，优先完成 production hardening、operator trial、release readiness 和前端 operator 细节收敛。
+
 ## 后续研究方向
 
 这些方向仍然有价值，但不应被理解为已经完成的能力：

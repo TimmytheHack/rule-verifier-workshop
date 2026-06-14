@@ -271,11 +271,15 @@ python3 -m unittest discover -s tests
 python3 scripts/run_mvp_demo.py
 ```
 
+`outputs/mvp_demo/` 和 `outputs/answer_demo/` 是本地可重建的旧演示产物，默认不再入库。当前交付验收以 `make demo`、`make pilot`、`make quality` 和 tool server contracts 为准。
+
 运行快速 regex-only 评估：
 
 ```bash
 python3 scripts/eval_fuzzy_inputs.py --methods regex
 ```
+
+后续路线见 [下一阶段路线](docs/next_route.md)。当前主线继续优先做 production hardening、operator trial 和 release readiness；Optional LLM Slot Adapter 之前不需要接 LLM API。
 
 运行真实数据集 pilot fixture：
 
