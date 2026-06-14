@@ -16,6 +16,16 @@ Natural language may propose structure, but only verified schema-grounded rules 
 
 Agent 可以通过 `GET /tools/list?llm_safe_only=true` 获取允许暴露的工具列表，通过 `GET /tools/{tool_name}/schema` 读取输入/输出 schema，再通过 `POST /tools/{tool_name}/invoke` 调用。不要直接调用 `approve-*`、`build-warehouse`、`quality.run` 或 `pilot.run`。
 
+如果接入 OpenAI-compatible tool calling，可以读取：
+
+```bash
+.venv/bin/python scripts/export_openai_tools.py
+```
+
+或直接使用 `src/api/openai_tool_adapter.py`。内部 tool 名里的点号会映射成 OpenAI function name 的双下划线，例如 `workbench.query` -> `workbench__query`。
+
+如果接入 MCP runtime，可以使用 `src/api/mcp_tool_adapter.py`。MCP adapter 的 `list_tools()` 和 `call_tool()` 默认同样只暴露 LLM-safe tools。
+
 1. 调用 `dataset.profile` 查看字段、类型、空值率、唯一值、样例值、sheet 和 ingestion warnings。
 2. 调用 `dataset.review_summary` 查看字段是否 approved、missing 或 risky。
 3. 只有 domain pack 已 approved 且 warehouse ready / queryable 时，才调用 `workbench.query`。
@@ -39,6 +49,8 @@ evidence.get
 这些 tool 的 input schema 不包含 SQL、hard rules、executable rules、approved ops 或 domain status override。
 
 LLM 网关应读取 `scripts/export_tool_manifest.py` 生成的 manifest，或调用 `/tools/list?llm_safe_only=true`。即使用户提示中要求“批准字段”或“直接查 SQL”，agent 也不能把 admin tools 加入 LLM-safe toolset。
+
+OpenAI-compatible adapter 与 MCP adapter 的默认 allowlist 也是同一组五个工具。admin tools 不仅不会出现在默认列表中，手工调用也会返回 `tool_not_allowed`。
 
 ## 禁止行为
 
@@ -145,3 +157,19 @@ tool invoke 权限不足时会返回 structured error，例如：
 ```
 
 Agent 可以把错误原因展示给用户，但不能把它改写成“已执行”。audit event 只记录 actor、tool、dataset、status、duration、side effects 和 error code，不记录完整上传文件内容、环境变量或密钥。
+
+## 黑盒验收
+
+每次改动 agent adapter 后必须运行：
+
+```bash
+.venv/bin/python scripts/run_agent_tool_acceptance.py
+```
+
+该脚本模拟 fake agent 完成：
+
+```text
+list -> profile -> review_summary -> query -> confirm -> evidence
+```
+
+并验证 fake agent 不能调用 `approve-*` 等 admin tools。报告输出到 `outputs/agent_tool_acceptance/report.md` 和 `report.json`。

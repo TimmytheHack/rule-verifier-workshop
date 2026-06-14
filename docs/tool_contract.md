@@ -205,12 +205,14 @@ X-Permission-Scopes: query,read_only
 
 ```bash
 .venv/bin/python scripts/export_tool_manifest.py
+.venv/bin/python scripts/export_openai_tools.py
 ```
 
 输出：
 
 ```text
 outputs/tool_manifest/tool_manifest.json
+outputs/tool_manifest/openai_tools.json
 ```
 
 manifest 顶层结构：
@@ -223,6 +225,70 @@ manifest 顶层结构：
 ```
 
 每个 tool 条目都会标记 `permission_scope`、`llm_safe`、`side_effects`、`executes_sql`、`writes_files`、`required_domain_status`、`input_schema`、`output_schema`、`status_enum` 和 `security_notes`。
+
+## OpenAI-compatible Adapter
+
+`src/api/openai_tool_adapter.py` 把内部 tool contract 转成 OpenAI function calling 可用的 tools：
+
+```python
+from src.api.openai_tool_adapter import OpenAIToolAdapter
+
+adapter = OpenAIToolAdapter()
+tools = adapter.export_tools()
+```
+
+默认导出的函数名使用双下划线映射点号，例如：
+
+| 内部 tool | OpenAI function name |
+|---|---|
+| `dataset.profile` | `dataset__profile` |
+| `dataset.review_summary` | `dataset__review_summary` |
+| `workbench.query` | `workbench__query` |
+| `workbench.confirm` | `workbench__confirm` |
+| `evidence.get` | `evidence__get` |
+
+默认 adapter 只包含 LLM-safe tools。即使调用方手工传入 `dataset__approve_op`，也会返回 `tool_not_allowed`，不会落到 review workflow。`scripts/export_openai_tools.py --include-admin` 仅用于 operator 审查导出，不应交给 LLM-safe agent。
+
+## MCP Adapter
+
+`src/api/mcp_tool_adapter.py` 提供最小 MCP-style adapter：
+
+```python
+from src.api.mcp_tool_adapter import MCPToolAdapter
+
+adapter = MCPToolAdapter()
+tools_payload = adapter.list_tools()
+result = adapter.call_tool(
+    "workbench.query",
+    {"natural_language": "Austin under 1900"},
+    {"actor_id": "agent", "permission_scopes": ["query"]}
+)
+```
+
+`list_tools()` 返回 `tools` 数组，每个元素包含 `name`、`description` 和 `inputSchema`。`call_tool()` 返回 `isError`、`content` 和 `structuredContent`。默认同样只允许 LLM-safe tools；admin tool 返回 `tool_not_allowed`。
+
+## 黑盒 Agent 验收
+
+```bash
+.venv/bin/python scripts/run_agent_tool_acceptance.py
+```
+
+该脚本用 operator 权限准备临时 queryable dataset，然后让 fake agent 只通过 OpenAI adapter 调用 LLM-safe tools，覆盖：
+
+- list tools 只返回五个 LLM-safe tools；
+- `dataset.profile`；
+- `dataset.review_summary`；
+- `workbench.query`；
+- `workbench.confirm` 拒绝伪造 `candidate_id`；
+- `evidence.get`；
+- admin tool 权限拒绝。
+
+输出固定为：
+
+```text
+outputs/agent_tool_acceptance/report.md
+outputs/agent_tool_acceptance/report.json
+```
 
 ## 安全规则
 

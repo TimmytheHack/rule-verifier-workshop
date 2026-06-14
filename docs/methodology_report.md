@@ -633,7 +633,8 @@ evidence pack 支持，不等于 raw Excel workbook 中一定不存在。
 - `src/api/tool_registry.py` 组合 DatasetService、Workbench、EvidencePack、Quality Gate 和 Real Dataset Pilot；
 - `GET /tools/list`、`GET /tools/{tool_name}/schema`、`POST /tools/{tool_name}/invoke` 作为 HTTP tool server 入口；
 - `GET /healthz`、`GET /readyz`、`GET /version` 支持部署探针；
-- `scripts/export_openapi.py` 和 `scripts/export_tool_manifest.py` 支持前端、agent 网关和 operator 控制台读取契约；
+- `scripts/export_openapi.py`、`scripts/export_tool_manifest.py` 和 `scripts/export_openai_tools.py` 支持前端、agent 网关、OpenAI-compatible tool calling 和 operator 控制台读取契约；
+- `src/api/openai_tool_adapter.py` 和 `src/api/mcp_tool_adapter.py` 默认只暴露 LLM-safe tools，`scripts/run_agent_tool_acceptance.py` 做 fake agent 黑盒验收；
 - `Makefile`、`.env.example`、`docs/local_deployment.md`、`docs/operator_guide.md`、`docs/troubleshooting.md` 说明本地部署、权限、审计和故障排查。
 
 这个发布层仍遵守同一条不变量：LLM-safe tools 只能读取 profile/review summary、调用 Workbench query/confirm 或取净化 EvidencePack；`approve-*`、`build-warehouse`、`quality.run` 和 `pilot.run` 必须由 operator/admin 权限触发。tool invoke audit 只记录 actor、tool、dataset、status、duration、side effects 和 error code，不记录完整上传文件内容、环境变量或密钥。

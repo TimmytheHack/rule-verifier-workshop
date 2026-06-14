@@ -143,9 +143,18 @@ evidence.get
 ```bash
 .venv/bin/python scripts/export_openapi.py
 .venv/bin/python scripts/export_tool_manifest.py
+.venv/bin/python scripts/export_openai_tools.py
 ```
 
-输出分别位于 `outputs/openapi/openapi.json` 和 `outputs/tool_manifest/tool_manifest.json`。
+输出分别位于 `outputs/openapi/openapi.json`、`outputs/tool_manifest/tool_manifest.json` 和 `outputs/tool_manifest/openai_tools.json`。OpenAI-compatible tools 和 MCP adapter 默认只暴露五个 LLM-safe tools；admin tools 默认不可见、不可调用。
+
+可以用 fake agent 黑盒验收工具调用链：
+
+```bash
+make agent-acceptance
+```
+
+该脚本验证 list/profile/review/query/confirm/evidence 和 admin 权限拒绝，并输出 `outputs/agent_tool_acceptance/report.md` 与 `report.json`。
 
 ## 启动后端
 
@@ -280,6 +289,9 @@ DeepSeek-backed 评估会读取 `.env`，并可能产生 API 延迟和 token 消
 - [Workbench API 响应契约](docs/api_contract.md)
 - [功能工具契约](docs/tool_contract.md)
 - [Agent 使用指南](docs/agent_usage_guide.md)
+- [本地部署说明](docs/local_deployment.md)
+- [Operator 操作指南](docs/operator_guide.md)
+- [故障排查](docs/troubleshooting.md)
 - [Real Dataset Pilot](docs/real_dataset_pilot.md)
 - [评估报告](docs/evaluation_report.md)
 - [端到端 demo 用例](docs/end_to_end_demo_cases.md)
