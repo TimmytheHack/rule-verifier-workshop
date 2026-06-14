@@ -37,6 +37,24 @@ outputs/real_dataset_pilot/report.md
 outputs/real_dataset_pilot/report.json
 ```
 
+面向 operator 的人工试运行使用相同 uploaded dataset、review、warehouse 和 Workbench
+能力，但报告按一次操作会话分目录保存，并额外记录操作卡点：
+
+```bash
+python scripts/run_operator_trial.py path/to/admissions.xlsx
+make operator-trial
+```
+
+输出为：
+
+```text
+outputs/operator_trial/<run_id>/report.md
+outputs/operator_trial/<run_id>/report.json
+```
+
+operator trial 适合真实 Excel 第一次接入前人工检查 sheet/header/profile/review/approve/build/query
+链路；real dataset pilot 适合发布前固定验收。
+
 ## 流程
 
 pilot 按顺序执行：

@@ -3,7 +3,7 @@ VENV ?= .venv
 VENVPY ?= $(VENV)/bin/python
 PIP ?= $(VENV)/bin/pip
 
-.PHONY: bootstrap test quality pilot demo agent-acceptance serve frontend clean-artifacts
+.PHONY: bootstrap test quality pilot operator-trial demo agent-acceptance serve frontend clean-artifacts
 
 bootstrap:
 	@if [ ! -x "$(VENVPY)" ]; then $(PYTHON) -m venv $(VENV); fi
@@ -18,6 +18,9 @@ quality:
 
 pilot:
 	$(VENVPY) scripts/run_real_dataset_pilot.py --fixture
+
+operator-trial:
+	$(VENVPY) scripts/run_operator_trial.py --fixture
 
 demo:
 	$(VENVPY) scripts/run_demo_acceptance.py

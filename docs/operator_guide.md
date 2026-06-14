@@ -180,6 +180,7 @@ curl -X POST \
 ```text
 generate draft
 -> review / approve
+-> run operator trial
 -> run demo acceptance
 -> run real dataset pilot
 -> run quality gate
@@ -190,6 +191,19 @@ generate draft
 
 ```bash
 make demo
+make operator-trial
 make pilot
 make quality
 ```
+
+真实招生 Excel 首次接入时，建议先运行 operator trial：
+
+```bash
+.venv/bin/python scripts/run_operator_trial.py path/to/admissions.xlsx
+```
+
+报告输出到 `outputs/operator_trial/<run_id>/report.md` 和 `report.json`。operator 应结合
+`docs/operator_trial_checklist.md` 和 `docs/operator_feedback_template.md` 检查 sheet/header
+检测、missing/risky fields、审批记录、warehouse fingerprint、两条目标 admissions query、
+warnings 和 failures。trial 通过后仍需继续执行 demo acceptance、real dataset pilot 和
+Quality Gate。

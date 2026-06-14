@@ -144,8 +144,32 @@ make test
 make demo
 make agent-acceptance
 make pilot
+make operator-trial
 make frontend
 make clean-artifacts
 ```
 
 `make clean-artifacts` 只清理临时 audit、临时 gate warehouse 和临时导出产物，不删除正式报告。
+
+## Operator Trial
+
+真实招生 Excel 进入生产前，operator 可以先跑一次人工试运行：
+
+```bash
+.venv/bin/python scripts/run_operator_trial.py path/to/admissions.xlsx
+```
+
+没有真实文件时可以使用内置 fixture：
+
+```bash
+make operator-trial
+```
+
+输出位于：
+
+```text
+outputs/operator_trial/<run_id>/report.md
+outputs/operator_trial/<run_id>/report.json
+```
+
+该报告面向人工审查，重点记录 sheet/header/profile/review/approve/build/query 每一步的 `operation_cards`、missing fields、risky fields、warnings 和 failures。通过 operator trial 不会绕过 domain review；正式发布仍需继续运行 demo acceptance、real dataset pilot 和 Quality Gate。

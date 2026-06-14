@@ -116,6 +116,15 @@ python scripts/run_real_dataset_pilot.py path/to/admissions.xlsx
 
 该脚本会执行 upload -> profile -> generate draft domain pack -> review summary -> safe auto-suggest approvals -> manual approval fixture -> build warehouse -> target admissions queries，并输出 `outputs/real_dataset_pilot/report.md` 与 `outputs/real_dataset_pilot/report.json`。没有真实文件时可用 `--fixture` 运行内置 real-like admissions fixture。详见 [Real Dataset Pilot](docs/real_dataset_pilot.md)。
 
+面向 operator 的真实 Excel 试运行可以使用：
+
+```bash
+python scripts/run_operator_trial.py path/to/admissions.xlsx
+make operator-trial
+```
+
+报告输出到 `outputs/operator_trial/<run_id>/report.md` 与 `report.json`，重点记录 sheet/header/profile/review/approve/build/query 每一步的操作卡点、missing/risky fields、warnings 和 failures。详见 [Operator Trial Checklist](docs/operator_trial_checklist.md) 和 [Operator Feedback Template](docs/operator_feedback_template.md)。
+
 Workbench API 响应已经固定为 multi-domain `WorkbenchResponse` contract。前端应依赖 `schema_version`、`domain`、`domain_version`、`domain_pack_status`、`status`、`query_type`、`query`、`answer`、`items`、`top_results`、`result_sections`、`result_count`、`executed_filters`、`candidates_to_confirm`、`confirmed_rules`、`unconfirmed_candidates`、`unexecuted_preferences`、`no_schema_field_preferences`、`rejected_confirmations`、`warnings`、`evidence_pack` 和 `debug_trace`。`status` 只能是 `ok`、`needs_confirmation`、`no_results`、`blocked`、`error`；`items` 是跨领域稳定 item card，`top_results` 只作为 domain-specific 兼容层，由 `domains/<domain>/top_result_mapping.yaml` 生成。admissions 额外支持 `group_detail_report` 和 `recommendation` 两类 `query_type`，通过 `result_sections` 返回专业组明细或冲/稳/保分组。draft/needs_review domain pack 默认返回 `blocked`，不执行 SQL。详见 [Workbench API 响应契约](docs/api_contract.md)。
 
 Workbench 还支持 candidate_id confirmation loop：
@@ -293,6 +302,8 @@ DeepSeek-backed 评估会读取 `.env`，并可能产生 API 延迟和 token 消
 - [Operator 操作指南](docs/operator_guide.md)
 - [故障排查](docs/troubleshooting.md)
 - [Real Dataset Pilot](docs/real_dataset_pilot.md)
+- [Operator Trial Checklist](docs/operator_trial_checklist.md)
+- [Operator Feedback Template](docs/operator_feedback_template.md)
 - [评估报告](docs/evaluation_report.md)
 - [端到端 demo 用例](docs/end_to_end_demo_cases.md)
 - [Excel schema profile](docs/excel_schema_profile.md)

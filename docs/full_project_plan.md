@@ -122,6 +122,7 @@ deterministic over-promotion rate
 | P4.6 | LLM/agent/前端可调用 functional tool layer 和机器可读 tool contracts | 已实现，见 `src/api/tool_registry.py`、`schemas/tools/*.json`、`docs/tool_contract.md` |
 | P4.7 | release packaging + tool server deployment hardening | 已实现，包含 `Makefile`、`.env.example`、`/tools/*`、`/healthz`、`/readyz`、`/version`、OpenAPI/tool manifest 导出和 operator/troubleshooting 文档 |
 | P4.8 | Agent Adapter + Black-box Tool-use Acceptance | 已实现，包含 OpenAI-compatible tools export、MCP adapter 和 `scripts/run_agent_tool_acceptance.py` |
+| P4.9 | 真实招生 Excel Operator Trial | 已实现，包含 `scripts/run_operator_trial.py`、`make operator-trial`、`docs/operator_trial_checklist.md` 和 `docs/operator_feedback_template.md` |
 | P5 | 非结构化政策/章程小型知识库，只做解释和候选，不进执行 | 待做 |
 | P6 | 可选模型/embedding 接入 | 暂不接入 |
 
@@ -137,6 +138,7 @@ deterministic over-promotion rate
 6. 将 recommendation quality evaluation 与 rule-verification evaluation 分开。
 7. 在不改变执行边界的前提下，把 uploaded dataset review UI 从当前 sheet/header/risk 摘要面板演进为更完整的人工审查工作台。
 8. 如需接入外部 agent runtime，可以基于当前 `/tools/list`、`/tools/{tool_name}/schema`、`/tools/{tool_name}/invoke`、OpenAI-compatible tools export 或 MCP adapter 做集成；adapter 必须复用 `schemas/tools/*.json` 和现有权限模型。
+9. 真实招生 Excel 首次接入前，先运行 `scripts/run_operator_trial.py path/to/admissions.xlsx`，用分目录报告记录 sheet/header/profile/review/approve/build/query 的人工卡点；通过后再进入 demo acceptance、real dataset pilot 和 Quality Gate。
 
 当前 benchmark snapshot：
 

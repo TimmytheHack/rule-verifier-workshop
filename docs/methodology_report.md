@@ -75,6 +75,13 @@ draft pack、review summary、safe auto-suggest approvals、manual approval fixt
 metric 和参数化 SQL 写入 EvidencePack；“630 分人工智能/计算机、广东、不想去国外”在没有
 位次时必须给 `score_without_rank` warning，且不声称录取概率。
 
+`scripts/run_operator_trial.py` 是面向 operator 的真实 Excel 人工试运行入口。它复用同一套
+DatasetService、review workflow、DuckDB warehouse、WorkbenchResponse 和 EvidencePack，不复制
+执行逻辑；输出按 `outputs/operator_trial/<run_id>/` 分目录保存。报告额外记录
+`operation_cards`、missing/risky fields、review blockers、safe auto-suggest approvals、人工
+approval fixture、warehouse fingerprint 和两条目标查询结果，用于 operator 在正式 Quality Gate
+前记录卡点和人工结论。
+
 functional tool layer 位于 `src/api/tool_registry.py`，机器可读契约位于
 `schemas/tools/*.json`。LLM-safe tools 只包括 `dataset.profile`、`dataset.review_summary`、
 `workbench.query`、`workbench.confirm` 和 `evidence.get`。review/admin/warehouse/
