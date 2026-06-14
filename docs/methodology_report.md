@@ -652,6 +652,20 @@ evidence pack 支持，不等于 raw Excel workbook 中一定不存在。
 
 这个发布层仍遵守同一条不变量：LLM-safe tools 只能读取 profile/review summary、调用 Workbench query/confirm 或取净化 EvidencePack；`approve-*`、`build-warehouse`、`quality.run` 和 `pilot.run` 必须由 operator/admin 权限触发。tool invoke audit 只记录 actor、tool、dataset、status、duration、side effects 和 error code，不记录完整上传文件内容、环境变量或密钥。
 
+## 11.6 非结构化资料 reference-only 层
+
+Phase F 增加的是最小化的 admissions policy reference 层，而不是结构化大表 RAG。
+`domains/admissions/policy_references/*.md` 保存已审核 Markdown 资料，domain pack 中的
+`policy_references` 配置列出允许触发 lexical 命中的关键词。Workbench 在生成
+EvidencePack 时追加 `policy_references`，每条命中都标记为 `reference_only` 和
+`does_not_change_sql_or_results`。
+
+该层只能解释和引用，例如说明“没有合作办学类型字段时，不想去国外/中外合作不能执行”
+或“专项计划需要已审核字段”。它不进入 AttributeGrounder、RuleVerifier、
+RulePromoter 或 DuckDBExecutor，不改变 SQL、params、`result_count`、
+`result_sections` 或冲/稳/保 bucket。后续如果引入政策文档检索，也必须保持这个
+EvidencePack 边界。
+
 ## 12. 当前局限性
 
 当前系统仍然很窄。

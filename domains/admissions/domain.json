@@ -25,7 +25,33 @@
     "value_aliases": "value_aliases.json",
     "answer_templates": "answer_templates.json",
     "golden_cases": "golden_cases.json",
-    "top_result_mapping": "top_result_mapping.yaml"
+    "top_result_mapping": "top_result_mapping.yaml",
+    "policy_references": "policy_references"
+  },
+  "policy_references": {
+    "enabled": true,
+    "status": "approved",
+    "path": "policy_references",
+    "max_hits": 3,
+    "keywords": {
+      "cooperation_programs": [
+        "中外合作",
+        "合作办学",
+        "国际班",
+        "境外培养",
+        "国外",
+        "出国"
+      ],
+      "special_plans": [
+        "地方专项",
+        "专项计划",
+        "校企合作"
+      ],
+      "subject_requirements": [
+        "选科",
+        "再选科目"
+      ]
+    }
   },
   "subject_policy": {
     "subjects": ["化学", "生物", "政治", "地理"],

@@ -34,6 +34,7 @@ class EvidencePack:
     unconfirmed_candidates: list[dict[str, Any]] = field(default_factory=list)
     no_schema_field_preferences: list[dict[str, Any]] = field(default_factory=list)
     rejected_confirmations: list[dict[str, Any]] = field(default_factory=list)
+    policy_references: list[dict[str, Any]] = field(default_factory=list)
 
     @classmethod
     def from_verified_pipeline(
@@ -49,6 +50,7 @@ class EvidencePack:
         execution_summary: dict[str, Any] | None = None,
         confirmation_state: dict[str, Any] | None = None,
         domain_config: DomainConfig | None = None,
+        policy_references: list[dict[str, Any]] | None = None,
     ) -> "EvidencePack":
         """Build an answer-safe evidence pack from post-execution artifacts."""
 
@@ -105,6 +107,7 @@ class EvidencePack:
                 [],
             ),
             rejected_confirmations=confirmation.get("rejected_candidates", []),
+            policy_references=policy_references or [],
         )
 
     def to_dict(self) -> dict[str, Any]:

@@ -117,7 +117,8 @@ domain_pack_status
 
 - dataset tools 返回 `DatasetService` / review workflow 的结构化响应。
 - `workbench.query` 和 `workbench.confirm` 返回 `WorkbenchResponse`。
-- `evidence.get` 返回净化后的 `EvidencePack`。
+- `evidence.get` 返回净化后的 `EvidencePack`；其中 `policy_references` 只允许作为
+  reference-only 解释资料，不能进入 SQL、hard rules 或 confirmation。
 - `quality.run` 返回 Quality Gate report。
 - `pilot.run` 返回 Real Dataset Pilot report。
 

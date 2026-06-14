@@ -78,6 +78,12 @@ class TemplateReportBuilder:
                 _no_schema_candidate_line(candidate)
                 for candidate in evidence["no_schema_field_preferences"]
             )
+        if evidence.get("policy_references"):
+            lines.extend(["", "参考说明（不参与筛选）："])
+            lines.extend(
+                _policy_reference_line(reference)
+                for reference in evidence["policy_references"]
+            )
 
         lines.extend(["", "未执行但已保留的偏好："])
         if evidence["not_executed_preferences"]:
@@ -159,6 +165,15 @@ def _no_schema_candidate_line(candidate: dict[str, Any]) -> str:
     return (
         f"- {candidate.get('source_text')}：{candidate.get('reason')}；"
         "即使提交该 candidate_id 也不能执行。"
+    )
+
+
+def _policy_reference_line(reference: dict[str, Any]) -> str:
+    terms = "、".join(str(item) for item in reference.get("matched_terms") or [])
+    return (
+        f"- {reference.get('title')}：{reference.get('excerpt')}；"
+        f"来源：{reference.get('source')}；命中：{terms}；"
+        "该说明不参与筛选。"
     )
 
 

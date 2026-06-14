@@ -37,6 +37,7 @@ from src.reporting.deepseek_answer_generator import (
     DeepSeekAnswerGenerator,
 )
 from src.reporting.evidence_pack import EvidencePack
+from src.reporting.policy_reference import policy_references_for_query
 from src.reporting.template_report_builder import TemplateReportBuilder
 from src.rules.rule_classifier import RuleClassifier
 from src.rules.rule_promoter import RulePromoter
@@ -322,6 +323,7 @@ def _run_workbench(config: WorkbenchConfig) -> dict[str, Any]:
         not_executed_preferences=classified_rules.get("non_executable_preferences", []),
     )
     extracted_preferences = _extracted_preferences(slots, domain_config)
+    policy_references = _policy_references_for_config(config, domain_config)
     evidence = EvidencePack.from_verified_pipeline(
         user_request=_compose_user_request(config),
         executed_rules=hard_rules,
@@ -334,6 +336,7 @@ def _run_workbench(config: WorkbenchConfig) -> dict[str, Any]:
         execution_summary=execution.audit.to_dict(),
         confirmation_state=confirmation_state,
         domain_config=domain_config,
+        policy_references=policy_references,
     )
     report, generator_usage = _generate_report(
         config=config,
@@ -431,6 +434,11 @@ def _planned_query_payload(
         for rank, row in enumerate(planned_result.rows[:EVIDENCE_TOP_K], start=1)
     ]
     result_count = len(planned_result.rows)
+    policy_references = _policy_references_for_config(config, domain_config)
+    answer = _append_policy_reference_answer(
+        planned_result.answer,
+        policy_references,
+    )
     evidence_pack = {
         "user_request": _compose_user_request(config),
         "query_type": planned_result.query_type,
@@ -456,6 +464,7 @@ def _planned_query_payload(
         "unconfirmed_candidates": planned_result.candidates_to_confirm,
         "no_schema_field_preferences": planned_result.no_schema_field_preferences,
         "rejected_confirmations": [],
+        "policy_references": policy_references,
     }
     legacy_payload = {
         "mode": "api",
@@ -504,8 +513,8 @@ def _planned_query_payload(
         "evidence_pack": evidence_pack,
         "natural_language_report": {
             "title": "Admissions query planner 结果",
-            "summary": planned_result.answer,
-            "full_text": planned_result.answer,
+            "summary": answer,
+            "full_text": answer,
             "result_count_text": f"当前返回 {result_count} 条结果。",
             "executed_rules": [_rule_label(rule) for rule in hard_rules],
             "attribute_explanations": [],
@@ -527,7 +536,7 @@ def _planned_query_payload(
         status=planned_result.status,
         query_type=planned_result.query_type,
         query=_contract_query(config),
-        answer=planned_result.answer,
+        answer=answer,
         items=items,
         top_results=top_results,
         result_sections=planned_result.result_sections,
@@ -548,6 +557,30 @@ def _planned_query_payload(
         debug_trace=_debug_trace(legacy_payload),
     ).to_dict()
     return {**legacy_payload, **response}
+
+
+def _policy_references_for_config(
+    config: WorkbenchConfig,
+    domain_config: DomainConfig,
+) -> list[dict[str, Any]]:
+    return policy_references_for_query(domain_config, _compose_user_request(config))
+
+
+def _append_policy_reference_answer(
+    answer: str,
+    policy_references: list[dict[str, Any]],
+) -> str:
+    if not policy_references:
+        return answer
+    lines = [answer, "", "参考说明（不参与筛选）："]
+    for reference in policy_references:
+        terms = "、".join(str(item) for item in reference.get("matched_terms") or [])
+        lines.append(
+            "- "
+            f"{reference.get('title')}：{reference.get('excerpt')}；"
+            f"来源：{reference.get('source')}；命中：{terms}；该说明不参与筛选。"
+        )
+    return "\n".join(lines)
 
 
 def _planned_not_executed_preference(

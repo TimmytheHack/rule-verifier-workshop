@@ -84,6 +84,8 @@ Agent 不允许：
 
 `deterministic_fields` 是前端或上游系统提供的确定性事实。它仍会进入 Workbench 的 schema-grounding 和 verifier，不等价于直接 SQL。
 
+如果返回的 `evidence_pack.policy_references` 非空，agent 只能把它作为已审核资料引用解释给用户。它不能改变 `executed_filters`、`result_count`、`result_sections`、`confirmed_candidate_ids` 或任何 hard rule。
+
 ## workbench.confirm 使用方式
 
 当上一轮返回 `needs_confirmation`：
@@ -122,7 +124,7 @@ Agent 应向用户展示候选并等待确认。用户确认后调用：
 }
 ```
 
-返回值不会暴露 stack trace、环境变量、密钥或绝对本地路径。回答生成器只能基于这个 evidence 解释已经执行、未执行和需要确认的偏好。
+返回值不会暴露 stack trace、环境变量、密钥或绝对本地路径。回答生成器只能基于这个 evidence 解释已经执行、未执行、reference-only 和需要确认的偏好。
 
 ## 管理类工具
 
