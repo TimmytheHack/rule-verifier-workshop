@@ -42,6 +42,20 @@ class OperatorTrialTest(unittest.TestCase):
         self.assertIn("build_warehouse", _operation_stages(loaded))
         self.assertIn("target_query_1", _operation_stages(loaded))
         self.assertIn("target_query_2", _operation_stages(loaded))
+        self.assertEqual(
+            {
+                "sheet_header",
+                "schema_profile",
+                "review_approval",
+                "warehouse",
+                "target_queries",
+                "trial_closeout",
+            },
+            _checkpoint_stages(loaded),
+        )
+        self.assertTrue(loaded["failure_playbook"])
+        self.assertIn("人工检查卡点", markdown)
+        self.assertIn("常见失败处理", markdown)
         self.assertFalse(loaded["failures"])
 
     def test_operator_trial_records_review_blockers(self) -> None:
@@ -63,6 +77,8 @@ class OperatorTrialTest(unittest.TestCase):
         self.assertTrue(report["review_blockers"])
         self.assertTrue(report["missing_fields"])
         self.assertIn("review_blockers", _operation_stages(report))
+        review_checkpoint = _checkpoint_by_stage(report, "review_approval")
+        self.assertEqual(review_checkpoint["status"], "fail")
 
     def test_operator_trial_cli_fixture_writes_date_dir(self) -> None:
         with TemporaryDirectory() as directory:
@@ -95,6 +111,23 @@ def _operation_stages(report: dict[str, object]) -> set[str]:
         str(card["stage"])
         for card in report.get("operation_cards", [])
     }
+
+
+def _checkpoint_stages(report: dict[str, object]) -> set[str]:
+    return {
+        str(card["stage"])
+        for card in report.get("manual_checkpoints", [])
+    }
+
+
+def _checkpoint_by_stage(
+    report: dict[str, object],
+    stage: str,
+) -> dict[str, object]:
+    for card in report.get("manual_checkpoints", []):
+        if card.get("stage") == stage:
+            return card
+    raise AssertionError(f"missing checkpoint: {stage}")
 
 
 if __name__ == "__main__":

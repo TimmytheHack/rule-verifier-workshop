@@ -54,6 +54,7 @@ clean-artifacts:
 	rm -rf outputs/demo_acceptance/uploaded_datasets
 	rm -rf outputs/demo_acceptance/uploaded_sources
 	rm -rf outputs/demo_acceptance/warehouses
+	rm -rf outputs/operator_trial
 	rm -rf outputs/tool_manifest
 	rm -rf outputs/openapi
 	rm -rf outputs/agent_tool_acceptance

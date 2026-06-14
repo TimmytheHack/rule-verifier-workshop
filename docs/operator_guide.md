@@ -197,7 +197,7 @@ make quality
 
 报告输出到 `outputs/operator_trial/<run_id>/report.md` 和 `report.json`。operator 应结合
 `docs/operator_trial_checklist.md` 和 `docs/operator_feedback_template.md` 检查 sheet/header
-检测、missing/risky fields、审批记录、warehouse fingerprint、两条目标 admissions query、
+检测、missing/risky fields、`manual_checkpoints`、常见失败处理、审批记录、warehouse fingerprint、两条目标 admissions query、
 warnings 和 failures。trial 通过后仍需继续执行 demo acceptance、real dataset pilot 和
 Quality Gate。
 

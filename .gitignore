@@ -21,6 +21,7 @@ outputs/quality_gate/tmp/
 outputs/uploaded_datasets/
 outputs/real_dataset_pilot/fixtures/
 outputs/real_dataset_pilot/uploaded_datasets/
+outputs/operator_trial/
 outputs/tool_audit/
 domains/**/*.duckdb
 domains/**/*.duckdb.wal

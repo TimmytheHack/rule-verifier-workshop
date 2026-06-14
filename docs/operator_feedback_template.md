@@ -111,6 +111,32 @@
 - blocked 原因：
 - 是否需要重新上传：
 
+## 常见失败处理记录
+
+| 现象 | 是否出现 | 处理结论 | owner |
+|---|---|---|---|
+| `header_detection_status` 不是 `ok` |  |  |  |
+| selected sheet 不正确 |  |  |  |
+| `missing_fields` 非空 |  |  |  |
+| `risky_fields` 未 approve/block |  |  |  |
+| `approve_domain` 失败 |  |  |  |
+| warehouse fingerprint 不一致 |  |  |  |
+| recommendation 缺少 `score_without_rank` warning |  |  |  |
+| 答案声称录取概率 |  |  |  |
+| `no_schema_field_preferences` 被执行 |  |  |  |
+| 报告包含 secret / 环境变量 / stack trace |  |  |  |
+
+## 人工卡点结论
+
+| checkpoint | 状态 | 人工结论 | 后续动作 |
+|---|---|---|---|
+| `sheet_header` |  |  |  |
+| `schema_profile` |  |  |  |
+| `review_approval` |  |  |  |
+| `warehouse` |  |  |  |
+| `target_queries` |  |  |  |
+| `trial_closeout` |  |  |  |
+
 ## 结论
 
 - 是否通过 operator trial：

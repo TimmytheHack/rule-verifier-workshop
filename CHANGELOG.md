@@ -10,7 +10,7 @@
 - `DomainConfig` + domain pack 抽象，admissions、housing、products 共用同一套 schema grounding、RuleVerifier、DuckDB execution 和 answer contract。
 - `scripts/generate_domain_pack.py` 和 `scripts/review_domain_pack.py`，支持 CSV/Excel 生成 draft pack、人工 review、approve/block 和 audit history。
 - Uploaded dataset flow：上传、profile、draft generation、review、approve、build warehouse、query。
-- Real dataset pilot 和 operator trial，覆盖真实招生 Excel 的 sheet/header/profile/review/build/query 试运行。
+- Real dataset pilot 和 operator trial，覆盖真实招生 Excel 的 sheet/header/profile/review/build/query 试运行；operator trial 报告包含 `manual_checkpoints` 和常见失败处理建议。
 - Functional tool contracts：`dataset.profile`、`dataset.review_summary`、`workbench.query`、`workbench.confirm`、`evidence.get` 等。
 - OpenAI-compatible tools export、MCP adapter 和 fake agent 黑盒 acceptance。
 - HTTP tool server 部署层：`/tools/list`、`/tools/{tool_name}/schema`、`/tools/{tool_name}/invoke`、`/healthz`、`/readyz`、`/version`。

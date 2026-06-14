@@ -267,6 +267,17 @@ def build_report(
         "warehouse_path": (warehouse.get("warehouse") or {}).get("database_path"),
         "warehouse_fingerprint": duckdb.get("fingerprint"),
         "target_query_results": target_results,
+        "manual_checkpoints": _manual_checkpoints(
+            context=context,
+            upload=upload,
+            profile=profile,
+            review=review,
+            approved=approved,
+            warehouse=warehouse,
+            target_results=target_results,
+            review_blockers=review_blockers,
+        ),
+        "failure_playbook": _failure_playbook(),
         "operation_cards": context.operation_cards,
         "warnings": warnings,
         "failures": context.failures,
@@ -325,6 +336,10 @@ def render_markdown(report: dict[str, Any]) -> str:
         ),
         "## 目标查询结果",
         _json_block(report["target_query_results"]),
+        "## 人工检查卡点",
+        _json_block(report["manual_checkpoints"]),
+        "## 常见失败处理",
+        _json_block(report["failure_playbook"]),
         "## 警告",
         _json_block(report["warnings"]),
         "## 失败项",
@@ -475,6 +490,161 @@ def _operator_review_summary(review: dict[str, Any]) -> dict[str, Any]:
         "risky_field_count": len(review.get("risky_fields") or []),
         "approved_field_count": sum(1 for field in fields if field.get("reviewed")),
     }
+
+
+def _manual_checkpoints(
+    *,
+    context: TrialContext,
+    upload: dict[str, Any],
+    profile: dict[str, Any],
+    review: dict[str, Any],
+    approved: dict[str, Any],
+    warehouse: dict[str, Any],
+    target_results: list[dict[str, Any]],
+    review_blockers: list[dict[str, Any]],
+) -> list[dict[str, Any]]:
+    """生成 operator 可直接勾审的人工卡点摘要。"""
+
+    warehouse_audit = warehouse.get("warehouse_audit") or {}
+    target_failures = [
+        failure
+        for result in target_results
+        for failure in (result.get("failures") or [])
+    ]
+    return [
+        {
+            "stage": "sheet_header",
+            "status": _checkpoint_status(
+                has_failure=not upload,
+                has_warning=bool(
+                    upload.get("warnings")
+                    or upload.get("header_detection_status") != "ok"
+                ),
+            ),
+            "evidence": {
+                "sheet_name": upload.get("sheet_name"),
+                "sheet_summaries": upload.get("sheet_summaries", []),
+                "detected_header_row": upload.get("detected_header_row"),
+                "header_detection_status": upload.get("header_detection_status"),
+            },
+            "operator_action": "人工确认 selected sheet 与 detected_header_row 是否和原表一致。",
+        },
+        {
+            "stage": "schema_profile",
+            "status": _checkpoint_status(
+                has_failure=not profile,
+                has_warning=bool(profile.get("warnings")),
+            ),
+            "evidence": _schema_profile_summary(profile),
+            "operator_action": "核对 dtype、空值率、唯一值数量、样例值和数值范围。",
+        },
+        {
+            "stage": "review_approval",
+            "status": _checkpoint_status(
+                has_failure=bool(review_blockers),
+                has_warning=bool(review.get("risky_fields")),
+            ),
+            "evidence": {
+                "missing_fields": review.get("missing_fields", []),
+                "risky_fields": review.get("risky_fields", []),
+                "review_blockers": review_blockers,
+                "approved_ok": bool(approved.get("ok")),
+            },
+            "operator_action": "缺失字段必须补映射或阻断；risky fields 必须人工 approve/block。",
+        },
+        {
+            "stage": "warehouse",
+            "status": _checkpoint_status(
+                has_failure=warehouse.get("status") != "queryable",
+                has_warning=bool(warehouse_audit.get("warnings")),
+            ),
+            "evidence": {
+                "status": warehouse.get("status"),
+                "warehouse_path": (warehouse.get("warehouse") or {}).get(
+                    "database_path"
+                ),
+                "warehouse_fingerprint": (
+                    warehouse_audit.get("duckdb") or {}
+                ).get("fingerprint"),
+                "warnings": warehouse_audit.get("warnings", []),
+            },
+            "operator_action": "fingerprint 不一致或状态不是 queryable 时，禁止进入生产查询。",
+        },
+        {
+            "stage": "target_queries",
+            "status": _checkpoint_status(
+                has_failure=bool(target_failures) or len(target_results) != 2,
+                has_warning=any(
+                    result.get("status") != "ok"
+                    for result in target_results
+                ),
+            ),
+            "evidence": [
+                {
+                    "query_type": result.get("query_type"),
+                    "status": result.get("status"),
+                    "result_count": result.get("result_count"),
+                    "failure_count": len(result.get("failures") or []),
+                }
+                for result in target_results
+            ],
+            "operator_action": "逐条核对 EvidencePack、SQL/params、warnings 和结果是否符合人工预期。",
+        },
+        {
+            "stage": "trial_closeout",
+            "status": _checkpoint_status(has_failure=bool(context.failures)),
+            "evidence": {
+                "warning_count": len(context.warnings),
+                "failure_count": len(context.failures),
+            },
+            "operator_action": "把可接受 warning、必须修复 warning、owner 和下一步结论写入反馈模板。",
+        },
+    ]
+
+
+def _checkpoint_status(*, has_failure: bool, has_warning: bool = False) -> str:
+    if has_failure:
+        return "fail"
+    if has_warning:
+        return "needs_review"
+    return "pass"
+
+
+def _failure_playbook() -> list[dict[str, str]]:
+    """返回 operator trial 常见失败处理建议。"""
+
+    return [
+        {
+            "symptom": "header_detection_status 不是 ok 或 detected_header_row 不符合人工观察。",
+            "likely_cause": "Excel 前几行包含标题、说明、合并单元格或空行。",
+            "operator_action": "用 --sheet-name 选定 sheet；必要时清理表头说明行后重新上传。",
+        },
+        {
+            "symptom": "missing_fields 非空。",
+            "likely_cause": "源列名和 admissions canonical field 无法稳定映射。",
+            "operator_action": "补充字段映射或确认该数据源不支持目标 query；不能强行 approve domain。",
+        },
+        {
+            "symptom": "risky_fields 非空。",
+            "likely_cause": "字段存在 PII、高基数、自由文本或特殊计划语义风险。",
+            "operator_action": "逐字段 approve/block；未审查字段不能成为 executable hard filter。",
+        },
+        {
+            "symptom": "warehouse status 不是 queryable 或 fingerprint guard 不通过。",
+            "likely_cause": "源文件被替换、warehouse 过期或构建中断。",
+            "operator_action": "重新 build warehouse；若仍不一致，重新上传并重跑 review。",
+        },
+        {
+            "symptom": "recommendation 缺少 score_without_rank warning。",
+            "likely_cause": "只有分数无位次时仍试图给出风险判断。",
+            "operator_action": "阻断发布，修复 admissions recommendation guard 后重跑 trial。",
+        },
+        {
+            "symptom": "答案声称录取概率或执行了 no_schema_field 偏好。",
+            "likely_cause": "Answer/EvidencePack 边界或 verifier guard 失效。",
+            "operator_action": "阻断发布，补测试并修复后重新跑 Quality Gate。",
+        },
+    ]
 
 
 def _schema_profile_summary(profile: dict[str, Any]) -> dict[str, Any]:

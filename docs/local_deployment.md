@@ -193,4 +193,4 @@ outputs/operator_trial/<run_id>/report.md
 outputs/operator_trial/<run_id>/report.json
 ```
 
-该报告面向人工审查，重点记录 sheet/header/profile/review/approve/build/query 每一步的 `operation_cards`、missing fields、risky fields、warnings 和 failures。通过 operator trial 不会绕过 domain review；正式发布仍需继续运行 demo acceptance、real dataset pilot 和 Quality Gate。
+该报告面向人工审查，重点记录 sheet/header/profile/review/approve/build/query 每一步的 `operation_cards`、`manual_checkpoints`、`failure_playbook`、missing fields、risky fields、warnings 和 failures。通过 operator trial 不会绕过 domain review；正式发布仍需继续运行 demo acceptance、real dataset pilot 和 Quality Gate。
