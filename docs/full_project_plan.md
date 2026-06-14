@@ -116,8 +116,9 @@ deterministic over-promotion rate
 | P0 | confirmation loop：`partial_match` 通过 `candidate_id` 确认后才可进入 hard filter | 已实现基础闭环 |
 | P1 | API response contract freeze + snapshot tests | 已实现基础 contract |
 | P2 | demo acceptance script，导出多领域 Markdown/JSON 验收报告 | 已实现，当前覆盖内置 domain 27 条和 uploaded dataset 2 条 |
-| P3 | 多数据源 ingestion 规范，支持新 Excel / CSV 进入同一 warehouse schema | 已实现 draft generator、Domain Pack Review / Approval workflow 和 uploaded dataset API/service flow |
+| P3 | 多数据源 ingestion 规范，支持新 Excel / CSV 进入同一 warehouse schema | 已实现 draft generator、Domain Pack Review / Approval workflow、uploaded dataset API/service flow 和 real dataset pilot |
 | P4 | 统一 Quality Gate，交付前运行测试、评估、demo acceptance、domain/warehouse guard 和前端 build | 已实现 |
+| P4.5 | 真实招生 Excel 上传、profile、审查、建仓、目标查询 pilot | 已实现，输出 `outputs/real_dataset_pilot/report.md` 与 `report.json` |
 | P5 | 非结构化政策/章程小型知识库，只做解释和候选，不进执行 | 待做 |
 | P6 | 可选模型/embedding 接入 | 暂不接入 |
 
@@ -131,7 +132,7 @@ deterministic over-promotion rate
 4. 将 40-case benchmark 扩展到 50-100 条更真实的改写表达。
 5. 在更长、更乱、不完整和矛盾输入上 stress-test DeepSeek extraction。
 6. 将 recommendation quality evaluation 与 rule-verification evaluation 分开。
-7. 在不改变执行边界的前提下，把 uploaded dataset review UI 从最小 API 面板演进为更完整的人工审查工作台。
+7. 在不改变执行边界的前提下，把 uploaded dataset review UI 从当前 sheet/header/risk 摘要面板演进为更完整的人工审查工作台。
 
 当前 benchmark snapshot：
 

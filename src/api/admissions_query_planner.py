@@ -91,6 +91,9 @@ class AdmissionsQueryPlanner:
         user_request: str,
     ) -> AdmissionsQueryResult:
         report_config = self.config.get(QUERY_TYPE_GROUP_DETAIL) or {}
+        readiness = self._query_readiness(QUERY_TYPE_GROUP_DETAIL, report_config)
+        if readiness is not None:
+            return readiness
         year_info = self._resolve_year(config, user_request)
         warnings = list(year_info["warnings"])
         university_name = _clean_text(
@@ -246,6 +249,9 @@ class AdmissionsQueryPlanner:
         user_request: str,
     ) -> AdmissionsQueryResult:
         policy = self.config.get(QUERY_TYPE_RECOMMENDATION) or {}
+        readiness = self._query_readiness(QUERY_TYPE_RECOMMENDATION, policy)
+        if readiness is not None:
+            return readiness
         fields = policy.get("fields") or {}
         inputs = self._recommendation_inputs(config, user_request, policy)
         if not inputs.major_terms:
@@ -549,8 +555,14 @@ class AdmissionsQueryPlanner:
             (
                 "cooperation_type",
                 self.aliases.get("cooperation_terms") or [],
-                ["中外合作", "合作办学", "国际合作"],
+                ["中外合作", "合作办学", "国际合作", "校企合作"],
                 "合作办学类型字段",
+            ),
+            (
+                "special_plan_type",
+                ["地方专项", "专项计划"],
+                ["地方专项", "专项计划"],
+                "专项计划类型字段",
             ),
         ]
         for field_id, terms, excluded_values, missing_field in checks:
@@ -579,6 +591,135 @@ class AdmissionsQueryPlanner:
                 }
             )
         return no_schema, rules
+
+    def _query_readiness(
+        self,
+        query_type: str,
+        query_config: dict[str, Any],
+    ) -> AdmissionsQueryResult | None:
+        ambiguous = self._ambiguous_score_fields(query_type)
+        if ambiguous:
+            warning = _warning(
+                "ambiguous_admissions_score_fields",
+                "分数字段语义不够明确，需要人工 review 指定 group/major min score 映射。",
+                severity="error",
+                ambiguous_fields=ambiguous,
+            )
+            return self._blocked_planned_result(
+                query_type=query_type,
+                warning=warning,
+                answer="当前上传数据的分数字段存在歧义，需要先人工确认 score 字段映射。",
+            )
+        missing = self._missing_required_fields(query_type, query_config)
+        if missing:
+            warning = _warning(
+                "missing_required_admissions_fields",
+                "uploaded admissions 数据缺少必要 canonical field，未执行 SQL。",
+                severity="error",
+                missing_fields=missing,
+            )
+            return self._blocked_planned_result(
+                query_type=query_type,
+                warning=warning,
+                answer="当前上传数据缺少必要招生字段，需要 review 后才能执行该 query_type。",
+            )
+        return None
+
+    def _missing_required_fields(
+        self,
+        query_type: str,
+        query_config: dict[str, Any],
+    ) -> list[dict[str, Any]]:
+        fields = query_config.get("fields") or {}
+        optional = {"cooperation_type", "school_country_or_region", "special_plan_type"}
+        field_ids = [
+            field_id
+            for field_id in fields.values()
+            if field_id and field_id not in optional
+        ]
+        if query_type == QUERY_TYPE_GROUP_DETAIL:
+            metric = (query_config.get("default_metric") or {}).get("field_id")
+            if metric:
+                field_ids.append(str(metric))
+        table_columns = self._table_columns()
+        missing = []
+        for field_id in _unique([str(item) for item in field_ids]):
+            source_column = self.domain_config.source_column_or_none(field_id)
+            if not source_column:
+                missing.append(
+                    {
+                        "field_id": field_id,
+                        "source_column": None,
+                        "reason": "missing_source_column",
+                    }
+                )
+                continue
+            if source_column not in table_columns:
+                missing.append(
+                    {
+                        "field_id": field_id,
+                        "source_column": source_column,
+                        "reason": "missing_table_column",
+                    }
+                )
+        return missing
+
+    def _ambiguous_score_fields(self, query_type: str) -> list[dict[str, Any]]:
+        if query_type not in {QUERY_TYPE_GROUP_DETAIL, QUERY_TYPE_RECOMMENDATION}:
+            return []
+        profile_path = self.domain_config.root / "schema_profile.json"
+        if not profile_path.exists():
+            return []
+        profile = _load_json(profile_path)
+        score_fields = []
+        has_group_min_score = False
+        for column in profile.get("columns") or []:
+            semantics = column.get("admissions_semantics") or {}
+            score_kind = semantics.get("score_kind")
+            if not score_kind:
+                continue
+            if score_kind == "group_min_score":
+                has_group_min_score = True
+            if score_kind in {"score", "min_score"}:
+                score_fields.append(
+                    {
+                        "field_id": column.get("field_id"),
+                        "source_column": column.get("source_column"),
+                        "score_kind": score_kind,
+                    }
+                )
+        if score_fields and not has_group_min_score:
+            return score_fields
+        return []
+
+    def _blocked_planned_result(
+        self,
+        *,
+        query_type: str,
+        warning: dict[str, Any],
+        answer: str,
+    ) -> AdmissionsQueryResult:
+        sections = (
+            {"groups": []}
+            if query_type == QUERY_TYPE_GROUP_DETAIL
+            else _empty_recommendation_sections()
+        )
+        return AdmissionsQueryResult(
+            query_type=query_type,
+            status="blocked",
+            rows=[],
+            result_sections=sections,
+            execution_summary=_empty_execution_summary(query_type, warnings=[warning]),
+            answer=answer,
+            warnings=[warning],
+        )
+
+    def _table_columns(self) -> set[str]:
+        with duckdb.connect(str(self.database_path), read_only=True) as connection:
+            rows = connection.execute(
+                f"DESCRIBE {_quote(self.domain_config.table_name)}"
+            ).fetchall()
+        return {str(row[0]) for row in rows}
 
     def _fetch_group_rows(self, **kwargs: Any) -> tuple[list[dict[str, Any]], str, list[Any]]:
         connection = kwargs["connection"]
@@ -1011,7 +1152,12 @@ def _rank_from_inputs(config: Any, text: str) -> int | None:
 
 def _parse_year(text: str) -> int | None:
     match = re.search(r"(20\d{2})\s*年?", text)
-    return int(match.group(1)) if match else None
+    if match:
+        return int(match.group(1))
+    match = re.search(r"(?<!\d)(\d{2})\s*年", text)
+    if not match:
+        return None
+    return 2000 + int(match.group(1))
 
 
 def _parse_university_name(text: str) -> str | None:

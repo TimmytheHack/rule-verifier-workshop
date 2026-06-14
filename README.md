@@ -87,6 +87,7 @@ python scripts/review_domain_pack.py approve-domain domains/<domain> \
   --write
 python scripts/review_domain_pack.py report domains/<domain> --write
 python scripts/run_demo_acceptance.py
+python scripts/run_real_dataset_pilot.py path/to/admissions.xlsx
 python scripts/run_quality_gate.py
 ```
 
@@ -104,7 +105,15 @@ uploaded
 -> queryable
 ```
 
-核心 endpoint 包括 `POST /datasets/upload`、`POST /datasets/{dataset_id}/generate-domain-pack`、`GET /datasets/{dataset_id}/profile`、`GET /datasets/{dataset_id}/review-summary`、`POST /datasets/{dataset_id}/approve-field`、`POST /datasets/{dataset_id}/approve-op`、`POST /datasets/{dataset_id}/block-field`、`POST /datasets/{dataset_id}/approve-domain`、`POST /datasets/{dataset_id}/build-warehouse` 和 `POST /workbench/query`。上传文件保存在 `outputs/uploaded_datasets/<dataset_id>/`，不会覆盖内置 `admissions`、`housing`、`products` domain pack。未 approved 的 pack、stale warehouse fingerprint、非法 `dataset_id` 或缺失 warehouse 都返回结构化 `blocked` / error，不执行 SQL。前端新增“上传数据集接入流程”面板，只调用这些 API 并展示 profile、review summary、`items`、`top_results`、`result_sections`、`EvidencePack` 和 warnings，不在前端生成推荐逻辑。
+核心 endpoint 包括 `POST /datasets/upload`、`POST /datasets/{dataset_id}/generate-domain-pack`、`GET /datasets/{dataset_id}/profile`、`GET /datasets/{dataset_id}/review-summary`、`POST /datasets/{dataset_id}/approve-field`、`POST /datasets/{dataset_id}/approve-op`、`POST /datasets/{dataset_id}/block-field`、`POST /datasets/{dataset_id}/approve-domain`、`POST /datasets/{dataset_id}/build-warehouse` 和 `POST /workbench/query`。上传文件保存在 `outputs/uploaded_datasets/<dataset_id>/`，不会覆盖内置 `admissions`、`housing`、`products` domain pack。Excel ingestion 会返回 sheet list、默认选中的非空 sheet、detected header row、重复列安全映射、合并单元格/隐藏行列/公式单元格 warning，以及行列规模 warning/error。未 approved 的 pack、stale warehouse fingerprint、非法 `dataset_id` 或缺失 warehouse 都返回结构化 `blocked` / error，不执行 SQL。前端新增“上传数据集接入流程”面板，只调用这些 API 并展示 profile、review summary、required/missing/risky fields、`items`、`top_results`、`result_sections`、`EvidencePack` 和 warnings，不在前端生成推荐逻辑。
+
+真实招生 Excel 上线前可以先跑 pilot：
+
+```bash
+python scripts/run_real_dataset_pilot.py path/to/admissions.xlsx
+```
+
+该脚本会执行 upload -> profile -> generate draft domain pack -> review summary -> safe auto-suggest approvals -> manual approval fixture -> build warehouse -> target admissions queries，并输出 `outputs/real_dataset_pilot/report.md` 与 `outputs/real_dataset_pilot/report.json`。没有真实文件时可用 `--fixture` 运行内置 real-like admissions fixture。详见 [Real Dataset Pilot](docs/real_dataset_pilot.md)。
 
 Workbench API 响应已经固定为 multi-domain `WorkbenchResponse` contract。前端应依赖 `schema_version`、`domain`、`domain_version`、`domain_pack_status`、`status`、`query_type`、`query`、`answer`、`items`、`top_results`、`result_sections`、`result_count`、`executed_filters`、`candidates_to_confirm`、`confirmed_rules`、`unconfirmed_candidates`、`unexecuted_preferences`、`no_schema_field_preferences`、`rejected_confirmations`、`warnings`、`evidence_pack` 和 `debug_trace`。`status` 只能是 `ok`、`needs_confirmation`、`no_results`、`blocked`、`error`；`items` 是跨领域稳定 item card，`top_results` 只作为 domain-specific 兼容层，由 `domains/<domain>/top_result_mapping.yaml` 生成。admissions 额外支持 `group_detail_report` 和 `recommendation` 两类 `query_type`，通过 `result_sections` 返回专业组明细或冲/稳/保分组。draft/needs_review domain pack 默认返回 `blocked`，不执行 SQL。详见 [Workbench API 响应契约](docs/api_contract.md)。
 
@@ -219,6 +228,18 @@ python3 scripts/run_mvp_demo.py
 python3 scripts/eval_fuzzy_inputs.py --methods regex
 ```
 
+运行真实数据集 pilot fixture：
+
+```bash
+python3 scripts/run_real_dataset_pilot.py --fixture
+```
+
+运行统一质量门禁：
+
+```bash
+python3 scripts/run_quality_gate.py
+```
+
 构建前端：
 
 ```bash
@@ -240,6 +261,7 @@ DeepSeek-backed 评估会读取 `.env`，并可能产生 API 延迟和 token 消
 
 - [方法报告](docs/methodology_report.md)
 - [Workbench API 响应契约](docs/api_contract.md)
+- [Real Dataset Pilot](docs/real_dataset_pilot.md)
 - [评估报告](docs/evaluation_report.md)
 - [端到端 demo 用例](docs/end_to_end_demo_cases.md)
 - [Excel schema profile](docs/excel_schema_profile.md)

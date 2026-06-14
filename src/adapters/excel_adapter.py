@@ -24,6 +24,10 @@ class ExcelDataSet:
     headers: list[str]
     header_index: dict[str, int]
     dataframe: pd.DataFrame
+    sheet_summaries: list[dict[str, Any]] | None = None
+    warnings: list[dict[str, Any]] | None = None
+    header_detection_status: str = "confirmed"
+    original_column_mapping: list[dict[str, Any]] | None = None
 
 
 class ExcelAdapter:

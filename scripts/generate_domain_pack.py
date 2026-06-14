@@ -7,10 +7,12 @@ import json
 import math
 import re
 import sys
+from collections import Counter
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
+import openpyxl
 import pandas as pd
 
 ROOT_DIR = Path(__file__).resolve().parents[1]
@@ -110,6 +112,23 @@ DESC_SORT_KEYWORDS = {
     "评分",
     "分数",
 }
+ADMISSIONS_SCORE_KEYWORDS = {"分", "score"}
+ADMISSIONS_RANK_KEYWORDS = {"位次", "rank"}
+ADMISSIONS_GROUP_KEYWORDS = {"专业组", "group"}
+ADMISSIONS_MAJOR_KEYWORDS = {"专业", "major"}
+ADMISSIONS_UNIVERSITY_KEYWORDS = {"院校", "学校", "大学", "university", "school"}
+ADMISSIONS_LOCATION_KEYWORDS = {"所在地", "所在省", "城市", "province", "city", "location"}
+SPECIAL_PLAN_TERMS = [
+    "中外合作",
+    "国际班",
+    "境外培养",
+    "合作办学",
+    "校企合作",
+    "地方专项",
+    "专项计划",
+]
+HEADER_SCAN_ROWS = 30
+FORMULA_SCAN_LIMIT = 5000
 
 
 @dataclass(frozen=True)
@@ -137,6 +156,30 @@ class DomainPackGenerationResult:
             "ingestion_summary_path": str(self.ingestion_summary_path),
             "row_count": self.row_count,
             "column_count": self.column_count,
+        }
+
+
+@dataclass(frozen=True)
+class SourceInspection:
+    """CSV/Excel 读取审查结果。"""
+
+    dataset: ExcelDataSet
+    sheet_summaries: list[dict[str, Any]]
+    warnings: list[dict[str, Any]]
+    detected_header_row: int
+    header_detection_status: str
+    original_column_mapping: list[dict[str, Any]]
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "sheet_name": self.dataset.sheet_name,
+            "sheet_summaries": self.sheet_summaries,
+            "warnings": self.warnings,
+            "detected_header_row": self.detected_header_row,
+            "header_detection_status": self.header_detection_status,
+            "original_column_mapping": self.original_column_mapping,
+            "row_count": len(self.dataset.dataframe),
+            "column_count": len(self.dataset.headers),
         }
 
 
@@ -198,6 +241,15 @@ def load_source_dataset(
 ) -> ExcelDataSet:
     """读取 CSV/Excel 为统一 dataset 结构。"""
 
+    return inspect_source_dataset(source_path, sheet_name=sheet_name).dataset
+
+
+def inspect_source_dataset(
+    source_path: str | Path,
+    sheet_name: str | None = None,
+) -> SourceInspection:
+    """读取并审查 CSV/Excel，包含 sheet、header 和字段清洗信息。"""
+
     path = Path(source_path)
     if not path.exists():
         raise FileNotFoundError(f"Source file not found: {path}")
@@ -205,32 +257,407 @@ def load_source_dataset(
     if suffix not in SUPPORTED_EXTENSIONS:
         raise ValueError(f"Unsupported source extension: {suffix}")
     if suffix == ".csv":
-        dataframe = pd.read_csv(path)
-        selected_sheet = path.stem
-    else:
-        with pd.ExcelFile(path) as excel_file:
-            selected_sheet = sheet_name or excel_file.sheet_names[0]
-            if selected_sheet not in excel_file.sheet_names:
-                raise ValueError(
-                    f"Sheet not found: {selected_sheet}. "
-                    f"Available sheets: {', '.join(excel_file.sheet_names)}"
-                )
-            dataframe = pd.read_excel(
-                excel_file,
-                sheet_name=selected_sheet,
-                dtype=object,
-            )
-    dataframe = dataframe.dropna(how="all")
-    dataframe.columns = [cell_text(column) for column in dataframe.columns]
-    headers = [column for column in dataframe.columns if column]
-    return ExcelDataSet(
-        workbook_path=path,
-        sheet_name=selected_sheet,
-        header_row=1,
-        headers=headers,
-        header_index={name: index for index, name in enumerate(headers)},
+        return _inspect_csv_source(path)
+    return _inspect_excel_source(path, sheet_name=sheet_name)
+
+
+def _inspect_csv_source(path: Path) -> SourceInspection:
+    raw = pd.read_csv(path, header=None, dtype=object)
+    sheet_summaries = [
+        _sheet_summary(
+            sheet_name=path.stem,
+            row_count=len(raw),
+            column_count=len(raw.columns),
+            non_empty_cells=_non_empty_cell_count(raw),
+            selected=True,
+        )
+    ]
+    header = _detect_header_row_from_frame(raw)
+    dataframe = _dataframe_from_raw(raw, header, source_name=path.stem)
+    return _inspection_from_dataframe(
+        path=path,
+        sheet_name=path.stem,
         dataframe=dataframe,
+        header=header,
+        sheet_summaries=sheet_summaries,
+        warnings=[],
     )
+
+
+def _inspect_excel_source(
+    path: Path,
+    sheet_name: str | None,
+) -> SourceInspection:
+    workbook = openpyxl.load_workbook(path, read_only=False, data_only=False)
+    try:
+        sheet_summaries = [
+            _openpyxl_sheet_summary(sheet, selected=False)
+            for sheet in workbook.worksheets
+        ]
+        selected_sheet = sheet_name or _first_non_empty_sheet(sheet_summaries)
+        if selected_sheet not in workbook.sheetnames:
+            raise ValueError(
+                f"Sheet not found: {selected_sheet}. "
+                f"Available sheets: {', '.join(workbook.sheetnames)}"
+            )
+        selected_summary = []
+        for summary in sheet_summaries:
+            updated = dict(summary)
+            updated["selected"] = summary["sheet_name"] == selected_sheet
+            selected_summary.append(updated)
+        sheet = workbook[selected_sheet]
+        warnings = _excel_structural_warnings(sheet)
+        raw = pd.read_excel(
+            path,
+            sheet_name=selected_sheet,
+            header=None,
+            dtype=object,
+            engine="openpyxl",
+        )
+    finally:
+        workbook.close()
+    header = _detect_header_row_from_frame(raw)
+    dataframe = _dataframe_from_raw(raw, header, source_name=selected_sheet)
+    return _inspection_from_dataframe(
+        path=path,
+        sheet_name=selected_sheet,
+        dataframe=dataframe,
+        header=header,
+        sheet_summaries=selected_summary,
+        warnings=warnings,
+    )
+
+
+def _inspection_from_dataframe(
+    *,
+    path: Path,
+    sheet_name: str,
+    dataframe: pd.DataFrame,
+    header: dict[str, Any],
+    sheet_summaries: list[dict[str, Any]],
+    warnings: list[dict[str, Any]],
+) -> SourceInspection:
+    normalized = _normalize_dataframe_columns(dataframe)
+    cleaned = normalized["dataframe"]
+    header_warnings = list(header.get("warnings") or [])
+    warnings = [*warnings, *header_warnings, *normalized["warnings"]]
+    dataset = ExcelDataSet(
+        workbook_path=path,
+        sheet_name=sheet_name,
+        header_row=header["row_number"],
+        headers=list(cleaned.columns),
+        header_index={name: index for index, name in enumerate(cleaned.columns)},
+        dataframe=cleaned,
+        sheet_summaries=sheet_summaries,
+        warnings=warnings,
+        header_detection_status=header["status"],
+        original_column_mapping=normalized["mapping"],
+    )
+    return SourceInspection(
+        dataset=dataset,
+        sheet_summaries=sheet_summaries,
+        warnings=warnings,
+        detected_header_row=header["row_number"],
+        header_detection_status=header["status"],
+        original_column_mapping=normalized["mapping"],
+    )
+
+
+def _dataframe_from_raw(
+    raw: pd.DataFrame,
+    header: dict[str, Any],
+    *,
+    source_name: str,
+) -> pd.DataFrame:
+    _ = source_name
+    header_index = max(0, int(header["row_number"]) - 1)
+    headers = [
+        _normalize_column_name(value)
+        for value in raw.iloc[header_index].tolist()
+    ]
+    data = raw.iloc[header_index + 1 :].copy()
+    data.columns = headers
+    data = data.dropna(how="all")
+    return data
+
+
+def _detect_header_row_from_frame(raw: pd.DataFrame) -> dict[str, Any]:
+    candidates = []
+    max_rows = min(len(raw), HEADER_SCAN_ROWS)
+    for index in range(max_rows):
+        values = raw.iloc[index].tolist()
+        score = _header_score(values)
+        candidates.append(
+            {
+                "row_number": index + 1,
+                "score": score,
+                "non_empty": sum(1 for value in values if cell_text(value)),
+            }
+        )
+    candidates.sort(key=lambda item: item["score"], reverse=True)
+    if not candidates:
+        return {
+            "row_number": 1,
+            "status": "needs_review",
+            "confidence": 0,
+            "warnings": [_source_warning("header_row_not_found", "未找到可用表头行。")],
+        }
+    best = candidates[0]
+    second_score = candidates[1]["score"] if len(candidates) > 1 else -1
+    status = "confirmed"
+    warnings = []
+    if best["score"] < 3 or best["score"] - second_score < 1:
+        status = "needs_review"
+        warnings.append(
+            _source_warning(
+                "header_row_detection_needs_review",
+                "表头行检测置信度不足，请人工确认。",
+                detected_header_row=best["row_number"],
+                confidence=best["score"],
+            )
+        )
+    return {
+        "row_number": int(best["row_number"]),
+        "status": status,
+        "confidence": best["score"],
+        "warnings": warnings,
+    }
+
+
+def _header_score(values: list[Any]) -> float:
+    texts = [_normalize_column_name(value) for value in values]
+    non_empty = [text for text in texts if text]
+    if not non_empty:
+        return 0
+    unique_count = len(set(non_empty))
+    numeric_count = sum(1 for text in non_empty if _parse_number(text) is not None)
+    keyword_count = sum(1 for text in non_empty if _header_keyword_hit(text))
+    avg_length = sum(len(text) for text in non_empty) / len(non_empty)
+    duplicate_penalty = max(0, len(non_empty) - unique_count)
+    length_penalty = 1 if avg_length > 40 else 0
+    return (
+        len(non_empty)
+        + keyword_count * 2
+        - numeric_count * 0.75
+        - duplicate_penalty
+        - length_penalty
+    )
+
+
+def _header_keyword_hit(text: str) -> bool:
+    lowered = text.lower()
+    keywords = (
+        NUMERIC_HINT_KEYWORDS
+        | TEXT_HINT_KEYWORDS
+        | IDENTIFIER_KEYWORDS
+        | ADMISSIONS_SCORE_KEYWORDS
+        | ADMISSIONS_RANK_KEYWORDS
+        | ADMISSIONS_UNIVERSITY_KEYWORDS
+        | ADMISSIONS_LOCATION_KEYWORDS
+    )
+    return any(keyword.lower() in lowered for keyword in keywords)
+
+
+def _normalize_dataframe_columns(dataframe: pd.DataFrame) -> dict[str, Any]:
+    original_columns = list(dataframe.columns)
+    normalized = [_normalize_column_name(column) for column in original_columns]
+    safe_columns, duplicate_warnings = _deduplicate_columns(normalized)
+    mapping = [
+        {
+            "column_index": index,
+            "original_column": cell_text(original),
+            "normalized_column": normalized_name,
+            "safe_column": safe_name,
+        }
+        for index, (original, normalized_name, safe_name) in enumerate(
+            zip(original_columns, normalized, safe_columns, strict=True),
+            start=1,
+        )
+    ]
+    cleaned = dataframe.copy()
+    cleaned.columns = safe_columns
+    drop_columns = [
+        column
+        for column, original in zip(cleaned.columns, normalized, strict=True)
+        if not original or _column_is_empty(cleaned[column])
+    ]
+    warnings = duplicate_warnings
+    if drop_columns:
+        warnings.append(
+            _source_warning(
+                "empty_columns_dropped",
+                "已丢弃空列或无表头列。",
+                columns=drop_columns,
+            )
+        )
+        cleaned = cleaned.drop(columns=drop_columns)
+        mapping = [item for item in mapping if item["safe_column"] not in drop_columns]
+    cleaned = cleaned.dropna(how="all")
+    cleaned = _coerce_numeric_columns(cleaned)
+    cleaned = cleaned.reset_index(drop=True)
+    return {"dataframe": cleaned, "mapping": mapping, "warnings": warnings}
+
+
+def _coerce_numeric_columns(dataframe: pd.DataFrame) -> pd.DataFrame:
+    """把纯数值列恢复为 numeric dtype，避免 CSV object 读取污染 profile。"""
+
+    coerced = dataframe.copy()
+    for column in coerced.columns:
+        series = coerced[column]
+        non_empty = [
+            value
+            for value in series.tolist()
+            if cell_text(value)
+        ]
+        if not non_empty:
+            continue
+        numeric = pd.to_numeric(series, errors="coerce")
+        non_empty_numeric = pd.to_numeric(pd.Series(non_empty), errors="coerce")
+        if not non_empty_numeric.isna().any():
+            coerced[column] = numeric
+    return coerced
+
+
+def _normalize_column_name(value: Any) -> str:
+    text = cell_text(value)
+    text = text.replace("\r", " ").replace("\n", " ").replace("\t", " ")
+    text = text.replace("（", "(").replace("）", ")")
+    text = re.sub(r"\s+", " ", text).strip()
+    return text
+
+
+def _deduplicate_columns(columns: list[str]) -> tuple[list[str], list[dict[str, Any]]]:
+    counts: Counter[str] = Counter()
+    duplicates = []
+    safe_columns = []
+    for column in columns:
+        if not column:
+            safe_columns.append("")
+            continue
+        counts[column] += 1
+        safe = column if counts[column] == 1 else f"{column}_{counts[column]}"
+        if counts[column] == 2:
+            duplicates.append(column)
+        safe_columns.append(safe)
+    warnings = []
+    if duplicates:
+        warnings.append(
+            _source_warning(
+                "duplicate_columns_normalized",
+                "检测到重复列名，已自动生成安全列名并保留原始映射。",
+                columns=duplicates,
+            )
+        )
+    return safe_columns, warnings
+
+
+def _column_is_empty(series: pd.Series) -> bool:
+    return all(not cell_text(value) for value in series.dropna().tolist())
+
+
+def _openpyxl_sheet_summary(sheet: Any, selected: bool) -> dict[str, Any]:
+    non_empty = 0
+    for row in sheet.iter_rows(values_only=True):
+        for value in row:
+            if cell_text(value):
+                non_empty += 1
+    return _sheet_summary(
+        sheet_name=sheet.title,
+        row_count=sheet.max_row or 0,
+        column_count=sheet.max_column or 0,
+        non_empty_cells=non_empty,
+        selected=selected,
+    )
+
+
+def _sheet_summary(
+    *,
+    sheet_name: str,
+    row_count: int,
+    column_count: int,
+    non_empty_cells: int,
+    selected: bool,
+) -> dict[str, Any]:
+    return {
+        "sheet_name": sheet_name,
+        "row_count": int(row_count),
+        "column_count": int(column_count),
+        "non_empty_cells": int(non_empty_cells),
+        "selected": selected,
+    }
+
+
+def _first_non_empty_sheet(sheet_summaries: list[dict[str, Any]]) -> str:
+    for summary in sheet_summaries:
+        if int(summary.get("non_empty_cells") or 0) > 0:
+            return str(summary["sheet_name"])
+    if sheet_summaries:
+        return str(sheet_summaries[0]["sheet_name"])
+    raise ValueError("Workbook has no sheets.")
+
+
+def _excel_structural_warnings(sheet: Any) -> list[dict[str, Any]]:
+    warnings = []
+    if sheet.merged_cells.ranges:
+        merged_ranges = list(sheet.merged_cells.ranges)
+        warnings.append(
+            _source_warning(
+                "merged_cells_detected",
+                "检测到合并单元格，请确认表头和数据未被合并结构影响。",
+                ranges=[str(item) for item in merged_ranges[:20]],
+            )
+        )
+    hidden_rows = [
+        index for index, dimension in sheet.row_dimensions.items() if dimension.hidden
+    ]
+    hidden_columns = [
+        key for key, dimension in sheet.column_dimensions.items() if dimension.hidden
+    ]
+    if hidden_rows or hidden_columns:
+        warnings.append(
+            _source_warning(
+                "hidden_rows_or_columns_detected",
+                "检测到隐藏行或隐藏列，ingestion 会按文件内容读取。",
+                hidden_rows=hidden_rows[:20],
+                hidden_columns=hidden_columns[:20],
+            )
+        )
+    formula_cells = []
+    scanned = 0
+    for row in sheet.iter_rows():
+        for cell in row:
+            scanned += 1
+            if cell.data_type == "f":
+                formula_cells.append(cell.coordinate)
+            if scanned >= FORMULA_SCAN_LIMIT:
+                break
+        if scanned >= FORMULA_SCAN_LIMIT:
+            break
+    if formula_cells:
+        warnings.append(
+            _source_warning(
+                "formula_cells_detected",
+                "检测到公式单元格；读取值可能依赖 Excel 缓存，请人工核验。",
+                cells=formula_cells[:20],
+            )
+        )
+    return warnings
+
+
+def _non_empty_cell_count(dataframe: pd.DataFrame) -> int:
+    count = 0
+    for value in dataframe.to_numpy().ravel().tolist():
+        if cell_text(value):
+            count += 1
+    return count
+
+
+def _source_warning(
+    code: str,
+    message: str,
+    **details: Any,
+) -> dict[str, Any]:
+    return {"code": code, "severity": "warning", "message": message, **details}
 
 
 def profile_dataset(dataset: ExcelDataSet, domain_id: str) -> dict[str, Any]:
@@ -271,6 +698,8 @@ def profile_dataset(dataset: ExcelDataSet, domain_id: str) -> dict[str, Any]:
         )
         numeric_profile = _numeric_profile(non_empty)
         samples = _sample_values(non_empty, pii=pii)
+        admissions_semantics = _admissions_semantics(source_column)
+        special_plan_risk = _special_plan_risk(source_column, samples)
         columns.append(
             {
                 "column_index": index,
@@ -296,6 +725,8 @@ def profile_dataset(dataset: ExcelDataSet, domain_id: str) -> dict[str, Any]:
                 "sample_values": samples,
                 "numeric": numeric_profile,
                 "keyword_flags": keyword_flags,
+                "admissions_semantics": admissions_semantics,
+                "special_plan_risk": special_plan_risk,
                 "candidate_allowed_ops": _candidate_allowed_ops(
                     inferred_type=inferred_type,
                     role=role,
@@ -314,6 +745,11 @@ def profile_dataset(dataset: ExcelDataSet, domain_id: str) -> dict[str, Any]:
             "path": str(dataset.workbook_path),
             "sheet_name": dataset.sheet_name,
             "header_row": dataset.header_row,
+            "detected_header_row": dataset.header_row,
+            "header_detection_status": dataset.header_detection_status,
+            "sheet_summaries": dataset.sheet_summaries or [],
+            "warnings": dataset.warnings or [],
+            "original_column_mapping": dataset.original_column_mapping or [],
         },
         "row_count": row_count,
         "column_count": len(columns),
@@ -333,7 +769,62 @@ def profile_dataset(dataset: ExcelDataSet, domain_id: str) -> dict[str, Any]:
                 "后才会获得 allowed_ops。"
             ),
         },
+}
+
+
+def _admissions_semantics(source_column: str) -> dict[str, Any]:
+    text = source_column.lower()
+    score = _has_any(text, ADMISSIONS_SCORE_KEYWORDS)
+    rank = _has_any(text, ADMISSIONS_RANK_KEYWORDS)
+    group = _has_any(text, ADMISSIONS_GROUP_KEYWORDS)
+    major = _has_any(text, ADMISSIONS_MAJOR_KEYWORDS)
+    minimum = any(term in text for term in ["最低", "min"])
+    semantics = {
+        "score_kind": None,
+        "rank_kind": None,
+        "entity_kind": None,
+        "location_kind": None,
     }
+    if score:
+        if group and minimum:
+            semantics["score_kind"] = "group_min_score"
+        elif major and minimum:
+            semantics["score_kind"] = "major_min_score"
+        elif minimum:
+            semantics["score_kind"] = "min_score"
+        else:
+            semantics["score_kind"] = "score"
+    if rank:
+        if group and minimum:
+            semantics["rank_kind"] = "group_min_rank"
+        elif major and minimum:
+            semantics["rank_kind"] = "major_min_rank"
+        elif minimum:
+            semantics["rank_kind"] = "min_rank"
+        else:
+            semantics["rank_kind"] = "rank"
+    if any(term in text for term in ["院校名称", "学校名称", "university_name"]):
+        semantics["entity_kind"] = "university_name"
+    elif any(term in text for term in ["学院", "college"]):
+        semantics["entity_kind"] = "college_name"
+    if any(term in text for term in ["所在省", "学校所在地", "school_location"]):
+        semantics["location_kind"] = "school_location"
+    elif any(term in text for term in ["生源地", "录取省份", "admission_province"]):
+        semantics["location_kind"] = "admission_province"
+    return {key: value for key, value in semantics.items() if value}
+
+
+def _special_plan_risk(source_column: str, samples: list[Any]) -> dict[str, Any]:
+    haystack = " ".join([source_column, *[str(value) for value in samples]])
+    matched = [term for term in SPECIAL_PLAN_TERMS if term in haystack]
+    return {
+        "matched_terms": matched,
+        "needs_schema_approval": bool(matched),
+    }
+
+
+def _has_any(text: str, keywords: set[str]) -> bool:
+    return any(keyword.lower() in text for keyword in keywords)
 
 
 def build_draft_payloads(

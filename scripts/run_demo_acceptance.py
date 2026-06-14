@@ -494,7 +494,7 @@ def run_uploaded_dataset_acceptance() -> list[dict[str, Any]]:
             DemoCase(
                 "uploaded_dataset_01_group_detail_excel",
                 "admissions",
-                "列出 2025 年深圳大学录取最高的专业组及专业组里面的各个专业最低录取分数",
+                "列出25年深圳大学录取最高的专业组及专业组里面的各个专业最低录取分数",
                 "ok",
                 acceptance_group="uploaded_dataset_acceptance",
             ),
@@ -573,8 +573,7 @@ def _uploaded_admissions_dataframe() -> pd.DataFrame:
         "生源地": "广东",
         "院校标签": "省内",
     }
-    return pd.DataFrame(
-        [
+    rows = [
             {
                 **base,
                 "ID": 1,
@@ -664,7 +663,23 @@ def _uploaded_admissions_dataframe() -> pd.DataFrame:
                 "院校排名": 120,
             },
         ]
-    )
+    pilot_2025_rows = []
+    for offset, row in enumerate(rows[:2], start=1):
+        pilot_2025_rows.append(
+            {
+                **row,
+                "ID": 100 + offset,
+                "年份": 2025,
+                "院校专业组代码": "10590225",
+                "专业组名称": "物理225组",
+                "专业组最低位次1": 7800,
+                "最低位次1": 7600 + offset * 100,
+                "专业组最低分1": 634,
+                "最低分1": 632 - offset,
+                "最高分1": 646 - offset,
+            }
+        )
+    return pd.DataFrame(pilot_2025_rows + rows)
 
 
 def _pass_text(record: dict[str, Any]) -> str:

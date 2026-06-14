@@ -15,6 +15,7 @@ import yaml
 
 from scripts.generate_domain_pack import (
     generate_domain_pack as generate_draft_domain_pack,
+    inspect_source_dataset,
     load_source_dataset,
 )
 from scripts.review_domain_pack import (
@@ -122,6 +123,10 @@ class DatasetService:
             "source_path": str(source_path),
             "source_fingerprint": source_fingerprint,
             "sheet_name": inspection["sheet_name"],
+            "sheet_summaries": inspection["sheet_summaries"],
+            "detected_header_row": inspection["detected_header_row"],
+            "header_detection_status": inspection["header_detection_status"],
+            "original_column_mapping": inspection["original_column_mapping"],
             "row_count": inspection["row_count"],
             "column_count": inspection["column_count"],
             "warnings": warnings,
@@ -208,6 +213,17 @@ class DatasetService:
             "source_fingerprint": metadata["source_fingerprint"],
             "row_count": profile.get("row_count"),
             "column_count": profile.get("column_count"),
+            "sheet_name": (profile.get("source") or {}).get("sheet_name"),
+            "sheet_summaries": (profile.get("source") or {}).get(
+                "sheet_summaries",
+                [],
+            ),
+            "detected_header_row": (profile.get("source") or {}).get(
+                "detected_header_row"
+            ),
+            "header_detection_status": (profile.get("source") or {}).get(
+                "header_detection_status"
+            ),
             "fields": [
                 _profile_field(column)
                 for column in profile.get("columns", [])
@@ -221,20 +237,46 @@ class DatasetService:
         metadata = self._load_metadata(dataset_id)
         domain_dir = self._domain_dir(metadata)
         summary = summarize_domain_pack(domain_dir)
+        profile = _load_json(metadata["schema_profile_path"]) if metadata.get("schema_profile_path") else {}
+        profile_by_source = {
+            column.get("source_column"): column
+            for column in profile.get("columns", [])
+            if column.get("source_column")
+        }
         fields = []
         for field in summary["fields"]:
+            profile_column = profile_by_source.get(field.get("source_column")) or {}
+            risk_flags = sorted(
+                set(_risk_flags(field)) | set(_risk_flags(profile_column))
+            )
             fields.append(
                 {
                     **field,
-                    "risk_flags": _risk_flags(field),
+                    "risk_flags": risk_flags,
                     "seed_ops": field.get("candidate_allowed_ops") or [],
+                    "admissions_semantics": profile_column.get(
+                        "admissions_semantics",
+                        {},
+                    ),
+                    "special_plan_risk": profile_column.get(
+                        "special_plan_risk",
+                        {},
+                    ),
                 }
             )
+        required_fields = _required_field_status(metadata, summary, profile)
         return {
             "dataset_id": dataset_id,
             "status": metadata["status"],
             "domain_pack_status": summary["domain_pack_status"],
             "reviewable_fields": fields,
+            "required_fields": required_fields,
+            "risky_fields": [field for field in fields if field["risk_flags"]],
+            "missing_fields": [
+                item
+                for item in required_fields
+                if not item["present"]
+            ],
             "summary": summary,
         }
 
@@ -558,16 +600,17 @@ class DatasetService:
         sheet_name: str | None,
     ) -> dict[str, Any]:
         try:
-            dataset = load_source_dataset(source_path, sheet_name=sheet_name)
+            inspection = inspect_source_dataset(source_path, sheet_name=sheet_name)
         except ValueError as exc:
             raise DatasetServiceError(
                 code="source_inspection_failed",
                 message=str(exc),
                 status_code=400,
             ) from exc
+        dataset = inspection.dataset
         row_count = len(dataset.dataframe)
         column_count = len(dataset.headers)
-        warnings = []
+        warnings = list(inspection.warnings)
         if row_count > ERROR_ROW_LIMIT:
             raise DatasetServiceError(
                 code="too_many_rows",
@@ -598,6 +641,10 @@ class DatasetService:
             )
         return {
             "sheet_name": dataset.sheet_name,
+            "sheet_summaries": inspection.sheet_summaries,
+            "detected_header_row": inspection.detected_header_row,
+            "header_detection_status": inspection.header_detection_status,
+            "original_column_mapping": inspection.original_column_mapping,
             "row_count": row_count,
             "column_count": column_count,
             "warnings": warnings,
@@ -758,6 +805,10 @@ class DatasetService:
             "domain_pack_status",
             "source_fingerprint",
             "sheet_name",
+            "sheet_summaries",
+            "detected_header_row",
+            "header_detection_status",
+            "original_column_mapping",
             "row_count",
             "column_count",
             "source_path",
@@ -789,6 +840,8 @@ def _profile_field(column: dict[str, Any]) -> dict[str, Any]:
         "risk_flags": _risk_flags(column),
         "candidate_allowed_ops": column.get("candidate_allowed_ops", []),
         "filter_policy": column.get("filter_policy"),
+        "admissions_semantics": column.get("admissions_semantics", {}),
+        "special_plan_risk": column.get("special_plan_risk", {}),
     }
 
 
@@ -800,6 +853,8 @@ def _risk_flags(field: dict[str, Any]) -> list[str]:
         flags.append("high_cardinality")
     if field.get("type") == "long_text" or field.get("inferred_type") == "long_text":
         flags.append("text")
+    if (field.get("special_plan_risk") or {}).get("needs_schema_approval"):
+        flags.append("special_plan_needs_schema_approval")
     seed_ops = field.get("seed_ops") or field.get("candidate_allowed_ops") or []
     if any(op in {"contains", "contains_any"} for op in seed_ops):
         flags.append("text_filter_needs_review")
@@ -814,6 +869,60 @@ def _review_result_payload(dataset_id: str, result: Any) -> dict[str, Any]:
         "message": result.message,
         "payload": result.payload,
     }
+
+
+def _required_field_status(
+    metadata: dict[str, Any],
+    summary: dict[str, Any],
+    profile: dict[str, Any] | None = None,
+) -> list[dict[str, Any]]:
+    if metadata.get("base_domain") != "admissions":
+        return []
+    domain_dir = metadata.get("domain_dir")
+    if not domain_dir:
+        return []
+    domain = DomainConfig.from_path(domain_dir, metadata.get("domain_name"))
+    fields = domain.payload.get("query_planner", {})
+    required_ids = []
+    group_detail = fields.get("group_detail_report") or {}
+    recommendation = fields.get("recommendation") or {}
+    required_ids.extend((group_detail.get("fields") or {}).values())
+    metric = (group_detail.get("default_metric") or {}).get("field_id")
+    if metric:
+        required_ids.append(metric)
+    required_ids.extend(
+        field_id
+        for field_id in (recommendation.get("fields") or {}).values()
+        if field_id not in {
+            "cooperation_type",
+            "school_country_or_region",
+            "special_plan_type",
+        }
+    )
+    if profile is None and metadata.get("schema_profile_path"):
+        profile = _load_json(metadata["schema_profile_path"])
+    actual_source_columns = {
+        column.get("source_column")
+        for column in (profile or {}).get("columns", [])
+        if column.get("source_column")
+    }
+    if not actual_source_columns:
+        actual_source_columns = {
+            field.get("source_column")
+            for field in summary.get("fields", [])
+            if field.get("source_column")
+        }
+    statuses = []
+    for field_id in sorted(set(str(item) for item in required_ids if item)):
+        source_column = domain.source_column_or_none(field_id)
+        statuses.append(
+            {
+                "field_id": field_id,
+                "source_column": source_column,
+                "present": bool(source_column and source_column in actual_source_columns),
+            }
+        )
+    return statuses
 
 
 def _set_domain_status(domain_dir: Path, status: str) -> None:

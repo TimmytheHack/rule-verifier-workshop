@@ -307,6 +307,36 @@ input {
   word-break: break-word;
 }
 
+.summary-line {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 8px;
+  color: #536872;
+  font-size: 13px;
+}
+
+.summary-line strong {
+  color: #1f3138;
+  text-align: right;
+}
+
+.sheet-list,
+.warning-list,
+.field-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 8px;
+}
+
+.risk-copy {
+  margin: 10px 0 0;
+  color: #8b4d14;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
 .result-json-grid {
   grid-template-columns: repeat(2, minmax(0, 1fr));
 }

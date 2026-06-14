@@ -15,5 +15,7 @@ outputs/demo_acceptance/uploaded_sources/
 outputs/quality_gate/warehouses/
 outputs/quality_gate/tmp/
 outputs/uploaded_datasets/
+outputs/real_dataset_pilot/fixtures/
+outputs/real_dataset_pilot/uploaded_datasets/
 domains/**/*.duckdb
 domains/**/*.duckdb.wal

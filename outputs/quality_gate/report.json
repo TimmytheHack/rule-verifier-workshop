@@ -1,9 +1,9 @@
 {
   "status": "pass",
-  "started_at": "2026-06-13T15:38:55.557727Z",
-  "finished_at": "2026-06-13T15:40:21.223368Z",
-  "duration_seconds": 85.666,
-  "git_commit": "03c2e56",
+  "started_at": "2026-06-14T04:51:21.596252Z",
+  "finished_at": "2026-06-14T04:52:44.734823Z",
+  "duration_seconds": 83.139,
+  "git_commit": "14f1b8d",
   "git_dirty": true,
   "checks": [
     {
@@ -21,7 +21,7 @@
       "status": "pass",
       "command": "find src scripts tests -name '*.py' -print0 | xargs -0 .venv/bin/python -m py_compile",
       "exit_code": 0,
-      "duration_seconds": 0.252,
+      "duration_seconds": 0.246,
       "stdout_tail": "",
       "stderr_tail": "",
       "artifacts": []
@@ -31,9 +31,9 @@
       "status": "pass",
       "command": ".venv/bin/python -m unittest discover -s tests",
       "exit_code": 0,
-      "duration_seconds": 34.219,
+      "duration_seconds": 35.368,
       "stdout_tail": "",
-      "stderr_tail": "...................................................................................................................................\n----------------------------------------------------------------------\nRan 131 tests in 33.291s\n\nOK\n",
+      "stderr_tail": "............................................................................................................................................\n----------------------------------------------------------------------\nRan 140 tests in 34.397s\n\nOK\n",
       "artifacts": []
     },
     {
@@ -41,9 +41,9 @@
       "status": "pass",
       "command": ".venv/bin/python -m unittest tests.test_workbench_api_contract",
       "exit_code": 0,
-      "duration_seconds": 14.323,
+      "duration_seconds": 13.41,
       "stdout_tail": "",
-      "stderr_tail": "..........\n----------------------------------------------------------------------\nRan 10 tests in 13.166s\n\nOK\n",
+      "stderr_tail": "..........\n----------------------------------------------------------------------\nRan 10 tests in 12.382s\n\nOK\n",
       "artifacts": []
     },
     {
@@ -51,7 +51,7 @@
       "status": "pass",
       "command": ".venv/bin/python scripts/eval_fuzzy_inputs.py --methods regex --quiet --output-path outputs/eval/fuzzy_eval_results.audit_tmp.json",
       "exit_code": 0,
-      "duration_seconds": 1.173,
+      "duration_seconds": 0.939,
       "stdout_tail": "Wrote outputs/eval/fuzzy_eval_results.audit_tmp.json\nrule_regex_extractor_symbolic_verifier score 320 / 320 tokens 0\ndeepseek_extractor_symbolic_verifier score 0 / 0 tokens 0\nllm_only_baseline score 0 / 0 tokens 0\nschema_aware_llm_only_baseline score 0 / 0 tokens 0\n",
       "stderr_tail": "",
       "artifacts": []
@@ -61,7 +61,7 @@
       "status": "pass",
       "command": ".venv/bin/python scripts/run_demo_acceptance.py",
       "exit_code": 0,
-      "duration_seconds": 20.949,
+      "duration_seconds": 19.809,
       "stdout_tail": "Wrote outputs/demo_acceptance/report.md\nWrote outputs/demo_acceptance/report.json\n",
       "stderr_tail": "",
       "artifacts": [
@@ -74,7 +74,7 @@
       "status": "pass",
       "command": "internal: DomainConfig + approved/draft execution guard",
       "exit_code": 0,
-      "duration_seconds": 11.125,
+      "duration_seconds": 9.925,
       "stdout_tail": "{\"domain_pack_status\": \"approved\", \"domain_config_valid\": true, \"review_validate_ok\": true, \"approved_can_execute\": true, \"top_result_mapping_count\": 19, \"smoke_status\": \"ok\"}\n{\"domain_pack_status\": \"approved\", \"domain_config_valid\": true, \"review_validate_ok\": true, \"approved_can_execute\": true, \"top_result_mapping_count\": 7, \"smoke_status\": \"ok\"}\n{\"domain_pack_status\": \"approved\", \"domain_config_valid\": true, \"review_validate_ok\": true, \"approved_can_execute\": true, \"top_result_mapping_count\": 7, \"smoke_status\": \"ok\"}\ndraft: blocked\nneeds_review: blocked",
       "stderr_tail": "",
       "artifacts": []
@@ -84,7 +84,7 @@
       "status": "pass",
       "command": "internal: review_domain_pack summarize/validate/report",
       "exit_code": 0,
-      "duration_seconds": 0.082,
+      "duration_seconds": 0.089,
       "stdout_tail": "{\"summary_domain\": \"quality_gate_review_smoke\", \"validation_ok\": true, \"report_written\": true}",
       "stderr_tail": "",
       "artifacts": [
@@ -97,7 +97,7 @@
       "status": "pass",
       "command": "internal: build/audit domain warehouses",
       "exit_code": 0,
-      "duration_seconds": 0.115,
+      "duration_seconds": 0.111,
       "stdout_tail": "{\"domain\": \"admissions\", \"ok\": true, \"source_fingerprint\": \"38cdba7f2b9f5c05d52f8285df5df4fc622d7cd67e2e179cb0a0912d41dba5b3\", \"duckdb_fingerprint\": \"38cdba7f2b9f5c05d52f8285df5df4fc622d7cd67e2e179cb0a0912d41dba5b3\", \"value_index_fingerprint\": \"38cdba7f2b9f5c05d52f8285df5df4fc622d7cd67e2e179cb0a0912d41dba5b3\", \"warnings\": []}\n{\"domain\": \"housing\", \"ok\": true, \"source_fingerprint\": \"a1d270fb1930c96aa5724304002c53502d0d5b4b8a13fca61ba1730c23e49abc\", \"duckdb_fingerprint\": \"a1d270fb1930c96aa5724304002c53502d0d5b4b8a13fca61ba1730c23e49abc\", \"value_index_fingerprint\": \"a1d270fb1930c96aa5724304002c53502d0d5b4b8a13fca61ba1730c23e49abc\", \"warnings\": []}\n{\"domain\": \"products\", \"ok\": true, \"source_fingerprint\": \"935148984771b126949535776197adf52009c18c830dade246203ca875c39673\", \"duckdb_fingerprint\": \"935148984771b126949535776197adf52009c18c830dade246203ca875c39673\", \"value_index_fingerprint\": \"935148984771b126949535776197adf52009c18c830dade246203ca875c39673\", \"warnings\": []}",
       "stderr_tail": "",
       "artifacts": [
@@ -109,7 +109,7 @@
       "status": "pass",
       "command": "git diff --check",
       "exit_code": 0,
-      "duration_seconds": 0.104,
+      "duration_seconds": 0.099,
       "stdout_tail": "",
       "stderr_tail": "",
       "artifacts": []
@@ -119,8 +119,8 @@
       "status": "warning",
       "command": "cd frontend && arch -arm64 npm run build",
       "exit_code": 0,
-      "duration_seconds": 3.164,
-      "stdout_tail": "\n> preference-rule-workbench@0.1.0 build\n> vite build\n\nvite v5.4.21 building for production...\ntransforming...\n✓ 1593 modules transformed.\nrendering chunks...\ncomputing gzip size...\ndist/index.html                     0.72 kB │ gzip:   0.50 kB\ndist/assets/index-Cvgftymp.css    367.39 kB │ gzip:  50.27 kB\ndist/assets/index-hhFNKeKI.js   1,096.62 kB │ gzip: 350.91 kB\n✓ built in 2.46s\n",
+      "duration_seconds": 2.992,
+      "stdout_tail": "\n> preference-rule-workbench@0.1.0 build\n> vite build\n\nvite v5.4.21 building for production...\ntransforming...\n✓ 1593 modules transformed.\nrendering chunks...\ncomputing gzip size...\ndist/index.html                     0.72 kB │ gzip:   0.50 kB\ndist/assets/index-PmSkQyY9.css    367.71 kB │ gzip:  50.34 kB\ndist/assets/index-BaX9oOeO.js   1,099.12 kB │ gzip: 351.46 kB\n✓ built in 2.39s\n",
       "stderr_tail": "node_modules/@vueuse/core/dist/index.js (3362:0): A comment\n\n\"/* #__PURE__ */\"\n\nin \"node_modules/@vueuse/core/dist/index.js\" contains an annotation that Rollup cannot interpret due to the position of the comment. The comment will be removed to avoid issues.\nnode_modules/@vueuse/core/dist/index.js (5780:22): A comment\n\n\"/* #__PURE__ */\"\n\nin \"node_modules/@vueuse/core/dist/index.js\" contains an annotation that Rollup cannot interpret due to the position of the comment. The comment will be removed to avoid issues.\n\n(!) Some chunks are larger than 500 kB after minification. Consider:\n- Using dynamic import() to code-split the application\n- Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks\n- Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.\n",
       "artifacts": [
         "frontend/dist"
@@ -132,7 +132,7 @@
     "failed": 0,
     "warnings": 2,
     "regex_score": "320/320",
-    "unit_tests": "131 tests",
+    "unit_tests": "140 tests",
     "api_contract_tests": "10 tests",
     "demo_acceptance": {
       "total": 29,

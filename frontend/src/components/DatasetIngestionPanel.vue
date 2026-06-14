@@ -23,6 +23,31 @@ const queryResult = ref(null);
 
 const datasetId = computed(() => dataset.value?.dataset_id || '');
 const reviewFields = computed(() => reviewSummary.value?.reviewable_fields || []);
+const sheetSummaries = computed(() => (
+  profile.value?.sheet_summaries
+  || dataset.value?.sheet_summaries
+  || []
+));
+const datasetWarnings = computed(() => (
+  profile.value?.warnings
+  || dataset.value?.warnings
+  || []
+));
+const requiredFields = computed(() => reviewSummary.value?.required_fields || []);
+const missingFields = computed(() => reviewSummary.value?.missing_fields || []);
+const riskyFields = computed(() => reviewSummary.value?.risky_fields || []);
+const queryOverview = computed(() => {
+  if (!queryResult.value) {
+    return null;
+  }
+  return {
+    status: queryResult.value.status,
+    query_type: queryResult.value.query_type,
+    result_count: queryResult.value.result_count,
+    warnings: queryResult.value.warnings || [],
+    section_keys: Object.keys(queryResult.value.result_sections || {}),
+  };
+});
 
 function beforeUpload(selectedFile) {
   file.value = selectedFile;
@@ -268,6 +293,70 @@ function jsonText(value) {
 
     <section v-if="dataset" class="dataset-json-grid">
       <article>
+        <h3>sheet list / header</h3>
+        <div class="summary-line">
+          <span>sheet</span>
+          <strong>{{ profile?.sheet_name || dataset?.sheet_name || '-' }}</strong>
+        </div>
+        <div class="summary-line">
+          <span>detected_header_row</span>
+          <strong>{{ profile?.detected_header_row || dataset?.detected_header_row || '-' }}</strong>
+        </div>
+        <div class="sheet-list">
+          <el-tag
+            v-for="sheet in sheetSummaries"
+            :key="sheet.sheet_name"
+            class="field-tag"
+            :type="sheet.selected ? 'success' : 'info'"
+            effect="plain"
+          >
+            {{ sheet.sheet_name }} · {{ sheet.row_count }}x{{ sheet.column_count }}
+          </el-tag>
+        </div>
+        <div class="warning-list">
+          <el-tag
+            v-for="warning in datasetWarnings"
+            :key="warning.code + warning.message"
+            class="field-tag"
+            type="warning"
+            effect="plain"
+          >
+            {{ warning.code }}
+          </el-tag>
+        </div>
+      </article>
+      <article>
+        <h3>required / missing</h3>
+        <div class="field-list">
+          <el-tag
+            v-for="field in requiredFields"
+            :key="field.field_id"
+            class="field-tag"
+            :type="field.present ? 'success' : 'danger'"
+            effect="plain"
+          >
+            {{ field.field_id }}
+          </el-tag>
+        </div>
+        <p v-if="missingFields.length" class="risk-copy">
+          missing：{{ missingFields.map((field) => field.field_id).join(', ') }}
+        </p>
+      </article>
+      <article>
+        <h3>risky fields</h3>
+        <div class="field-list">
+          <el-tag
+            v-for="field in riskyFields"
+            :key="field.field_id"
+            class="field-tag"
+            type="warning"
+            effect="plain"
+          >
+            {{ field.field_id }} · {{ field.risk_flags.join('/') }}
+          </el-tag>
+        </div>
+      </article>
+      <article>
         <h3>dataset</h3>
         <pre>{{ jsonText(dataset) }}</pre>
       </article>
@@ -302,6 +391,10 @@ function jsonText(value) {
     </el-table>
 
     <section v-if="queryResult" class="dataset-json-grid result-json-grid">
+      <article>
+        <h3>query_type / status</h3>
+        <pre>{{ jsonText(queryOverview) }}</pre>
+      </article>
       <article>
         <h3>items</h3>
         <pre>{{ jsonText(queryResult.items) }}</pre>

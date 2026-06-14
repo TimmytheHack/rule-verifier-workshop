@@ -32,6 +32,7 @@ generate draft
 -> review
 -> approve
 -> demo acceptance
+-> real dataset pilot
 -> quality gate
 -> commit / release
 ```
@@ -93,8 +94,8 @@ endpoint：
 |---|---|
 | `POST /datasets/upload?filename=...` | 上传 CSV/Excel 原始 body，保存到托管目录，返回 `dataset_id` 和 `source_fingerprint`。 |
 | `POST /datasets/{dataset_id}/generate-domain-pack` | 生成 draft domain pack、schema profile、schema/value index 和 ingestion summary。 |
-| `GET /datasets/{dataset_id}/profile` | 返回字段类型、空值率、唯一值数量、样例值和风险标记。 |
-| `GET /datasets/{dataset_id}/review-summary` | 返回可审查字段、seed ops、PII / high-cardinality / text 风险。 |
+| `GET /datasets/{dataset_id}/profile` | 返回字段类型、空值率、唯一值数量、样例值、sheet list、detected header row、原始列映射和风险标记。 |
+| `GET /datasets/{dataset_id}/review-summary` | 返回可审查字段、seed ops、required/missing fields、PII / high-cardinality / text / special-plan 风险。 |
 | `POST /datasets/{dataset_id}/approve-field` | 调用 review workflow 批准字段，并写入审计记录。 |
 | `POST /datasets/{dataset_id}/approve-op` | 调用 review workflow 批准字段的特定 op，并写入审计记录。 |
 | `POST /datasets/{dataset_id}/block-field` | 调用 review workflow 阻断字段，并写入审计记录。 |
@@ -106,10 +107,37 @@ endpoint：
 
 - `dataset_id` 只能包含字母、数字、下划线和连字符，禁止目录穿越；上传数据不能覆盖内置 `admissions`、`housing`、`products`。
 - 上传文件会检查扩展名、大小、sheet、行数和列数，并返回 structured warning/error。
+- Excel 默认选择第一个非空 sheet，同时返回所有 sheet 的 row/column/non-empty summary。
+- header row detection 会扫描前若干行；不确定时返回 `header_row_detection_needs_review` warning。
+- 重复列名会生成安全列名并保留 `original_column_mapping`；空列、全空行、列名换行、首尾空格和中文括号会被清洗。
+- 合并单元格、隐藏行列、公式单元格会进入 structured warnings。
 - `draft` / `needs_review` pack 必须返回 `blocked`，不执行 SQL。
 - `warehouse` metadata、schema/value index metadata 和源文件 fingerprint 不一致时返回 `blocked`。
 - `POST /workbench/query` 仍走 `DomainConfig`、`RuleVerifier`、confirmation loop 和参数化 DuckDB SQL；前端自然语言不能直接生成 hard filter。
 - uploaded admissions 数据集可以复用已审查 `admissions` domain pack，但仍必须先 `approve-domain` 并重建 warehouse。
+
+## Real Dataset Pilot
+
+真实招生 CSV/Excel 在进入生产前，应先运行：
+
+```bash
+python scripts/run_real_dataset_pilot.py path/to/admissions.xlsx
+```
+
+pilot 完整执行 upload -> profile -> generate draft domain pack -> review summary ->
+safe auto-suggest approvals -> manual approval fixture -> build warehouse -> target
+admissions queries，并输出：
+
+```text
+outputs/real_dataset_pilot/report.md
+outputs/real_dataset_pilot/report.json
+```
+
+报告记录 `source_path`、`dataset_id`、`source_fingerprint`、`sheet_name`、
+`row_count` / `column_count`、`detected_header_row`、schema profile summary、risky
+fields、approved/blocked fields、warehouse path/fingerprint、目标查询结果、warnings
+和 failures。缺少必要 admissions canonical fields 或分数字段语义不清时，目标 query
+必须返回 `blocked` 或带 needs-review warning，不能硬执行 SQL。
 
 ## 固定顶层字段
 

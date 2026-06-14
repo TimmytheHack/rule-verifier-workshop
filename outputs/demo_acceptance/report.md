@@ -1,6 +1,6 @@
 # Demo Acceptance 验收报告
 
-- 生成时间：`2026-06-13T15:40:06.403596Z`
+- 生成时间：`2026-06-14T04:52:31.294617Z`
 - 总记录数：`29`
 - 通过：`29`
 - 失败：`0`
@@ -26964,7 +26964,7 @@ candidate_id 确认状态：
 
 - domain: `admissions`
 - acceptance_group: `uploaded_dataset_acceptance`
-- query: 列出 2025 年深圳大学录取最高的专业组及专业组里面的各个专业最低录取分数
+- query: 列出25年深圳大学录取最高的专业组及专业组里面的各个专业最低录取分数
 - status: `ok`
 - query_type: `group_detail_report`
 - pass/fail：`通过`
@@ -26975,12 +26975,12 @@ candidate_id 确认状态：
   {
     "item_id": "result_001",
     "title": "深圳大学",
-    "subtitle": "物理221组（2 个专业）",
+    "subtitle": "物理225组（2 个专业）",
     "primary_attributes": [
       {
         "key": "year",
         "label": "year",
-        "value": 2024
+        "value": 2025
       },
       {
         "key": "university_name",
@@ -26990,29 +26990,29 @@ candidate_id 确认状态：
       {
         "key": "group_code",
         "label": "group_code",
-        "value": "10590221"
+        "value": "10590225"
       },
       {
         "key": "group_name",
         "label": "group_name",
-        "value": "物理221组"
+        "value": "物理225组"
       }
     ],
     "secondary_attributes": [
       {
         "key": "major_name",
         "label": "major_name",
-        "value": "物理221组（2 个专业）"
+        "value": "物理225组（2 个专业）"
       },
       {
         "key": "rank_2024",
         "label": "rank_2024",
-        "value": 9000
+        "value": 7800
       },
       {
         "key": "group_min_rank",
         "label": "group_min_rank",
-        "value": 9000
+        "value": 7800
       }
     ],
     "matched_filters": [
@@ -27020,7 +27020,7 @@ candidate_id 确认状态：
         "id": "planned_year",
         "field": "年份",
         "operator": "eq",
-        "value": 2024,
+        "value": 2025,
         "matched": false,
         "text": ""
       },
@@ -27034,13 +27034,13 @@ candidate_id 确认状态：
       }
     ],
     "raw": {
-      "年份": 2024,
+      "年份": 2025,
       "院校名称": "深圳大学",
-      "院校专业组代码": "10590221",
-      "专业组名称": "物理221组",
-      "专业组最低分1": 628,
-      "专业组最低位次1": 9000,
-      "专业名称": "物理221组（2 个专业）"
+      "院校专业组代码": "10590225",
+      "专业组名称": "物理225组",
+      "专业组最低分1": 634,
+      "专业组最低位次1": 7800,
+      "专业名称": "物理225组（2 个专业）"
     }
   }
 ]
@@ -27051,23 +27051,23 @@ candidate_id 确认状态：
   {
     "id": "result_001",
     "trace": [],
-    "year": 2024,
+    "year": 2025,
     "batch": null,
     "university_code": null,
     "university_name": "深圳大学",
-    "group_code": "10590221",
-    "group_name": "物理221组",
+    "group_code": "10590225",
+    "group_name": "物理225组",
     "major_code": null,
-    "major_name": "物理221组（2 个专业）",
+    "major_name": "物理225组（2 个专业）",
     "full_major_name": null,
     "subject_requirement": null,
     "province": null,
     "city": null,
     "tuition": null,
-    "rank_2024": 9000,
+    "rank_2024": 7800,
     "major_rank_2024": null,
     "plan_count": null,
-    "group_min_rank": 9000,
+    "group_min_rank": 7800,
     "major_min_rank": null,
     "safety_margin": ""
   }
@@ -27078,28 +27078,28 @@ candidate_id 确认状态：
 {
   "groups": [
     {
-      "group_code": "10590221",
-      "group_title": "物理221组",
-      "group_metric_score": 628,
-      "group_min_rank": 9000,
+      "group_code": "10590225",
+      "group_title": "物理225组",
+      "group_metric_score": 634,
+      "group_min_rank": 7800,
       "major_count": 2,
       "majors": [
         {
-          "major_code": "080901",
+          "major_code": "80901",
           "major_name": "计算机科学与技术",
           "full_major_name": "计算机科学与技术",
-          "min_score": 626,
-          "min_rank": 8800,
-          "max_score": 640,
+          "min_score": 631,
+          "min_rank": 7700,
+          "max_score": 645,
           "plan_count": 30
         },
         {
-          "major_code": "080717",
+          "major_code": "80717",
           "major_name": "人工智能",
           "full_major_name": "人工智能",
-          "min_score": 625,
-          "min_rank": 9100,
-          "max_score": 638,
+          "min_score": 630,
+          "min_rank": 7800,
+          "max_score": 644,
           "plan_count": 20
         }
       ]
@@ -27112,11 +27112,11 @@ candidate_id 确认状态：
 [
   {
     "id": "planned_year",
-    "label": "年份 等于 2024",
+    "label": "年份 等于 2025",
     "field": "年份",
     "operator": "eq",
-    "value": 2024,
-    "source_span": "2024"
+    "value": 2025,
+    "source_span": "2025"
   },
   {
     "id": "planned_university_name",
@@ -27141,7 +27141,7 @@ candidate_id 确认状态：
 {
   "sql": "SELECT\n  CAST(\"院校专业组代码\" AS VARCHAR) AS group_code,\n  ANY_VALUE(CAST(\"专业组名称\" AS VARCHAR)) AS group_title,\n  MAX(TRY_CAST(regexp_extract(REPLACE(CAST(\"专业组最低分1\" AS VARCHAR), ',', ''), '\\d+(?:\\.\\d+)?') AS DOUBLE)) AS group_metric_score,\n  MIN(TRY_CAST(regexp_extract(REPLACE(CAST(\"专业组最低位次1\" AS VARCHAR), ',', ''), '\\d+(?:\\.\\d+)?') AS DOUBLE)) AS group_min_rank,\n  COUNT(*) AS major_count\nFROM \"admissions\"\nWHERE TRY_CAST(regexp_extract(REPLACE(CAST(\"年份\" AS VARCHAR), ',', ''), '\\d+(?:\\.\\d+)?') AS DOUBLE) = ?\n  AND STRPOS(CAST(\"院校名称\" AS VARCHAR), ?) > 0\n  AND \"院校专业组代码\" IS NOT NULL\nGROUP BY CAST(\"院校专业组代码\" AS VARCHAR)\nORDER BY group_metric_score DESC NULLS LAST, group_code ASC\nLIMIT ?",
   "params": [
-    2024,
+    2025,
     "深圳大学",
     5
   ]
@@ -27155,20 +27155,20 @@ candidate_id 确认状态：
   "generate_status": "needs_review",
   "approve_ok": true,
   "build_status": "queryable",
-  "source_fingerprint": "05a02b09976a4e7fa5deee4911fb7c21ce3adad45d115fa3fa046478233c32af"
+  "source_fingerprint": "bad88abfec3a7dd2a72dd00a6c3fe6159c61625b295f6ca7adf23a9891b43f73"
 }
 ```
 ### EvidencePack
 ```json
 {
-  "user_request": "列出 2025 年深圳大学录取最高的专业组及专业组里面的各个专业最低录取分数",
+  "user_request": "列出25年深圳大学录取最高的专业组及专业组里面的各个专业最低录取分数",
   "query_type": "group_detail_report",
   "executed_rules": [
     {
       "rule_id": "planned_year",
       "field": "年份",
       "operator": "eq",
-      "value": 2024
+      "value": 2025
     },
     {
       "rule_id": "planned_university_name",
@@ -27184,23 +27184,23 @@ candidate_id 确认状态：
     {
       "id": "result_001",
       "trace": [],
-      "year": 2024,
+      "year": 2025,
       "batch": null,
       "university_code": null,
       "university_name": "深圳大学",
-      "group_code": "10590221",
-      "group_name": "物理221组",
+      "group_code": "10590225",
+      "group_name": "物理225组",
       "major_code": null,
-      "major_name": "物理221组（2 个专业）",
+      "major_name": "物理225组（2 个专业）",
       "full_major_name": null,
       "subject_requirement": null,
       "province": null,
       "city": null,
       "tuition": null,
-      "rank_2024": 9000,
+      "rank_2024": 7800,
       "major_rank_2024": null,
       "plan_count": null,
-      "group_min_rank": 9000,
+      "group_min_rank": 7800,
       "major_min_rank": null,
       "safety_margin": ""
     }
@@ -27208,28 +27208,28 @@ candidate_id 确认状态：
   "result_sections": {
     "groups": [
       {
-        "group_code": "10590221",
-        "group_title": "物理221组",
-        "group_metric_score": 628,
-        "group_min_rank": 9000,
+        "group_code": "10590225",
+        "group_title": "物理225组",
+        "group_metric_score": 634,
+        "group_min_rank": 7800,
         "major_count": 2,
         "majors": [
           {
-            "major_code": "080901",
+            "major_code": "80901",
             "major_name": "计算机科学与技术",
             "full_major_name": "计算机科学与技术",
-            "min_score": 626,
-            "min_rank": 8800,
-            "max_score": 640,
+            "min_score": 631,
+            "min_rank": 7700,
+            "max_score": 645,
             "plan_count": 30
           },
           {
-            "major_code": "080717",
+            "major_code": "80717",
             "major_name": "人工智能",
             "full_major_name": "人工智能",
-            "min_score": 625,
-            "min_rank": 9100,
-            "max_score": 638,
+            "min_score": 630,
+            "min_rank": 7800,
+            "max_score": 644,
             "plan_count": 20
           }
         ]
@@ -27256,17 +27256,17 @@ candidate_id 确认状态：
     "query_type": "group_detail_report",
     "sql": "SELECT\n  CAST(\"院校专业组代码\" AS VARCHAR) AS group_code,\n  ANY_VALUE(CAST(\"专业组名称\" AS VARCHAR)) AS group_title,\n  MAX(TRY_CAST(regexp_extract(REPLACE(CAST(\"专业组最低分1\" AS VARCHAR), ',', ''), '\\d+(?:\\.\\d+)?') AS DOUBLE)) AS group_metric_score,\n  MIN(TRY_CAST(regexp_extract(REPLACE(CAST(\"专业组最低位次1\" AS VARCHAR), ',', ''), '\\d+(?:\\.\\d+)?') AS DOUBLE)) AS group_min_rank,\n  COUNT(*) AS major_count\nFROM \"admissions\"\nWHERE TRY_CAST(regexp_extract(REPLACE(CAST(\"年份\" AS VARCHAR), ',', ''), '\\d+(?:\\.\\d+)?') AS DOUBLE) = ?\n  AND STRPOS(CAST(\"院校名称\" AS VARCHAR), ?) > 0\n  AND \"院校专业组代码\" IS NOT NULL\nGROUP BY CAST(\"院校专业组代码\" AS VARCHAR)\nORDER BY group_metric_score DESC NULLS LAST, group_code ASC\nLIMIT ?",
     "params": [
-      2024,
+      2025,
       "深圳大学",
       5
     ],
     "detail_sql": "SELECT\n  CAST(\"院校专业组代码\" AS VARCHAR) AS group_code,\n  CAST(\"专业组名称\" AS VARCHAR) AS group_title,\n  CAST(\"专业代码\" AS VARCHAR) AS major_code,\n  CAST(\"专业名称\" AS VARCHAR) AS major_name,\n  CAST(\"专业全称\" AS VARCHAR) AS full_major_name,\n  TRY_CAST(regexp_extract(REPLACE(CAST(\"最低分1\" AS VARCHAR), ',', ''), '\\d+(?:\\.\\d+)?') AS DOUBLE) AS min_score,\n  TRY_CAST(regexp_extract(REPLACE(CAST(\"最低位次1\" AS VARCHAR), ',', ''), '\\d+(?:\\.\\d+)?') AS DOUBLE) AS min_rank,\n  TRY_CAST(regexp_extract(REPLACE(CAST(\"最高分1\" AS VARCHAR), ',', ''), '\\d+(?:\\.\\d+)?') AS DOUBLE) AS max_score,\n  TRY_CAST(regexp_extract(REPLACE(CAST(\"计划人数\" AS VARCHAR), ',', ''), '\\d+(?:\\.\\d+)?') AS DOUBLE) AS plan_count\nFROM \"admissions\"\nWHERE TRY_CAST(regexp_extract(REPLACE(CAST(\"年份\" AS VARCHAR), ',', ''), '\\d+(?:\\.\\d+)?') AS DOUBLE) = ?\n  AND STRPOS(CAST(\"院校名称\" AS VARCHAR), ?) > 0\n  AND CAST(\"院校专业组代码\" AS VARCHAR) IN (?)\nORDER BY group_code ASC, min_score DESC NULLS LAST, major_code ASC",
     "detail_params": [
-      2024,
+      2025,
       "深圳大学",
-      "10590221"
+      "10590225"
     ],
-    "input_row_count": 4,
+    "input_row_count": 6,
     "filtered_row_count": 1,
     "nested_result_count": 2,
     "group_by": [
@@ -27292,13 +27292,6 @@ candidate_id 确认状态：
     "skipped_soft_rule_ids": [],
     "warnings": [
       {
-        "code": "requested_year_unavailable",
-        "severity": "warning",
-        "message": "请求年份 2025 不在当前 warehouse 中，改用 2024。",
-        "requested_year": 2025,
-        "year": 2024
-      },
-      {
         "code": "metric_default_used",
         "severity": "warning",
         "message": "“录取最高”按 domain pack 默认指标：专业组最低分最高。",
@@ -27318,7 +27311,7 @@ candidate_id 确认状态：
 ```
 ### answer
 
-按 2025 年请求已改用当前可用的 2024 年 数据，深圳大学 录取分数最高的专业组是 10590221（物理221组），专业组最低分为 628。以下 sections.groups 展开了组内专业最低分。
+按 2025 年 数据，深圳大学 录取分数最高的专业组是 10590225（物理225组），专业组最低分为 634。以下 sections.groups 展开了组内专业最低分。
 
 ## uploaded_dataset_02_recommendation_csv `通过`
 
@@ -27955,7 +27948,7 @@ candidate_id 确认状态：
   "generate_status": "needs_review",
   "approve_ok": true,
   "build_status": "queryable",
-  "source_fingerprint": "8cffbd836d28a8da6055a1ff61d7408a7935b3dcf445a0843d25bb44b0e61065"
+  "source_fingerprint": "65e459919d73f7c98388bcb104d4dd357d9770342a53bad890fc0f628c404a93"
 }
 ```
 ### EvidencePack
@@ -28187,7 +28180,7 @@ candidate_id 确认状态：
       630,
       30
     ],
-    "input_row_count": 4,
+    "input_row_count": 6,
     "filtered_row_count": 3,
     "group_by": [],
     "metric": "score_margin",
