@@ -28,30 +28,30 @@ const emit = defineEmits([
 ]);
 
 const demoExtractors = [
-  { value: 'regex', label: '规则解析软偏好' },
-  { value: 'deepseek', label: 'LLM 辅助解析软偏好' },
-  { value: 'template_coverage', label: '字段覆盖演示' },
+  { value: 'regex', label: '规则解析' },
+  { value: 'deepseek', label: '模型辅助' },
+  { value: 'template_coverage', label: '字段覆盖' },
 ];
 
 const apiExtractors = [
-  { value: 'regex', label: '规则解析软偏好' },
-  { value: 'deepseek', label: 'LLM 辅助解析软偏好' },
+  { value: 'regex', label: '规则解析' },
+  { value: 'deepseek', label: '模型辅助' },
 ];
 
 const demoGenerators = [
-  { value: 'template_evidence', label: '模板证据回答' },
-  { value: 'deepseek_evidence', label: 'LLM 证据回答' },
-  { value: 'template_coverage', label: '证据覆盖清单' },
+  { value: 'template_evidence', label: '固定模板' },
+  { value: 'deepseek_evidence', label: '模型润色' },
+  { value: 'template_coverage', label: '覆盖清单' },
 ];
 
 const apiGenerators = [
-  { value: 'template_evidence', label: '模板证据回答' },
-  { value: 'deepseek_evidence', label: 'LLM 证据回答' },
+  { value: 'template_evidence', label: '固定模板' },
+  { value: 'deepseek_evidence', label: '模型润色' },
 ];
 
 const models = [
-  { value: 'deepseek-v4-flash', label: 'LLM 快速模型' },
-  { value: 'deepseek-v4-pro', label: 'LLM 高质量模型' },
+  { value: 'deepseek-v4-flash', label: '快速模型' },
+  { value: 'deepseek-v4-pro', label: '高质量模型' },
 ];
 
 const extractorOptions = computed(() =>
@@ -86,30 +86,29 @@ function updateMode(value) {
     <template #header>
       <div class="card-header">
         <div>
-          <p class="section-kicker">运行设置</p>
-          <h2>模式与可选项</h2>
+          <h2>运行方式</h2>
         </div>
         <el-tag :type="mode === 'api' ? 'warning' : 'info'" effect="plain">
-          {{ mode === 'api' ? 'API 模式' : '演示模式' }}
+          {{ mode === 'api' ? '连接后端' : '演示数据' }}
         </el-tag>
       </div>
     </template>
 
     <div class="mode-grid">
       <div class="control-block wide-control">
-        <span class="control-label">运行模式</span>
+        <span class="control-label">模式</span>
         <el-segmented
           :model-value="mode"
           :options="[
-            { value: 'demo', label: '演示模式' },
-            { value: 'api', label: 'API 模式' },
+            { value: 'demo', label: '演示' },
+            { value: 'api', label: '后端' },
           ]"
           @update:model-value="updateMode"
         />
       </div>
 
       <div class="control-block">
-        <span class="control-label">规则提取方式</span>
+        <span class="control-label">解析</span>
         <el-select
           :model-value="extractor"
           class="full-control"
@@ -125,7 +124,7 @@ function updateMode(value) {
       </div>
 
       <div class="control-block">
-        <span class="control-label">证据回答</span>
+        <span class="control-label">回答</span>
         <el-select
           :model-value="generator"
           class="full-control"
@@ -141,7 +140,7 @@ function updateMode(value) {
       </div>
 
       <div class="control-block">
-        <span class="control-label">LLM 模型</span>
+        <span class="control-label">模型</span>
         <el-select
           :model-value="model"
           class="full-control"
@@ -158,12 +157,5 @@ function updateMode(value) {
       </div>
     </div>
 
-    <el-alert
-      class="inline-alert mode-warning"
-      type="info"
-      :closable="false"
-      show-icon
-      title="API 模式不会提供 LLM-only 路径；LLM 只可用于软偏好解析或基于证据包生成回答。"
-    />
   </el-card>
 </template>

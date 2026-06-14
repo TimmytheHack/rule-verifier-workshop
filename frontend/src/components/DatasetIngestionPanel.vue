@@ -60,14 +60,72 @@ const queryStatusMessage = computed(() => {
     return '';
   }
   const messages = {
-    ok: '已执行已审核 hard filters，可展示推荐或明细。',
-    needs_confirmation: '存在待确认候选；这些 candidate 还没有进入 executed_filters。',
-    no_results: 'SQL 正常执行但结果为 0，前端不能编造推荐。',
-    blocked: '安全阻断，SQL 不应执行；请检查 domain status、fingerprint 或 confirmation。',
-    error: '后端返回 structured error，前端不展示 stack trace。',
+    ok: '已按审核规则执行，可展示结果。',
+    needs_confirmation: '存在待确认项，确认前不会执行。',
+    no_results: '查询正常但结果为 0，前端不能编造推荐。',
+    blocked: '已被安全阻断，请检查数据状态、指纹或确认记录。',
+    error: '后端返回错误，前端不展示内部错误详情。',
   };
-  return messages[queryResult.value.status] || '未知状态，请检查 EvidencePack。';
+  return messages[queryResult.value.status] || '未知状态，请检查证据。';
 });
+
+const STATUS_LABELS = {
+  ok: '已完成',
+  queryable: '可查询',
+  needs_confirmation: '待确认',
+  no_results: '无结果',
+  blocked: '已阻断',
+  error: '错误',
+  draft: '草稿',
+  approved: '已批准',
+  pass: '通过',
+  fail: '失败',
+};
+
+const STAGE_LABELS = {
+  upload: '上传',
+  generate_domain_pack: '生成草稿',
+  profile: '字段画像',
+  review_summary: '审查摘要',
+  approve_field: '批准字段',
+  'approve-field': '批准字段',
+  approve_op: '批准条件',
+  'approve-op': '批准条件',
+  block_field: '阻断字段',
+  'block-field': '阻断字段',
+  approve_domain: '批准领域',
+  build_warehouse: '构建数据仓库',
+  query: '查询',
+  confirm_query: '确认后查询',
+};
+
+const ATTRIBUTE_LABELS = {
+  year: '年份',
+  batch: '批次',
+  university_code: '院校代码',
+  university_name: '院校名称',
+  group_code: '专业组代码',
+  group_name: '专业组名称',
+  major_code: '专业代码',
+  major_name: '专业名称',
+  full_major_name: '专业全称',
+  city: '城市',
+  tuition: '学费',
+  rank_2024: '2024 位次',
+  score_2024: '2024 分数',
+  plan_count: '招生计划',
+  subject_requirement: '选科要求',
+  group_min_rank: '专业组最低位次',
+  major_min_rank: '专业最低位次',
+  safety_margin: '位次差距',
+};
+
+const OP_OPTIONS = [
+  { value: 'in', label: '包含列表' },
+  { value: '<=', label: '小于等于' },
+  { value: '>=', label: '大于等于' },
+  { value: '=', label: '等于' },
+];
 
 function beforeUpload(selectedFile) {
   file.value = selectedFile;
@@ -191,7 +249,7 @@ async function runUploadedQuery(confirmedCandidateIds = []) {
 
 async function confirmSelectedCandidates() {
   if (!selectedCandidateIds.value.length) {
-    errorText.value = '请选择上一轮系统返回的 candidate_id。';
+    errorText.value = '请选择上一轮系统返回的确认编号。';
     return;
   }
   await runUploadedQuery(selectedCandidateIds.value);
@@ -297,7 +355,32 @@ function itemAttributes(item) {
   return [
     ...(item.primary_attributes || []),
     ...(item.secondary_attributes || []),
-  ].slice(0, 6);
+  ].slice(0, 6).map((attribute) => ({
+    ...attribute,
+    displayLabel: (
+      ATTRIBUTE_LABELS[attribute.key]
+      || ATTRIBUTE_LABELS[attribute.label]
+      || attribute.label
+      || attribute.key
+    ),
+  }));
+}
+
+function queryTypeLabel(value) {
+  const labels = {
+    verified_filter: '筛选查询',
+    group_detail_report: '专业组明细',
+    recommendation: '推荐分组',
+  };
+  return labels[value] || value || '未知查询';
+}
+
+function statusLabel(value) {
+  return STATUS_LABELS[value] || value || '未上传';
+}
+
+function stageLabel(value) {
+  return STAGE_LABELS[value] || value || '未知操作';
 }
 </script>
 
@@ -306,11 +389,10 @@ function itemAttributes(item) {
     <template #header>
       <div class="card-header">
         <div>
-          <p class="section-kicker">Dataset / Ingestion API</p>
-          <h2>上传数据集接入流程</h2>
+          <h2>上传数据</h2>
         </div>
         <el-tag :type="statusType(dataset?.status)" effect="plain">
-          {{ dataset?.status || '未上传' }}
+          {{ statusLabel(dataset?.status) }}
         </el-tag>
       </div>
     </template>
@@ -320,7 +402,7 @@ function itemAttributes(item) {
       type="warning"
       :closable="false"
       show-icon
-      title="前端只调用上传、review、warehouse 和 Workbench API；自然语言不会在前端生成 hard filter。"
+      title="前端只提交操作，规则是否执行由后端验证。"
     />
 
     <div class="dataset-flow-grid">
@@ -338,15 +420,15 @@ function itemAttributes(item) {
         </el-upload>
 
         <div class="compact-controls">
-          <el-input v-model="domainName" placeholder="domain_name" />
-          <el-input v-model="baseDomain" placeholder="base_domain，可为空" />
+          <el-input v-model="domainName" placeholder="领域名" />
+          <el-input v-model="baseDomain" placeholder="参考模板，可为空" />
         </div>
         <div class="button-row">
           <el-button :icon="UploadFilled" type="primary" :loading="loading" @click="uploadDataset">
             上传
           </el-button>
           <el-button :icon="DataAnalysis" :disabled="!datasetId" :loading="loading" @click="generateDomainPack">
-            生成 draft
+            生成草稿
           </el-button>
         </div>
       </section>
@@ -354,26 +436,33 @@ function itemAttributes(item) {
       <section class="dataset-panel">
         <h3>审查与批准</h3>
         <div class="compact-controls">
-          <el-input v-model="fieldId" placeholder="field_id" />
-          <el-input v-model="opFieldId" placeholder="op field_id" />
-          <el-input v-model="opName" placeholder="op，例如 in / <=" />
+          <el-input v-model="fieldId" placeholder="字段名" />
+          <el-input v-model="opFieldId" placeholder="条件字段" />
+          <el-select v-model="opName" placeholder="选择条件">
+            <el-option
+              v-for="option in OP_OPTIONS"
+              :key="option.value"
+              :label="option.label"
+              :value="option.value"
+            />
+          </el-select>
         </div>
         <div class="button-row">
           <el-button :disabled="!datasetId" :loading="loading" @click="approveField">
-            approve-field
+            批准字段
           </el-button>
           <el-button :disabled="!datasetId" :loading="loading" @click="approveOp">
-            approve-op
+            批准条件
           </el-button>
           <el-button :icon="Warning" :disabled="!datasetId" :loading="loading" @click="blockField">
-            block-field
+            阻断字段
           </el-button>
           <el-button :icon="Check" type="success" :disabled="!datasetId" :loading="loading" @click="approveDomain">
-            approve-domain
+            批准领域
           </el-button>
         </div>
         <el-button class="wide-button" :disabled="!datasetId" :loading="loading" @click="buildWarehouse">
-          构建 warehouse
+          构建数据仓库
         </el-button>
       </section>
 
@@ -393,7 +482,7 @@ function itemAttributes(item) {
           :loading="loading"
           @click="runUploadedQuery()"
         >
-          运行 WorkbenchResponse
+          查询
         </el-button>
       </section>
     </div>
@@ -409,13 +498,13 @@ function itemAttributes(item) {
 
     <section v-if="dataset" class="dataset-json-grid">
       <article>
-        <h3>sheet list / header</h3>
+        <h3>工作表与表头</h3>
         <div class="summary-line">
-          <span>sheet</span>
+          <span>工作表</span>
           <strong>{{ profile?.sheet_name || dataset?.sheet_name || '-' }}</strong>
         </div>
         <div class="summary-line">
-          <span>detected_header_row</span>
+          <span>表头行</span>
           <strong>{{ profile?.detected_header_row || dataset?.detected_header_row || '-' }}</strong>
         </div>
         <div class="sheet-list">
@@ -442,7 +531,7 @@ function itemAttributes(item) {
         </div>
       </article>
       <article>
-        <h3>required / missing</h3>
+        <h3>必需字段</h3>
         <div class="field-list">
           <el-tag
             v-for="field in requiredFields"
@@ -455,11 +544,11 @@ function itemAttributes(item) {
           </el-tag>
         </div>
         <p v-if="missingFields.length" class="risk-copy">
-          missing：{{ missingFields.map((field) => field.field_id).join(', ') }}
+          缺失：{{ missingFields.map((field) => field.field_id).join(', ') }}
         </p>
       </article>
       <article>
-        <h3>risky fields</h3>
+        <h3>风险字段</h3>
         <div class="field-list">
           <el-tag
             v-for="field in riskyFields"
@@ -473,15 +562,15 @@ function itemAttributes(item) {
         </div>
       </article>
       <article>
-        <h3>dataset</h3>
+        <h3>数据概况</h3>
         <pre>{{ jsonText(dataset) }}</pre>
       </article>
       <article>
-        <h3>schema profile</h3>
+        <h3>字段画像</h3>
         <pre>{{ jsonText(profile) }}</pre>
       </article>
       <article>
-        <h3>review summary</h3>
+        <h3>审查摘要</h3>
         <pre>{{ jsonText(reviewSummary) }}</pre>
       </article>
       <article>
@@ -489,11 +578,11 @@ function itemAttributes(item) {
         <div v-if="auditEvents.length" class="audit-event-list">
           <div v-for="event in auditEvents" :key="event.id" class="audit-event">
             <div class="audit-event-main">
-              <strong>{{ event.stage }}</strong>
+              <strong>{{ stageLabel(event.stage) }}</strong>
               <span>{{ event.created_at }}</span>
             </div>
             <el-tag :type="event.status === 'pass' ? 'success' : 'danger'" effect="plain">
-              {{ event.status }}
+              {{ statusLabel(event.status) }}
             </el-tag>
             <pre>{{ jsonText(event.details) }}</pre>
           </div>
@@ -503,17 +592,17 @@ function itemAttributes(item) {
     </section>
 
     <el-table v-if="reviewFields.length" class="review-table" :data="reviewFields" border stripe>
-      <el-table-column prop="field_id" label="field_id" width="170" />
-      <el-table-column prop="source_column" label="source_column" width="180" />
-      <el-table-column prop="type" label="type" width="120" />
-      <el-table-column label="seed ops" min-width="180">
+      <el-table-column prop="field_id" label="字段" width="170" />
+      <el-table-column prop="source_column" label="来源列" width="180" />
+      <el-table-column prop="type" label="类型" width="120" />
+      <el-table-column label="建议条件" min-width="180">
         <template #default="{ row }">
           <el-tag v-for="op in row.seed_ops" :key="op" class="field-tag" effect="plain">
             {{ op }}
           </el-tag>
         </template>
       </el-table-column>
-      <el-table-column label="risk" min-width="180">
+      <el-table-column label="风险" min-width="180">
         <template #default="{ row }">
           <el-tag v-for="flag in row.risk_flags" :key="flag" class="field-tag" type="warning" effect="plain">
             {{ flag }}
@@ -525,9 +614,9 @@ function itemAttributes(item) {
     <section v-if="queryResult" class="query-response-panel">
       <div class="query-status-row">
         <el-tag size="large" :type="statusType(queryResult.status)" effect="light">
-          {{ queryResult.status }}
+          {{ statusLabel(queryResult.status) }}
         </el-tag>
-        <strong>{{ queryResult.query_type || 'unknown_query_type' }}</strong>
+        <strong>{{ queryTypeLabel(queryResult.query_type) }}</strong>
         <span>{{ queryStatusMessage }}</span>
       </div>
 
@@ -544,8 +633,7 @@ function itemAttributes(item) {
       <section v-if="candidatesToConfirm.length" class="confirmation-workflow">
         <div class="card-header">
           <div>
-            <p class="section-kicker">确认闭环</p>
-            <h3>待用户确认的候选</h3>
+            <h3>待确认项</h3>
           </div>
           <el-button
             :icon="Refresh"
@@ -554,7 +642,7 @@ function itemAttributes(item) {
             :loading="loading"
             @click="confirmSelectedCandidates"
           >
-            用 candidate_id 重跑
+            确认后重跑
           </el-button>
         </div>
         <el-checkbox-group v-model="selectedCandidateIds" class="candidate-checkboxes">
@@ -586,7 +674,7 @@ function itemAttributes(item) {
               effect="plain"
               class="field-tag"
             >
-              {{ attribute.label }}：{{ attribute.value ?? '暂无' }}
+              {{ attribute.displayLabel }}：{{ attribute.value ?? '暂无' }}
             </el-tag>
           </div>
         </article>
@@ -602,23 +690,23 @@ function itemAttributes(item) {
 
     <section v-if="queryResult" class="dataset-json-grid result-json-grid">
       <article>
-        <h3>query_type / status</h3>
+        <h3>查询状态</h3>
         <pre>{{ jsonText(queryOverview) }}</pre>
       </article>
       <article>
-        <h3>items</h3>
+        <h3>结果条目</h3>
         <pre>{{ jsonText(queryResult.items) }}</pre>
       </article>
       <article>
-        <h3>top_results</h3>
+        <h3>兼容结果</h3>
         <pre>{{ jsonText(queryResult.top_results) }}</pre>
       </article>
       <article>
-        <h3>result_sections</h3>
+        <h3>分组结果</h3>
         <pre>{{ jsonText(queryResult.result_sections) }}</pre>
       </article>
       <article>
-        <h3>EvidencePack / warnings</h3>
+        <h3>证据与提醒</h3>
         <pre>{{ jsonText({ evidence_pack: queryResult.evidence_pack, warnings: queryResult.warnings }) }}</pre>
       </article>
     </section>

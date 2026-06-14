@@ -17,12 +17,12 @@ const props = defineProps({
 });
 
 const usageLabels = {
-  prompt_tokens: '输入 token',
-  completion_tokens: '输出 token',
-  total_tokens: '总 token',
-  prompt_cache_hit_tokens: '缓存命中 token',
-  prompt_cache_miss_tokens: '缓存未命中 token',
-  reasoning_tokens: '推理 token',
+  prompt_tokens: '输入用量',
+  completion_tokens: '输出用量',
+  total_tokens: '总用量',
+  prompt_cache_hit_tokens: '缓存命中',
+  prompt_cache_miss_tokens: '缓存未命中',
+  reasoning_tokens: '推理用量',
 };
 
 const hasUsage = computed(() => {
@@ -48,11 +48,10 @@ function usageRows(usage) {
     <template #header>
       <div class="card-header">
         <div>
-          <p class="section-kicker">LLM 调用统计</p>
-          <h2>Token 用量</h2>
+          <h2>模型用量</h2>
         </div>
         <el-tag :type="hasUsage ? 'success' : 'info'" effect="plain">
-          {{ hasUsage ? '已返回用量' : '本次未调用 LLM' }}
+          {{ hasUsage ? '已返回用量' : '本次未调用模型' }}
         </el-tag>
       </div>
     </template>
@@ -61,7 +60,7 @@ function usageRows(usage) {
       <el-tag effect="plain">抽取：{{ selectedOptions.extractor }}</el-tag>
       <el-tag effect="plain">生成：{{ selectedOptions.generator }}</el-tag>
       <el-tag v-if="selectedOptions.model" type="warning" effect="plain">
-        模型：{{ selectedOptions.model }}
+        当前模型：{{ selectedOptions.model }}
       </el-tag>
     </div>
 
@@ -70,7 +69,7 @@ function usageRows(usage) {
       type="info"
       :closable="false"
       show-icon
-      title="只有选择 LLM 辅助解析软偏好或 LLM 证据回答时，后端才会返回 token 用量。"
+      title="只有启用模型辅助时，后端才会返回用量。"
     />
 
     <div v-else class="usage-grid">

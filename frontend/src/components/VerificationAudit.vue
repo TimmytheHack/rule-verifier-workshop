@@ -38,10 +38,9 @@ function statusIcon(type) {
     <template #header>
       <div class="card-header">
         <div>
-          <p class="section-kicker">属性接地 → 规则验证</p>
-          <h2>字段接地与规则审查</h2>
+          <h2>字段与规则审查</h2>
         </div>
-        <el-tag type="warning" effect="plain">LLM 只提议，验证器决定</el-tag>
+        <el-tag type="warning" effect="plain">模型只提候选，后端决定是否执行</el-tag>
       </div>
     </template>
 

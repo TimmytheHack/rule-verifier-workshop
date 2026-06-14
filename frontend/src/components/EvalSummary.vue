@@ -43,10 +43,10 @@ const auditCards = computed(() => {
       note: '基于已验证规则',
     },
     {
-      label: 'Trace 覆盖',
+      label: '追踪覆盖',
       value: `${tracedRows.length}/${results.length}`,
       type: tracedRows.length === results.length ? 'success' : 'danger',
-      note: '当前表格 Top 结果',
+      note: '当前表格结果',
     },
   ];
 });
@@ -64,8 +64,7 @@ const cooperationStatus = computed(() => {
     <template #header>
       <div class="card-header">
         <div>
-          <p class="section-kicker">当前运行审计</p>
-          <h2>验证质量检查</h2>
+          <h2>质量检查</h2>
         </div>
         <el-tag effect="plain">当前结果</el-tag>
       </div>

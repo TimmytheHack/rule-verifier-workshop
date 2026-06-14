@@ -12,8 +12,7 @@ defineProps({
     <template #header>
       <div class="card-header">
         <div>
-          <p class="section-kicker">追踪生成</p>
-          <h2>证据包生成回答</h2>
+          <h2>证据回答</h2>
         </div>
         <el-tag type="warning" effect="plain">规则验证结果</el-tag>
       </div>
@@ -47,7 +46,7 @@ defineProps({
       </section>
 
       <section>
-        <h4>Top 结果</h4>
+        <h4>重点结果</h4>
         <ol class="report-list">
           <li v-for="item in report.top_results" :key="item">{{ item }}</li>
         </ol>

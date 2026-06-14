@@ -1,6 +1,5 @@
 <script setup>
-import { ref } from 'vue';
-import { DocumentChecked, WarningFilled } from '@element-plus/icons-vue';
+import { computed, ref } from 'vue';
 
 import UserInputPanel from './components/UserInputPanel.vue';
 import WorkbenchModePanel from './components/WorkbenchModePanel.vue';
@@ -31,9 +30,19 @@ const defaultSoftPreferences = {
   tuition_cap_yuan: null,
 };
 
-const runData = ref(null);
+const runData = ref({
+  ...demoRun,
+  token_usage: null,
+  selected_options: {
+    extractor: 'regex',
+    generator: 'template_evidence',
+    model: 'deepseek-v4-flash',
+  },
+});
 const activeResult = ref(null);
 const traceVisible = ref(false);
+const activeWorkspace = ref('query');
+const sideTab = ref('rules');
 const mode = ref('demo');
 const extractor = ref('regex');
 const generator = ref('template_evidence');
@@ -41,21 +50,19 @@ const model = ref('deepseek-v4-flash');
 const loading = ref(false);
 const apiError = ref('');
 
-const stages = [
-  '基础信息',
-  '偏好解析',
-  '字段接地',
-  '规则解析',
-  '规则审查',
-  '确定性规则',
-  '待确认规则',
-  '不可执行偏好',
-  '最终可执行规则',
-  '筛选结果',
-  'Trace',
-  '证据回答',
-  '当前审计',
-];
+const resultRows = computed(() => (
+  runData.value?.items?.length ? runData.value.items : runData.value?.top_results || []
+));
+const quickStats = computed(() => {
+  const data = runData.value || {};
+  return [
+    { label: '状态', value: statusLabel(data.status || 'ok'), tone: data.status || 'ok' },
+    { label: '结果', value: data.result_count ?? 0, tone: 'ok' },
+    { label: '已执行', value: data.executable_rules?.length || data.executed_filters?.length || 0, tone: 'ok' },
+    { label: '待确认', value: data.candidate_rules?.length || data.candidates_to_confirm?.length || 0, tone: 'needs_confirmation' },
+    { label: '未执行', value: data.not_executed_preferences?.length || data.unexecuted_preferences?.length || 0, tone: 'blocked' },
+  ];
+});
 
 function runDemo(runRequest, selectedOptions = {}) {
   runData.value = {
@@ -100,11 +107,11 @@ async function runWorkbench(runRequest) {
     });
     const apiPayload = await response.json();
     if (!response.ok) {
-      throw new Error(apiPayload.detail || 'API 模式运行失败');
+      throw new Error(apiPayload.detail || '后端运行失败');
     }
     runData.value = apiPayload;
   } catch (error) {
-    apiError.value = error instanceof Error ? error.message : 'API 模式运行失败';
+    apiError.value = error instanceof Error ? error.message : '后端运行失败';
   } finally {
     loading.value = false;
   }
@@ -119,119 +126,118 @@ function authHeaders() {
   const token = window.localStorage.getItem('actor_token') || '';
   return token ? { 'X-Actor-Token': token } : {};
 }
+
+function statusLabel(status) {
+  const labels = {
+    ok: '通过',
+    needs_confirmation: '待确认',
+    no_results: '无结果',
+    blocked: '已阻断',
+    error: '错误',
+  };
+  return labels[status] || status;
+}
 </script>
 
 <template>
   <main class="app-shell">
     <header class="app-header">
       <div>
-        <p class="eyebrow">偏好到规则验证</p>
-        <h1>偏好到规则验证工作台</h1>
-        <p class="header-copy">
-          只展示现有管线输出：抽取、属性对齐、验证、提升、执行、行级追踪与评估对比。
-        </p>
+        <h1>规则验证工作台</h1>
+        <p class="header-copy">输入偏好，查看哪些已执行、哪些待确认、哪些不能执行。</p>
       </div>
-      <div class="header-tags" aria-label="技术栈">
-        <el-tag size="large" effect="plain">Vue 3</el-tag>
-        <el-tag size="large" effect="plain" type="success">Vite</el-tag>
-        <el-tag size="large" effect="plain" type="warning">Element Plus</el-tag>
-      </div>
+      <el-tag size="large" effect="plain" type="warning">不是志愿建议</el-tag>
     </header>
 
-    <el-alert
-      class="safety-alert"
-      type="warning"
-      :closable="false"
-      show-icon
-    >
-      <template #title>
-        本前端仅可视化 mock/pipeline 输出，不新增推荐逻辑，不推断新规则；不可执行偏好必须保留展示。
-      </template>
-    </el-alert>
+    <el-tabs v-model="activeWorkspace" class="workspace-tabs">
+      <el-tab-pane label="查询验证" name="query">
+        <section class="workspace-panel query-workspace">
+          <aside class="control-column">
+            <WorkbenchModePanel
+              v-model:mode="mode"
+              v-model:extractor="extractor"
+              v-model:generator="generator"
+              v-model:model="model"
+            />
+            <UserInputPanel
+              :default-hard-filters="defaultHardFilters"
+              :default-soft-preferences="defaultSoftPreferences"
+              :mode="mode"
+              :loading="loading"
+              @run="runWorkbench"
+            />
+            <el-alert
+              v-if="apiError"
+              class="inline-alert"
+              type="error"
+              :closable="false"
+              show-icon
+              :title="apiError"
+            />
+          </aside>
 
-    <WorkbenchModePanel
-      v-model:mode="mode"
-      v-model:extractor="extractor"
-      v-model:generator="generator"
-      v-model:model="model"
-    />
+          <section class="result-column">
+            <div class="quick-stats">
+              <article v-for="item in quickStats" :key="item.label" :class="['quick-stat', `tone-${item.tone}`]">
+                <span>{{ item.label }}</span>
+                <strong>{{ item.value }}</strong>
+              </article>
+            </div>
 
-    <DatasetIngestionPanel />
+            <ResultTable
+              :results="resultRows"
+              :total="runData?.result_count || 0"
+              @view-trace="openTrace"
+            />
+          </section>
 
-    <UserInputPanel
-      :default-hard-filters="defaultHardFilters"
-      :default-soft-preferences="defaultSoftPreferences"
-      :mode="mode"
-      :loading="loading"
-      @run="runWorkbench"
-    />
+          <aside class="evidence-column">
+            <el-tabs v-model="sideTab" class="side-tabs">
+              <el-tab-pane label="规则" name="rules">
+                <RuleSummaryCards
+                  :deterministic-rules="runData?.deterministic_rules"
+                  :candidate-rules="runData?.candidate_rules"
+                  :not-executed-preferences="runData?.not_executed_preferences"
+                  :executable-rules="runData?.executable_rules"
+                />
+                <CandidateConfirmation
+                  :candidate-rules="runData?.candidate_rules"
+                  :confirmations="runData?.simulated_confirmations"
+                />
+              </el-tab-pane>
+              <el-tab-pane label="证据" name="evidence">
+                <EvidenceReport :report="runData?.natural_language_report" />
+              </el-tab-pane>
+              <el-tab-pane label="审计" name="audit">
+                <EvalSummary :run-data="runData" />
+                <TokenUsagePanel
+                  :token-usage="runData?.token_usage"
+                  :mode="mode"
+                  :selected-options="runData?.selected_options"
+                />
+              </el-tab-pane>
+            </el-tabs>
+          </aside>
+        </section>
+      </el-tab-pane>
 
-    <el-alert
-      v-if="apiError"
-      class="safety-alert"
-      type="error"
-      :closable="false"
-      show-icon
-      :title="apiError"
-    />
+      <el-tab-pane label="上传数据" name="dataset">
+        <section class="workspace-panel single-scroll">
+          <DatasetIngestionPanel />
+        </section>
+      </el-tab-pane>
 
-    <section class="pipeline-strip" aria-label="管线阶段">
-      <span v-for="stage in stages" :key="stage" class="stage-pill">
-        {{ stage }}
-      </span>
-    </section>
-
-    <el-empty
-      v-if="!runData"
-      class="empty-run"
-      description="点击“运行规则验证”加载演示数据或调用后端 API"
-    />
-
-    <template v-else>
-      <TokenUsagePanel
-        :token-usage="runData.token_usage"
-        :mode="mode"
-        :selected-options="runData.selected_options"
-      />
-
-      <ExtractedPreferences :preferences="runData.extracted_preferences" />
-
-      <VerificationAudit
-        :grounding="runData.attribute_grounding"
-        :proposed-rules="runData.proposed_rules"
-      />
-
-      <RuleSummaryCards
-        :deterministic-rules="runData.deterministic_rules"
-        :candidate-rules="runData.candidate_rules"
-        :not-executed-preferences="runData.not_executed_preferences"
-        :executable-rules="runData.executable_rules"
-      />
-
-      <CandidateConfirmation
-        :candidate-rules="runData.candidate_rules"
-        :confirmations="runData.simulated_confirmations"
-      />
-
-      <ResultTable
-        :results="runData.items?.length ? runData.items : runData.top_results"
-        :total="runData.result_count"
-        @view-trace="openTrace"
-      />
-
-      <EvidenceReport :report="runData.natural_language_report" />
-
-      <EvalSummary
-        :run-data="runData"
-      />
-    </template>
+      <el-tab-pane label="详细审计" name="details">
+        <section class="workspace-panel detail-workspace">
+          <ExtractedPreferences :preferences="runData?.extracted_preferences" />
+          <VerificationAudit
+            :grounding="runData?.attribute_grounding"
+            :proposed-rules="runData?.proposed_rules"
+          />
+        </section>
+      </el-tab-pane>
+    </el-tabs>
 
     <TraceDrawer v-model="traceVisible" :result="activeResult" />
-
-    <footer class="app-footer">
-      <el-icon><DocumentChecked /></el-icon>
-      <span>页面标签：规则验证结果，不是最终志愿建议。</span>
-      <el-icon class="footer-warning"><WarningFilled /></el-icon>
-    </footer>
   </main>
 </template>

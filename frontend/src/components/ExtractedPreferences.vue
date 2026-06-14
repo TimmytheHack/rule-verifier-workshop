@@ -37,8 +37,7 @@ function statusLabel(status) {
     <template #header>
       <div class="card-header">
         <div>
-          <p class="section-kicker">抽取器 → 属性对齐</p>
-          <h2>抽取偏好</h2>
+          <h2>识别到的偏好</h2>
         </div>
         <el-tag effect="plain">保留来源片段</el-tag>
       </div>

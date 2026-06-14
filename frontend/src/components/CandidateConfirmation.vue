@@ -36,8 +36,7 @@ function subtitle(candidate) {
     <template #header>
       <div class="card-header">
         <div>
-          <p class="section-kicker">规则提升</p>
-          <h2>候选规则模拟确认</h2>
+          <h2>待确认规则</h2>
         </div>
         <div class="confirmation-tags">
           <el-tag
@@ -57,7 +56,7 @@ function subtitle(candidate) {
       type="warning"
       :closable="false"
       show-icon
-      title="演示确认来自管线输出，前端不根据点击结果创建新规则。"
+      title="只显示后端给出的确认项。"
     />
 
     <div class="confirmation-grid">

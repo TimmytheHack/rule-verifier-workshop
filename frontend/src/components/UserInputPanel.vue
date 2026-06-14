@@ -128,19 +128,18 @@ function trimSentence(value) {
     <template #header>
       <div class="card-header">
         <div>
-          <p class="section-kicker">用户输入</p>
-          <h2>基础信息与偏好描述</h2>
+          <h2>输入偏好</h2>
         </div>
         <el-tag :type="mode === 'api' ? 'warning' : 'info'" effect="plain">
-          {{ mode === 'api' ? '调用后端 API' : '加载内置演示数据' }}
+          {{ mode === 'api' ? '连接后端' : '演示数据' }}
         </el-tag>
       </div>
     </template>
 
     <section class="input-section">
       <div class="input-section-title">
-        <h3>考生基础信息</h3>
-        <el-tag type="success" effect="plain">结构化事实，进入规则验证</el-tag>
+        <h3>基础信息</h3>
+        <el-tag type="success" effect="plain">可验证</el-tag>
       </div>
       <div class="hard-form-grid">
         <label class="control-block">
@@ -192,15 +191,15 @@ function trimSentence(value) {
         </label>
 
         <p class="form-note">
-          专业、城市、中外合作、学校性质等偏好请写入下方文本，由规则解析或 LLM 辅助解析；选科要求由上方基础信息参与规则验证。
+          专业、城市、费用等写在下方。
         </p>
       </div>
     </section>
 
     <section class="input-section soft-section">
       <div class="input-section-title">
-        <h3>偏好描述与边界确认</h3>
-        <el-tag type="warning" effect="plain">偏好来自文本，边界用于确认候选规则</el-tag>
+        <h3>偏好</h3>
+        <el-tag type="warning" effect="plain">需核验</el-tag>
       </div>
       <div class="soft-form-grid">
         <label class="control-block">
@@ -233,7 +232,7 @@ function trimSentence(value) {
             v-model="soft.prompt"
             class="input-textarea"
             type="textarea"
-            :rows="4"
+            :rows="3"
             maxlength="240"
             show-word-limit
             resize="none"
@@ -251,10 +250,10 @@ function trimSentence(value) {
         :loading="loading"
         @click="submitRun"
       >
-        运行规则验证
+        运行
       </el-button>
       <span class="muted-note">
-        {{ mode === 'api' ? '将请求后端运行受控选项。' : '演示模式只加载内置数据。' }}
+        {{ mode === 'api' ? '请求后端' : '使用演示数据' }}
       </span>
     </div>
   </el-card>
