@@ -1,54 +1,23 @@
 {
   "status": "pass",
-  "started_at": "2026-06-14T00:00:00Z",
-  "finished_at": "2026-06-14T00:01:30Z",
-  "duration_seconds": 90.0,
-  "git_commit": "example",
-  "git_dirty": false,
-  "checks": [
-    {
-      "name": "python_syntax",
-      "status": "pass",
-      "command": "find src scripts tests -name '*.py' -print0 | xargs -0 .venv/bin/python -m py_compile",
-      "exit_code": 0,
-      "duration_seconds": 0.3,
-      "stdout_tail": "",
-      "stderr_tail": "",
-      "artifacts": []
-    },
-    {
-      "name": "unit_tests",
-      "status": "pass",
-      "command": ".venv/bin/python -m unittest discover -s tests",
-      "exit_code": 0,
-      "duration_seconds": 42.0,
-      "stdout_tail": "Ran 176 tests in 42.0s\\n\\nOK",
-      "stderr_tail": "",
-      "artifacts": []
-    },
-    {
-      "name": "demo_acceptance",
-      "status": "pass",
-      "command": ".venv/bin/python scripts/run_demo_acceptance.py",
-      "exit_code": 0,
-      "duration_seconds": 20.0,
-      "stdout_tail": "Wrote outputs/demo_acceptance/report.json",
-      "stderr_tail": "",
-      "artifacts": [
-        "outputs/demo_acceptance/report.json",
-        "outputs/demo_acceptance/report.md"
-      ]
-    }
-  ],
+  "captured_for": "v0.1.0-rc1",
+  "captured_at": "2026-06-15T00:44:41+08:00",
+  "report_path": "outputs/quality_gate/tmp/latest/report.json",
   "summary": {
-    "passed": 3,
+    "passed": 11,
     "failed": 0,
-    "warnings": 0,
+    "warnings": 1,
     "regex_score": "320/320",
-    "unit_tests": "176 tests",
+    "unit_tests": "198 tests",
+    "api_contract_tests": "10 tests",
     "demo_acceptance": {
       "total": 29,
       "passed": 29,
+      "by_domain": {
+        "admissions": 19,
+        "housing": 5,
+        "products": 5
+      },
       "status_distribution": {
         "ok": 19,
         "needs_confirmation": 8,
@@ -70,8 +39,67 @@
       }
     }
   },
-  "artifacts": [
-    "outputs/quality_gate/report.json",
-    "outputs/quality_gate/report.md"
-  ]
+  "checks": [
+    {
+      "name": "git_state",
+      "status": "pass"
+    },
+    {
+      "name": "python_syntax",
+      "status": "pass"
+    },
+    {
+      "name": "unit_tests",
+      "status": "pass"
+    },
+    {
+      "name": "api_contract_tests",
+      "status": "pass"
+    },
+    {
+      "name": "regex_evaluator",
+      "status": "pass"
+    },
+    {
+      "name": "demo_acceptance",
+      "status": "pass"
+    },
+    {
+      "name": "domain_pack_validate",
+      "status": "pass",
+      "evidence": "approved domain 可执行；draft / needs_review domain 返回 blocked，不执行 SQL。"
+    },
+    {
+      "name": "domain_review_workflow",
+      "status": "pass"
+    },
+    {
+      "name": "warehouse_fingerprint_guard",
+      "status": "pass",
+      "evidence": "stale warehouse fingerprint 返回结构化 blocked / warning。"
+    },
+    {
+      "name": "git_diff_check",
+      "status": "pass"
+    },
+    {
+      "name": "frontend_build",
+      "status": "warning",
+      "reason": "Vite/Rollup 输出既有 PURE annotation 与 chunk size warning，退出码为 0。"
+    },
+    {
+      "name": "generated_artifact_consistency",
+      "status": "pass",
+      "evidence": "Quality Gate 在临时目录生成 demo acceptance，运行中没有新增 tracked artifact diff。"
+    }
+  ],
+  "coverage": {
+    "builtin_admissions": "make demo 覆盖 19 条 admissions case。",
+    "uploaded_admissions": "make demo 覆盖 2 条 uploaded dataset case，make pilot 覆盖 real-like admissions fixture。",
+    "housing_products": "make demo 覆盖 housing 5 条、products 5 条。",
+    "draft_blocked": "domain_pack_validate 和 API contract tests 覆盖 draft / needs_review blocked。",
+    "stale_fingerprint_blocked": "warehouse_fingerprint_guard 和 uploaded dataset stale tests 覆盖。",
+    "no_schema_field_not_executed": "Workbench confirmation loop 和 API contract tests 覆盖。",
+    "agent_admin_denied": "make agent-acceptance 覆盖 fake agent 调用 admin tool 被拒绝。"
+  }
 }

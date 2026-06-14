@@ -1,6 +1,6 @@
 # Demo Acceptance 验收报告
 
-- 生成时间：`2026-06-14T06:10:08.302569Z`
+- 生成时间：`2026-06-14T16:25:02.340883Z`
 - 总记录数：`29`
 - 通过：`29`
 - 失败：`0`
@@ -1506,7 +1506,8 @@
   "executed_after_confirmation": [],
   "unconfirmed_candidates": [],
   "no_schema_field_preferences": [],
-  "rejected_confirmations": []
+  "rejected_confirmations": [],
+  "policy_references": []
 }
 ```
 ### answer
@@ -2837,7 +2838,8 @@
   "executed_after_confirmation": [],
   "unconfirmed_candidates": [],
   "no_schema_field_preferences": [],
-  "rejected_confirmations": []
+  "rejected_confirmations": [],
+  "policy_references": []
 }
 ```
 ### answer
@@ -3395,7 +3397,8 @@
   "executed_after_confirmation": [],
   "unconfirmed_candidates": [],
   "no_schema_field_preferences": [],
-  "rejected_confirmations": []
+  "rejected_confirmations": [],
+  "policy_references": []
 }
 ```
 ### answer
@@ -4983,7 +4986,8 @@
     }
   ],
   "no_schema_field_preferences": [],
-  "rejected_confirmations": []
+  "rejected_confirmations": [],
+  "policy_references": []
 }
 ```
 ### answer
@@ -6551,7 +6555,20 @@ candidate_id 确认状态：
       "matched_values": []
     }
   ],
-  "rejected_confirmations": []
+  "rejected_confirmations": [],
+  "policy_references": [
+    {
+      "reference_id": "special_plans",
+      "title": "专项计划与校企合作说明 status: approved 地方专项、专项计划、校企合作、产业学院等标签可能来自招生备注、专业全称或单独的 计划类型字段。只有当字段被 schema profile 标记、review workflow 批准，并且 allowed op 通过审查后，相关偏好才可以成为 executable hard filter。 如果这些信息只出现在自由文本备注中，默认只能作为 reference-only 解释或 needs_review 线索，不能直接改变推荐结果。",
+      "source": "policy_references/special_plans.md",
+      "matched_terms": [
+        "校企合作"
+      ],
+      "excerpt": "# 专项计划与校企合作说明 status: approved 地方专项、专项计划、校企合作、产业学院等标签可能来自招生备注、专业全称或单独的 计划类型字段。只有当字段被 schema profile 标记、review workflow 批准，并且 allowed op 通过审查后，相关偏好才...",
+      "status": "reference_only",
+      "effect": "does_not_change_sql_or_results"
+    }
+  ]
 }
 ```
 ### answer
@@ -6591,6 +6608,9 @@ candidate_id 确认状态：
 
 缺少字段，不能确认执行：
 - 不要校企合作：当前数据中没有可执行字段，不能进入筛表。；即使提交该 candidate_id 也不能执行。
+
+参考说明（不参与筛选）：
+- 专项计划与校企合作说明 status: approved 地方专项、专项计划、校企合作、产业学院等标签可能来自招生备注、专业全称或单独的 计划类型字段。只有当字段被 数据字段定义 profile 标记、review workflow 批准，并且 allowed op 通过审查后，相关偏好才可以成为 executable hard filter。 如果这些信息只出现在自由文本备注中，默认只能作为 reference-only 解释或 needs_review 线索，不能直接改变推荐结果。：# 专项计划与校企合作说明 status: approved 地方专项、专项计划、校企合作、产业学院等标签可能来自招生备注、专业全称或单独的 计划类型字段。只有当字段被 数据字段定义 profile 标记、review workflow 批准，并且 allowed op 通过审查后，相关偏好才...；来源：policy_references/special_plans.md；命中：校企合作；该说明不参与筛选。
 
 未执行但已保留的偏好：
 - 不要校企合作：未执行，未参与筛选。原因：缺少合作办学类型字段，当前版本不从文本字段推断。
@@ -6890,7 +6910,8 @@ candidate_id 确认状态：
   "executed_after_confirmation": [],
   "unconfirmed_candidates": [],
   "no_schema_field_preferences": [],
-  "rejected_confirmations": []
+  "rejected_confirmations": [],
+  "policy_references": []
 }
 ```
 ### answer
@@ -8183,7 +8204,20 @@ candidate_id 确认状态：
       "matched_values": []
     }
   ],
-  "rejected_confirmations": []
+  "rejected_confirmations": [],
+  "policy_references": [
+    {
+      "reference_id": "cooperation_programs",
+      "title": "合作办学与境外培养说明 status: approved 招生数据中如果没有经过审查的 `cooperation_type`、`school_country_or_region` 或同等字段，系统不能执行“排除中外合作”“不要境外培养”“不想去国外”之类的 hard filter。此类偏好应进入 `no_schema_field_preferences`，只能作为未执行说明 或人工审查线索。 如果后续 domain pack 增加并批准了合作办学类型、培养地点或境外培养字段，才能由 RuleVerifier 校验 operator 和 value 后进入参数化 SQL。",
+      "source": "policy_references/cooperation_programs.md",
+      "matched_terms": [
+        "中外合作"
+      ],
+      "excerpt": "...chool_country_or_region` 或同等字段，系统不能执行“排除中外合作”“不要境外培养”“不想去国外”之类的 hard filter。此类偏好应进入 `no_schema_field_preferences`，只能作为未执行说明 或人工审查线索。 如果后续 domain pack 增加并批准了合作办学类型、培养地点或境外培养字段，才能由 R...",
+      "status": "reference_only",
+      "effect": "does_not_change_sql_or_results"
+    }
+  ]
 }
 ```
 ### answer
@@ -8213,6 +8247,9 @@ candidate_id 确认状态：
 
 缺少字段，不能确认执行：
 - 不要中外合作：当前数据中没有可执行字段，不能进入筛表。；即使提交该 candidate_id 也不能执行。
+
+参考说明（不参与筛选）：
+- 合作办学与境外培养说明 status: approved 招生数据中如果没有经过审查的 `合作办学类型字段`、`国家或境外办学字段` 或同等字段，系统不能执行“排除中外合作”“不要境外培养”“不想去国外”之类的 hard filter。此类偏好应进入 `no_schema_field_preferences`，只能作为未执行说明 或人工审查线索。 如果后续 domain pack 增加并批准了合作办学类型、培养地点或境外培养字段，才能由 RuleVerifier 校验 操作符 和 规则值 后进入参数化 SQL。：...chool_country_or_region` 或同等字段，系统不能执行“排除中外合作”“不要境外培养”“不想去国外”之类的 hard filter。此类偏好应进入 `no_schema_field_preferences`，只能作为未执行说明 或人工审查线索。 如果后续 domain pack 增加并批准了合作办学类型、培养地点或境外培养字段，才能由 R...；来源：policy_references/cooperation_programs.md；命中：中外合作；该说明不参与筛选。
 
 未执行但已保留的偏好：
 - 不要中外合作：未执行，未参与筛选。原因：缺少合作办学类型字段，当前版本不从文本字段推断。
@@ -9394,7 +9431,8 @@ candidate_id 确认状态：
   "executed_after_confirmation": [],
   "unconfirmed_candidates": [],
   "no_schema_field_preferences": [],
-  "rejected_confirmations": []
+  "rejected_confirmations": [],
+  "policy_references": []
 }
 ```
 ### answer
@@ -10744,7 +10782,8 @@ candidate_id 确认状态：
   "executed_after_confirmation": [],
   "unconfirmed_candidates": [],
   "no_schema_field_preferences": [],
-  "rejected_confirmations": []
+  "rejected_confirmations": [],
+  "policy_references": []
 }
 ```
 ### answer
@@ -12093,7 +12132,8 @@ candidate_id 确认状态：
   "executed_after_confirmation": [],
   "unconfirmed_candidates": [],
   "no_schema_field_preferences": [],
-  "rejected_confirmations": []
+  "rejected_confirmations": [],
+  "policy_references": []
 }
 ```
 ### answer
@@ -13383,7 +13423,8 @@ candidate_id 确认状态：
       "matched_values": []
     }
   ],
-  "rejected_confirmations": []
+  "rejected_confirmations": [],
+  "policy_references": []
 }
 ```
 ### answer
@@ -14814,7 +14855,8 @@ candidate_id 确认状态：
       "matched_values": []
     }
   ],
-  "rejected_confirmations": []
+  "rejected_confirmations": [],
+  "policy_references": []
 }
 ```
 ### answer
@@ -16211,7 +16253,8 @@ candidate_id 确认状态：
   "executed_after_confirmation": [],
   "unconfirmed_candidates": [],
   "no_schema_field_preferences": [],
-  "rejected_confirmations": []
+  "rejected_confirmations": [],
+  "policy_references": []
 }
 ```
 ### answer
@@ -17792,7 +17835,8 @@ candidate_id 确认状态：
     }
   ],
   "no_schema_field_preferences": [],
-  "rejected_confirmations": []
+  "rejected_confirmations": [],
+  "policy_references": []
 }
 ```
 ### answer
@@ -19325,7 +19369,8 @@ candidate_id 确认状态：
   "executed_after_confirmation": [],
   "unconfirmed_candidates": [],
   "no_schema_field_preferences": [],
-  "rejected_confirmations": []
+  "rejected_confirmations": [],
+  "policy_references": []
 }
 ```
 ### answer
@@ -20386,7 +20431,8 @@ candidate_id 确认状态：
   "executed_after_confirmation": [],
   "unconfirmed_candidates": [],
   "no_schema_field_preferences": [],
-  "rejected_confirmations": []
+  "rejected_confirmations": [],
+  "policy_references": []
 }
 ```
 ### answer
@@ -21911,6 +21957,38 @@ candidate_id 确认状态：
         "direction": "ASC"
       }
     ],
+    "margin_policy": {
+      "score_margin": {
+        "reach_max_abs": 30,
+        "match_max": 20,
+        "safety_min": 30
+      },
+      "rank_margin": {
+        "reach_max_abs": 8000,
+        "match_max": 15000,
+        "safety_min": 30000
+      }
+    },
+    "year_weighting": {
+      "mode": "latest_available_year",
+      "selected_year_weight": 1.0,
+      "historical_decay": 0.75,
+      "notes": "当前 admissions recommendation 只执行 latest_available_year；多年度趋势接入前只在 EvidencePack 记录策略，不跨年加权执行。",
+      "selected_year": 2024,
+      "executed_cross_year_weighting": false
+    },
+    "major_match": {
+      "mode": "exact_major_keywords",
+      "terms": [
+        "计算机",
+        "人工智能"
+      ]
+    },
+    "bucket_counts": {
+      "reach": 5,
+      "match": 5,
+      "safety": 1
+    },
     "top_k": 30,
     "hard_rule_ids": [
       "planned_year",
@@ -21948,12 +22026,28 @@ candidate_id 确认状态：
       "reason": "当前 domain pack 未启用境外办学字段，不能执行该排除条件。"
     }
   ],
-  "rejected_confirmations": []
+  "rejected_confirmations": [],
+  "policy_references": [
+    {
+      "reference_id": "cooperation_programs",
+      "title": "合作办学与境外培养说明 status: approved 招生数据中如果没有经过审查的 `cooperation_type`、`school_country_or_region` 或同等字段，系统不能执行“排除中外合作”“不要境外培养”“不想去国外”之类的 hard filter。此类偏好应进入 `no_schema_field_preferences`，只能作为未执行说明 或人工审查线索。 如果后续 domain pack 增加并批准了合作办学类型、培养地点或境外培养字段，才能由 RuleVerifier 校验 operator 和 value 后进入参数化 SQL。",
+      "source": "policy_references/cooperation_programs.md",
+      "matched_terms": [
+        "国外"
+      ],
+      "excerpt": "...region` 或同等字段，系统不能执行“排除中外合作”“不要境外培养”“不想去国外”之类的 hard filter。此类偏好应进入 `no_schema_field_preferences`，只能作为未执行说明 或人工审查线索。 如果后续 domain pack 增加并批准了合作办学类型、培养地点或境外培养字段，才能由 RuleVerifier 校验 op...",
+      "status": "reference_only",
+      "effect": "does_not_change_sql_or_results"
+    }
+  ]
 }
 ```
 ### answer
 
 基于历史最低分/最低位次和分数 630，按分数 margin分为冲、稳、保，共返回 11 条分组结果。该分组不是录取概率判断；未指定年份，默认使用 latest_available_year=2024。；只提供分数没有位次；系统只按历史最低分 margin 分组，不能判断录取概率。。
+
+参考说明（不参与筛选）：
+- 合作办学与境外培养说明 status: approved 招生数据中如果没有经过审查的 `cooperation_type`、`school_country_or_region` 或同等字段，系统不能执行“排除中外合作”“不要境外培养”“不想去国外”之类的 hard filter。此类偏好应进入 `no_schema_field_preferences`，只能作为未执行说明 或人工审查线索。 如果后续 domain pack 增加并批准了合作办学类型、培养地点或境外培养字段，才能由 RuleVerifier 校验 operator 和 value 后进入参数化 SQL。：...region` 或同等字段，系统不能执行“排除中外合作”“不要境外培养”“不想去国外”之类的 hard filter。此类偏好应进入 `no_schema_field_preferences`，只能作为未执行说明 或人工审查线索。 如果后续 domain pack 增加并批准了合作办学类型、培养地点或境外培养字段，才能由 RuleVerifier 校验 op...；来源：policy_references/cooperation_programs.md；命中：国外；该说明不参与筛选。
 
 ## housing_01 `通过`
 
@@ -22700,7 +22794,8 @@ candidate_id 确认状态：
   "executed_after_confirmation": [],
   "unconfirmed_candidates": [],
   "no_schema_field_preferences": [],
-  "rejected_confirmations": []
+  "rejected_confirmations": [],
+  "policy_references": []
 }
 ```
 ### answer
@@ -23325,7 +23420,8 @@ candidate_id 确认状态：
   "executed_after_confirmation": [],
   "unconfirmed_candidates": [],
   "no_schema_field_preferences": [],
-  "rejected_confirmations": []
+  "rejected_confirmations": [],
+  "policy_references": []
 }
 ```
 ### answer
@@ -23864,7 +23960,8 @@ candidate_id 确认状态：
   "executed_after_confirmation": [],
   "unconfirmed_candidates": [],
   "no_schema_field_preferences": [],
-  "rejected_confirmations": []
+  "rejected_confirmations": [],
+  "policy_references": []
 }
 ```
 ### answer
@@ -24333,7 +24430,8 @@ candidate_id 确认状态：
   "executed_after_confirmation": [],
   "unconfirmed_candidates": [],
   "no_schema_field_preferences": [],
-  "rejected_confirmations": []
+  "rejected_confirmations": [],
+  "policy_references": []
 }
 ```
 ### answer
@@ -25029,7 +25127,8 @@ candidate_id 确认状态：
   "executed_after_confirmation": [],
   "unconfirmed_candidates": [],
   "no_schema_field_preferences": [],
-  "rejected_confirmations": []
+  "rejected_confirmations": [],
+  "policy_references": []
 }
 ```
 ### answer
@@ -25493,7 +25592,8 @@ candidate_id 确认状态：
   "executed_after_confirmation": [],
   "unconfirmed_candidates": [],
   "no_schema_field_preferences": [],
-  "rejected_confirmations": []
+  "rejected_confirmations": [],
+  "policy_references": []
 }
 ```
 ### answer
@@ -25893,7 +25993,8 @@ candidate_id 确认状态：
   "executed_after_confirmation": [],
   "unconfirmed_candidates": [],
   "no_schema_field_preferences": [],
-  "rejected_confirmations": []
+  "rejected_confirmations": [],
+  "policy_references": []
 }
 ```
 ### answer
@@ -26241,7 +26342,8 @@ candidate_id 确认状态：
   "executed_after_confirmation": [],
   "unconfirmed_candidates": [],
   "no_schema_field_preferences": [],
-  "rejected_confirmations": []
+  "rejected_confirmations": [],
+  "policy_references": []
 }
 ```
 ### answer
@@ -26702,7 +26804,8 @@ candidate_id 确认状态：
   "executed_after_confirmation": [],
   "unconfirmed_candidates": [],
   "no_schema_field_preferences": [],
-  "rejected_confirmations": []
+  "rejected_confirmations": [],
+  "policy_references": []
 }
 ```
 ### answer
@@ -26927,7 +27030,8 @@ candidate_id 确认状态：
   "executed_after_confirmation": [],
   "unconfirmed_candidates": [],
   "no_schema_field_preferences": [],
-  "rejected_confirmations": []
+  "rejected_confirmations": [],
+  "policy_references": []
 }
 ```
 ### answer
@@ -27155,7 +27259,7 @@ candidate_id 确认状态：
   "generate_status": "needs_review",
   "approve_ok": true,
   "build_status": "queryable",
-  "source_fingerprint": "46d0a437dc5c014e4be6ecb1cb9fb2d7de3fdfe8a61586d7324e4e5fbc8f105a"
+  "source_fingerprint": "d2d1896c5851d70e91623d4a12fc9ca84f589d113b5b62176229e50722472e70"
 }
 ```
 ### EvidencePack
@@ -27306,7 +27410,8 @@ candidate_id 确认状态：
   "executed_after_confirmation": [],
   "unconfirmed_candidates": [],
   "no_schema_field_preferences": [],
-  "rejected_confirmations": []
+  "rejected_confirmations": [],
+  "policy_references": []
 }
 ```
 ### answer
@@ -28190,6 +28295,38 @@ candidate_id 确认状态：
         "direction": "ASC"
       }
     ],
+    "margin_policy": {
+      "score_margin": {
+        "reach_max_abs": 30,
+        "match_max": 20,
+        "safety_min": 30
+      },
+      "rank_margin": {
+        "reach_max_abs": 8000,
+        "match_max": 15000,
+        "safety_min": 30000
+      }
+    },
+    "year_weighting": {
+      "mode": "latest_available_year",
+      "selected_year_weight": 1.0,
+      "historical_decay": 0.75,
+      "notes": "当前 admissions recommendation 只执行 latest_available_year；多年度趋势接入前只在 EvidencePack 记录策略，不跨年加权执行。",
+      "selected_year": 2024,
+      "executed_cross_year_weighting": false
+    },
+    "major_match": {
+      "mode": "exact_major_keywords",
+      "terms": [
+        "计算机",
+        "人工智能"
+      ]
+    },
+    "bucket_counts": {
+      "reach": 1,
+      "match": 2,
+      "safety": 0
+    },
     "top_k": 30,
     "hard_rule_ids": [
       "planned_year",
@@ -28227,7 +28364,8 @@ candidate_id 确认状态：
       "reason": "当前 domain pack 未启用境外办学字段，不能执行该排除条件。"
     }
   ],
-  "rejected_confirmations": []
+  "rejected_confirmations": [],
+  "policy_references": []
 }
 ```
 ### answer

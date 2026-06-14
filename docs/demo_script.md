@@ -16,6 +16,44 @@ make release-check
 - `release_manifest.json`、`sample_data/`、`sample_outputs/` 校验通过；
 - 当前工作区没有临时 report 或密钥文件。
 
+## 候选发布验收顺序
+
+`v0.1.0-rc1` 候选发布建议按以下顺序验收：
+
+```bash
+make bootstrap
+make release-check
+make serve
+make demo
+make pilot
+make operator-trial
+make agent-acceptance
+make quality
+make clean-artifacts
+git status --short
+```
+
+候选证据位置：
+
+```text
+sample_outputs/release_candidate_evidence.json
+sample_outputs/quality_gate_summary.json
+sample_outputs/operator_trial_summary.md
+outputs/demo_acceptance/report.md
+outputs/demo_acceptance/report.json
+outputs/real_dataset_pilot/report.md
+outputs/real_dataset_pilot/report.json
+outputs/operator_trial/<run_id>/report.md
+outputs/operator_trial/<run_id>/report.json
+outputs/agent_tool_acceptance/report.md
+outputs/agent_tool_acceptance/report.json
+outputs/quality_gate/tmp/latest/report.md
+outputs/quality_gate/tmp/latest/report.json
+```
+
+`outputs/operator_trial/`、`outputs/agent_tool_acceptance/` 和 `outputs/quality_gate/tmp/`
+是临时验收产物，发布前应由 `make clean-artifacts` 清理；`sample_outputs/` 只保留精简候选摘要。
+
 ## 1. Tool Server 启动
 
 ```bash
@@ -149,6 +187,8 @@ outputs/quality_gate/tmp/latest/report.json
 - demo acceptance 必须全部 pass。
 - approved domain 可执行，draft/needs_review 不能执行。
 - warehouse fingerprint 不一致时 gate fail。
+- `generated_artifact_consistency` 必须 pass，表示 gate 运行没有新增 tracked artifact diff。
+- 前端 build 退出码必须为 0；既有 Vite/Rollup warning 只作为 warning 展示。
 
 ## 7. 演示收尾
 

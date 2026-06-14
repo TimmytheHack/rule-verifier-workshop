@@ -1,27 +1,37 @@
-# Operator Trial 摘要示例
+# Operator Trial 候选摘要
 
+- release candidate：`v0.1.0-rc1`
+- run_id：`20260614_163130`
 - status：`pass`
-- dataset_id：`ds_operator_trial_real_like_admissions`
+- dataset_id：`ds_operator_trial_real_like_admissions_pil`
 - sheet_name：`招生数据`
 - detected_header_row：`3`
 - row_count / column_count：`6` / `25`
-- warehouse_fingerprint：`example-fingerprint`
+- source_fingerprint：`70cc9586a0ca2d152d4e7959c66c1e573654fa9e3e678960dd7622e5f738b445`
+- warehouse_fingerprint：`70cc9586a0ca2d152d4e7959c66c1e573654fa9e3e678960dd7622e5f738b445`
+- failures：`[]`
 
 ## 操作卡点
 
 | stage | status | 说明 |
 |---|---|---|
-| upload | `warning` | 检测到合并单元格、隐藏行和公式单元格，已写入 structured warnings。 |
-| generate_draft_domain_pack | `pass` | 生成 draft domain pack 和 schema profile。 |
-| profile | `pass` | 字段类型、空值率、唯一值数量和样例值可审查。 |
-| review_summary | `pass` | admissions required fields 未缺失。 |
-| approve_domain | `pass` | 使用已审查 admissions template 批准 domain。 |
-| build_warehouse | `pass` | DuckDB warehouse 和 source fingerprint 一致。 |
-| target_query_1 | `pass` | `group_detail_report` 返回专业组和组内专业明细。 |
-| target_query_2 | `pass` | `recommendation` 返回冲/稳/保分组，并保留 `score_without_rank` warning。 |
+| sheet_header | `needs_review` | 已记录 sheet list、选中 sheet、detected header row 和人工确认点。 |
+| schema_profile | `needs_review` | 已记录字段类型、行列规模、warning 和 schema profile 摘要。 |
+| review_approval | `pass` | required admissions fields 无缺失，risky fields 已进入人工审查路径。 |
+| warehouse | `pass` | DuckDB warehouse 构建完成，source fingerprint 与 warehouse fingerprint 一致。 |
+| target_queries | `pass` | `group_detail_report` 返回 1 条专业组明细，`recommendation` 返回 3 条分组结果。 |
+| trial_closeout | `pass` | failures 为空，常见失败处理已写入报告。 |
+
+## 目标查询
+
+| query_type | status | result_count | 关键证据 |
+|---|---|---:|---|
+| `group_detail_report` | `ok` | 1 | 返回深圳大学专业组及组内专业最低分/位次明细。 |
+| `recommendation` | `ok` | 3 | 保留 `default_year_used` 和 `score_without_rank` warning，不声称录取概率。 |
 
 ## 人工结论
 
-该示例只展示报告摘要形状。真实 operator trial 必须检查 `report.json` 中的
-`missing_fields`、`risky_fields`、`warnings`、`failures`、`EvidencePack`、SQL/params 和
-fingerprint guard 结果，再决定是否进入 demo acceptance、real dataset pilot 和 Quality Gate。
+该候选 run 覆盖 upload -> profile -> draft -> review -> approve -> build warehouse ->
+query 的完整 operator trial 路径。正式发布前仍应读取对应 `report.json` 中的
+`missing_fields`、`risky_fields`、`warnings`、`EvidencePack`、SQL/params 和 fingerprint
+guard 结果；如果换成真实招生 Excel，必须重新运行 trial 并更新本摘要或 release notes。

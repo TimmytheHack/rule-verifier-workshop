@@ -2,6 +2,34 @@
 
 本文用于 `LLM-safe structured data query tool server for Excel/CSV` 候选发布。所有步骤都应由 operator 或 maintainer 执行，LLM/agent 不应自动调用 admin tools。
 
+## 0. 当前候选证据
+
+候选 tag：`v0.1.0-rc1`。精简证据见：
+
+```text
+sample_outputs/release_candidate_evidence.json
+sample_outputs/quality_gate_summary.json
+sample_outputs/operator_trial_summary.md
+```
+
+必须确认：
+
+- [ ] `make bootstrap` 通过，`.venv` 和 requirements 可用。
+- [ ] `make serve` 通过，`/healthz`、`/readyz`、`/version` 可访问，`llm_safe_only=true` 只返回五个 LLM-safe tools。
+- [ ] `make demo` 通过：29/29 pass；admissions 19、housing 5、products 5；uploaded dataset acceptance 2。
+- [ ] `make pilot` 通过：`ds_real_pilot_real_like_admissions_pil` 的 source fingerprint 与 warehouse fingerprint 一致。
+- [ ] `make operator-trial` 通过：`20260614_163130` fixture 覆盖 sheet/header/profile/review/approve/build/query 卡点。
+- [ ] `make agent-acceptance` 通过：fake agent 调用 `dataset.approve_op` 被 `tool_not_allowed` 拒绝。
+- [ ] `make quality` 通过：11 pass、0 fail、1 warning；唯一 warning 是既有前端 build warning。
+- [ ] `make clean-artifacts` 后没有临时 quality/operator/agent/audit/warehouse/upload 产物留在工作区。
+- [ ] 内置 admissions 覆盖：`make demo` admissions 19/19 pass。
+- [ ] uploaded admissions 覆盖：`make demo` uploaded 2/2 pass，`make pilot` real-like admissions fixture pass。
+- [ ] housing/products 覆盖：`make demo` housing 5/5 pass，products 5/5 pass。
+- [ ] draft blocked 覆盖：Quality Gate `domain_pack_validate`、`tests/test_uploaded_dataset_flow.py` 和 `tests/test_workbench_api_contract.py`。
+- [ ] stale fingerprint 覆盖：Quality Gate `warehouse_fingerprint_guard`、`tests/test_data_warehouse_guard.py` 和 `tests/test_uploaded_dataset_flow.py`。
+- [ ] `no_schema_field` 不执行覆盖：`tests/test_workbench_api_contract.py` 和 `tests/test_workbench_confirmation_loop.py`。
+- [ ] agent 不能调用 admin tools 覆盖：`make agent-acceptance` 的 `admin_permission_denied` case。
+
 ## 1. 环境
 
 - [ ] 当前分支干净，未混入临时 report、DuckDB、上传原件、密钥或 `.venv`。
@@ -93,6 +121,7 @@ make quality
 - [ ] Python 语法检查通过。
 - [ ] unit tests 通过。
 - [ ] regex evaluator 为 `320/320`。
+- [ ] unit tests 摘要为 `198 tests`，API contract tests 摘要为 `10 tests`。
 - [ ] demo acceptance 全部 pass。
 - [ ] domain pack validate 和 review workflow smoke 通过。
 - [ ] warehouse fingerprint guard smoke 通过。
@@ -111,6 +140,7 @@ git status --short
 
 - [ ] 没有临时 audit、临时 uploaded dataset、临时 warehouse 或本机 report 进入 commit。
 - [ ] 没有 `outputs/quality_gate/tmp/latest/`、tool audit 轮转文件或临时 upload 原件进入 commit。
+- [ ] `make quality` 后 `git status --short` 仍为空，说明 gate 未把干净工作区改脏。
 - [ ] 只 stage 本次 release package 相关文件。
 - [ ] commit message 简洁明确。
 

@@ -169,7 +169,7 @@ Release demo package 包含：
 
 - `release_manifest.json`：固定发布入口、契约版本、sample data、sample outputs 和安全不变量。
 - `sample_data/`：脱敏 admissions CSV、housing/products toy CSV 和说明。
-- `sample_outputs/`：精简 WorkbenchResponse、Quality Gate 和 operator trial 输出示例。
+- `sample_outputs/`：精简 WorkbenchResponse 示例，以及 Quality Gate、operator trial、release candidate 覆盖证据摘要。
 - `CHANGELOG.md`、`RELEASE_CHECKLIST.md`、`docs/demo_script.md`：发布说明、检查清单和演示脚本。
 
 发布包静态校验：

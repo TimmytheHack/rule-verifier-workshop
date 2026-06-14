@@ -1,0 +1,177 @@
+{
+  "release_candidate": "v0.1.0-rc1",
+  "captured_at": "2026-06-15T00:44:41+08:00",
+  "positioning": "LLM-safe structured data query tool server for Excel/CSV",
+  "command_evidence": [
+    {
+      "command": "make bootstrap",
+      "status": "pass",
+      "evidence": ".venv 可用，requirements 已安装。"
+    },
+    {
+      "command": "make serve",
+      "status": "pass",
+      "evidence": {
+        "healthz": "ok",
+        "readyz": "ok",
+        "version": {
+          "api_version": "api.v1",
+          "schema_version": "workbench_response.v1",
+          "tool_contract_version": "tools.v1"
+        },
+        "llm_safe_tools": [
+          "dataset.profile",
+          "dataset.review_summary",
+          "evidence.get",
+          "workbench.confirm",
+          "workbench.query"
+        ]
+      }
+    },
+    {
+      "command": "make demo",
+      "status": "pass",
+      "evidence": {
+        "report_json": "outputs/demo_acceptance/report.json",
+        "total": 29,
+        "passed": 29,
+        "failed": 0,
+        "by_domain": {
+          "admissions": 19,
+          "housing": 5,
+          "products": 5
+        },
+        "by_acceptance_group": {
+          "builtin_domain_acceptance": 27,
+          "uploaded_dataset_acceptance": 2
+        },
+        "by_status": {
+          "ok": 19,
+          "needs_confirmation": 8,
+          "no_results": 2
+        }
+      }
+    },
+    {
+      "command": "make pilot",
+      "status": "pass",
+      "evidence": {
+        "report_json": "outputs/real_dataset_pilot/report.json",
+        "dataset_id": "ds_real_pilot_real_like_admissions_pil",
+        "sheet_name": "招生数据",
+        "detected_header_row": 3,
+        "source_fingerprint": "c64a0f6bc01a8282d63a69abe2268a6a7c5abe8329f4501607229a904fefe507",
+        "warehouse_fingerprint": "c64a0f6bc01a8282d63a69abe2268a6a7c5abe8329f4501607229a904fefe507",
+        "failures": []
+      }
+    },
+    {
+      "command": "make operator-trial",
+      "status": "pass",
+      "evidence": {
+        "run_id": "20260614_163130",
+        "dataset_id": "ds_operator_trial_real_like_admissions_pil",
+        "sheet_name": "招生数据",
+        "detected_header_row": 3,
+        "row_count": 6,
+        "column_count": 25,
+        "source_fingerprint": "70cc9586a0ca2d152d4e7959c66c1e573654fa9e3e678960dd7622e5f738b445",
+        "warehouse_fingerprint": "70cc9586a0ca2d152d4e7959c66c1e573654fa9e3e678960dd7622e5f738b445",
+        "target_queries": [
+          {
+            "query_type": "group_detail_report",
+            "status": "ok",
+            "result_count": 1
+          },
+          {
+            "query_type": "recommendation",
+            "status": "ok",
+            "result_count": 3,
+            "warnings": [
+              "default_year_used",
+              "score_without_rank"
+            ]
+          }
+        ],
+        "failures": []
+      }
+    },
+    {
+      "command": "make agent-acceptance",
+      "status": "pass",
+      "evidence": {
+        "total": 7,
+        "passed": 7,
+        "failed": 0,
+        "admin_permission_denied": {
+          "status": "error",
+          "code": "tool_not_allowed",
+          "message": "Tool is not available to this adapter: dataset.approve_op"
+        }
+      }
+    },
+    {
+      "command": "make quality",
+      "status": "pass",
+      "evidence": "最终干净工作区运行结果为 11 pass、0 fail、1 warning；见 sample_outputs/quality_gate_summary.json。"
+    },
+    {
+      "command": "make clean-artifacts",
+      "status": "pass",
+      "evidence": "临时 quality gate、operator trial、agent acceptance、tool audit、warehouse 和 upload artifact 可清理。"
+    }
+  ],
+  "coverage_matrix": [
+    {
+      "requirement": "内置 admissions",
+      "status": "covered",
+      "evidence": "make demo: admissions 19/19 pass。"
+    },
+    {
+      "requirement": "uploaded admissions",
+      "status": "covered",
+      "evidence": "make demo: uploaded_dataset_acceptance 2/2 pass；make pilot: real-like admissions fixture pass。"
+    },
+    {
+      "requirement": "housing/products",
+      "status": "covered",
+      "evidence": "make demo: housing 5/5 pass，products 5/5 pass。"
+    },
+    {
+      "requirement": "draft blocked",
+      "status": "covered",
+      "evidence": "Quality Gate domain_pack_validate、tests/test_uploaded_dataset_flow.py、tests/test_workbench_api_contract.py。"
+    },
+    {
+      "requirement": "stale fingerprint",
+      "status": "covered",
+      "evidence": "Quality Gate warehouse_fingerprint_guard、tests/test_data_warehouse_guard.py、tests/test_uploaded_dataset_flow.py。"
+    },
+    {
+      "requirement": "no_schema_field not executed",
+      "status": "covered",
+      "evidence": "tests/test_workbench_api_contract.py 和 tests/test_workbench_confirmation_loop.py 覆盖确认也不执行。"
+    },
+    {
+      "requirement": "agent cannot call admin tools",
+      "status": "covered",
+      "evidence": "make agent-acceptance 的 admin_permission_denied case。"
+    }
+  ],
+  "tracked_candidate_artifacts": [
+    "outputs/demo_acceptance/report.json",
+    "outputs/demo_acceptance/report.md",
+    "outputs/real_dataset_pilot/report.json",
+    "outputs/real_dataset_pilot/report.md",
+    "sample_outputs/quality_gate_summary.json",
+    "sample_outputs/operator_trial_summary.md",
+    "sample_outputs/release_candidate_evidence.json"
+  ],
+  "temporary_artifacts_to_clean_before_tag": [
+    "outputs/quality_gate/tmp/",
+    "outputs/operator_trial/",
+    "outputs/agent_tool_acceptance/",
+    "outputs/tool_audit/",
+    "outputs/uploaded_datasets/tmp_*"
+  ]
+}

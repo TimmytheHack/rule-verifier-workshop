@@ -3,12 +3,12 @@
 - status：`pass`
 - source_path：`outputs/real_dataset_pilot/fixtures/real_like_admissions_pilot.xlsx`
 - dataset_id：`ds_real_pilot_real_like_admissions_pil`
-- source_fingerprint：`4a65e144b71c15844bfbb2d952f937e3a142bf9481732f735ba3f8a5513721f4`
+- source_fingerprint：`c64a0f6bc01a8282d63a69abe2268a6a7c5abe8329f4501607229a904fefe507`
 - sheet_name：`招生数据`
 - row_count / column_count：`6` / `25`
 - detected_header_row：`3`
 - warehouse_path：`/Users/tz/Desktop/Projects/SZU/outputs/real_dataset_pilot/uploaded_datasets/ds_real_pilot_real_like_admissions_pil/domain_packs/admissions/warehouse/admissions.duckdb`
-- warehouse_fingerprint：`4a65e144b71c15844bfbb2d952f937e3a142bf9481732f735ba3f8a5513721f4`
+- warehouse_fingerprint：`c64a0f6bc01a8282d63a69abe2268a6a7c5abe8329f4501607229a904fefe507`
 
 ## Schema Profile Summary
 ```json
@@ -486,7 +486,8 @@
       "executed_after_confirmation": [],
       "unconfirmed_candidates": [],
       "no_schema_field_preferences": [],
-      "rejected_confirmations": []
+      "rejected_confirmations": [],
+      "policy_references": []
     },
     "sql": "SELECT\n  CAST(\"院校专业组代码\" AS VARCHAR) AS group_code,\n  ANY_VALUE(CAST(\"专业组名称\" AS VARCHAR)) AS group_title,\n  MAX(TRY_CAST(regexp_extract(REPLACE(CAST(\"专业组最低分1\" AS VARCHAR), ',', ''), '\\d+(?:\\.\\d+)?') AS DOUBLE)) AS group_metric_score,\n  MIN(TRY_CAST(regexp_extract(REPLACE(CAST(\"专业组最低位次1\" AS VARCHAR), ',', ''), '\\d+(?:\\.\\d+)?') AS DOUBLE)) AS group_min_rank,\n  COUNT(*) AS major_count\nFROM \"admissions\"\nWHERE TRY_CAST(regexp_extract(REPLACE(CAST(\"年份\" AS VARCHAR), ',', ''), '\\d+(?:\\.\\d+)?') AS DOUBLE) = ?\n  AND STRPOS(CAST(\"院校名称\" AS VARCHAR), ?) > 0\n  AND \"院校专业组代码\" IS NOT NULL\nGROUP BY CAST(\"院校专业组代码\" AS VARCHAR)\nORDER BY group_metric_score DESC NULLS LAST, group_code ASC\nLIMIT ?",
     "params": [
@@ -1293,6 +1294,38 @@
             "direction": "ASC"
           }
         ],
+        "margin_policy": {
+          "score_margin": {
+            "reach_max_abs": 30,
+            "match_max": 20,
+            "safety_min": 30
+          },
+          "rank_margin": {
+            "reach_max_abs": 8000,
+            "match_max": 15000,
+            "safety_min": 30000
+          }
+        },
+        "year_weighting": {
+          "mode": "latest_available_year",
+          "selected_year_weight": 1.0,
+          "historical_decay": 0.75,
+          "notes": "当前 admissions recommendation 只执行 latest_available_year；多年度趋势接入前只在 EvidencePack 记录策略，不跨年加权执行。",
+          "selected_year": 2024,
+          "executed_cross_year_weighting": false
+        },
+        "major_match": {
+          "mode": "exact_major_keywords",
+          "terms": [
+            "计算机",
+            "人工智能"
+          ]
+        },
+        "bucket_counts": {
+          "reach": 1,
+          "match": 2,
+          "safety": 0
+        },
         "top_k": 30,
         "hard_rule_ids": [
           "planned_year",
@@ -1330,7 +1363,8 @@
           "reason": "当前 domain pack 未启用境外办学字段，不能执行该排除条件。"
         }
       ],
-      "rejected_confirmations": []
+      "rejected_confirmations": [],
+      "policy_references": []
     },
     "sql": "SELECT\n  \"年份\" AS year,\n  \"院校名称\" AS university_name,\n  \"院校专业组代码\" AS group_code,\n  \"专业组名称\" AS group_title,\n  \"专业代码\" AS major_code,\n  \"专业名称\" AS major_name,\n  \"专业全称\" AS full_major_name,\n  \"所在省\" AS school_province,\n  \"城市\" AS city,\n  \"学费\" AS tuition,\n  TRY_CAST(regexp_extract(REPLACE(CAST(\"专业组最低分1\" AS VARCHAR), ',', ''), '\\d+(?:\\.\\d+)?') AS DOUBLE) AS group_min_score,\n  TRY_CAST(regexp_extract(REPLACE(CAST(\"专业组最低位次1\" AS VARCHAR), ',', ''), '\\d+(?:\\.\\d+)?') AS DOUBLE) AS group_min_rank,\n  TRY_CAST(regexp_extract(REPLACE(CAST(\"最低分1\" AS VARCHAR), ',', ''), '\\d+(?:\\.\\d+)?') AS DOUBLE) AS major_min_score,\n  TRY_CAST(regexp_extract(REPLACE(CAST(\"最低位次1\" AS VARCHAR), ',', ''), '\\d+(?:\\.\\d+)?') AS DOUBLE) AS major_min_rank,\n  TRY_CAST(regexp_extract(REPLACE(CAST(\"计划人数\" AS VARCHAR), ',', ''), '\\d+(?:\\.\\d+)?') AS DOUBLE) AS plan_count\nFROM \"admissions\"\nWHERE TRY_CAST(regexp_extract(REPLACE(CAST(\"年份\" AS VARCHAR), ',', ''), '\\d+(?:\\.\\d+)?') AS DOUBLE) = ? AND CAST(\"所在省\" AS VARCHAR) IN (?) AND (STRPOS(CAST(\"专业名称\" AS VARCHAR), ?) > 0 OR STRPOS(CAST(\"专业名称\" AS VARCHAR), ?) > 0) AND TRY_CAST(regexp_extract(REPLACE(CAST(\"专业组最低分1\" AS VARCHAR), ',', ''), '\\d+(?:\\.\\d+)?') AS DOUBLE) BETWEEN ? AND ?\nORDER BY ABS(? - TRY_CAST(regexp_extract(REPLACE(CAST(\"专业组最低分1\" AS VARCHAR), ',', ''), '\\d+(?:\\.\\d+)?') AS DOUBLE)) ASC NULLS LAST, group_min_score DESC NULLS LAST\nLIMIT ?",
     "params": [

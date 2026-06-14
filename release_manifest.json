@@ -7,6 +7,30 @@
   "workbench_schema_version": "workbench_response.v1",
   "tool_contract_version": "tools.v1",
   "positioning": "LLM-safe structured data query tool server for Excel/CSV",
+  "release_evidence": {
+    "candidate_tag": "v0.1.0-rc1",
+    "last_readiness_date": "2026-06-15",
+    "summary_path": "sample_outputs/release_candidate_evidence.json",
+    "commands_verified": [
+      "make bootstrap",
+      "make serve",
+      "make demo",
+      "make pilot",
+      "make operator-trial",
+      "make agent-acceptance",
+      "make quality",
+      "make clean-artifacts"
+    ],
+    "coverage": [
+      "builtin_admissions",
+      "uploaded_admissions",
+      "housing_products",
+      "draft_blocked",
+      "stale_fingerprint_blocked",
+      "no_schema_field_not_executed",
+      "agent_admin_denied"
+    ]
+  },
   "commands": [
     {
       "name": "bootstrap",
@@ -84,11 +108,15 @@
     },
     {
       "path": "sample_outputs/quality_gate_summary.json",
-      "description": "Quality Gate report.json 的精简结构示例。"
+      "description": "Quality Gate 候选报告的精简摘要。"
     },
     {
       "path": "sample_outputs/operator_trial_summary.md",
-      "description": "operator trial 人工报告摘要示例。"
+      "description": "operator trial 候选人工报告摘要。"
+    },
+    {
+      "path": "sample_outputs/release_candidate_evidence.json",
+      "description": "候选发布命令稳定性和验收覆盖矩阵。"
     },
     {
       "path": "sample_outputs/README.md",
