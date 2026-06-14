@@ -275,6 +275,38 @@ class DeepSeekEvalModesTest(unittest.TestCase):
         self.assertIsNone(slots["preferences"]["cooperation_preference_raw"])
         self.assertEqual(slots["preferences"]["school_ownership_preference_raw"], "优先公办")
 
+    def test_deepseek_normalization_keeps_explicit_non_alias_major_terms(self) -> None:
+        slots = normalize_slots(
+            {
+                "user_context": {},
+                "preferences": {
+                    "major_keyword": "环境工程",
+                    "major_exact_terms": ["环境工程"],
+                },
+                "proposed_rules": [],
+            },
+            "广东物理类，排位12345，想学环境工程，广州。",
+        )
+
+        self.assertEqual(slots["preferences"]["major_exact_terms"], ["环境工程"])
+        self.assertEqual(slots["preferences"]["major_keyword"], "环境工程")
+
+    def test_deepseek_normalization_drops_non_alias_major_not_in_user_text(self) -> None:
+        slots = normalize_slots(
+            {
+                "user_context": {},
+                "preferences": {
+                    "major_keyword": "环境工程",
+                    "major_exact_terms": ["环境工程"],
+                },
+                "proposed_rules": [],
+            },
+            "广东物理类，排位12345，广州。",
+        )
+
+        self.assertEqual(slots["preferences"]["major_exact_terms"], [])
+        self.assertIsNone(slots["preferences"]["major_keyword"])
+
 
 if __name__ == "__main__":
     unittest.main()

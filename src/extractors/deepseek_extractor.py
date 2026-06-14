@@ -272,6 +272,11 @@ def normalize_slots(slots: dict[str, Any], original_text: str) -> dict[str, Any]
     if major_expansion:
         major_texts.append(str(major_expansion))
     normalized_major_terms = _terms_in_text_order(known_majors, major_texts)
+    if not normalized_major_terms:
+        normalized_major_terms = _explicit_major_terms_from_llm(
+            preferences,
+            original_text,
+        )
     preferences["major_exact_terms"] = normalized_major_terms
     preferences["major_keyword"] = normalized_major_terms[0] if normalized_major_terms else None
 
@@ -527,6 +532,30 @@ def _terms_in_text_order(terms: list[str], texts: list[str]) -> list[str]:
                 positions[term] = (text_index, char_index)
                 break
     return sorted(positions, key=positions.get)
+
+
+def _explicit_major_terms_from_llm(
+    preferences: dict[str, Any],
+    original_text: str,
+) -> list[str]:
+    candidates: list[str] = []
+    for value in [preferences.get("major_keyword")]:
+        if value:
+            candidates.append(str(value))
+    raw_terms = preferences.get("major_exact_terms") or []
+    if isinstance(raw_terms, str):
+        candidates.append(raw_terms)
+    elif isinstance(raw_terms, list):
+        candidates.extend(str(term) for term in raw_terms)
+
+    accepted: list[str] = []
+    for candidate in candidates:
+        term = candidate.strip()
+        if not term or term in accepted:
+            continue
+        if term in original_text:
+            accepted.append(term)
+    return accepted
 
 
 def _tuition_cap_yuan(text: str) -> int | None:
