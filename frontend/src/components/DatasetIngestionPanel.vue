@@ -24,10 +24,6 @@ const reviewSummary = ref(null);
 const queryResult = ref(null);
 const selectedCandidateIds = ref([]);
 const auditEvents = ref([]);
-const operatorHeaders = {
-  'X-Actor-Id': 'frontend_operator',
-  'X-Permission-Scopes': 'dataset_write,read_only,review_admin,warehouse_admin,query',
-};
 
 const datasetId = computed(() => dataset.value?.dataset_id || '');
 const reviewFields = computed(() => reviewSummary.value?.reviewable_fields || []);
@@ -238,7 +234,7 @@ async function requestJson(url, options = {}) {
   const response = await fetch(url, {
     ...options,
     headers: {
-      ...operatorHeaders,
+      ...authHeaders(),
       ...(options.headers || {}),
     },
   });
@@ -264,6 +260,11 @@ function appendAuditEvent(stage, status, details = {}) {
     },
     ...auditEvents.value,
   ].slice(0, 20);
+}
+
+function authHeaders() {
+  const token = window.localStorage.getItem('actor_token') || '';
+  return token ? { 'X-Actor-Token': token } : {};
 }
 
 function statusType(status) {

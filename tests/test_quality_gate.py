@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import shlex
 import unittest
 from pathlib import Path
 from tempfile import TemporaryDirectory
@@ -22,11 +23,14 @@ class FakeRunner:
         regex_score: str = "320 / 320",
         dirty: bool = False,
         create_demo_report: bool = True,
+        dirty_after_checks: bool = False,
     ) -> None:
         self.fail_command = fail_command
         self.regex_score = regex_score
         self.dirty = dirty
         self.create_demo_report = create_demo_report
+        self.dirty_after_checks = dirty_after_checks
+        self.demo_ran = False
         self.commands: list[str] = []
 
     def run(self, command: str, cwd: Path) -> CommandResult:
@@ -34,6 +38,8 @@ class FakeRunner:
         if "rev-parse" in command:
             return CommandResult(exit_code=0, stdout="abc123\n")
         if "status --porcelain" in command:
+            if self.dirty_after_checks and self.demo_ran:
+                return CommandResult(exit_code=0, stdout=" M generated.md\n")
             return CommandResult(exit_code=0, stdout=" M file.py\n" if self.dirty else "")
         if self.fail_command and self.fail_command in command:
             return CommandResult(exit_code=1, stderr=f"{self.fail_command} failed")
@@ -50,8 +56,9 @@ class FakeRunner:
                 ),
             )
         if "run_demo_acceptance.py" in command:
+            self.demo_ran = True
             if self.create_demo_report:
-                _write_demo_report(cwd)
+                _write_demo_report(_demo_output_dir(command, cwd))
             return CommandResult(exit_code=0, stdout="Wrote demo report\n")
         return CommandResult(exit_code=0, stdout="ok\n")
 
@@ -162,6 +169,16 @@ class QualityGateTest(unittest.TestCase):
         self.assertEqual(loaded["status"], report["status"])
         self.assertIn("Quality Gate 报告", markdown)
 
+    def test_new_generated_worktree_changes_fail_gate(self) -> None:
+        with TemporaryDirectory() as directory:
+            report = _run_fake_gate(
+                Path(directory),
+                runner=FakeRunner(dirty_after_checks=True),
+            )
+
+        self.assertEqual(report["status"], "fail")
+        self.assertIn("generated_artifact_consistency", _failed_check_names(report))
+
 
 def _run_fake_gate(
     root: Path,
@@ -218,8 +235,15 @@ def _pass_internal(name: str):
     return factory
 
 
-def _write_demo_report(root: Path) -> None:
-    report_dir = root / "outputs/demo_acceptance"
+def _demo_output_dir(command: str, cwd: Path) -> Path:
+    parts = shlex.split(command)
+    if "--output-dir" in parts:
+        index = parts.index("--output-dir")
+        return Path(parts[index + 1])
+    return cwd / "outputs/demo_acceptance"
+
+
+def _write_demo_report(report_dir: Path) -> None:
     report_dir.mkdir(parents=True, exist_ok=True)
     payload = {
         "summary": {

@@ -46,6 +46,7 @@ clean-artifacts:
 	find src scripts tests -type f \( -name '*.pyc' -o -name '*.pyo' \) -delete 2>/dev/null || true
 	rm -f .DS_Store
 	rm -f outputs/eval/*.audit_tmp.json
+	rm -rf outputs/tool_audit
 	rm -rf outputs/answer_demo
 	find outputs/mvp_demo -type f ! -name 'AGENTS.override.md' -delete 2>/dev/null || true
 	rm -rf outputs/quality_gate/tmp

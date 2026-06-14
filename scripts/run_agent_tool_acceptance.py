@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+import base64
 import json
 import sys
 import tempfile
@@ -233,7 +234,7 @@ def prepare_queryable_dataset(root: Path) -> str:
         "dataset.upload",
         {
             "filename": source.name,
-            "source_path": str(source),
+            "content_base64": base64.b64encode(source.read_bytes()).decode("ascii"),
             "dataset_id": dataset_id,
         },
         write_actor,
@@ -287,6 +288,7 @@ def _actor(root: Path, permission_scopes: list[str]) -> dict[str, Any]:
         "permission_scopes": permission_scopes,
         "dataset_root": str(root / "managed"),
         "audit_path": str(root / "operator_audit.jsonl"),
+        "_trusted_internal": True,
     }
 
 

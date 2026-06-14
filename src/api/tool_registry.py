@@ -3,9 +3,13 @@
 from __future__ import annotations
 
 import base64
+import binascii
+import fcntl
 import json
+import os
 import re
 import time
+from contextlib import contextmanager
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from pathlib import Path
@@ -30,6 +34,8 @@ from src.api.workbench import WorkbenchConfig, run_workbench
 ROOT_DIR = Path(__file__).resolve().parents[2]
 TOOL_SCHEMA_DIR = ROOT_DIR / "schemas/tools"
 DEFAULT_AUDIT_PATH = ROOT_DIR / "outputs/tool_audit/audit.jsonl"
+DEFAULT_AUDIT_MAX_BYTES = 5 * 1024 * 1024
+DEFAULT_AUDIT_BACKUPS = 5
 TOOL_CONTRACT_VERSION = "tools.v1"
 LLM_SAFE_TOOL_NAMES = {
     "dataset.profile",
@@ -254,17 +260,14 @@ def _tool_dataset_upload(
     payload: dict[str, Any],
 ) -> dict[str, Any]:
     filename = str(payload.get("filename") or "")
-    source_path = payload.get("source_path")
     content_base64 = payload.get("content_base64")
-    if source_path:
-        path = Path(str(source_path))
-        _reject_path_traversal(path)
-        filename = filename or path.name
-        content = path.read_bytes()
-    elif content_base64:
-        content = base64.b64decode(str(content_base64))
+    if content_base64:
+        try:
+            content = base64.b64decode(str(content_base64), validate=True)
+        except binascii.Error as exc:
+            raise ToolRegistryError("dataset.upload content_base64 is invalid") from exc
     else:
-        raise ToolRegistryError("dataset.upload requires source_path or content_base64")
+        raise ToolRegistryError("dataset.upload requires content_base64")
     return service.upload(
         filename=filename,
         content=content,
@@ -457,12 +460,13 @@ def _write_audit_event(
     actor_context: dict[str, Any],
     invocation: ToolInvocation,
 ) -> None:
-    audit_path = Path(actor_context.get("audit_path") or DEFAULT_AUDIT_PATH)
-    _reject_path_traversal(audit_path)
+    audit_path = _audit_path(actor_context)
     audit_path.parent.mkdir(parents=True, exist_ok=True)
-    audit_path.write_text("", encoding="utf-8") if not audit_path.exists() else None
-    with audit_path.open("a", encoding="utf-8") as handle:
-        handle.write(json.dumps(invocation.to_dict(), ensure_ascii=False) + "\n")
+    line = json.dumps(invocation.to_dict(), ensure_ascii=False) + "\n"
+    with _file_lock(audit_path.with_suffix(audit_path.suffix + ".lock")):
+        _rotate_audit_log_if_needed(audit_path, len(line.encode("utf-8")))
+        with audit_path.open("a", encoding="utf-8") as handle:
+            handle.write(line)
 
 
 def _payload_dataset_id(payload: dict[str, Any]) -> str | None:
@@ -507,6 +511,71 @@ def _error_code(exc: Exception) -> str:
 def _reject_path_traversal(path: Path) -> None:
     if ".." in path.parts:
         raise ToolRegistryError("Path traversal is not allowed")
+
+
+def _audit_path(actor_context: dict[str, Any]) -> Path:
+    if actor_context.get("_trusted_internal") and actor_context.get("audit_path"):
+        path = Path(str(actor_context["audit_path"]))
+        _reject_path_traversal(path)
+        return path
+    configured = os.getenv("TOOL_AUDIT_LOG_PATH")
+    path = Path(configured) if configured else DEFAULT_AUDIT_PATH
+    _reject_path_traversal(path)
+    if not path.is_absolute():
+        path = ROOT_DIR / path
+    output_root = _output_root()
+    resolved = path.resolve()
+    if resolved != output_root and output_root not in resolved.parents:
+        raise ToolRegistryError("Audit log path must be under OUTPUT_ROOT")
+    return resolved
+
+
+def _output_root() -> Path:
+    configured = Path(os.getenv("OUTPUT_ROOT", "outputs"))
+    if not configured.is_absolute():
+        configured = ROOT_DIR / configured
+    return configured.resolve()
+
+
+def _audit_max_bytes() -> int:
+    try:
+        return max(1024, int(os.getenv("TOOL_AUDIT_MAX_BYTES", DEFAULT_AUDIT_MAX_BYTES)))
+    except ValueError:
+        return DEFAULT_AUDIT_MAX_BYTES
+
+
+def _audit_backups() -> int:
+    try:
+        return max(1, int(os.getenv("TOOL_AUDIT_BACKUPS", DEFAULT_AUDIT_BACKUPS)))
+    except ValueError:
+        return DEFAULT_AUDIT_BACKUPS
+
+
+def _rotate_audit_log_if_needed(audit_path: Path, incoming_bytes: int) -> None:
+    if not audit_path.exists():
+        return
+    if audit_path.stat().st_size + incoming_bytes <= _audit_max_bytes():
+        return
+    backups = _audit_backups()
+    audit_path.with_name(f"{audit_path.name}.{backups}").unlink(missing_ok=True)
+    for index in range(backups - 1, 0, -1):
+        source = audit_path.with_name(f"{audit_path.name}.{index}")
+        target = audit_path.with_name(f"{audit_path.name}.{index + 1}")
+        if source.exists():
+            os.replace(source, target)
+    first = audit_path.with_name(f"{audit_path.name}.1")
+    os.replace(audit_path, first)
+
+
+@contextmanager
+def _file_lock(lock_path: Path):
+    lock_path.parent.mkdir(parents=True, exist_ok=True)
+    with lock_path.open("a", encoding="utf-8") as lock_file:
+        fcntl.flock(lock_file.fileno(), fcntl.LOCK_EX)
+        try:
+            yield
+        finally:
+            fcntl.flock(lock_file.fileno(), fcntl.LOCK_UN)
 
 
 def _utc_now() -> str:

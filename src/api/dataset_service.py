@@ -3,11 +3,14 @@
 from __future__ import annotations
 
 import hashlib
+import fcntl
 import json
 import os
 import re
 import shutil
-from dataclasses import dataclass
+import tempfile
+from contextlib import contextmanager
+from dataclasses import dataclass, replace
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
@@ -404,55 +407,50 @@ class DatasetService:
         """基于 approved domain pack 构建 DuckDB 和 schema/value index。"""
 
         metadata = self._load_metadata(dataset_id)
-        domain_dir = self._domain_dir(metadata)
-        domain = DomainConfig.from_path(domain_dir, metadata["domain_name"])
-        if domain.pack_status != "approved":
-            raise DatasetServiceError(
-                code="domain_not_approved",
-                message="未 approved 的 domain pack 不能构建 queryable warehouse。",
-                status_code=409,
+        with _warehouse_build_lock(self._dataset_dir(dataset_id)):
+            metadata = self._load_metadata(dataset_id)
+            domain_dir = self._domain_dir(metadata)
+            domain = DomainConfig.from_path(domain_dir, metadata["domain_name"])
+            if domain.pack_status != "approved":
+                raise DatasetServiceError(
+                    code="domain_not_approved",
+                    message="未 approved 的 domain pack 不能构建 queryable warehouse。",
+                    status_code=409,
+                )
+            dataset = load_source_dataset(
+                metadata["source_path"],
+                sheet_name=metadata.get("sheet_name"),
             )
-        dataset = load_source_dataset(
-            metadata["source_path"],
-            sheet_name=metadata.get("sheet_name"),
-        )
-        build_result = build_structured_store_from_dataset(
-            dataset=dataset,
-            schema_path=domain.schema_path,
-            database_path=domain.warehouse_database_path,
-            index_path=domain.value_index_path,
-            table_name=domain.table_name,
-            source_path=metadata["source_path"],
-        )
-        summary_path = domain_dir / "ingestion_summary.json"
-        summary_path.write_text(
-            json.dumps(build_result.to_dict(), ensure_ascii=False, indent=2) + "\n",
-            encoding="utf-8",
-        )
-        audit = audit_data_warehouse_fingerprints(
-            workbook_path=domain.workbook_path,
-            database_path=domain.warehouse_database_path,
-            index_path=domain.value_index_path,
-            table_name=domain.table_name,
-        )
-        _append_history(metadata, "warehouse_ready", build_result.to_dict())
-        status = "queryable" if audit["ok"] else "blocked"
-        _append_history(metadata, status, {"warehouse_audit": audit})
-        metadata.update(
-            {
-                "status": status,
-                "warehouse_database_path": str(domain.warehouse_database_path),
-                "schema_value_index_path": str(domain.value_index_path),
-                "ingestion_summary_path": str(summary_path),
-                "updated_at": _utc_now(),
+            build_result = _build_warehouse_atomic(
+                dataset=dataset,
+                domain=domain,
+                source_path=metadata["source_path"],
+                summary_path=domain_dir / "ingestion_summary.json",
+            )
+            audit = audit_data_warehouse_fingerprints(
+                workbook_path=domain.workbook_path,
+                database_path=domain.warehouse_database_path,
+                index_path=domain.value_index_path,
+                table_name=domain.table_name,
+            )
+            _append_history(metadata, "warehouse_ready", build_result.to_dict())
+            status = "queryable" if audit["ok"] else "blocked"
+            _append_history(metadata, status, {"warehouse_audit": audit})
+            metadata.update(
+                {
+                    "status": status,
+                    "warehouse_database_path": str(domain.warehouse_database_path),
+                    "schema_value_index_path": str(domain.value_index_path),
+                    "ingestion_summary_path": str(domain_dir / "ingestion_summary.json"),
+                    "updated_at": _utc_now(),
+                }
+            )
+            self._save_metadata(metadata)
+            return {
+                **self._public_metadata(metadata),
+                "warehouse": build_result.to_dict(),
+                "warehouse_audit": audit,
             }
-        )
-        self._save_metadata(metadata)
-        return {
-            **self._public_metadata(metadata),
-            "warehouse": build_result.to_dict(),
-            "warehouse_audit": audit,
-        }
 
     def query(
         self,
@@ -963,6 +961,58 @@ def _append_history(
         }
     )
     metadata["status"] = status
+
+
+def _build_warehouse_atomic(
+    *,
+    dataset: Any,
+    domain: DomainConfig,
+    source_path: str,
+    summary_path: Path,
+) -> Any:
+    warehouse_dir = domain.warehouse_database_path.parent
+    warehouse_dir.mkdir(parents=True, exist_ok=True)
+    with tempfile.TemporaryDirectory(
+        prefix=".warehouse_build_",
+        dir=str(warehouse_dir),
+    ) as directory:
+        temp_dir = Path(directory)
+        temp_database = temp_dir / domain.warehouse_database_path.name
+        temp_index = temp_dir / domain.value_index_path.name
+        temp_summary = temp_dir / summary_path.name
+        temp_result = build_structured_store_from_dataset(
+            dataset=dataset,
+            schema_path=domain.schema_path,
+            database_path=temp_database,
+            index_path=temp_index,
+            table_name=domain.table_name,
+            source_path=source_path,
+        )
+        final_result = replace(
+            temp_result,
+            database_path=domain.warehouse_database_path,
+            index_path=domain.value_index_path,
+        )
+        temp_summary.write_text(
+            json.dumps(final_result.to_dict(), ensure_ascii=False, indent=2) + "\n",
+            encoding="utf-8",
+        )
+        os.replace(temp_database, domain.warehouse_database_path)
+        os.replace(temp_index, domain.value_index_path)
+        os.replace(temp_summary, summary_path)
+        return final_result
+
+
+@contextmanager
+def _warehouse_build_lock(dataset_dir: Path):
+    lock_path = dataset_dir / ".warehouse_build.lock"
+    lock_path.parent.mkdir(parents=True, exist_ok=True)
+    with lock_path.open("a", encoding="utf-8") as lock_file:
+        fcntl.flock(lock_file.fileno(), fcntl.LOCK_EX)
+        try:
+            yield
+        finally:
+            fcntl.flock(lock_file.fileno(), fcntl.LOCK_UN)
 
 
 def _append_review_history(

@@ -7,6 +7,8 @@
 - [ ] 当前分支干净，未混入临时 report、DuckDB、上传原件、密钥或 `.venv`。
 - [ ] `.env.example` 不包含真实密钥。
 - [ ] `ENABLE_LLM=false` 为默认值。
+- [ ] 生产环境已配置 `AUTH_TOKENS_JSON`，且不会信任浏览器传来的 `permission_scopes`。
+- [ ] `DATA_ROOT`、`OUTPUT_ROOT`、`TOOL_AUDIT_LOG_PATH` 和 audit 轮转参数已指向持久化目录。
 - [ ] 已确认不会接入 Qwen、BGE、向量库或外部 LLM API。
 
 ## 2. 静态发布包
@@ -20,6 +22,7 @@ make release-check
 - [ ] `release_manifest.json` 可读取。
 - [ ] `sample_data/` 只包含小型脱敏 CSV 和说明。
 - [ ] `sample_outputs/` 只包含稳定示例，不包含真实大表或本机绝对路径。
+- [ ] `Dockerfile`、`docker-compose.yml`、`docs/production_deployment.md`、`docs/security_model.md` 和 `docs/backup_restore.md` 已更新。
 - [ ] `CHANGELOG.md`、`RELEASE_CHECKLIST.md` 和 `docs/demo_script.md` 已更新。
 
 ## 3. Functional Tool Server
@@ -36,6 +39,8 @@ curl http://127.0.0.1:8001/version
 - [ ] `/readyz` 通过 data root、tool schemas、DomainConfig 和 Quality Gate 基础依赖检查。
 - [ ] `/version` 返回 `api_version=api.v1`、`schema_version=workbench_response.v1`、`tool_contract_version=tools.v1`。
 - [ ] `/tools/list?llm_safe_only=true` 只返回五个 LLM-safe tools。
+- [ ] admin tool 调用必须使用 `Authorization: Bearer <operator-token>` 或 `X-Actor-Token`，旧 `X-Permission-Scopes` 与 body `actor_context.permission_scopes` 不授予权限。
+- [ ] `dataset.upload` tool 只接受 `content_base64`，不接受服务端 `source_path` 读取。
 
 ## 4. Demo 与 Agent 验收
 
@@ -93,18 +98,19 @@ make quality
 - [ ] warehouse fingerprint guard smoke 通过。
 - [ ] `git diff --check` 通过。
 - [ ] 前端 build 退出码为 0；既有 Vite/Rollup warning 只记录为 warning。
+- [ ] gate 报告写入 `outputs/quality_gate/tmp/latest/`，且 gate 会在运行中新产物改脏工作区时失败。
 
 ## 7. 清理与提交
 
 ```bash
 make clean-artifacts
-rm -f outputs/eval/fuzzy_eval_results.audit_tmp.json
 git status --short
 ```
 
 必须确认：
 
 - [ ] 没有临时 audit、临时 uploaded dataset、临时 warehouse 或本机 report 进入 commit。
+- [ ] 没有 `outputs/quality_gate/tmp/latest/`、tool audit 轮转文件或临时 upload 原件进入 commit。
 - [ ] 只 stage 本次 release package 相关文件。
 - [ ] commit message 简洁明确。
 

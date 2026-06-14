@@ -7,16 +7,11 @@
     "additionalProperties": false,
     "properties": {
       "filename": {"type": "string", "minLength": 1},
-      "source_path": {"type": "string"},
       "content_base64": {"type": "string"},
       "dataset_id": {"type": "string"},
       "sheet_name": {"type": "string"}
     },
-    "required": ["filename"],
-    "anyOf": [
-      {"required": ["source_path"]},
-      {"required": ["content_base64"]}
-    ]
+    "required": ["filename", "content_base64"]
   },
   "output_schema": {
     "type": "object",
@@ -37,12 +32,13 @@
   "security_notes": [
     "dataset_id must be path safe.",
     "Uploaded files cannot overwrite built-in domains.",
-    "This tool is not LLM-safe because it can write files."
+    "This tool is not LLM-safe because it can write files.",
+    "Tool upload accepts base64 content only; server-side source_path reads are disabled."
   ],
   "status_enum": ["uploaded", "blocked", "error"],
   "examples": [
     {
-      "request": {"filename": "admissions.xlsx", "source_path": "/safe/upload/admissions.xlsx"},
+      "request": {"filename": "admissions.xlsx", "content_base64": "base64..."},
       "response": {"dataset_id": "ds_example", "status": "uploaded", "source_fingerprint": "sha256..."}
     }
   ]

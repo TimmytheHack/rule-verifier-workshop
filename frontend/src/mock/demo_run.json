@@ -7,15 +7,15 @@
     "ok": true,
     "warnings": [],
     "source": {
-      "path": "/Users/tz/Desktop/Projects/SZU/广东省2025年志愿填报大数据（24-25）0523.xlsx",
+      "path": "sample_data/admissions_source.xlsx",
       "exists": true,
       "fingerprint": "38cdba7f2b9f5c05d52f8285df5df4fc622d7cd67e2e179cb0a0912d41dba5b3"
     },
     "duckdb": {
-      "path": "/var/folders/8x/m9y8nxl15rj6986pjlwl_d680000gn/T/tmp7cqowzol/guangdong_admissions.duckdb",
+      "path": "outputs/data/guangdong_admissions.duckdb",
       "exists": true,
       "metadata": {
-        "source_path": "/Users/tz/Desktop/Projects/SZU/广东省2025年志愿填报大数据（24-25）0523.xlsx",
+        "source_path": "sample_data/admissions_source.xlsx",
         "sheet_name": "Sheet1",
         "header_row": "3",
         "table_name": "admissions",
@@ -33,11 +33,11 @@
       "fingerprint": "38cdba7f2b9f5c05d52f8285df5df4fc622d7cd67e2e179cb0a0912d41dba5b3"
     },
     "schema_value_index": {
-      "path": "/var/folders/8x/m9y8nxl15rj6986pjlwl_d680000gn/T/tmp7cqowzol/schema_value_index.json",
+      "path": "outputs/data/schema_value_index.json",
       "exists": true,
       "source": {
-        "source_path": "/Users/tz/Desktop/Projects/SZU/广东省2025年志愿填报大数据（24-25）0523.xlsx",
-        "workbook_path": "/Users/tz/Desktop/Projects/SZU/广东省2025年志愿填报大数据（24-25）0523.xlsx",
+        "source_path": "sample_data/admissions_source.xlsx",
+        "workbook_path": "sample_data/admissions_source.xlsx",
         "sheet_name": "Sheet1",
         "header_row": 3,
         "fingerprint": "38cdba7f2b9f5c05d52f8285df5df4fc622d7cd67e2e179cb0a0912d41dba5b3",
@@ -45,7 +45,7 @@
         "created_at": "2026-06-13T15:08:21.966956Z"
       },
       "warehouse": {
-        "database_path": "/var/folders/8x/m9y8nxl15rj6986pjlwl_d680000gn/T/tmp7cqowzol/guangdong_admissions.duckdb",
+        "database_path": "outputs/data/guangdong_admissions.duckdb",
         "table_name": "admissions",
         "row_count": 30855,
         "column_count": 57,
@@ -1958,15 +1958,15 @@
       "ok": true,
       "warnings": [],
       "source": {
-        "path": "/Users/tz/Desktop/Projects/SZU/广东省2025年志愿填报大数据（24-25）0523.xlsx",
+        "path": "sample_data/admissions_source.xlsx",
         "exists": true,
         "fingerprint": "38cdba7f2b9f5c05d52f8285df5df4fc622d7cd67e2e179cb0a0912d41dba5b3"
       },
       "duckdb": {
-        "path": "/var/folders/8x/m9y8nxl15rj6986pjlwl_d680000gn/T/tmp7cqowzol/guangdong_admissions.duckdb",
+        "path": "outputs/data/guangdong_admissions.duckdb",
         "exists": true,
         "metadata": {
-          "source_path": "/Users/tz/Desktop/Projects/SZU/广东省2025年志愿填报大数据（24-25）0523.xlsx",
+          "source_path": "sample_data/admissions_source.xlsx",
           "sheet_name": "Sheet1",
           "header_row": "3",
           "table_name": "admissions",
@@ -1984,11 +1984,11 @@
         "fingerprint": "38cdba7f2b9f5c05d52f8285df5df4fc622d7cd67e2e179cb0a0912d41dba5b3"
       },
       "schema_value_index": {
-        "path": "/var/folders/8x/m9y8nxl15rj6986pjlwl_d680000gn/T/tmp7cqowzol/schema_value_index.json",
+        "path": "outputs/data/schema_value_index.json",
         "exists": true,
         "source": {
-          "source_path": "/Users/tz/Desktop/Projects/SZU/广东省2025年志愿填报大数据（24-25）0523.xlsx",
-          "workbook_path": "/Users/tz/Desktop/Projects/SZU/广东省2025年志愿填报大数据（24-25）0523.xlsx",
+          "source_path": "sample_data/admissions_source.xlsx",
+          "workbook_path": "sample_data/admissions_source.xlsx",
           "sheet_name": "Sheet1",
           "header_row": 3,
           "fingerprint": "38cdba7f2b9f5c05d52f8285df5df4fc622d7cd67e2e179cb0a0912d41dba5b3",
@@ -1996,7 +1996,7 @@
           "created_at": "2026-06-13T15:08:21.966956Z"
         },
         "warehouse": {
-          "database_path": "/var/folders/8x/m9y8nxl15rj6986pjlwl_d680000gn/T/tmp7cqowzol/guangdong_admissions.duckdb",
+          "database_path": "outputs/data/guangdong_admissions.duckdb",
           "table_name": "admissions",
           "row_count": 30855,
           "column_count": 57,

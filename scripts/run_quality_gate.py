@@ -35,10 +35,10 @@ from src.domains import DomainConfig
 
 
 DEFAULT_DOMAINS = ["admissions", "housing", "products"]
-OUTPUT_DIR = Path("outputs/quality_gate")
+OUTPUT_DIR = Path("outputs/quality_gate/tmp/latest")
 REPORT_JSON = "report.json"
 REPORT_MD = "report.md"
-REGEX_AUDIT_PATH = Path("outputs/eval/fuzzy_eval_results.audit_tmp.json")
+REGEX_AUDIT_FILENAME = "fuzzy_eval_results.audit_tmp.json"
 REGEX_EXPECTED_SCORE = "320/320"
 TAIL_LIMIT = 4000
 
@@ -154,6 +154,7 @@ def run_quality_gate(
     context = GateContext(root=root, options=options, runner=runner)
 
     git_commit, git_dirty = git_info(runner, root)
+    initial_dirty = _dirty_lines(git_dirty)
     context.summary.update(
         {
             "regex_score": "",
@@ -213,7 +214,8 @@ def run_quality_gate(
             name="regex_evaluator",
             command=(
                 ".venv/bin/python scripts/eval_fuzzy_inputs.py --methods regex "
-                f"--quiet --output-path {REGEX_AUDIT_PATH}"
+                "--quiet --output-path "
+                f"{context.options.output_dir / 'eval' / REGEX_AUDIT_FILENAME}"
             ),
             after=lambda check: _summarize_regex_score(context, check),
         )
@@ -236,6 +238,7 @@ def run_quality_gate(
         add_step(lambda: skipped_check("frontend_build", "用户传入 --skip-frontend。"))
     else:
         add_step(lambda: check_frontend_build(context))
+    add_step(lambda: check_no_new_worktree_changes(context, initial_dirty))
 
     finished = _utc_now()
     summary = finalize_summary(context)
@@ -284,7 +287,7 @@ def run_command_check(
     return check
 
 
-def check_git_state(context: GateContext, git_dirty: bool) -> dict[str, Any]:
+def check_git_state(context: GateContext, git_dirty: str) -> dict[str, Any]:
     if not git_dirty:
         return make_check(
             name="git_state",
@@ -306,7 +309,11 @@ def check_git_state(context: GateContext, git_dirty: bool) -> dict[str, Any]:
 
 
 def check_demo_acceptance(context: GateContext) -> dict[str, Any]:
-    command = ".venv/bin/python scripts/run_demo_acceptance.py"
+    output_dir = context.options.output_dir / "demo_acceptance"
+    command = (
+        ".venv/bin/python scripts/run_demo_acceptance.py "
+        f"--output-dir {output_dir}"
+    )
     result = context.runner.run(command, context.root)
     check = make_check(
         name="demo_acceptance",
@@ -317,11 +324,11 @@ def check_demo_acceptance(context: GateContext) -> dict[str, Any]:
         stdout=result.stdout,
         stderr=result.stderr,
         artifacts=[
-            "outputs/demo_acceptance/report.md",
-            "outputs/demo_acceptance/report.json",
+            str(output_dir / "report.md"),
+            str(output_dir / "report.json"),
         ],
     )
-    report_path = context.root / "outputs/demo_acceptance/report.json"
+    report_path = output_dir / "report.json"
     if not report_path.exists():
         check["status"] = "fail"
         check["stderr_tail"] = _append_tail(
@@ -349,6 +356,28 @@ def check_demo_acceptance(context: GateContext) -> dict[str, Any]:
         check["status"] = "fail"
         check["stderr_tail"] = _append_tail(check["stderr_tail"], "\n".join(failures))
     return check
+
+
+def check_no_new_worktree_changes(
+    context: GateContext,
+    initial_dirty: set[str],
+) -> dict[str, Any]:
+    result = context.runner.run("git status --porcelain", context.root)
+    current_dirty = _dirty_lines(result.stdout)
+    new_dirty = sorted(current_dirty - initial_dirty)
+    return make_check(
+        name="generated_artifact_consistency",
+        status="fail" if new_dirty else "pass",
+        command="git status --porcelain",
+        exit_code=1 if new_dirty else 0,
+        duration_seconds=result.duration_seconds,
+        stdout=(
+            "本次 Quality Gate 未新增工作区改动。"
+            if not new_dirty
+            else "\n".join(new_dirty)
+        ),
+        stderr=result.stderr,
+    )
 
 
 def check_domain_pack_validate(context: GateContext) -> dict[str, Any]:
@@ -807,10 +836,14 @@ def skipped_check(name: str, reason: str) -> dict[str, Any]:
     )
 
 
-def git_info(runner: CommandRunner, root: Path) -> tuple[str, bool]:
+def git_info(runner: CommandRunner, root: Path) -> tuple[str, str]:
     commit = runner.run("git rev-parse --short HEAD", root)
     status = runner.run("git status --porcelain", root)
-    return (commit.stdout.strip() or "unknown", bool(status.stdout.strip()))
+    return (commit.stdout.strip() or "unknown", status.stdout)
+
+
+def _dirty_lines(status_output: str) -> set[str]:
+    return {line for line in status_output.splitlines() if line.strip()}
 
 
 def _add_check(context: GateContext, check: dict[str, Any]) -> None:

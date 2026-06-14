@@ -50,6 +50,11 @@ GET /version
 | `warehouse_admin` | 构建 DuckDB warehouse 和 schema/value index。 |
 | `diagnostics` | 运行 quality gate 或 real dataset pilot。 |
 
+HTTP 服务端只信任 `AUTH_TOKENS_JSON` token 映射，调用方通过 `Authorization: Bearer <token>`、
+`X-Actor-Token` 或 `actor_token` cookie 传递 token。浏览器、LLM 或请求体
+`actor_context.permission_scopes` 不能授予权限。进程内维护脚本和测试可以直接调用
+`ToolRegistry` 并传入受信任 `actor_context`，但这不代表 HTTP 边界接受同样字段。
+
 ## LLM-safe 工具
 
 只有以下 tool 可标记为 LLM-safe：
@@ -177,30 +182,26 @@ confirmed = invoke_tool(
 outputs/tool_audit/audit.jsonl
 ```
 
-调用方也可以在 `actor_context.audit_path` 指定审计文件。
+生产环境可用 `TOOL_AUDIT_LOG_PATH` 固定路径。audit 写入会加文件锁，并按
+`TOOL_AUDIT_MAX_BYTES` 与 `TOOL_AUDIT_BACKUPS` 轮转；HTTP 请求体里的
+`actor_context.audit_path` 不会覆盖服务端路径。
 
 HTTP tool invoke 请求体固定为：
 
 ```json
 {
-  "payload": {},
-  "actor_context": {
-    "actor_id": "agent",
-    "permission_scopes": ["query"],
-    "dataset_root": "outputs/uploaded_datasets",
-    "audit_path": "outputs/tool_audit/audit.jsonl"
-  }
+  "payload": {}
 }
 ```
 
-HTTP headers 也可提供同样权限信息：
+HTTP headers：
 
 ```text
-X-Actor-Id: agent
-X-Permission-Scopes: query,read_only
+Authorization: Bearer agent-token
 ```
 
-`GET /tools/list?llm_safe_only=true` 在无权限 header 时只暴露 LLM-safe scopes；普通 `GET /tools/list` 会按 actor permission 过滤，不默认展示 admin tools。
+`GET /tools/list?llm_safe_only=true` 在无 token 时只暴露 LLM-safe scopes；普通
+`GET /tools/list` 会按 token 映射出的 actor permission 过滤，不默认展示 admin tools。
 
 ## Tool Manifest
 
@@ -299,8 +300,10 @@ outputs/agent_tool_acceptance/report.json
 
 - `draft`、`needs_review`、`blocked` domain pack 调用 `workbench.query` 必须返回 `blocked`，不执行 SQL。
 - `approve_field`、`approve_op`、`approve_domain` 必须使用 `review_admin` 权限，不能标记为 LLM-safe。
+- `dataset.upload` tool 只接受 `content_base64`，不能让 HTTP 调用方要求服务端读取 `source_path`。
 - `dataset.build_warehouse` 必须使用 `warehouse_admin` 权限。
+- `dataset.build_warehouse` 必须加 dataset 级锁，并原子发布 DuckDB、schema/value index 和 summary。
 - `quality.run` 和 `pilot.run` 是 diagnostics/admin tools，不暴露给 LLM 自动调用。
 - `evidence.get` 会移除 stack trace、环境变量、密钥和绝对本地路径。
 - LLM 不允许生成 SQL、不允许构造 hard rules、不允许伪造 `candidate_id`。
-- 每次 tool invoke 都写 audit event；audit event 只记录摘要和副作用，不记录完整上传文件内容、环境变量或 secret。
+- 每次 tool invoke 都写 audit event；audit event 只记录摘要和副作用，不记录完整上传文件内容、环境变量或 secret，并使用固定路径、文件锁和轮转策略。

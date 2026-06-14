@@ -82,12 +82,14 @@ async function runWorkbench(runRequest) {
   loading.value = true;
   apiError.value = '';
   try {
-    const response = await fetch('/api/workbench/run', {
+    const response = await fetch('/workbench/query', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
+        ...authHeaders(),
       },
       body: JSON.stringify({
+        domain_name: 'admissions',
         user_input: runRequest.user_input,
         hard_filters: runRequest.hard_filters,
         soft_preferences: runRequest.soft_preferences,
@@ -111,6 +113,11 @@ async function runWorkbench(runRequest) {
 function openTrace(result) {
   activeResult.value = result;
   traceVisible.value = true;
+}
+
+function authHeaders() {
+  const token = window.localStorage.getItem('actor_token') || '';
+  return token ? { 'X-Actor-Token': token } : {};
 }
 </script>
 

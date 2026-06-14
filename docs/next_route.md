@@ -21,11 +21,11 @@ make release-check
 make quality
 ```
 
-`outputs/demo_acceptance/`、`outputs/real_dataset_pilot/`、`outputs/quality_gate/` 和 `sample_outputs/` 仍保留为当前验收与发布证据。`outputs/data/*.duckdb`、demo acceptance warehouse、quality gate warehouse、uploaded dataset 和 audit scratch 继续保持本地生成、默认不提交。
+`outputs/demo_acceptance/`、`outputs/real_dataset_pilot/`、`outputs/quality_gate/tmp/latest/` 和 `sample_outputs/` 仍保留为当前验收与发布证据。`outputs/data/*.duckdb`、demo acceptance warehouse、quality gate warehouse、uploaded dataset 和 audit scratch 继续保持本地生成、默认不提交。
 
 ## 接下来优先路线
 
-1. Production Hardening：新增 `Dockerfile` / `docker-compose`、DATA_ROOT / OUTPUT_ROOT 持久化、audit log rotation、build warehouse lock、dataset_id namespace、CORS/auth/rate limit stub、`docs/production_deployment.md`、`docs/security_model.md`、`docs/backup_restore.md`。
+1. Production Hardening 收尾：在现有 Docker、持久化目录、服务端 token 鉴权、audit log rotation、warehouse build lock / atomic publish 和生产文档基础上，继续补 rate-limit stub、反向代理 TLS/CORS 策略和生产观测。
 2. Operator Trial 收敛：用真实招生 Excel 继续跑 `scripts/run_operator_trial.py`，记录 sheet/header/profile/review/approve/build/query 的人工卡点，补齐 operator checklist 中的失败样例和处理建议。
 3. Frontend Operator UI 收敛：强化 audit log、review required/risky/missing fields、warehouse status、EvidencePack 展示和 `needs_confirmation` 交互；继续要求前端只展示 `items`、`result_sections` 和 evidence，不生成推荐逻辑。
 4. Release Readiness：稳定 `make bootstrap`、`make serve`、`make demo`、`make pilot`、`make quality`、`make clean-artifacts`；更新 release manifest、demo script 和 sample outputs，准备 release tag。

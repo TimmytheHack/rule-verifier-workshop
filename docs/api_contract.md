@@ -1,6 +1,6 @@
 # Workbench API 响应契约
 
-本文固定 `/api/workbench/run` 和 `/workbench/query` 的多领域响应契约。前端应优先读取统一 `items`
+本文固定 `/workbench/query` 的多领域响应契约。旧 `/api/workbench/run` endpoint 已移除，前端应优先读取统一 `items`
 层；`top_results` 仅作为 domain-specific 兼容层保留。`debug_trace` 内保留旧调试
 结构，用于排查，不应作为主展示字段来源。
 
@@ -73,7 +73,7 @@ reviewed_by 和 approval history。
 `scripts/run_quality_gate.py` 是交付前统一门禁。它会运行 Python 语法检查、unit tests、
 regex evaluator、API contract tests、demo acceptance、domain pack validate、domain review
 workflow smoke、warehouse fingerprint guard、`git diff --check` 和可选前端 build。门禁报告写入
-`outputs/quality_gate/report.md` 和 `outputs/quality_gate/report.json`；任何 required check
+`outputs/quality_gate/tmp/latest/report.md` 和 `outputs/quality_gate/tmp/latest/report.json`；任何 required check
 失败时，release 不应继续。
 
 ## Uploaded Dataset / Ingestion API
@@ -108,7 +108,10 @@ endpoint：
 | `POST /datasets/{dataset_id}/build-warehouse` | 基于 approved pack 构建 DuckDB warehouse 和 value index。 |
 | `POST /workbench/query` | 支持 `dataset_id` / `domain_name`，返回同一 `WorkbenchResponse` contract。 |
 
-这些 endpoint 与 tool registry 使用同一套 actor context 和 permission enforcement。HTTP 调用方可以通过 `X-Actor-Id` 与 `X-Permission-Scopes` 传递身份和权限；`POST /tools/{tool_name}/invoke` 也可以在 body 的 `actor_context` 中传递同样字段。
+这些 endpoint 与 tool registry 使用同一套 permission enforcement。HTTP 权限只来自服务端
+`AUTH_TOKENS_JSON` token 映射，并通过 `Authorization: Bearer <token>`、`X-Actor-Token`
+或 `actor_token` cookie 传递。浏览器或 LLM 在 body `actor_context` 中传入的
+`actor_id`、`permission_scopes`、`audit_path`、`dataset_root` 不授予权限。
 
 ## Tool Server API
 
@@ -127,14 +130,14 @@ endpoint：
 
 ```json
 {
-  "payload": {},
-  "actor_context": {
-    "actor_id": "operator",
-    "permission_scopes": ["query"],
-    "dataset_root": "outputs/uploaded_datasets",
-    "audit_path": "outputs/tool_audit/audit.jsonl"
-  }
+  "payload": {}
 }
+```
+
+HTTP header 示例：
+
+```text
+Authorization: Bearer agent-token
 ```
 
 LLM-safe tools 只能是：

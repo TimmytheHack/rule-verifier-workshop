@@ -105,6 +105,18 @@
       "description": "本地部署说明。"
     },
     {
+      "path": "docs/production_deployment.md",
+      "description": "容器化生产部署说明。"
+    },
+    {
+      "path": "docs/security_model.md",
+      "description": "服务端鉴权、tool 权限和执行边界说明。"
+    },
+    {
+      "path": "docs/backup_restore.md",
+      "description": "上传数据、warehouse 和 audit log 备份恢复说明。"
+    },
+    {
       "path": "docs/operator_guide.md",
       "description": "operator 操作流程。"
     },
@@ -136,11 +148,15 @@
   "security_invariants": [
     "LLM-safe tools 只暴露 dataset.profile、dataset.review_summary、workbench.query、workbench.confirm、evidence.get。",
     "admin tools 默认不可见不可调用，必须由 operator/admin 权限触发。",
+    "HTTP 权限只来自服务端 AUTH_TOKENS_JSON token 映射，不能信任浏览器或 LLM 传入的 permission_scopes。",
     "draft、needs_review、blocked domain pack 不能执行 SQL。",
     "confirmed_candidate_ids 只能引用上一轮系统生成的 candidate_id。",
     "no_schema_field_preferences 永远不能执行。",
     "SQL 必须参数化，LLM 不能生成 SQL 或 executable hard rules。",
+    "dataset.upload tool 只接受 content_base64，服务端 source_path 读取默认禁用。",
     "API/tool output 不暴露 stack trace、secret、环境变量或危险绝对路径。",
+    "tool audit 使用固定路径、文件锁、大小上限和轮转。",
+    "warehouse build 使用 dataset 级锁和 atomic publish。",
     "结构化 Excel/CSV 使用 DuckDB warehouse、schema profile 和 schema/value index，不把大表全量 embedding。"
   ],
   "release_notes": {

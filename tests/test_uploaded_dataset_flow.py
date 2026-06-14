@@ -4,6 +4,7 @@ import json
 import unittest
 from pathlib import Path
 from tempfile import TemporaryDirectory
+from unittest.mock import patch
 
 import pandas as pd
 import yaml
@@ -108,6 +109,28 @@ class UploadedDatasetFlowTest(unittest.TestCase):
             [warning["code"] for warning in response["warnings"]],
         )
         self.assertEqual(response["debug_trace"]["execution"]["sql"], "")
+
+    def test_failed_rebuild_keeps_previous_queryable_warehouse(self) -> None:
+        with TemporaryDirectory() as directory:
+            service, dataset_id = _generated_generic_dataset(Path(directory))
+            _approve_generic_dataset(service, dataset_id)
+            service.build_warehouse(dataset_id)
+
+            with patch(
+                "src.api.dataset_service.build_structured_store_from_dataset",
+                side_effect=RuntimeError("simulated build failure"),
+            ):
+                with self.assertRaises(RuntimeError):
+                    service.build_warehouse(dataset_id)
+
+            response = service.query(
+                dataset_id,
+                user_input="Austin under 1900",
+                hard_filters={"city": ["Austin"], "rent_usd": 1900},
+            )
+
+        self.assertEqual(response["status"], "ok")
+        self.assertEqual(response["result_count"], 1)
 
     def test_unsafe_dataset_id_is_rejected(self) -> None:
         with TemporaryDirectory() as directory:

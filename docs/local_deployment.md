@@ -32,12 +32,15 @@ cp .env.example .env
 |---|---|
 | `DATA_ROOT` | uploaded dataset 托管目录，默认 `outputs/uploaded_datasets`。 |
 | `OUTPUT_ROOT` | 报告、audit、manifest 等输出根目录，默认 `outputs`。 |
+| `AUTH_TOKENS_JSON` | HTTP 鉴权 token 映射，生产环境必须配置。 |
 | `UPLOAD_MAX_MB` | 单个上传文件大小上限，默认 `25`。 |
 | `ENABLE_LLM` | 是否允许可选 LLM 辅助生成，默认 `false`。 |
 | `DEEPSEEK_API_KEY` | 可选 DeepSeek key；默认留空。 |
 | `DEEPSEEK_MODEL` | DeepSeek 模型名，默认 `deepseek-chat`。 |
 | `DEEPSEEK_API_URL` | DeepSeek OpenAI-compatible chat completions URL。 |
 | `TOOL_AUDIT_LOG_PATH` | tool invoke audit JSONL 路径。 |
+| `TOOL_AUDIT_MAX_BYTES` | 单个 audit JSONL 文件最大字节数，超过后轮转。 |
+| `TOOL_AUDIT_BACKUPS` | audit log 保留的轮转备份数量。 |
 | `FRONTEND_ORIGIN` | 允许的前端 origin，逗号分隔。 |
 | `LOG_LEVEL` | 服务日志级别。 |
 
@@ -81,25 +84,26 @@ curl http://127.0.0.1:8001/version
 | `POST /tools/{tool_name}/invoke` | 调用 ToolRegistry，写入 audit event。 |
 | `GET /openapi.json` | FastAPI 内置 OpenAPI。 |
 
+HTTP 权限只来自服务端 `AUTH_TOKENS_JSON` token 映射。开发环境可以先配置：
+
+```bash
+export AUTH_TOKENS_JSON='{"operator-token":{"actor_id":"operator","permission_scopes":["read_only","query","confirm","dataset_write","review_admin","warehouse_admin","diagnostics"]},"agent-token":{"actor_id":"agent","permission_scopes":["read_only","query","confirm"]}}'
+```
+
+请求通过 `Authorization: Bearer <token>` 或 `X-Actor-Token: <token>` 传递 token。服务端不信任浏览器或请求体传来的 `permission_scopes`、`actor_id`、`audit_path` 或 `dataset_root`。
+
 `POST /tools/{tool_name}/invoke` 请求体：
 
 ```json
 {
-  "payload": {},
-  "actor_context": {
-    "actor_id": "operator",
-    "permission_scopes": ["query"],
-    "dataset_root": "outputs/uploaded_datasets",
-    "audit_path": "outputs/tool_audit/audit.jsonl"
-  }
+  "payload": {}
 }
 ```
 
-也可以通过 HTTP headers 传递：
+HTTP header：
 
 ```text
-X-Actor-Id: operator
-X-Permission-Scopes: query,read_only
+Authorization: Bearer agent-token
 ```
 
 LLM/agent 默认只应看到 `llm_safe_only=true` 的工具：`dataset.profile`、`dataset.review_summary`、`workbench.query`、`workbench.confirm`、`evidence.get`。
@@ -146,11 +150,11 @@ make operator-trial
 make quality
 ```
 
-`make release-check` 会校验 `release_manifest.json`、`sample_data/`、`sample_outputs/`、发布文档和关键 Makefile 入口。`make quality` 会运行统一 Quality Gate，并生成：
+`make release-check` 会校验 `release_manifest.json`、`sample_data/`、`sample_outputs/`、发布文档和关键 Makefile 入口。`make quality` 会运行统一 Quality Gate，并生成临时报告：
 
 ```text
-outputs/quality_gate/report.md
-outputs/quality_gate/report.json
+outputs/quality_gate/tmp/latest/report.md
+outputs/quality_gate/tmp/latest/report.json
 ```
 
 常用辅助命令：
@@ -166,7 +170,7 @@ make frontend
 make clean-artifacts
 ```
 
-`make clean-artifacts` 只清理临时 audit、临时 gate warehouse 和临时导出产物，不删除正式报告。
+`make clean-artifacts` 会清理临时 audit、临时 gate warehouse、临时 Quality Gate 报告和临时导出产物，不删除正式发布样例。
 
 ## Operator Trial
 

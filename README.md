@@ -92,7 +92,7 @@ python scripts/run_real_dataset_pilot.py path/to/admissions.xlsx
 python scripts/run_quality_gate.py
 ```
 
-`review_domain_pack.py` 默认 dry-run，只有显式 `--write` 才会写入 `review.yaml`、runtime schema、rule taxonomy、attribute grounding、`top_result_mapping.yaml` 和 domain status。PII、高基数字段、自由文本 contains/keyword filter、未通过数值范围 sanity check 的字段都不能自动 approve。`draft` / `needs_review` pack 即使已有 seed candidate ops，也会在 Workbench 中返回 `blocked`，不执行 SQL；只有 `approved` pack 才能进入 demo acceptance、quality gate 和生产使用。`run_quality_gate.py` 会统一运行 Python 语法检查、unit tests、regex evaluator、demo acceptance、domain pack validate、warehouse fingerprint guard、`git diff --check` 和前端 build，并输出 `outputs/quality_gate/report.md` 与 `outputs/quality_gate/report.json`。
+`review_domain_pack.py` 默认 dry-run，只有显式 `--write` 才会写入 `review.yaml`、runtime schema、rule taxonomy、attribute grounding、`top_result_mapping.yaml` 和 domain status。PII、高基数字段、自由文本 contains/keyword filter、未通过数值范围 sanity check 的字段都不能自动 approve。`draft` / `needs_review` pack 即使已有 seed candidate ops，也会在 Workbench 中返回 `blocked`，不执行 SQL；只有 `approved` pack 才能进入 demo acceptance、quality gate 和生产使用。`run_quality_gate.py` 会统一运行 Python 语法检查、unit tests、regex evaluator、临时 demo acceptance、domain pack validate、warehouse fingerprint guard、前端 build 和生成产物一致性检查，并输出到 `outputs/quality_gate/tmp/latest/`。
 
 后端现在也提供 uploaded dataset 产品流，把上述 CLI 能力接成 API/service：
 
@@ -145,7 +145,7 @@ workbench.confirm
 evidence.get
 ```
 
-这些是唯一 LLM-safe tools。`dataset.upload`、`dataset.generate_domain_pack`、`approve-*`、`build-warehouse`、`quality.run` 和 `pilot.run` 都是写入或管理类工具，需要对应权限，不能自动暴露给 LLM。tool registry 位于 `src/api/tool_registry.py`，机器可读契约位于 `schemas/tools/*.json`。HTTP 包装层提供 `GET /tools/list`、`GET /tools/{tool_name}/schema`、`POST /tools/{tool_name}/invoke`、`GET /healthz`、`GET /readyz` 和 `GET /version`。使用指南见 [功能工具契约](docs/tool_contract.md)、[Agent 使用指南](docs/agent_usage_guide.md)、[本地部署说明](docs/local_deployment.md)、[Operator 操作指南](docs/operator_guide.md) 和 [故障排查](docs/troubleshooting.md)。
+这些是唯一 LLM-safe tools。`dataset.upload`、`dataset.generate_domain_pack`、`approve-*`、`build-warehouse`、`quality.run` 和 `pilot.run` 都是写入或管理类工具，需要对应权限，不能自动暴露给 LLM。HTTP 权限只来自服务端 `AUTH_TOKENS_JSON` token 映射，不信任浏览器或 LLM 传入的 `permission_scopes`；`dataset.upload` tool 只接受 `content_base64`，不读取服务端 `source_path`。tool registry 位于 `src/api/tool_registry.py`，机器可读契约位于 `schemas/tools/*.json`。HTTP 包装层提供 `GET /tools/list`、`GET /tools/{tool_name}/schema`、`POST /tools/{tool_name}/invoke`、`GET /healthz`、`GET /readyz` 和 `GET /version`。使用指南见 [功能工具契约](docs/tool_contract.md)、[Agent 使用指南](docs/agent_usage_guide.md)、[本地部署说明](docs/local_deployment.md)、[Operator 操作指南](docs/operator_guide.md)、[生产部署说明](docs/production_deployment.md)、[安全模型](docs/security_model.md)、[备份与恢复](docs/backup_restore.md) 和 [故障排查](docs/troubleshooting.md)。
 
 发布前可以导出接入契约：
 
@@ -196,9 +196,13 @@ cp .env.example .env
 
 ```text
 ENABLE_LLM=false
+AUTH_TOKENS_JSON=
 DEEPSEEK_API_KEY=
 DEEPSEEK_MODEL=deepseek-chat
 DEEPSEEK_API_URL=https://api.deepseek.com/chat/completions
+TOOL_AUDIT_LOG_PATH=outputs/tool_audit/audit.jsonl
+TOOL_AUDIT_MAX_BYTES=5242880
+TOOL_AUDIT_BACKUPS=5
 ```
 
 只使用前端 demo 模式、regex 抽取、模板证据回答、uploaded dataset、Quality Gate 或 tool server 时不需要 DeepSeek key；只有显式设置 `ENABLE_LLM=true` 并配置 `DEEPSEEK_API_KEY` 时，Workbench 才会调用 DeepSeek slot adapter。生产路径中的 DeepSeek 只补 deterministic extractor 缺失的 slots，不覆盖已抽取字段，不生成 SQL，不返回 hard rules 或 executable rules。

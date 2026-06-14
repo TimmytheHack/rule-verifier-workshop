@@ -104,9 +104,12 @@ class ServerDeploymentTest(unittest.TestCase):
             "DATA_ROOT=",
             "OUTPUT_ROOT=",
             "UPLOAD_MAX_MB=",
+            "AUTH_TOKENS_JSON=",
             "ENABLE_LLM=false",
             "DEEPSEEK_API_KEY=",
             "TOOL_AUDIT_LOG_PATH=",
+            "TOOL_AUDIT_MAX_BYTES=",
+            "TOOL_AUDIT_BACKUPS=",
             "FRONTEND_ORIGIN=",
             "LOG_LEVEL=",
         ]:

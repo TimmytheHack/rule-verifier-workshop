@@ -16,7 +16,10 @@
 
 所有 tool invoke 都写入 audit event，字段包括 `actor_id`、`tool_name`、`dataset_id`、`status`、`duration_seconds`、`side_effects` 和 `error_code`。audit log 不记录原始上传内容、环境变量或密钥。
 
-本地前端的 uploaded dataset 面板是 operator demo 面板，会带 `frontend_operator` 和所需管理权限 header 调用后端。生产前端应改为由真实登录态或网关注入权限，不能把 admin 权限暴露给普通 LLM/agent。
+生产服务端只信任 `AUTH_TOKENS_JSON` 中配置的 token 映射。浏览器、LLM 或请求体传来的
+`permission_scopes`、`actor_id` 不授予权限。本地前端可以把 operator token 放入
+`localStorage.actor_token` 进行人工 demo；生产前端应由真实登录态或网关注入 token，不能把
+admin token 暴露给普通 LLM/agent。
 
 ## 上传与 profile
 
@@ -25,22 +28,17 @@ HTTP 上传：
 ```bash
 curl -X POST \
   "http://127.0.0.1:8001/datasets/upload?filename=admissions.xlsx" \
-  -H "X-Actor-Id: operator" \
-  -H "X-Permission-Scopes: dataset_write" \
+  -H "Authorization: Bearer <operator-token>" \
   --data-binary @admissions.xlsx
 ```
 
-tool invoke 上传：
+tool invoke 上传只接受 HTTP/body/base64 内容，不读取服务端本地 `source_path`：
 
 ```json
 {
   "payload": {
     "filename": "admissions.xlsx",
-    "source_path": "/safe/path/admissions.xlsx"
-  },
-  "actor_context": {
-    "actor_id": "operator",
-    "permission_scopes": ["dataset_write"]
+    "content_base64": "<base64 encoded file bytes>"
   }
 }
 ```
@@ -51,8 +49,7 @@ tool invoke 上传：
 
 ```bash
 curl \
-  -H "X-Actor-Id: operator" \
-  -H "X-Permission-Scopes: read_only" \
+  -H "Authorization: Bearer <operator-token>" \
   http://127.0.0.1:8001/datasets/<dataset_id>/profile
 ```
 
@@ -69,8 +66,7 @@ profile 应重点检查：
 ```bash
 curl -X POST \
   -H "Content-Type: application/json" \
-  -H "X-Actor-Id: operator" \
-  -H "X-Permission-Scopes: dataset_write" \
+  -H "Authorization: Bearer <operator-token>" \
   http://127.0.0.1:8001/datasets/<dataset_id>/generate-domain-pack \
   -d '{"base_domain":"admissions","llm":"off"}'
 ```
@@ -81,8 +77,7 @@ curl -X POST \
 
 ```bash
 curl \
-  -H "X-Actor-Id: reviewer" \
-  -H "X-Permission-Scopes: read_only" \
+  -H "Authorization: Bearer <operator-token>" \
   http://127.0.0.1:8001/datasets/<dataset_id>/review-summary
 ```
 
@@ -101,8 +96,7 @@ curl \
 ```bash
 curl -X POST \
   -H "Content-Type: application/json" \
-  -H "X-Actor-Id: reviewer" \
-  -H "X-Permission-Scopes: review_admin" \
+  -H "Authorization: Bearer <operator-token>" \
   http://127.0.0.1:8001/datasets/<dataset_id>/approve-field \
   -d '{"field_id":"city","note":"城市字段已核对"}'
 ```
@@ -112,8 +106,7 @@ curl -X POST \
 ```bash
 curl -X POST \
   -H "Content-Type: application/json" \
-  -H "X-Actor-Id: reviewer" \
-  -H "X-Permission-Scopes: review_admin" \
+  -H "Authorization: Bearer <operator-token>" \
   http://127.0.0.1:8001/datasets/<dataset_id>/approve-op \
   -d '{"field_id":"city","op":"in","note":"低基数字段，可执行 in"}'
 ```
@@ -123,8 +116,7 @@ curl -X POST \
 ```bash
 curl -X POST \
   -H "Content-Type: application/json" \
-  -H "X-Actor-Id: reviewer" \
-  -H "X-Permission-Scopes: review_admin" \
+  -H "Authorization: Bearer <operator-token>" \
   http://127.0.0.1:8001/datasets/<dataset_id>/block-field \
   -d '{"field_id":"phone","note":"PII 字段"}'
 ```
@@ -134,8 +126,7 @@ curl -X POST \
 ```bash
 curl -X POST \
   -H "Content-Type: application/json" \
-  -H "X-Actor-Id: reviewer" \
-  -H "X-Permission-Scopes: review_admin" \
+  -H "Authorization: Bearer <operator-token>" \
   http://127.0.0.1:8001/datasets/<dataset_id>/approve-domain \
   -d '{"title_field":"university_name","primary_fields":["group_code","major_name","city"],"sort_field":"min_rank"}'
 ```
@@ -144,20 +135,19 @@ curl -X POST \
 
 ```bash
 curl -X POST \
-  -H "X-Actor-Id: warehouse_admin" \
-  -H "X-Permission-Scopes: warehouse_admin" \
+  -H "Authorization: Bearer <operator-token>" \
   http://127.0.0.1:8001/datasets/<dataset_id>/build-warehouse
 ```
 
-`build-warehouse` 会生成 DuckDB、schema/value index、ingestion summary，并校验 source fingerprint。fingerprint 不一致时状态为 `blocked`，不能 query。
+`build-warehouse` 会加 dataset 级锁，原子发布 DuckDB、schema/value index 和 ingestion
+summary，并校验 source fingerprint。fingerprint 不一致时状态为 `blocked`，不能 query。
 
 ## 查询
 
 ```bash
 curl -X POST \
   -H "Content-Type: application/json" \
-  -H "X-Actor-Id: agent" \
-  -H "X-Permission-Scopes: query" \
+  -H "Authorization: Bearer <agent-token>" \
   http://127.0.0.1:8001/workbench/query \
   -d '{"dataset_id":"<dataset_id>","domain_name":"admissions","user_input":"列出25年深圳大学录取最高的专业组及专业组里面的各个专业最低录取分数","extractor":"regex"}'
 ```
@@ -167,8 +157,9 @@ curl -X POST \
 ```bash
 curl -X POST \
   -H "Content-Type: application/json" \
+  -H "Authorization: Bearer <agent-token>" \
   http://127.0.0.1:8001/tools/workbench.query/invoke \
-  -d '{"payload":{"dataset_id":"<dataset_id>","domain":"admissions","natural_language":"我今年高考分数630，想读计算机，想留在广东省","deterministic_fields":{"user_score":630}},"actor_context":{"actor_id":"agent","permission_scopes":["query"]}}'
+  -d '{"payload":{"dataset_id":"<dataset_id>","domain":"admissions","natural_language":"我今年高考分数630，想读计算机，想留在广东省","deterministic_fields":{"user_score":630}}}'
 ```
 
 前端和 agent 应优先读取 `items`、`result_sections`、`warnings` 和 `evidence_pack`。`top_results` 只作为 domain-specific 兼容层。

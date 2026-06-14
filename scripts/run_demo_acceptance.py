@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import argparse
 import json
 import math
 import shutil
@@ -298,7 +299,9 @@ CASES = [
 ]
 
 
-def main() -> int:
+def main(argv: list[str] | None = None) -> int:
+    args = parse_args(argv)
+    configure_output_dir(Path(args.output_dir))
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
     warehouse_paths = build_demo_warehouses()
     records = run_acceptance_cases(warehouse_paths)
@@ -312,6 +315,23 @@ def main() -> int:
     print(f"Wrote {REPORT_MD_PATH}")
     print(f"Wrote {REPORT_JSON_PATH}")
     return 0 if report["summary"]["failed"] == 0 else 1
+
+
+def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--output-dir", default=str(OUTPUT_DIR))
+    return parser.parse_args(argv)
+
+
+def configure_output_dir(output_dir: Path) -> None:
+    global OUTPUT_DIR, WAREHOUSE_DIR, REPORT_JSON_PATH, REPORT_MD_PATH
+    global UPLOADED_DATASET_DIR, UPLOADED_SOURCE_DIR
+    OUTPUT_DIR = output_dir
+    WAREHOUSE_DIR = OUTPUT_DIR / "warehouses"
+    REPORT_JSON_PATH = OUTPUT_DIR / "report.json"
+    REPORT_MD_PATH = OUTPUT_DIR / "report.md"
+    UPLOADED_DATASET_DIR = OUTPUT_DIR / "uploaded_datasets"
+    UPLOADED_SOURCE_DIR = OUTPUT_DIR / "uploaded_sources"
 
 
 def build_demo_warehouses() -> dict[str, tuple[Path, Path]]:

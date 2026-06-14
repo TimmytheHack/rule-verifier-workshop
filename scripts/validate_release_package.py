@@ -29,7 +29,12 @@ REQUIRED_MAKE_TARGETS = {
 REQUIRED_RELEASE_FILES = {
     "CHANGELOG.md",
     "RELEASE_CHECKLIST.md",
+    "Dockerfile",
+    "docker-compose.yml",
     "docs/demo_script.md",
+    "docs/production_deployment.md",
+    "docs/security_model.md",
+    "docs/backup_restore.md",
     "release_manifest.json",
 }
 FORBIDDEN_SAMPLE_SUFFIXES = {".duckdb", ".db", ".sqlite", ".env"}

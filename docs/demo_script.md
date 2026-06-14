@@ -138,8 +138,8 @@ make quality
 打开：
 
 ```text
-outputs/quality_gate/report.md
-outputs/quality_gate/report.json
+outputs/quality_gate/tmp/latest/report.md
+outputs/quality_gate/tmp/latest/report.json
 ```
 
 讲解点：
@@ -154,7 +154,6 @@ outputs/quality_gate/report.json
 
 ```bash
 make clean-artifacts
-rm -f outputs/eval/fuzzy_eval_results.audit_tmp.json
 git status --short
 ```
 

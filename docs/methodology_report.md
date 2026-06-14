@@ -53,8 +53,9 @@ Workbench 中返回 `blocked`，不执行 SQL。
 交付前必须运行 `scripts/run_quality_gate.py`。该门禁统一覆盖 Python 语法检查、unit
 tests、regex evaluator、API contract tests、demo acceptance、domain pack validate、domain
 review workflow smoke、warehouse fingerprint guard、`git diff --check` 和前端 build。报告
-写入 `outputs/quality_gate/report.md` 与 `outputs/quality_gate/report.json`，用于 commit /
-release 前的审计。
+写入 `outputs/quality_gate/tmp/latest/report.md` 与
+`outputs/quality_gate/tmp/latest/report.json`，并检查运行期间是否新增未跟踪或被改脏的
+tracked artifact，防止 gate 通过但工作区被产物污染。
 
 上传数据集产品流没有绕过这些边界。`POST /datasets/upload` 只保存 CSV/Excel 并生成
 路径安全的 `dataset_id`；`generate-domain-pack` 仍调用同一个 schema profiling 和 draft

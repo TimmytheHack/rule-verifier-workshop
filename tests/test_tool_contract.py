@@ -1,9 +1,11 @@
 from __future__ import annotations
 
+import base64
 import json
 import unittest
 from pathlib import Path
 from tempfile import TemporaryDirectory
+from unittest.mock import patch
 
 import pandas as pd
 from jsonschema import Draft202012Validator
@@ -271,6 +273,41 @@ class ToolContractTest(unittest.TestCase):
         self.assertNotIn("sk-secret", serialized)
         self.assertNotIn("api_key", serialized)
 
+    def test_dataset_upload_rejects_source_path_contract(self) -> None:
+        with self.assertRaises(Exception):
+            invoke_tool(
+                "dataset.upload",
+                {
+                    "filename": "housing.csv",
+                    "source_path": "/tmp/housing.csv",
+                },
+                _actor(Path("/tmp"), ["dataset_write"]),
+            )
+
+    def test_audit_log_rotates_when_size_limit_is_reached(self) -> None:
+        with TemporaryDirectory() as directory:
+            root = Path(directory)
+            actor = _actor(root, ["read_only"])
+            with patch.dict(
+                "os.environ",
+                {"TOOL_AUDIT_MAX_BYTES": "1024", "TOOL_AUDIT_BACKUPS": "2"},
+            ):
+                for index in range(12):
+                    invoke_tool(
+                        "evidence.get",
+                        {
+                            "evidence_pack": {
+                                "result_count": index,
+                                "padding": "x" * 300,
+                            }
+                        },
+                        actor,
+                    )
+
+            audit_path = root / "audit.jsonl"
+            self.assertTrue(audit_path.exists())
+            self.assertTrue(audit_path.with_name("audit.jsonl.1").exists())
+
     def test_tool_outputs_match_response_contracts(self) -> None:
         with TemporaryDirectory() as directory:
             root = Path(directory)
@@ -306,6 +343,7 @@ def _actor(root: Path, permissions: list[str]) -> dict[str, object]:
         "permission_scopes": permissions,
         "dataset_root": str(root / "managed"),
         "audit_path": str(root / "audit.jsonl"),
+        "_trusted_internal": True,
     }
 
 
@@ -324,7 +362,7 @@ def _generated_generic_dataset(root: Path) -> str:
         "dataset.upload",
         {
             "filename": source.name,
-            "source_path": str(source),
+            "content_base64": base64.b64encode(source.read_bytes()).decode("ascii"),
             "dataset_id": dataset_id,
         },
         actor,

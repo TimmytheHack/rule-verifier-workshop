@@ -1,0 +1,13 @@
+.git
+.venv
+.env
+frontend/node_modules
+frontend/dist
+node_modules
+outputs
+tmp
+__pycache__
+*.pyc
+*.pyo
+.DS_Store
+广东省2025年志愿填报大数据（24-25）0523.xlsx
