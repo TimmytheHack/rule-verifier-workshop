@@ -1,0 +1,42 @@
+{
+  "name": "dataset.block_field",
+  "description": "人工阻断某个字段执行，即使它有 seed ops 也不能成为 hard filter。",
+  "llm_safe": false,
+  "input_schema": {
+    "type": "object",
+    "additionalProperties": false,
+    "properties": {
+      "dataset_id": {"type": "string", "minLength": 1},
+      "field_id": {"type": "string", "minLength": 1},
+      "note": {"type": "string"}
+    },
+    "required": ["dataset_id", "field_id"]
+  },
+  "output_schema": {
+    "type": "object",
+    "required": ["dataset_id", "ok", "written"],
+    "properties": {
+      "dataset_id": {"type": "string"},
+      "ok": {"type": "boolean"},
+      "written": {"type": "boolean"},
+      "payload": {"type": "object"}
+    },
+    "additionalProperties": true
+  },
+  "permission_scope": "review_admin",
+  "side_effects": ["writes review.yaml", "updates field blocking metadata", "writes tool audit event"],
+  "required_domain_status": "needs_review",
+  "executes_sql": false,
+  "writes_files": true,
+  "security_notes": [
+    "Not LLM-safe.",
+    "Blocking is audited and takes precedence over seed suggestions."
+  ],
+  "status_enum": ["ok", "error"],
+  "examples": [
+    {
+      "request": {"dataset_id": "ds_example", "field_id": "email"},
+      "response": {"dataset_id": "ds_example", "ok": true, "written": true}
+    }
+  ]
+}

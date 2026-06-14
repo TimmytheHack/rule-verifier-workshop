@@ -1,6 +1,6 @@
 # Demo Acceptance 验收报告
 
-- 生成时间：`2026-06-14T04:52:31.294617Z`
+- 生成时间：`2026-06-14T06:10:08.302569Z`
 - 总记录数：`29`
 - 通过：`29`
 - 失败：`0`
@@ -27155,7 +27155,7 @@ candidate_id 确认状态：
   "generate_status": "needs_review",
   "approve_ok": true,
   "build_status": "queryable",
-  "source_fingerprint": "bad88abfec3a7dd2a72dd00a6c3fe6159c61625b295f6ca7adf23a9891b43f73"
+  "source_fingerprint": "46d0a437dc5c014e4be6ecb1cb9fb2d7de3fdfe8a61586d7324e4e5fbc8f105a"
 }
 ```
 ### EvidencePack

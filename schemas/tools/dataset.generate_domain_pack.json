@@ -1,0 +1,43 @@
+{
+  "name": "dataset.generate_domain_pack",
+  "description": "为 uploaded dataset 生成 draft/needs_review domain pack、schema profile、value index 和 ingestion summary。",
+  "llm_safe": false,
+  "input_schema": {
+    "type": "object",
+    "additionalProperties": false,
+    "properties": {
+      "dataset_id": {"type": "string", "minLength": 1},
+      "domain_name": {"type": "string"},
+      "base_domain": {"type": "string"},
+      "llm": {"type": "string", "enum": ["off", "deepseek"]}
+    },
+    "required": ["dataset_id"]
+  },
+  "output_schema": {
+    "type": "object",
+    "required": ["dataset_id", "status", "domain_pack_status"],
+    "properties": {
+      "dataset_id": {"type": "string"},
+      "status": {"type": "string"},
+      "domain_pack_status": {"type": "string"},
+      "profile": {"type": "object"}
+    },
+    "additionalProperties": true
+  },
+  "permission_scope": "dataset_write",
+  "side_effects": ["writes domain pack files", "writes schema profile", "writes value index", "writes ingestion summary"],
+  "required_domain_status": "uploaded",
+  "executes_sql": false,
+  "writes_files": true,
+  "security_notes": [
+    "Generated configs remain draft/needs_review.",
+    "Seed ops are review inputs and cannot execute."
+  ],
+  "status_enum": ["profiled", "draft_domain_generated", "needs_review", "blocked", "error"],
+  "examples": [
+    {
+      "request": {"dataset_id": "ds_example", "domain_name": "admissions", "base_domain": "admissions", "llm": "off"},
+      "response": {"dataset_id": "ds_example", "status": "needs_review", "domain_pack_status": "needs_review"}
+    }
+  ]
+}

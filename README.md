@@ -1,6 +1,6 @@
 # 偏好到规则验证工作台
 
-本项目是一个面向广东高考志愿填报场景的研究工程项目，核心目标是验证“自然语言偏好”能否被安全地转换为可执行规则。它不是普通志愿推荐 bot，也不会把模糊偏好直接当作筛选条件执行。
+本项目是一个面向广东高考志愿填报场景的研究工程项目，核心目标是验证“自然语言偏好”能否被安全地转换为可执行规则。当前工程形态已经包装为 `LLM-safe structured data query tool server for Excel/CSV`：LLM/agent/前端可以调用稳定 tool contracts，但不能绕过 schema grounding、RuleVerifier、confirmation loop 或 DuckDB fingerprint guard。它不是普通志愿推荐 bot，也不会把模糊偏好直接当作筛选条件执行。
 
 项目关注的问题是：
 
@@ -27,6 +27,7 @@
 | `schemas/` | schema profile 和历史配置；运行时 schema 以 `domains/admissions/schema_registry.json` 为准 |
 | `rules/` | 跨 domain 的规则生命周期、信息需求和模糊词参考配置 |
 | `scripts/` | demo、评估、离线 schema profiling 和 domain pack auto-generator 脚本 |
+| `schemas/tools/` | 面向 LLM/agent/前端的 functional tool contracts |
 | `docs/` | 方法、评估和端到端 demo 文档 |
 | `outputs/` | 已生成 demo 和 evaluation artifact |
 
@@ -124,6 +125,18 @@ Workbench 还支持 candidate_id confirmation loop：
 - 后端会按当前 query 重新生成候选并校验 `candidate_id`；伪造、过期或不属于当前 query 的 id 会被拒绝。
 - 确认通过后，系统只把该 candidate 对应的已审查字段和值编译成参数化 DuckDB SQL。
 - `no_schema_field` 偏好即使被提交确认也不会执行，只会保留在证据包中解释。
+
+LLM/agent/前端可通过 functional tool layer 调用现有能力：
+
+```text
+dataset.profile
+dataset.review_summary
+workbench.query
+workbench.confirm
+evidence.get
+```
+
+这些是唯一 LLM-safe tools。`dataset.upload`、`dataset.generate_domain_pack`、`approve-*`、`build-warehouse`、`quality.run` 和 `pilot.run` 都是写入或管理类工具，需要对应权限，不能自动暴露给 LLM。tool registry 位于 `src/api/tool_registry.py`，机器可读契约位于 `schemas/tools/*.json`，使用指南见 [功能工具契约](docs/tool_contract.md) 和 [Agent 使用指南](docs/agent_usage_guide.md)。
 
 ## 启动后端
 
@@ -261,6 +274,8 @@ DeepSeek-backed 评估会读取 `.env`，并可能产生 API 延迟和 token 消
 
 - [方法报告](docs/methodology_report.md)
 - [Workbench API 响应契约](docs/api_contract.md)
+- [功能工具契约](docs/tool_contract.md)
+- [Agent 使用指南](docs/agent_usage_guide.md)
 - [Real Dataset Pilot](docs/real_dataset_pilot.md)
 - [评估报告](docs/evaluation_report.md)
 - [端到端 demo 用例](docs/end_to_end_demo_cases.md)

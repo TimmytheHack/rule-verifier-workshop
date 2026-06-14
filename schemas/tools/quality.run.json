@@ -1,0 +1,43 @@
+{
+  "name": "quality.run",
+  "description": "运行统一 Quality Gate 并输出质量报告。",
+  "llm_safe": false,
+  "input_schema": {
+    "type": "object",
+    "additionalProperties": false,
+    "properties": {
+      "fail_fast": {"type": "boolean"},
+      "skip_frontend": {"type": "boolean"},
+      "skip_demo": {"type": "boolean"},
+      "domains": {"type": "array", "items": {"type": "string"}},
+      "output_dir": {"type": "string"},
+      "strict": {"type": "boolean"}
+    }
+  },
+  "output_schema": {
+    "type": "object",
+    "required": ["status", "checks", "summary"],
+    "properties": {
+      "status": {"type": "string", "enum": ["pass", "fail"]},
+      "checks": {"type": "array"},
+      "summary": {"type": "object"}
+    },
+    "additionalProperties": true
+  },
+  "permission_scope": "diagnostics",
+  "side_effects": ["runs tests and checks", "writes quality gate reports", "writes tool audit event"],
+  "required_domain_status": "none",
+  "executes_sql": true,
+  "writes_files": true,
+  "security_notes": [
+    "Not LLM-safe.",
+    "May run shell commands through the existing quality gate script."
+  ],
+  "status_enum": ["pass", "fail", "error"],
+  "examples": [
+    {
+      "request": {"skip_frontend": true},
+      "response": {"status": "pass", "checks": [], "summary": {}}
+    }
+  ]
+}

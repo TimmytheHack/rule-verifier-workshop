@@ -4,6 +4,11 @@
 层；`top_results` 仅作为 domain-specific 兼容层保留。`debug_trace` 内保留旧调试
 结构，用于排查，不应作为主展示字段来源。
 
+项目对外定位为 `LLM-safe structured data query tool server for Excel/CSV`。HTTP API、
+`src/api/tool_registry.py` 和 `schemas/tools/*.json` 都必须复用本文的
+`WorkbenchResponse` / DatasetResponse / QualityGate report 契约，不能另造一套可绕过 verifier
+的输入或输出结构。
+
 ## status 枚举
 
 | status | 含义 |
@@ -115,6 +120,39 @@ endpoint：
 - `warehouse` metadata、schema/value index metadata 和源文件 fingerprint 不一致时返回 `blocked`。
 - `POST /workbench/query` 仍走 `DomainConfig`、`RuleVerifier`、confirmation loop 和参数化 DuckDB SQL；前端自然语言不能直接生成 hard filter。
 - uploaded admissions 数据集可以复用已审查 `admissions` domain pack，但仍必须先 `approve-domain` 并重建 warehouse。
+
+## Functional Tool Layer
+
+tool registry 位于：
+
+```text
+src/api/tool_registry.py
+```
+
+机器可读 tool contract 位于：
+
+```text
+schemas/tools/*.json
+```
+
+LLM-safe tools 仅限：
+
+```text
+dataset.profile
+dataset.review_summary
+workbench.query
+workbench.confirm
+evidence.get
+```
+
+`workbench.query` 的 LLM-facing input 只允许 `dataset_id`、`domain`、
+`deterministic_fields`、`natural_language`、`confirmed_candidate_ids`、`top_k`。
+不得接受 `raw_sql`、`sql`、`hard_rules`、`executable_rules`、`approved_ops` 或
+`domain_pack_status`。`workbench.confirm` 必须基于上一轮 `WorkbenchResponse` 和
+系统生成的 `candidate_id`，不能接受新的用户自由文本来构造 hard filter。
+
+详细 tool contract 见 `docs/tool_contract.md`，agent 调用规范见
+`docs/agent_usage_guide.md`。
 
 ## Real Dataset Pilot
 

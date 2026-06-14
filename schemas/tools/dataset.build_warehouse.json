@@ -1,0 +1,41 @@
+{
+  "name": "dataset.build_warehouse",
+  "description": "基于 approved domain pack 构建 DuckDB warehouse 和 schema/value index。",
+  "llm_safe": false,
+  "input_schema": {
+    "type": "object",
+    "additionalProperties": false,
+    "properties": {
+      "dataset_id": {"type": "string", "minLength": 1}
+    },
+    "required": ["dataset_id"]
+  },
+  "output_schema": {
+    "type": "object",
+    "required": ["dataset_id", "status", "warehouse"],
+    "properties": {
+      "dataset_id": {"type": "string"},
+      "status": {"type": "string"},
+      "warehouse": {"type": "object"},
+      "warehouse_audit": {"type": "object"}
+    },
+    "additionalProperties": true
+  },
+  "permission_scope": "warehouse_admin",
+  "side_effects": ["writes DuckDB warehouse", "writes schema value index", "writes ingestion summary", "writes tool audit event"],
+  "required_domain_status": "approved",
+  "executes_sql": true,
+  "writes_files": true,
+  "security_notes": [
+    "Not LLM-safe.",
+    "Fails unless domain pack is approved.",
+    "Fingerprint guard must pass before queryable status."
+  ],
+  "status_enum": ["warehouse_ready", "queryable", "blocked", "error"],
+  "examples": [
+    {
+      "request": {"dataset_id": "ds_example"},
+      "response": {"dataset_id": "ds_example", "status": "queryable", "warehouse": {}}
+    }
+  ]
+}

@@ -1,0 +1,49 @@
+{
+  "name": "dataset.upload",
+  "description": "上传 CSV/Excel 到托管数据目录，生成路径安全 dataset_id 和 source_fingerprint。",
+  "llm_safe": false,
+  "input_schema": {
+    "type": "object",
+    "additionalProperties": false,
+    "properties": {
+      "filename": {"type": "string", "minLength": 1},
+      "source_path": {"type": "string"},
+      "content_base64": {"type": "string"},
+      "dataset_id": {"type": "string"},
+      "sheet_name": {"type": "string"}
+    },
+    "required": ["filename"],
+    "anyOf": [
+      {"required": ["source_path"]},
+      {"required": ["content_base64"]}
+    ]
+  },
+  "output_schema": {
+    "type": "object",
+    "required": ["dataset_id", "status", "source_fingerprint"],
+    "properties": {
+      "dataset_id": {"type": "string"},
+      "status": {"type": "string"},
+      "source_fingerprint": {"type": "string"},
+      "warnings": {"type": "array"}
+    },
+    "additionalProperties": true
+  },
+  "permission_scope": "dataset_write",
+  "side_effects": ["writes uploaded source file", "writes dataset metadata"],
+  "required_domain_status": "none",
+  "executes_sql": false,
+  "writes_files": true,
+  "security_notes": [
+    "dataset_id must be path safe.",
+    "Uploaded files cannot overwrite built-in domains.",
+    "This tool is not LLM-safe because it can write files."
+  ],
+  "status_enum": ["uploaded", "blocked", "error"],
+  "examples": [
+    {
+      "request": {"filename": "admissions.xlsx", "source_path": "/safe/upload/admissions.xlsx"},
+      "response": {"dataset_id": "ds_example", "status": "uploaded", "source_fingerprint": "sha256..."}
+    }
+  ]
+}

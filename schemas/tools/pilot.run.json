@@ -1,0 +1,46 @@
+{
+  "name": "pilot.run",
+  "description": "运行真实招生 CSV/Excel pilot，生成可审计 Markdown/JSON 报告。",
+  "llm_safe": false,
+  "input_schema": {
+    "type": "object",
+    "additionalProperties": false,
+    "properties": {
+      "source_path": {"type": "string"},
+      "fixture": {"type": "boolean"},
+      "sheet_name": {"type": "string"},
+      "output_dir": {"type": "string"}
+    },
+    "anyOf": [
+      {"required": ["source_path"]},
+      {"required": ["fixture"]}
+    ]
+  },
+  "output_schema": {
+    "type": "object",
+    "required": ["status", "dataset_id", "target_query_results", "failures"],
+    "properties": {
+      "status": {"type": "string", "enum": ["pass", "fail"]},
+      "dataset_id": {"type": "string"},
+      "target_query_results": {"type": "array"},
+      "failures": {"type": "array"}
+    },
+    "additionalProperties": true
+  },
+  "permission_scope": "diagnostics",
+  "side_effects": ["writes pilot report", "writes temporary uploaded dataset artifacts", "writes tool audit event"],
+  "required_domain_status": "none",
+  "executes_sql": true,
+  "writes_files": true,
+  "security_notes": [
+    "Not LLM-safe.",
+    "Uses DatasetService and WorkbenchResponse contract; does not bypass review or verifier."
+  ],
+  "status_enum": ["pass", "fail", "error"],
+  "examples": [
+    {
+      "request": {"fixture": true},
+      "response": {"status": "pass", "dataset_id": "ds_real_pilot_fixture", "target_query_results": [], "failures": []}
+    }
+  ]
+}

@@ -1,0 +1,40 @@
+{
+  "name": "dataset.profile",
+  "description": "读取已生成的 schema profile，返回字段类型、空值率、唯一值、样例值、sheet 和 warning 摘要。",
+  "llm_safe": true,
+  "input_schema": {
+    "type": "object",
+    "additionalProperties": false,
+    "properties": {
+      "dataset_id": {"type": "string", "minLength": 1}
+    },
+    "required": ["dataset_id"]
+  },
+  "output_schema": {
+    "type": "object",
+    "required": ["dataset_id", "status", "fields"],
+    "properties": {
+      "dataset_id": {"type": "string"},
+      "status": {"type": "string"},
+      "fields": {"type": "array"},
+      "warnings": {"type": "array"}
+    },
+    "additionalProperties": true
+  },
+  "permission_scope": "read_only",
+  "side_effects": [],
+  "required_domain_status": "draft_or_later",
+  "executes_sql": false,
+  "writes_files": false,
+  "security_notes": [
+    "LLM-safe: does not accept SQL or executable rule inputs.",
+    "Profile values are samples for review, not execution rules."
+  ],
+  "status_enum": ["uploaded", "profiled", "needs_review", "approved", "queryable", "blocked", "error"],
+  "examples": [
+    {
+      "request": {"dataset_id": "ds_example"},
+      "response": {"dataset_id": "ds_example", "status": "needs_review", "fields": []}
+    }
+  ]
+}

@@ -1,0 +1,41 @@
+{
+  "name": "evidence.get",
+  "description": "从 WorkbenchResponse 或 EvidencePack 中提取经过安全净化的证据包。",
+  "llm_safe": true,
+  "input_schema": {
+    "type": "object",
+    "additionalProperties": false,
+    "properties": {
+      "workbench_response": {"type": "object"},
+      "evidence_pack": {"type": "object"}
+    },
+    "anyOf": [
+      {"required": ["workbench_response"]},
+      {"required": ["evidence_pack"]}
+    ]
+  },
+  "output_schema": {
+    "type": "object",
+    "required": ["evidence_pack"],
+    "properties": {
+      "evidence_pack": {"type": "object"}
+    },
+    "additionalProperties": false
+  },
+  "permission_scope": "read_only",
+  "side_effects": ["writes tool audit event"],
+  "required_domain_status": "none",
+  "executes_sql": false,
+  "writes_files": false,
+  "security_notes": [
+    "LLM-safe.",
+    "Does not expose stack trace, environment variables, secrets or absolute local paths."
+  ],
+  "status_enum": ["ok", "error"],
+  "examples": [
+    {
+      "request": {"workbench_response": {"evidence_pack": {"result_count": 1}}},
+      "response": {"evidence_pack": {"result_count": 1}}
+    }
+  ]
+}

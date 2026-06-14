@@ -1,0 +1,41 @@
+{
+  "name": "dataset.review_summary",
+  "description": "返回可审查字段、seed ops、required/missing/risky fields 和 review metadata 摘要。",
+  "llm_safe": true,
+  "input_schema": {
+    "type": "object",
+    "additionalProperties": false,
+    "properties": {
+      "dataset_id": {"type": "string", "minLength": 1}
+    },
+    "required": ["dataset_id"]
+  },
+  "output_schema": {
+    "type": "object",
+    "required": ["dataset_id", "domain_pack_status", "reviewable_fields"],
+    "properties": {
+      "dataset_id": {"type": "string"},
+      "domain_pack_status": {"type": "string"},
+      "reviewable_fields": {"type": "array"},
+      "missing_fields": {"type": "array"},
+      "risky_fields": {"type": "array"}
+    },
+    "additionalProperties": true
+  },
+  "permission_scope": "read_only",
+  "side_effects": [],
+  "required_domain_status": "draft_or_later",
+  "executes_sql": false,
+  "writes_files": false,
+  "security_notes": [
+    "LLM-safe: review summary is advisory.",
+    "Field approval requires review_admin tools."
+  ],
+  "status_enum": ["needs_review", "approved", "blocked", "error"],
+  "examples": [
+    {
+      "request": {"dataset_id": "ds_example"},
+      "response": {"dataset_id": "ds_example", "domain_pack_status": "needs_review", "reviewable_fields": []}
+    }
+  ]
+}

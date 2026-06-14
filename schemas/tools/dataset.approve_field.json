@@ -1,0 +1,42 @@
+{
+  "name": "dataset.approve_field",
+  "description": "人工批准 canonical field 进入可执行审查范围，并写入审计记录。",
+  "llm_safe": false,
+  "input_schema": {
+    "type": "object",
+    "additionalProperties": false,
+    "properties": {
+      "dataset_id": {"type": "string", "minLength": 1},
+      "field_id": {"type": "string", "minLength": 1},
+      "note": {"type": "string"}
+    },
+    "required": ["dataset_id", "field_id"]
+  },
+  "output_schema": {
+    "type": "object",
+    "required": ["dataset_id", "ok", "written"],
+    "properties": {
+      "dataset_id": {"type": "string"},
+      "ok": {"type": "boolean"},
+      "written": {"type": "boolean"},
+      "payload": {"type": "object"}
+    },
+    "additionalProperties": true
+  },
+  "permission_scope": "review_admin",
+  "side_effects": ["writes review.yaml", "updates runtime schema review metadata", "writes tool audit event"],
+  "required_domain_status": "needs_review",
+  "executes_sql": false,
+  "writes_files": true,
+  "security_notes": [
+    "Not LLM-safe.",
+    "Approval does not bypass RuleVerifier."
+  ],
+  "status_enum": ["ok", "rejected", "error"],
+  "examples": [
+    {
+      "request": {"dataset_id": "ds_example", "field_id": "city", "note": "reviewed city enum"},
+      "response": {"dataset_id": "ds_example", "ok": true, "written": true}
+    }
+  ]
+}

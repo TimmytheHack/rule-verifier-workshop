@@ -1,0 +1,44 @@
+{
+  "name": "dataset.approve_domain",
+  "description": "在 required checks 通过后批准 uploaded domain pack。",
+  "llm_safe": false,
+  "input_schema": {
+    "type": "object",
+    "additionalProperties": false,
+    "properties": {
+      "dataset_id": {"type": "string", "minLength": 1},
+      "title_field": {"type": "string"},
+      "primary_fields": {"type": "array", "items": {"type": "string"}},
+      "sort_field": {"type": "string"},
+      "default_safe_sort": {"type": "boolean"},
+      "note": {"type": "string"}
+    },
+    "required": ["dataset_id"]
+  },
+  "output_schema": {
+    "type": "object",
+    "required": ["dataset_id", "ok"],
+    "properties": {
+      "dataset_id": {"type": "string"},
+      "ok": {"type": "boolean"},
+      "payload": {"type": "object"}
+    },
+    "additionalProperties": true
+  },
+  "permission_scope": "review_admin",
+  "side_effects": ["writes review.yaml", "updates domain status", "writes tool audit event"],
+  "required_domain_status": "needs_review",
+  "executes_sql": false,
+  "writes_files": true,
+  "security_notes": [
+    "Not LLM-safe.",
+    "Domain approval still requires warehouse build before query execution."
+  ],
+  "status_enum": ["approved", "rejected", "error"],
+  "examples": [
+    {
+      "request": {"dataset_id": "ds_example", "title_field": "listing_id", "primary_fields": ["city"], "default_safe_sort": true},
+      "response": {"dataset_id": "ds_example", "ok": true}
+    }
+  ]
+}

@@ -1,0 +1,47 @@
+{
+  "name": "workbench.query",
+  "description": "运行安全 Workbench 查询，只接受 dataset/domain、deterministic fields、自然语言、candidate_id 和 top_k 等安全输入。",
+  "llm_safe": true,
+  "input_schema": {
+    "type": "object",
+    "additionalProperties": false,
+    "properties": {
+      "dataset_id": {"type": "string"},
+      "domain": {"type": "string", "default": "admissions"},
+      "deterministic_fields": {"type": "object"},
+      "natural_language": {"type": "string", "minLength": 1},
+      "confirmed_candidate_ids": {"type": "array", "items": {"type": "string"}},
+      "top_k": {"type": "integer", "minimum": 1, "maximum": 100}
+    },
+    "required": ["natural_language"]
+  },
+  "output_schema": {
+    "type": "object",
+    "required": ["schema_version", "domain", "status", "items", "evidence_pack"],
+    "properties": {
+      "schema_version": {"const": "workbench_response.v1"},
+      "domain": {"type": "string"},
+      "status": {"type": "string"},
+      "items": {"type": "array"},
+      "evidence_pack": {"type": "object"}
+    },
+    "additionalProperties": true
+  },
+  "permission_scope": "query",
+  "side_effects": ["writes tool audit event"],
+  "required_domain_status": "approved_and_warehouse_ready",
+  "executes_sql": true,
+  "writes_files": false,
+  "security_notes": [
+    "LLM-safe: input schema forbids SQL, executable rules, hard rules and domain status overrides.",
+    "draft/needs_review/blocked domain packs return blocked without SQL.",
+    "Natural language can propose preferences but RuleVerifier controls execution."
+  ],
+  "status_enum": ["ok", "needs_confirmation", "no_results", "blocked", "error"],
+  "examples": [
+    {
+      "request": {"dataset_id": "ds_example", "domain": "admissions", "natural_language": "我今年高考分数630，想读计算机", "deterministic_fields": {"user_score": 630}},
+      "response": {"schema_version": "workbench_response.v1", "domain": "admissions", "status": "ok", "items": [], "evidence_pack": {}}
+    }
+  ]
+}

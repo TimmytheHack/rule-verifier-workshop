@@ -1,0 +1,43 @@
+{
+  "name": "dataset.approve_op",
+  "description": "人工批准某个字段的特定 op，例如 city in 或 rent <=。",
+  "llm_safe": false,
+  "input_schema": {
+    "type": "object",
+    "additionalProperties": false,
+    "properties": {
+      "dataset_id": {"type": "string", "minLength": 1},
+      "field_id": {"type": "string", "minLength": 1},
+      "op": {"type": "string", "minLength": 1},
+      "note": {"type": "string"}
+    },
+    "required": ["dataset_id", "field_id", "op"]
+  },
+  "output_schema": {
+    "type": "object",
+    "required": ["dataset_id", "ok", "written"],
+    "properties": {
+      "dataset_id": {"type": "string"},
+      "ok": {"type": "boolean"},
+      "written": {"type": "boolean"},
+      "payload": {"type": "object"}
+    },
+    "additionalProperties": true
+  },
+  "permission_scope": "review_admin",
+  "side_effects": ["writes review.yaml", "updates allowed operator metadata", "writes tool audit event"],
+  "required_domain_status": "needs_review",
+  "executes_sql": false,
+  "writes_files": true,
+  "security_notes": [
+    "Not LLM-safe.",
+    "Only reviewed ops can later be considered by RuleVerifier."
+  ],
+  "status_enum": ["ok", "rejected", "error"],
+  "examples": [
+    {
+      "request": {"dataset_id": "ds_example", "field_id": "city", "op": "in"},
+      "response": {"dataset_id": "ds_example", "ok": true, "written": true}
+    }
+  ]
+}

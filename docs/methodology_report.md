@@ -2,7 +2,7 @@
 
 ## 1. 项目定位
 
-本项目是一个 research-engineering 方法论项目，不是普通的高考志愿推荐 bot。
+本项目是一个 research-engineering 方法论项目，不是普通的高考志愿推荐 bot。当前工程形态已经包装为 `LLM-safe structured data query tool server for Excel/CSV`：LLM/agent/前端可以调用稳定 tool contracts，但执行权仍由 schema grounding、RuleVerifier、confirmation loop 和 DuckDB fingerprint guard 控制。
 
 当前案例是基于结构化 Excel 数据的广东高考志愿填报场景。核心研究问题是：
 
@@ -74,6 +74,13 @@ draft pack、review summary、safe auto-suggest approvals、manual approval fixt
 返回 `blocked` 或 needs-review warning；“25年深圳大学录取最高专业组”会把最终使用的
 metric 和参数化 SQL 写入 EvidencePack；“630 分人工智能/计算机、广东、不想去国外”在没有
 位次时必须给 `score_without_rank` warning，且不声称录取概率。
+
+functional tool layer 位于 `src/api/tool_registry.py`，机器可读契约位于
+`schemas/tools/*.json`。LLM-safe tools 只包括 `dataset.profile`、`dataset.review_summary`、
+`workbench.query`、`workbench.confirm` 和 `evidence.get`。review/admin/warehouse/
+diagnostics tools 需要显式权限并写入 audit event，不能暴露给 LLM 自动调用。`workbench.query`
+不接受 SQL、hard rules、executable rules 或 domain status override；`workbench.confirm`
+只能引用上一轮系统生成的 `candidate_id`。
 
 这次抽象仍然坚持结构化存储优先：招生主数据使用 DuckDB 和 schema/value index；toy
 domain 使用 CSV fixture。系统没有接入 Qwen、BGE、向量库或全文表格 embedding。可选

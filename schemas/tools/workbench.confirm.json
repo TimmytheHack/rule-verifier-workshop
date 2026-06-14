@@ -1,0 +1,45 @@
+{
+  "name": "workbench.confirm",
+  "description": "用上一轮 WorkbenchResponse 中系统生成的 candidate_id 进行确认后重跑同一 query。",
+  "llm_safe": true,
+  "input_schema": {
+    "type": "object",
+    "additionalProperties": false,
+    "properties": {
+      "previous_response": {"type": "object"},
+      "confirmed_candidate_ids": {"type": "array", "items": {"type": "string"}, "minItems": 1},
+      "dataset_id": {"type": "string"},
+      "domain": {"type": "string"}
+    },
+    "required": ["previous_response", "confirmed_candidate_ids"]
+  },
+  "output_schema": {
+    "type": "object",
+    "required": ["schema_version", "domain", "status", "rejected_confirmations"],
+    "properties": {
+      "schema_version": {"const": "workbench_response.v1"},
+      "domain": {"type": "string"},
+      "status": {"type": "string"},
+      "rejected_confirmations": {"type": "array"},
+      "evidence_pack": {"type": "object"}
+    },
+    "additionalProperties": true
+  },
+  "permission_scope": "confirm",
+  "side_effects": ["writes tool audit event"],
+  "required_domain_status": "approved_and_warehouse_ready",
+  "executes_sql": true,
+  "writes_files": false,
+  "security_notes": [
+    "LLM-safe: cannot accept user free text to generate hard filters.",
+    "Only previous_response.query.text and system-generated candidate_id are used.",
+    "Forged or stale candidate_id returns blocked/rejected."
+  ],
+  "status_enum": ["ok", "blocked", "error"],
+  "examples": [
+    {
+      "request": {"previous_response": {"query": {"text": "广州深圳候选", "dataset_id": "ds_example"}, "domain": "admissions"}, "confirmed_candidate_ids": ["cand_abc"]},
+      "response": {"schema_version": "workbench_response.v1", "domain": "admissions", "status": "blocked", "rejected_confirmations": []}
+    }
+  ]
+}
