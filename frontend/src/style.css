@@ -132,7 +132,7 @@ input {
 
 .query-workspace {
   display: grid;
-  grid-template-columns: minmax(330px, 400px) minmax(480px, 1.25fr) minmax(340px, 0.9fr);
+  grid-template-columns: minmax(330px, 390px) minmax(520px, 1.35fr) minmax(300px, 0.85fr);
   gap: 12px;
 }
 
@@ -224,12 +224,46 @@ input {
   overflow: hidden;
 }
 
-.result-column .table-scroll {
+.result-column .table-scroll,
+.result-column .result-list {
   height: 100%;
 }
 
 .side-tabs {
   min-height: 0;
+}
+
+.advanced-collapse,
+.detail-collapse {
+  border: 0;
+}
+
+.advanced-collapse .el-collapse-item__header,
+.detail-collapse .el-collapse-item__header {
+  height: 42px;
+  padding: 0 12px;
+  border: 1px solid #dfe7ec;
+  border-radius: 8px;
+  background: #ffffff;
+  color: #304650;
+  font-size: 14px;
+  font-weight: 800;
+}
+
+.advanced-collapse .el-collapse-item__wrap,
+.detail-collapse .el-collapse-item__wrap {
+  border: 0;
+  background: transparent;
+}
+
+.advanced-collapse .el-collapse-item__content,
+.detail-collapse .el-collapse-item__content {
+  padding: 10px 0 0;
+}
+
+.advanced-collapse .workbench-card,
+.detail-collapse .workbench-card {
+  margin-top: 0;
 }
 
 .side-tabs > .el-tabs__content {
@@ -257,6 +291,10 @@ input {
   display: grid;
   grid-template-columns: minmax(360px, 0.85fr) minmax(560px, 1.15fr);
   gap: 12px;
+}
+
+.detail-workspace .summary-section {
+  grid-column: 1 / -1;
 }
 
 .card-header {
@@ -360,6 +398,17 @@ input {
   color: #5f6c76;
   font-size: 12px;
   line-height: 1.4;
+}
+
+.quick-example-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.quick-example-row .el-button {
+  margin-left: 0 !important;
 }
 
 .panel-actions {
@@ -949,6 +998,78 @@ input {
   line-height: 1.6;
 }
 
+.beginner-card > .el-card__body {
+  display: grid;
+  gap: 10px;
+}
+
+.beginner-section {
+  padding: 10px;
+  border: 1px solid #dfe8ec;
+  border-radius: 8px;
+  background: #fbfdff;
+}
+
+.beginner-section.good {
+  border-color: #c9e4d4;
+  background: #fbfffd;
+}
+
+.beginner-section.warn {
+  border-color: #efdba7;
+  background: #fffdf8;
+}
+
+.beginner-section.bad {
+  border-color: #efc8c2;
+  background: #fffafa;
+}
+
+.beginner-section-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+  color: #233942;
+}
+
+.beginner-section-title h3 {
+  margin: 0;
+  font-size: 15px;
+}
+
+.beginner-list {
+  display: grid;
+  gap: 6px;
+}
+
+.beginner-row {
+  padding: 8px 0;
+  border-top: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+.beginner-row:first-child {
+  border-top: 0;
+}
+
+.beginner-row strong {
+  color: #1e333d;
+  font-size: 14px;
+}
+
+.beginner-row p {
+  margin: 5px 0 0;
+  color: #66717c;
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.beginner-empty {
+  margin: 0;
+  color: #6d7882;
+  font-size: 13px;
+}
+
 .confirmation-options {
   display: flex;
   flex-wrap: wrap;
@@ -960,6 +1081,52 @@ input {
   overflow-x: auto;
 }
 
+.result-list {
+  display: grid;
+  align-content: start;
+  gap: 10px;
+  overflow: auto;
+  scrollbar-width: thin;
+}
+
+.result-item-card {
+  display: grid;
+  grid-template-columns: minmax(160px, 0.9fr) minmax(240px, 1.35fr) auto;
+  gap: 10px;
+  align-items: center;
+  min-height: 92px;
+  padding: 12px;
+  border: 1px solid #dfe8ec;
+  border-radius: 8px;
+  background: #fbfdff;
+}
+
+.result-item-main {
+  min-width: 0;
+}
+
+.result-item-main strong {
+  color: #1d313c;
+  font-size: 16px;
+}
+
+.result-item-main p {
+  display: -webkit-box;
+  margin: 6px 0 0;
+  overflow: hidden;
+  color: #60707b;
+  font-size: 13px;
+  line-height: 1.45;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.result-item-actions {
+  display: grid;
+  justify-items: end;
+  gap: 6px;
+}
+
 .table-subtext {
   margin: 6px 0 0;
 }
@@ -968,6 +1135,14 @@ input {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
+  min-width: 0;
+}
+
+.attribute-list .el-tag {
+  max-width: 100%;
+  height: auto;
+  min-height: 24px;
+  white-space: normal;
 }
 
 .compact-major {
@@ -1215,6 +1390,14 @@ input {
 
   .stage-pill {
     width: 100%;
+  }
+
+  .result-item-card {
+    grid-template-columns: 1fr;
+  }
+
+  .result-item-actions {
+    justify-items: start;
   }
 
   .candidate-confirm-row {

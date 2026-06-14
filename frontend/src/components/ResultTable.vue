@@ -56,10 +56,25 @@ function rowSubtitle(row) {
 
 function rowAttributes(row) {
   if (isItem(row)) {
-    return [
+    const attributes = [
       ...(row.primary_attributes || []),
       ...(row.secondary_attributes || []),
-    ].slice(0, 8).map((item) => ({
+    ];
+    const byKey = new Map(attributes.map((item) => [item.key, item]));
+    const preferredKeys = [
+      'major_code',
+      'major_name',
+      'city',
+      'tuition',
+      'group_min_rank',
+      'major_min_rank',
+      'rank_2024',
+      'plan_count',
+    ];
+    const preferred = preferredKeys
+      .map((key) => byKey.get(key))
+      .filter(Boolean);
+    return (preferred.length ? preferred : attributes.slice(0, 6)).map((item) => ({
       ...item,
       displayLabel: attributeLabel(item),
     }));
@@ -93,43 +108,37 @@ function matchedCount(row) {
       </div>
     </template>
 
-    <div class="table-scroll">
-      <el-table :data="results" border stripe>
-        <el-table-column label="条目" min-width="220">
-          <template #default="{ row }">
-            <strong>{{ rowTitle(row) }}</strong>
-            <p class="table-subtext">{{ rowSubtitle(row) }}</p>
-          </template>
-        </el-table-column>
-        <el-table-column label="属性" min-width="420">
-          <template #default="{ row }">
-            <div class="attribute-list">
-              <el-tag
-                v-for="item in rowAttributes(row)"
-                :key="item.key"
-                effect="plain"
-              >
-                {{ item.displayLabel || item.label }}：{{ item.value ?? '暂无' }}
-              </el-tag>
-            </div>
-          </template>
-        </el-table-column>
-        <el-table-column label="匹配规则" width="120">
-          <template #default="{ row }">{{ matchedCount(row) }}</template>
-        </el-table-column>
-        <el-table-column label="操作" width="130" fixed="right">
-          <template #default="{ row }">
-            <el-button
-              type="primary"
-              link
-              :icon="View"
-              @click="emit('view-trace', row)"
-            >
-              查看追踪
-            </el-button>
-          </template>
-        </el-table-column>
-      </el-table>
+    <div class="result-list">
+      <article
+        v-for="row in results"
+        :key="row.item_id || row.id || `${rowTitle(row)}-${rowSubtitle(row)}`"
+        class="result-item-card"
+      >
+        <div class="result-item-main">
+          <strong>{{ rowTitle(row) }}</strong>
+          <p>{{ rowSubtitle(row) }}</p>
+        </div>
+        <div class="attribute-list">
+          <el-tag
+            v-for="item in rowAttributes(row)"
+            :key="item.key"
+            effect="plain"
+          >
+            {{ item.displayLabel || item.label }}：{{ item.value ?? '暂无' }}
+          </el-tag>
+        </div>
+        <div class="result-item-actions">
+          <el-tag type="success" effect="plain">通过 {{ matchedCount(row) }} 条</el-tag>
+          <el-button
+            type="primary"
+            link
+            :icon="View"
+            @click="emit('view-trace', row)"
+          >
+            查看原因
+          </el-button>
+        </div>
+      </article>
     </div>
   </el-card>
 </template>

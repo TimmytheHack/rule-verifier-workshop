@@ -1,6 +1,6 @@
 <script setup>
 import { reactive, watch } from 'vue';
-import { Search } from '@element-plus/icons-vue';
+import { MagicStick, Search } from '@element-plus/icons-vue';
 
 const props = defineProps({
   defaultHardFilters: {
@@ -26,17 +26,35 @@ const emit = defineEmits(['run']);
 const provinceOptions = ['广东'];
 const subjectOptions = ['物理', '历史'];
 const reselectedSubjectOptions = ['化学', '生物', '政治', '地理'];
-const safetyOptions = [
-  { label: '不使用', value: '' },
-  { label: '5%', value: 5 },
-  { label: '10%', value: 10 },
-  { label: '15%', value: 15 },
-];
+const cityOptions = ['广州', '深圳', '佛山', '东莞', '珠海', '汕头', '惠州'];
 const tuitionOptions = [
-  { label: '不使用', value: '' },
+  { label: '先不选', value: '' },
   { label: '10000 元/年', value: 10000 },
   { label: '20000 元/年', value: 20000 },
   { label: '40000 元/年', value: 40000 },
+];
+const safetyOptionsForBeginners = [
+  { label: '先不选', value: '' },
+  { label: '稳一点', value: 5 },
+  { label: '更稳', value: 10 },
+  { label: '很稳', value: 15 },
+];
+const quickExamples = [
+  {
+    label: '计算机，广州深圳',
+    hard: { major_keyword: '计算机', preferred_cities: ['广州', '深圳'] },
+    soft: { prompt: '想学计算机，最好在广州深圳，学校稳一点。' },
+  },
+  {
+    label: '学费两万以内',
+    hard: { tuition_cap_yuan: 20000 },
+    soft: { tuition_cap_yuan: 20000, prompt: '想找学费两万以内的专业。' },
+  },
+  {
+    label: '先看稳妥选择',
+    hard: {},
+    soft: { safety_margin_percent: 10, prompt: '学校稳一点，专业不要太冷门。' },
+  },
 ];
 
 const hard = reactive(emptyHardFilters());
@@ -97,12 +115,19 @@ function submitRun() {
   });
 }
 
+function applyExample(example) {
+  Object.assign(hard, example.hard || {});
+  Object.assign(soft, example.soft || {});
+}
+
 function composeRequest(hardPayload, softPayload) {
   const hardParts = [
     hardPayload.source_province,
     hardPayload.subject_type ? `${hardPayload.subject_type}类` : '',
     hardPayload.reselected_subjects.length ? `再选科目：${hardPayload.reselected_subjects.join('、')}` : '',
     hardPayload.user_rank ? `排位${hardPayload.user_rank}` : '',
+    hardPayload.major_keyword ? `想学${hardPayload.major_keyword}` : '',
+    hardPayload.preferred_cities.length ? `城市优先：${hardPayload.preferred_cities.join('、')}` : '',
   ].filter(Boolean);
   const boundaryParts = [
     softPayload.safety_margin_percent ? `位次窗口 ${softPayload.safety_margin_percent}%` : '',
@@ -128,7 +153,7 @@ function trimSentence(value) {
     <template #header>
       <div class="card-header">
         <div>
-          <h2>输入偏好</h2>
+          <h2>填报信息</h2>
         </div>
         <el-tag :type="mode === 'api' ? 'warning' : 'info'" effect="plain">
           {{ mode === 'api' ? '连接后端' : '演示数据' }}
@@ -138,8 +163,8 @@ function trimSentence(value) {
 
     <section class="input-section">
       <div class="input-section-title">
-        <h3>基础信息</h3>
-        <el-tag type="success" effect="plain">可验证</el-tag>
+        <h3>第一步：基础信息</h3>
+        <el-tag type="success" effect="plain">必填</el-tag>
       </div>
       <div class="hard-form-grid">
         <label class="control-block">
@@ -155,7 +180,7 @@ function trimSentence(value) {
         </label>
 
         <label class="control-block">
-          <span class="control-label">科类</span>
+          <span class="control-label">物理 / 历史</span>
           <el-segmented
             v-model="hard.subject_type"
             :options="subjectOptions"
@@ -164,7 +189,7 @@ function trimSentence(value) {
         </label>
 
         <label class="control-block">
-          <span class="control-label">省排位</span>
+          <span class="control-label">全省排位</span>
           <el-input-number
             v-model="hard.user_rank"
             class="full-control"
@@ -175,7 +200,7 @@ function trimSentence(value) {
         </label>
 
         <label class="control-block wide-field">
-          <span class="control-label">再选科目（四选二）</span>
+          <span class="control-label">再选科目</span>
           <el-checkbox-group
             v-model="hard.reselected_subjects"
             :max="2"
@@ -191,22 +216,66 @@ function trimSentence(value) {
         </label>
 
         <p class="form-note">
-          专业、城市、费用等写在下方。
+          不用填分数，排位更适合做筛选。
         </p>
       </div>
     </section>
 
     <section class="input-section soft-section">
       <div class="input-section-title">
-        <h3>偏好</h3>
-        <el-tag type="warning" effect="plain">需核验</el-tag>
+        <h3>第二步：想要什么</h3>
+        <el-tag type="warning" effect="plain">可选</el-tag>
+      </div>
+      <div class="quick-example-row" aria-label="常用示例">
+        <el-button
+          v-for="example in quickExamples"
+          :key="example.label"
+          :icon="MagicStick"
+          plain
+          @click="applyExample(example)"
+        >
+          {{ example.label }}
+        </el-button>
       </div>
       <div class="soft-form-grid">
         <label class="control-block">
-          <span class="control-label">位次窗口（可选）</span>
-          <el-select v-model="soft.safety_margin_percent" class="full-control">
+          <span class="control-label">想学专业</span>
+          <el-input
+            v-model="hard.major_keyword"
+            class="full-control"
+            clearable
+            placeholder="如：计算机"
+          />
+        </label>
+
+        <label class="control-block">
+          <span class="control-label">想去城市</span>
+          <el-select
+            v-model="hard.preferred_cities"
+            class="full-control"
+            multiple
+            collapse-tags
+            collapse-tags-tooltip
+            placeholder="可多选"
+          >
             <el-option
-              v-for="option in safetyOptions"
+              v-for="option in cityOptions"
+              :key="option"
+              :label="option"
+              :value="option"
+            />
+          </el-select>
+        </label>
+
+        <label class="control-block">
+          <span class="control-label">稳妥程度</span>
+          <el-select
+            v-model="soft.safety_margin_percent"
+            class="full-control"
+            placeholder="先不选"
+          >
+            <el-option
+              v-for="option in safetyOptionsForBeginners"
               :key="String(option.value)"
               :label="option.label"
               :value="option.value"
@@ -215,8 +284,12 @@ function trimSentence(value) {
         </label>
 
         <label class="control-block">
-          <span class="control-label">费用上限（可选）</span>
-          <el-select v-model="soft.tuition_cap_yuan" class="full-control">
+          <span class="control-label">学费上限</span>
+          <el-select
+            v-model="soft.tuition_cap_yuan"
+            class="full-control"
+            placeholder="先不选"
+          >
             <el-option
               v-for="option in tuitionOptions"
               :key="String(option.value)"
@@ -227,16 +300,16 @@ function trimSentence(value) {
         </label>
 
         <label class="control-block prompt-field">
-          <span class="control-label">偏好描述</span>
+          <span class="control-label">其他想法</span>
           <el-input
             v-model="soft.prompt"
             class="input-textarea"
             type="textarea"
-            :rows="3"
+            :rows="2"
             maxlength="240"
             show-word-limit
             resize="none"
-            placeholder="例如：想学计算机，最好在广州深圳，学校稳一点，不想去太贵的中外合作。"
+            placeholder="例如：学校稳一点，不想去太贵的中外合作。"
           />
         </label>
       </div>
@@ -250,10 +323,10 @@ function trimSentence(value) {
         :loading="loading"
         @click="submitRun"
       >
-        运行
+        开始筛选
       </el-button>
       <span class="muted-note">
-        {{ mode === 'api' ? '请求后端' : '使用演示数据' }}
+        {{ mode === 'api' ? '连接后端' : '演示结果' }}
       </span>
     </div>
   </el-card>

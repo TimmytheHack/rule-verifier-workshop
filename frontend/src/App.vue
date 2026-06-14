@@ -13,6 +13,7 @@ import TraceDrawer from './components/TraceDrawer.vue';
 import EvidenceReport from './components/EvidenceReport.vue';
 import EvalSummary from './components/EvalSummary.vue';
 import TokenUsagePanel from './components/TokenUsagePanel.vue';
+import BeginnerDecisionPanel from './components/BeginnerDecisionPanel.vue';
 import demoRun from './mock/demo_run.json';
 
 const defaultHardFilters = {
@@ -42,7 +43,6 @@ const runData = ref({
 const activeResult = ref(null);
 const traceVisible = ref(false);
 const activeWorkspace = ref('query');
-const sideTab = ref('rules');
 const mode = ref('demo');
 const extractor = ref('regex');
 const generator = ref('template_evidence');
@@ -143,22 +143,16 @@ function statusLabel(status) {
   <main class="app-shell">
     <header class="app-header">
       <div>
-        <h1>规则验证工作台</h1>
-        <p class="header-copy">输入偏好，查看哪些已执行、哪些待确认、哪些不能执行。</p>
+        <h1>招生筛选助手</h1>
+        <p class="header-copy">填排位和偏好，先看可验证筛选结果。</p>
       </div>
       <el-tag size="large" effect="plain" type="warning">不是志愿建议</el-tag>
     </header>
 
     <el-tabs v-model="activeWorkspace" class="workspace-tabs">
-      <el-tab-pane label="查询验证" name="query">
+      <el-tab-pane label="开始查询" name="query">
         <section class="workspace-panel query-workspace">
           <aside class="control-column">
-            <WorkbenchModePanel
-              v-model:mode="mode"
-              v-model:extractor="extractor"
-              v-model:generator="generator"
-              v-model:model="model"
-            />
             <UserInputPanel
               :default-hard-filters="defaultHardFilters"
               :default-soft-preferences="defaultSoftPreferences"
@@ -166,6 +160,16 @@ function statusLabel(status) {
               :loading="loading"
               @run="runWorkbench"
             />
+            <el-collapse class="advanced-collapse">
+              <el-collapse-item title="高级设置" name="advanced">
+                <WorkbenchModePanel
+                  v-model:mode="mode"
+                  v-model:extractor="extractor"
+                  v-model:generator="generator"
+                  v-model:model="model"
+                />
+              </el-collapse-item>
+            </el-collapse>
             <el-alert
               v-if="apiError"
               class="inline-alert"
@@ -192,43 +196,42 @@ function statusLabel(status) {
           </section>
 
           <aside class="evidence-column">
-            <el-tabs v-model="sideTab" class="side-tabs">
-              <el-tab-pane label="规则" name="rules">
-                <RuleSummaryCards
-                  :deterministic-rules="runData?.deterministic_rules"
-                  :candidate-rules="runData?.candidate_rules"
-                  :not-executed-preferences="runData?.not_executed_preferences"
-                  :executable-rules="runData?.executable_rules"
-                />
-                <CandidateConfirmation
-                  :candidate-rules="runData?.candidate_rules"
-                  :confirmations="runData?.simulated_confirmations"
-                />
-              </el-tab-pane>
-              <el-tab-pane label="证据" name="evidence">
+            <BeginnerDecisionPanel :run-data="runData" />
+            <el-collapse class="detail-collapse">
+              <el-collapse-item title="查看证据回答" name="evidence">
                 <EvidenceReport :report="runData?.natural_language_report" />
-              </el-tab-pane>
-              <el-tab-pane label="审计" name="audit">
+              </el-collapse-item>
+              <el-collapse-item title="查看质量检查" name="audit">
                 <EvalSummary :run-data="runData" />
                 <TokenUsagePanel
                   :token-usage="runData?.token_usage"
                   :mode="mode"
                   :selected-options="runData?.selected_options"
                 />
-              </el-tab-pane>
-            </el-tabs>
+              </el-collapse-item>
+            </el-collapse>
           </aside>
         </section>
       </el-tab-pane>
 
-      <el-tab-pane label="上传数据" name="dataset">
+      <el-tab-pane label="上传表格" name="dataset">
         <section class="workspace-panel single-scroll">
           <DatasetIngestionPanel />
         </section>
       </el-tab-pane>
 
-      <el-tab-pane label="详细审计" name="details">
+      <el-tab-pane label="查看详情" name="details">
         <section class="workspace-panel detail-workspace">
+          <RuleSummaryCards
+            :deterministic-rules="runData?.deterministic_rules"
+            :candidate-rules="runData?.candidate_rules"
+            :not-executed-preferences="runData?.not_executed_preferences"
+            :executable-rules="runData?.executable_rules"
+          />
+          <CandidateConfirmation
+            :candidate-rules="runData?.candidate_rules"
+            :confirmations="runData?.simulated_confirmations"
+          />
           <ExtractedPreferences :preferences="runData?.extracted_preferences" />
           <VerificationAudit
             :grounding="runData?.attribute_grounding"
