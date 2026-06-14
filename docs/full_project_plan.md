@@ -127,9 +127,9 @@ deterministic over-promotion rate
 | P4.11 | Frontend Productization | 已实现 operator UI 增强：上传/profile/review/warehouse/query、`items` 与 `result_sections` 优先展示、candidate confirmation 交互、warnings/blocked/no_results 状态和前端操作审计记录 |
 | P4.12 | Admissions Recommendation Calibration | 已实现 EvidencePack 级校准记录：`score_margin` / `rank_margin`、`latest_available_year` 策略、专业匹配来源和冲/稳/保 bucket 计数；不输出录取概率 |
 | P5 | 非结构化政策/章程小型知识库，只做解释和候选，不进执行 | 已实现轻量 reference-only lexical 层，不接 LLM/BGE/向量库，不改变 SQL/result_count/buckets |
-| P6 | 可选模型/embedding 接入 | 暂不接入 |
+| P6 | 可选模型接入 | 已先适配 DeepSeek slot adapter，默认 `ENABLE_LLM=false`；OpenAI-compatible local endpoint、Qwen/vLLM、embedding/BGE/向量库暂不接入 |
 
-近期执行路线见 `docs/next_route.md`。在进入 Optional LLM Slot Adapter 之前，优先完成 production hardening、operator trial、release readiness 和前端 operator 细节收敛。
+近期执行路线见 `docs/next_route.md`。DeepSeek 只作为受控 slot adapter；后续仍优先完成 production hardening、operator trial、release readiness 和前端 operator 细节收敛。
 
 ## 后续研究方向
 

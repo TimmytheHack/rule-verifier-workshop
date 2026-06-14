@@ -75,6 +75,8 @@ domain_pack_status
 
 `workbench.query` 只接受 `dataset_id`、`domain`、`deterministic_fields`、`natural_language`、`confirmed_candidate_ids`、`top_k`。自然语言只能提出候选偏好，是否执行仍由 schema grounding、RuleVerifier 和 confirmation loop 决定。
 
+当后端 `ENABLE_LLM=true` 且 DeepSeek key 可用时，Workbench 可使用 DeepSeek slot adapter 补 deterministic extractor 缺失的 slots。这个 adapter 不改变 tool input schema，不接受 SQL 或 hard rules，输出进入 Workbench 前必须通过 JSON schema 校验和禁止字段检查。
+
 `workbench.confirm` 不接受新的用户自由文本。它必须接收上一轮 `WorkbenchResponse` 和 `confirmed_candidate_ids`，从上一轮 `query.text` 重跑同一 query。伪造、过期或不属于当前 query 的 `candidate_id` 会返回 `blocked` / `rejected_confirmations`。
 
 ## 工具一览

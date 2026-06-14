@@ -16,6 +16,8 @@ Natural language may propose structure, but only verified schema-grounded rules 
 
 Agent 可以通过 `GET /tools/list?llm_safe_only=true` 获取允许暴露的工具列表，通过 `GET /tools/{tool_name}/schema` 读取输入/输出 schema，再通过 `POST /tools/{tool_name}/invoke` 调用。不要直接调用 `approve-*`、`build-warehouse`、`quality.run` 或 `pilot.run`。
 
+如果 operator 显式设置 `ENABLE_LLM=true`，Workbench 可以启用 DeepSeek slot adapter。但这个 adapter 仍属于后端受控抽取层：它只补 deterministic extractor 缺失的 slots/candidates，输出会先经过 schema 校验和禁止字段检查，不能生成 SQL、hard rules、approved ops 或 executable rules。
+
 如果接入 OpenAI-compatible tool calling，可以读取：
 
 ```bash

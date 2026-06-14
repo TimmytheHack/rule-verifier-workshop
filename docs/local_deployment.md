@@ -35,9 +35,20 @@ cp .env.example .env
 | `UPLOAD_MAX_MB` | 单个上传文件大小上限，默认 `25`。 |
 | `ENABLE_LLM` | 是否允许可选 LLM 辅助生成，默认 `false`。 |
 | `DEEPSEEK_API_KEY` | 可选 DeepSeek key；默认留空。 |
+| `DEEPSEEK_MODEL` | DeepSeek 模型名，默认 `deepseek-chat`。 |
+| `DEEPSEEK_API_URL` | DeepSeek OpenAI-compatible chat completions URL。 |
 | `TOOL_AUDIT_LOG_PATH` | tool invoke audit JSONL 路径。 |
 | `FRONTEND_ORIGIN` | 允许的前端 origin，逗号分隔。 |
 | `LOG_LEVEL` | 服务日志级别。 |
+
+DeepSeek slot adapter 默认不启用。需要验证真实 API 时，确认 `.env` 中存在
+`ENABLE_LLM=true` 和 `DEEPSEEK_API_KEY`，然后运行：
+
+```bash
+.venv/bin/python scripts/run_deepseek_slot_probe.py
+```
+
+该脚本只输出 fallback/adapter/token 使用摘要，不输出密钥或完整 prompt。
 
 ## 启动服务
 

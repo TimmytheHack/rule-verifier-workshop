@@ -28,10 +28,13 @@ from src.executors.duckdb_executor import (
 from src.api.admissions_query_planner import AdmissionsQueryPlanner
 from src.extractors.deepseek_extractor import (
     DeepSeekClient,
-    DeepSeekExtractor,
-    has_deepseek_api_key,
 )
 from src.extractors.extractor_pipeline import ExtractorFallbackPipeline
+from src.extractors.llm_slot_adapter import (
+    DeepSeekSlotAdapter,
+    deepseek_slot_adapter_enabled,
+    llm_runtime_enabled,
+)
 from src.extractors.regex_extractor import RegexExtractor
 from src.reporting.deepseek_answer_generator import (
     DeepSeekAnswerGenerator,
@@ -1306,7 +1309,7 @@ def _extract_slots(
     if config.extractor == "hybrid":
         client = (
             _interactive_deepseek_client(config.model)
-            if has_deepseek_api_key()
+            if deepseek_slot_adapter_enabled()
             else None
         )
         slots = _slots_from_inputs(
@@ -1315,7 +1318,9 @@ def _extract_slots(
                     alias_path=domain_config.value_aliases_path
                 ),
                 fallback_extractor=(
-                    DeepSeekExtractor(client=client) if client is not None else None
+                    DeepSeekSlotAdapter.from_client(client)
+                    if client is not None
+                    else None
                 ),
                 fallback_enabled=client is not None,
             ).extract(
@@ -1332,9 +1337,20 @@ def _extract_slots(
         )
         return slots, slots.get("deepseek_usage")
 
-    client = _interactive_deepseek_client(config.model)
     slots = _slots_from_inputs(
-        DeepSeekExtractor(client=client).extract(
+        ExtractorFallbackPipeline(
+            deterministic_extractor=RegexExtractor(
+                alias_path=domain_config.value_aliases_path
+            ),
+            fallback_extractor=(
+                DeepSeekSlotAdapter.from_client(
+                    _interactive_deepseek_client(config.model)
+                )
+                if deepseek_slot_adapter_enabled()
+                else None
+            ),
+            fallback_enabled=deepseek_slot_adapter_enabled(),
+        ).extract(
             soft_prompt,
             schema_context=(
                 schema_registry.field_summary_for_llm()
@@ -1357,7 +1373,7 @@ def _generate_report(
 ) -> tuple[dict[str, Any], dict[str, int] | None]:
     evidence_dict = evidence.to_dict()
 
-    if config.generator == "template_evidence":
+    if config.generator == "template_evidence" or not llm_runtime_enabled():
         answer = TemplateReportBuilder(domain_config=domain_config).build(evidence)
         return _report_from_answer(answer, evidence_dict, domain_config), None
 

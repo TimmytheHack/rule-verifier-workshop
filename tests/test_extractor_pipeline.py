@@ -51,6 +51,10 @@ class ExtractorFallbackPipelineTest(unittest.TestCase):
         self.assertEqual(slots["preferences"]["major_exact_terms"], ["环境工程"])
         self.assertEqual(slots["preferences"]["preferred_cities"], ["广州"])
         self.assertEqual(slots["proposed_rules"], [])
+        self.assertEqual(
+            slots["unmapped_preferences"],
+            [],
+        )
         self.assertEqual(slots["deepseek_usage"]["total_tokens"], 9)
 
     def test_fallback_is_skipped_when_deterministic_slots_are_sufficient(self) -> None:

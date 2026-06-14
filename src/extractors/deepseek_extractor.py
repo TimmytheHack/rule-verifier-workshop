@@ -45,14 +45,14 @@ class DeepSeekClient:
         self,
         api_key: str | None = None,
         model: str | None = None,
-        api_url: str = DEEPSEEK_API_URL,
+        api_url: str | None = None,
         timeout_seconds: int | None = None,
         max_retries: int | None = None,
         retry_backoff_seconds: float | None = None,
     ) -> None:
         self.api_key = api_key or env_value("DEEPSEEK_API_KEY")
         self.model = model or env_value("DEEPSEEK_MODEL") or DEFAULT_MODEL
-        self.api_url = api_url
+        self.api_url = api_url or env_value("DEEPSEEK_API_URL") or DEEPSEEK_API_URL
         self.timeout_seconds = (
             timeout_seconds
             if timeout_seconds is not None

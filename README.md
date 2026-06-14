@@ -197,9 +197,19 @@ cp .env.example .env
 ```text
 ENABLE_LLM=false
 DEEPSEEK_API_KEY=
+DEEPSEEK_MODEL=deepseek-chat
+DEEPSEEK_API_URL=https://api.deepseek.com/chat/completions
 ```
 
-只使用前端 demo 模式、regex 抽取、模板证据回答、uploaded dataset、Quality Gate 或 tool server 时不需要 DeepSeek key；只有显式开启可选 LLM 辅助生成时才需要配置 key。
+只使用前端 demo 模式、regex 抽取、模板证据回答、uploaded dataset、Quality Gate 或 tool server 时不需要 DeepSeek key；只有显式设置 `ENABLE_LLM=true` 并配置 `DEEPSEEK_API_KEY` 时，Workbench 才会调用 DeepSeek slot adapter。生产路径中的 DeepSeek 只补 deterministic extractor 缺失的 slots，不覆盖已抽取字段，不生成 SQL，不返回 hard rules 或 executable rules。
+
+本地验证 DeepSeek slot adapter：
+
+```bash
+ENABLE_LLM=true .venv/bin/python scripts/run_deepseek_slot_probe.py
+```
+
+输出只包含 `fallback_extraction`、`llm_slot_adapter`、token usage、抽取摘要和执行摘要，不会打印密钥或完整 prompt。
 
 启动 FastAPI：
 
@@ -279,7 +289,7 @@ python3 scripts/run_mvp_demo.py
 python3 scripts/eval_fuzzy_inputs.py --methods regex
 ```
 
-后续路线见 [下一阶段路线](docs/next_route.md)。当前主线继续优先做 production hardening、operator trial 和 release readiness；Optional LLM Slot Adapter 之前不需要接 LLM API。
+后续路线见 [下一阶段路线](docs/next_route.md)。当前主线已经先适配 DeepSeek slot adapter，但默认仍关闭；后续继续优先做 production hardening、operator trial 和 release readiness，暂不接 OpenAI-compatible local endpoint、Qwen/vLLM、BGE 或向量库。
 
 运行真实数据集 pilot fixture：
 

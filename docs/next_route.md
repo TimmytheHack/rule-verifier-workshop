@@ -33,10 +33,12 @@ make quality
 
 ## 暂停边界
 
-以下事项进入前需要单独确认，不作为当前无 LLM API 主线继续：
+DeepSeek slot adapter 已作为第一步适配：默认仍由 `ENABLE_LLM=false` 禁用，显式开启后只补 missing slots，并在进入 Workbench 前做 schema 校验和禁止字段检查。
 
-- Optional LLM Slot Adapter：DeepSeek API、OpenAI-compatible local endpoint、Qwen via vLLM。
+以下事项进入前需要单独确认：
+
+- OpenAI-compatible local endpoint、Qwen via vLLM 或其他 provider adapter。
 - 任何 embedding、BGE、向量库或结构化大表 RAG。
 - 让 LLM 输出 executable rules、hard filters、approved ops 或 SQL。
 
-即使未来接入 LLM，也必须保持 `ENABLE_LLM=false` 默认，LLM 输出只补 missing slot 或 candidate explanation，并通过 jsonschema、AttributeGrounder、RuleVerifier 和 confirmation loop。
+即使未来扩展更多 LLM provider，也必须保持 `ENABLE_LLM=false` 默认，LLM 输出只补 missing slot 或 candidate explanation，并通过 jsonschema、AttributeGrounder、RuleVerifier 和 confirmation loop。

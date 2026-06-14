@@ -122,8 +122,13 @@ def merge_slot_payloads(
         list(deterministic.get("raw_phrases") or [])
         + list(fallback.get("raw_phrases") or [])
     )
+    for key in ["unmapped_preferences", "questions_needed"]:
+        records = list(deterministic.get(key) or []) + list(fallback.get(key) or [])
+        merged[key] = _unique_records(records)
     if fallback.get("source_spans"):
         merged["source_spans"] = fallback["source_spans"]
+    if fallback.get("llm_slot_adapter"):
+        merged["llm_slot_adapter"] = fallback["llm_slot_adapter"]
     merged["proposed_rules"] = []
     return merged
 
@@ -174,4 +179,18 @@ def _unique(values: list[Any]) -> list[Any]:
     for value in values:
         if value not in output:
             output.append(value)
+    return output
+
+
+def _unique_records(values: list[Any]) -> list[dict[str, Any]]:
+    output: list[dict[str, Any]] = []
+    seen: set[str] = set()
+    for value in values:
+        if not isinstance(value, dict):
+            continue
+        key = repr(sorted(value.items()))
+        if key in seen:
+            continue
+        seen.add(key)
+        output.append(value)
     return output

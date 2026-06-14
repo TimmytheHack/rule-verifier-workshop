@@ -133,15 +133,15 @@ class WorkbenchGoldenE2ETest(unittest.TestCase):
             result["natural_language_report"]["full_text"],
         )
 
-    def test_hybrid_without_deepseek_key_uses_deterministic_only(self) -> None:
-        with patch("src.api.workbench.has_deepseek_api_key", return_value=False):
-            with patch("src.api.workbench.DeepSeekExtractor") as extractor_class:
+    def test_hybrid_without_llm_gate_uses_deterministic_only(self) -> None:
+        with patch("src.api.workbench.deepseek_slot_adapter_enabled", return_value=False):
+            with patch("src.api.workbench.DeepSeekSlotAdapter") as adapter_class:
                 result = _run_case(
                     "广东物理，物化生，排位32000，想学计科，广深优先。",
                     extractor="hybrid",
                 )
 
-        extractor_class.assert_not_called()
+        adapter_class.assert_not_called()
         self.assertEqual(result["token_usage"]["extractor"], None)
         self.assertFalse(result["extracted_slots"]["fallback_extraction"]["used"])
         self.assertEqual(
@@ -154,6 +154,64 @@ class WorkbenchGoldenE2ETest(unittest.TestCase):
             ],
         )
         self.assertEqual(result["result_count"], 3962)
+
+    def test_deepseek_extractor_option_respects_llm_gate(self) -> None:
+        with patch("src.api.workbench.deepseek_slot_adapter_enabled", return_value=False):
+            with patch("src.api.workbench.DeepSeekSlotAdapter") as adapter_class:
+                result = _run_case(
+                    "广东物理类，排位12345，想学环境工程，广州。",
+                    extractor="deepseek",
+                )
+
+        adapter_class.assert_not_called()
+        self.assertFalse(result["extracted_slots"]["fallback_extraction"]["used"])
+        self.assertEqual(result["token_usage"]["extractor"], None)
+
+    def test_hybrid_llm_adapter_only_fills_missing_slots(self) -> None:
+        class FakeAdapter:
+            def extract(self, text: str, **_kwargs: object) -> dict[str, object]:
+                return {
+                    "input": text,
+                    "user_context": {
+                        "source_province": "广东",
+                        "subject_type": "物理",
+                        "reselected_subjects": [],
+                        "user_rank": 12345,
+                    },
+                    "preferences": {
+                        "major_keyword": "环境工程",
+                        "major_exact_terms": ["环境工程"],
+                        "preferred_cities": ["广州"],
+                        "preferred_school_provinces": [],
+                    },
+                    "proposed_rules": [],
+                    "deepseek_usage": {"total_tokens": 7},
+                    "llm_slot_adapter": {
+                        "provider": "deepseek",
+                        "validated": True,
+                    },
+                }
+
+        with patch("src.api.workbench.deepseek_slot_adapter_enabled", return_value=True):
+            with patch("src.api.workbench._interactive_deepseek_client"):
+                with patch(
+                    "src.api.workbench.DeepSeekSlotAdapter.from_client",
+                    return_value=FakeAdapter(),
+                ):
+                    result = _run_case(
+                        "广东物理类，排位12345，想学环境工程，广州。",
+                        extractor="hybrid",
+                    )
+
+        fallback = result["extracted_slots"]["fallback_extraction"]
+        self.assertTrue(fallback["used"])
+        self.assertIn("preferences.major_exact_terms", fallback["filled_paths"])
+        self.assertEqual(result["token_usage"]["extractor"]["total_tokens"], 7)
+        self.assertEqual(
+            result["extracted_slots"]["preferences"]["major_exact_terms"],
+            ["环境工程"],
+        )
+        self.assertEqual(result["extracted_slots"]["proposed_rules"], [])
 
 
 if __name__ == "__main__":

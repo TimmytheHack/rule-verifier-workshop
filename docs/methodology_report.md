@@ -678,6 +678,7 @@ EvidencePack 边界。
 - Human confirmation 是模拟的。
 - 系统只使用一个广东招生数据集；Workbench hard rules 通过 DuckDB executor 执行，pandas executor 仅保留为 MVP demo、评估对照和测试工具。
 - Workbench 依赖 DuckDB metadata、schema/value index metadata 和源 Excel fingerprint 一致性校验，校验失败时阻断执行并返回 structured warning。
+- DeepSeek slot adapter 已可选接入，但默认关闭；启用时只补 deterministic extractor 缺失的 slots，并在进入 Workbench 前做 JSON schema 校验和禁止字段检查。
 - 不生成完整志愿表。
 - 不评价学校声誉。
 - 不预测就业结果。
@@ -697,6 +698,7 @@ EvidencePack 边界。
 - 增加 per-rule trace completeness scoring。
 - 增加 unsupported but tempting fields 的 adversarial inputs。
 - 测试 DeepSeek extraction 在不完整、矛盾输入中的稳定性。
+- 单独压测 DeepSeek slot adapter：确认不覆盖 deterministic slots、不返回 executable rules、不改变 RuleVerifier 边界。
 - 将 40-case benchmark 继续扩展到 50-100 条真实改写表达。
 - 压测 `320/320` DeepSeek 结果在更长、更乱、矛盾输入下是否仍然稳定。
 - 将 recommendation quality evaluation 和 rule verification evaluation 分开。

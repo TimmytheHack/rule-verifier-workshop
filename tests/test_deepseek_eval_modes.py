@@ -174,7 +174,9 @@ class DeepSeekEvalModesTest(unittest.TestCase):
         with TemporaryDirectory() as directory:
             dotenv_path = Path(directory) / ".env"
             dotenv_path.write_text(
-                'DEEPSEEK_API_KEY="test-key"\nDEEPSEEK_MODEL=custom-model\n',
+                'DEEPSEEK_API_KEY="test-key"\n'
+                "DEEPSEEK_MODEL=custom-model\n"
+                "DEEPSEEK_API_URL=https://example.test/chat/completions\n",
                 encoding="utf-8",
             )
             with patch.dict(os.environ, {}, clear=True), patch(
@@ -185,6 +187,7 @@ class DeepSeekEvalModesTest(unittest.TestCase):
 
         self.assertEqual(client.api_key, "test-key")
         self.assertEqual(client.model, "custom-model")
+        self.assertEqual(client.api_url, "https://example.test/chat/completions")
 
     def test_deepseek_client_retries_transient_network_errors(self) -> None:
         calls = {"count": 0}
