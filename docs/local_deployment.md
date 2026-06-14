@@ -127,10 +127,15 @@ outputs/agent_tool_acceptance/report.json
 ## 发布前检查
 
 ```bash
+make release-check
+make demo
+make agent-acceptance
+make pilot
+make operator-trial
 make quality
 ```
 
-该命令运行统一 Quality Gate，并生成：
+`make release-check` 会校验 `release_manifest.json`、`sample_data/`、`sample_outputs/`、发布文档和关键 Makefile 入口。`make quality` 会运行统一 Quality Gate，并生成：
 
 ```text
 outputs/quality_gate/report.md
@@ -145,6 +150,7 @@ make demo
 make agent-acceptance
 make pilot
 make operator-trial
+make release-check
 make frontend
 make clean-artifacts
 ```

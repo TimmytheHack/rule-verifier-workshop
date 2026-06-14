@@ -3,7 +3,7 @@ VENV ?= .venv
 VENVPY ?= $(VENV)/bin/python
 PIP ?= $(VENV)/bin/pip
 
-.PHONY: bootstrap test quality pilot operator-trial demo agent-acceptance serve frontend clean-artifacts
+.PHONY: bootstrap test quality pilot operator-trial demo agent-acceptance release-check serve frontend clean-artifacts
 
 bootstrap:
 	@if [ ! -x "$(VENVPY)" ]; then $(PYTHON) -m venv $(VENV); fi
@@ -28,6 +28,9 @@ demo:
 agent-acceptance:
 	$(VENVPY) scripts/run_agent_tool_acceptance.py
 
+release-check:
+	$(VENVPY) scripts/validate_release_package.py
+
 serve:
 	$(VENVPY) -m uvicorn src.api.server:app --reload --port 8001
 
@@ -48,4 +51,5 @@ clean-artifacts:
 	rm -rf outputs/tool_manifest
 	rm -rf outputs/openapi
 	rm -rf outputs/agent_tool_acceptance
+	rm -rf outputs/release_package
 	rm -f outputs/tool_audit/test_audit.jsonl

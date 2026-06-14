@@ -165,6 +165,19 @@ make agent-acceptance
 
 该脚本验证 list/profile/review/query/confirm/evidence 和 admin 权限拒绝，并输出 `outputs/agent_tool_acceptance/report.md` 与 `report.json`。
 
+Release demo package 包含：
+
+- `release_manifest.json`：固定发布入口、契约版本、sample data、sample outputs 和安全不变量。
+- `sample_data/`：脱敏 admissions CSV、housing/products toy CSV 和说明。
+- `sample_outputs/`：精简 WorkbenchResponse、Quality Gate 和 operator trial 输出示例。
+- `CHANGELOG.md`、`RELEASE_CHECKLIST.md`、`docs/demo_script.md`：发布说明、检查清单和演示脚本。
+
+发布包静态校验：
+
+```bash
+make release-check
+```
+
 ## 启动后端
 
 推荐用 Makefile 创建环境并安装依赖：
@@ -270,6 +283,18 @@ python3 scripts/eval_fuzzy_inputs.py --methods regex
 make pilot
 ```
 
+运行 operator trial fixture：
+
+```bash
+make operator-trial
+```
+
+校验 release package：
+
+```bash
+make release-check
+```
+
 运行统一质量门禁：
 
 ```bash
@@ -298,12 +323,15 @@ DeepSeek-backed 评估会读取 `.env`，并可能产生 API 延迟和 token 消
 - [Workbench API 响应契约](docs/api_contract.md)
 - [功能工具契约](docs/tool_contract.md)
 - [Agent 使用指南](docs/agent_usage_guide.md)
+- [演示脚本](docs/demo_script.md)
 - [本地部署说明](docs/local_deployment.md)
 - [Operator 操作指南](docs/operator_guide.md)
 - [故障排查](docs/troubleshooting.md)
 - [Real Dataset Pilot](docs/real_dataset_pilot.md)
 - [Operator Trial Checklist](docs/operator_trial_checklist.md)
 - [Operator Feedback Template](docs/operator_feedback_template.md)
+- [发布检查清单](RELEASE_CHECKLIST.md)
+- [变更日志](CHANGELOG.md)
 - [评估报告](docs/evaluation_report.md)
 - [端到端 demo 用例](docs/end_to_end_demo_cases.md)
 - [Excel schema profile](docs/excel_schema_profile.md)

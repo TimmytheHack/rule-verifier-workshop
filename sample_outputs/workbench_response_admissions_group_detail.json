@@ -1,0 +1,132 @@
+{
+  "schema_version": "workbench_response.v1",
+  "domain": "admissions",
+  "domain_version": "admissions.v1",
+  "domain_pack_status": "approved",
+  "status": "ok",
+  "query_type": "group_detail_report",
+  "query": "列出 2025 年深圳大学录取最高的专业组及专业组里面的各个专业最低录取分数",
+  "answer": "已按已审核字段执行 2025 年、深圳大学、专业组最低分排序，并展开组内专业最低分。",
+  "result_count": 1,
+  "items": [
+    {
+      "item_id": "group_10590225",
+      "title": "深圳大学",
+      "subtitle": "物理225组",
+      "primary_attributes": [
+        {
+          "key": "group_code",
+          "label": "group_code",
+          "value": "10590225"
+        },
+        {
+          "key": "group_min_score",
+          "label": "group_min_score",
+          "value": 634
+        }
+      ],
+      "secondary_attributes": [
+        {
+          "key": "city",
+          "label": "city",
+          "value": "深圳"
+        }
+      ],
+      "matched_filters": [
+        "year = 2025",
+        "university_name = 深圳大学"
+      ],
+      "raw": {
+        "院校名称": "深圳大学",
+        "院校专业组代码": "10590225",
+        "专业组最低分1": 634
+      }
+    }
+  ],
+  "top_results": [
+    {
+      "university_name": "深圳大学",
+      "group_code": "10590225",
+      "major_code": "080901",
+      "major_name": "计算机科学与技术",
+      "full_major_name": "计算机科学与技术",
+      "city": "深圳",
+      "tuition": 6850,
+      "rank_2024": 7800,
+      "plan_count": 40
+    }
+  ],
+  "result_sections": {
+    "groups": [
+      {
+        "group_code": "10590225",
+        "group_title": "物理225组",
+        "group_metric_score": 634,
+        "majors": [
+          {
+            "major_code": "080901",
+            "major_name": "计算机科学与技术",
+            "major_min_score": 633
+          },
+          {
+            "major_code": "080717",
+            "major_name": "人工智能",
+            "major_min_score": 632
+          }
+        ]
+      }
+    ]
+  },
+  "executed_filters": [
+    {
+      "field_id": "year",
+      "op": "=",
+      "value": 2025
+    },
+    {
+      "field_id": "university_name",
+      "op": "=",
+      "value": "深圳大学"
+    }
+  ],
+  "candidates_to_confirm": [],
+  "confirmed_rules": [],
+  "unconfirmed_candidates": [],
+  "unexecuted_preferences": [],
+  "no_schema_field_preferences": [],
+  "rejected_confirmations": [],
+  "warnings": [],
+  "evidence_pack": {
+    "execution_summary": {
+      "query_type": "group_detail_report",
+      "sql": "SELECT ... WHERE year = ? AND university_name = ?",
+      "params": [
+        2025,
+        "深圳大学"
+      ],
+      "group_by": [
+        "group_code"
+      ],
+      "metric": {
+        "field_id": "group_min_score_2024",
+        "aggregation": "max"
+      },
+      "sort": [
+        {
+          "field_id": "group_min_score_2024",
+          "direction": "desc"
+        }
+      ],
+      "nested_result_count": 2
+    }
+  },
+  "debug_trace": {
+    "execution": {
+      "sql": "SELECT ... WHERE year = ? AND university_name = ?",
+      "params": [
+        2025,
+        "深圳大学"
+      ]
+    }
+  }
+}

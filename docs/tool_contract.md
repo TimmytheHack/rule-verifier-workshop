@@ -226,6 +226,8 @@ manifest 顶层结构：
 
 每个 tool 条目都会标记 `permission_scope`、`llm_safe`、`side_effects`、`executes_sql`、`writes_files`、`required_domain_status`、`input_schema`、`output_schema`、`status_enum` 和 `security_notes`。
 
+`release_manifest.json` 是发布包清单，用于记录命令入口、sample data、sample outputs、文档和安全不变量；它不替代 `outputs/tool_manifest/tool_manifest.json`，也不作为 agent 可调用 tool schema。
+
 ## OpenAI-compatible Adapter
 
 `src/api/openai_tool_adapter.py` 把内部 tool contract 转成 OpenAI function calling 可用的 tools：

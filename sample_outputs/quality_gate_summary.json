@@ -1,0 +1,77 @@
+{
+  "status": "pass",
+  "started_at": "2026-06-14T00:00:00Z",
+  "finished_at": "2026-06-14T00:01:30Z",
+  "duration_seconds": 90.0,
+  "git_commit": "example",
+  "git_dirty": false,
+  "checks": [
+    {
+      "name": "python_syntax",
+      "status": "pass",
+      "command": "find src scripts tests -name '*.py' -print0 | xargs -0 .venv/bin/python -m py_compile",
+      "exit_code": 0,
+      "duration_seconds": 0.3,
+      "stdout_tail": "",
+      "stderr_tail": "",
+      "artifacts": []
+    },
+    {
+      "name": "unit_tests",
+      "status": "pass",
+      "command": ".venv/bin/python -m unittest discover -s tests",
+      "exit_code": 0,
+      "duration_seconds": 42.0,
+      "stdout_tail": "Ran 176 tests in 42.0s\\n\\nOK",
+      "stderr_tail": "",
+      "artifacts": []
+    },
+    {
+      "name": "demo_acceptance",
+      "status": "pass",
+      "command": ".venv/bin/python scripts/run_demo_acceptance.py",
+      "exit_code": 0,
+      "duration_seconds": 20.0,
+      "stdout_tail": "Wrote outputs/demo_acceptance/report.json",
+      "stderr_tail": "",
+      "artifacts": [
+        "outputs/demo_acceptance/report.json",
+        "outputs/demo_acceptance/report.md"
+      ]
+    }
+  ],
+  "summary": {
+    "passed": 3,
+    "failed": 0,
+    "warnings": 0,
+    "regex_score": "320/320",
+    "unit_tests": "176 tests",
+    "demo_acceptance": {
+      "total": 29,
+      "passed": 29,
+      "status_distribution": {
+        "ok": 19,
+        "needs_confirmation": 8,
+        "no_results": 2
+      }
+    },
+    "domains": {
+      "admissions": {
+        "status": "approved",
+        "can_execute": true
+      },
+      "housing": {
+        "status": "approved",
+        "can_execute": true
+      },
+      "products": {
+        "status": "approved",
+        "can_execute": true
+      }
+    }
+  },
+  "artifacts": [
+    "outputs/quality_gate/report.json",
+    "outputs/quality_gate/report.md"
+  ]
+}

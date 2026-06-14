@@ -181,6 +181,7 @@ curl -X POST \
 generate draft
 -> review / approve
 -> run operator trial
+-> run release package check
 -> run demo acceptance
 -> run real dataset pilot
 -> run quality gate
@@ -190,6 +191,7 @@ generate draft
 命令入口：
 
 ```bash
+make release-check
 make demo
 make operator-trial
 make pilot
@@ -207,3 +209,7 @@ make quality
 检测、missing/risky fields、审批记录、warehouse fingerprint、两条目标 admissions query、
 warnings 和 failures。trial 通过后仍需继续执行 demo acceptance、real dataset pilot 和
 Quality Gate。
+
+候选发布前还应阅读 `RELEASE_CHECKLIST.md`，确认 `sample_data/`、`sample_outputs/`、
+`release_manifest.json` 和 `docs/demo_script.md` 已更新。只有完整 checklist 通过后，才创建
+候选 tag。

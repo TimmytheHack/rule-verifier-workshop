@@ -1,0 +1,151 @@
+{
+  "release_manifest_version": "release_manifest.v1",
+  "release_name": "llm-safe-excel-csv-tool-server",
+  "release_status": "candidate",
+  "recommended_tag": "v0.1.0-rc1",
+  "api_version": "api.v1",
+  "workbench_schema_version": "workbench_response.v1",
+  "tool_contract_version": "tools.v1",
+  "positioning": "LLM-safe structured data query tool server for Excel/CSV",
+  "commands": [
+    {
+      "name": "bootstrap",
+      "command": "make bootstrap",
+      "purpose": "创建或检查 .venv 并安装 requirements。"
+    },
+    {
+      "name": "serve",
+      "command": "make serve",
+      "purpose": "启动 FastAPI tool server。"
+    },
+    {
+      "name": "demo",
+      "command": "make demo",
+      "purpose": "运行内置 admissions、housing、products 和 uploaded dataset demo acceptance。"
+    },
+    {
+      "name": "pilot",
+      "command": "make pilot",
+      "purpose": "运行 real-like admissions Excel pilot fixture。"
+    },
+    {
+      "name": "operator-trial",
+      "command": "make operator-trial",
+      "purpose": "运行真实招生 Excel operator trial fixture。"
+    },
+    {
+      "name": "agent-acceptance",
+      "command": "make agent-acceptance",
+      "purpose": "运行 fake agent 黑盒 tool-use acceptance。"
+    },
+    {
+      "name": "quality",
+      "command": "make quality",
+      "purpose": "运行完整交付门禁。"
+    },
+    {
+      "name": "frontend",
+      "command": "make frontend",
+      "purpose": "构建前端；Vite/Rollup warning 由 Quality Gate 记录为 warning。"
+    },
+    {
+      "name": "clean-artifacts",
+      "command": "make clean-artifacts",
+      "purpose": "清理临时 audit、临时 warehouse 和导出产物。"
+    },
+    {
+      "name": "release-check",
+      "command": "make release-check",
+      "purpose": "校验 release manifest、sample_data、sample_outputs 和关键入口。"
+    }
+  ],
+  "sample_data": [
+    {
+      "path": "sample_data/admissions_minimal.csv",
+      "description": "脱敏 admissions CSV fixture，覆盖 group_detail_report 和 recommendation 查询所需字段。"
+    },
+    {
+      "path": "sample_data/housing.csv",
+      "description": "20 行 housing toy domain CSV。"
+    },
+    {
+      "path": "sample_data/products.csv",
+      "description": "20 行 products toy domain CSV，包含 PII-like email_contact 字段用于审查风险示例。"
+    },
+    {
+      "path": "sample_data/README.md",
+      "description": "sample_data 使用说明。"
+    }
+  ],
+  "sample_outputs": [
+    {
+      "path": "sample_outputs/workbench_response_admissions_group_detail.json",
+      "description": "admissions group_detail_report 的精简 WorkbenchResponse 示例。"
+    },
+    {
+      "path": "sample_outputs/quality_gate_summary.json",
+      "description": "Quality Gate report.json 的精简结构示例。"
+    },
+    {
+      "path": "sample_outputs/operator_trial_summary.md",
+      "description": "operator trial 人工报告摘要示例。"
+    },
+    {
+      "path": "sample_outputs/README.md",
+      "description": "sample_outputs 使用说明。"
+    }
+  ],
+  "docs": [
+    {
+      "path": "README.md",
+      "description": "项目入口说明。"
+    },
+    {
+      "path": "docs/local_deployment.md",
+      "description": "本地部署说明。"
+    },
+    {
+      "path": "docs/operator_guide.md",
+      "description": "operator 操作流程。"
+    },
+    {
+      "path": "docs/tool_contract.md",
+      "description": "functional tool contracts。"
+    },
+    {
+      "path": "docs/agent_usage_guide.md",
+      "description": "LLM/agent 使用指南。"
+    },
+    {
+      "path": "docs/demo_script.md",
+      "description": "演示脚本。"
+    },
+    {
+      "path": "docs/troubleshooting.md",
+      "description": "故障排查。"
+    },
+    {
+      "path": "docs/real_dataset_pilot.md",
+      "description": "真实数据 pilot。"
+    },
+    {
+      "path": "docs/operator_trial_checklist.md",
+      "description": "operator trial checklist。"
+    }
+  ],
+  "security_invariants": [
+    "LLM-safe tools 只暴露 dataset.profile、dataset.review_summary、workbench.query、workbench.confirm、evidence.get。",
+    "admin tools 默认不可见不可调用，必须由 operator/admin 权限触发。",
+    "draft、needs_review、blocked domain pack 不能执行 SQL。",
+    "confirmed_candidate_ids 只能引用上一轮系统生成的 candidate_id。",
+    "no_schema_field_preferences 永远不能执行。",
+    "SQL 必须参数化，LLM 不能生成 SQL 或 executable hard rules。",
+    "API/tool output 不暴露 stack trace、secret、环境变量或危险绝对路径。",
+    "结构化 Excel/CSV 使用 DuckDB warehouse、schema profile 和 schema/value index，不把大表全量 embedding。"
+  ],
+  "release_notes": {
+    "changelog": "CHANGELOG.md",
+    "checklist": "RELEASE_CHECKLIST.md",
+    "created_for_phase": "Phase C Release Tag + Demo Package"
+  }
+}

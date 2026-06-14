@@ -643,6 +643,8 @@ evidence pack 支持，不等于 raw Excel workbook 中一定不存在。
 - `scripts/export_openapi.py`、`scripts/export_tool_manifest.py` 和 `scripts/export_openai_tools.py` 支持前端、agent 网关、OpenAI-compatible tool calling 和 operator 控制台读取契约；
 - `src/api/openai_tool_adapter.py` 和 `src/api/mcp_tool_adapter.py` 默认只暴露 LLM-safe tools，`scripts/run_agent_tool_acceptance.py` 做 fake agent 黑盒验收；
 - `Makefile`、`.env.example`、`docs/local_deployment.md`、`docs/operator_guide.md`、`docs/troubleshooting.md` 说明本地部署、权限、审计和故障排查。
+- `release_manifest.json`、`CHANGELOG.md`、`RELEASE_CHECKLIST.md`、`docs/demo_script.md`、`sample_data/` 和 `sample_outputs/` 组成候选 release demo package；
+- `scripts/validate_release_package.py` 和 `make release-check` 校验发布包静态完整性，但不替代 Quality Gate。
 
 这个发布层仍遵守同一条不变量：LLM-safe tools 只能读取 profile/review summary、调用 Workbench query/confirm 或取净化 EvidencePack；`approve-*`、`build-warehouse`、`quality.run` 和 `pilot.run` 必须由 operator/admin 权限触发。tool invoke audit 只记录 actor、tool、dataset、status、duration、side effects 和 error code，不记录完整上传文件内容、环境变量或密钥。
 
