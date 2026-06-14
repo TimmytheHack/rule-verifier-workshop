@@ -46,6 +46,7 @@ class _RecommendationInputs:
     score: int | None
     rank: int | None
     major_terms: list[str]
+    major_match_mode: str
     school_provinces: list[str]
     no_schema_preferences: list[dict[str, Any]]
     warnings: list[dict[str, Any]]
@@ -324,6 +325,10 @@ class AdmissionsQueryPlanner:
             for row in section["items"]
         ]
         metric = "rank_margin" if inputs.rank else "score_margin"
+        bucket_counts = {
+            key: len(section.get("items") or [])
+            for key, section in section_payload.items()
+        }
         execution_summary = {
             "executor": "duckdb",
             "query_type": QUERY_TYPE_RECOMMENDATION,
@@ -334,6 +339,13 @@ class AdmissionsQueryPlanner:
             "group_by": [],
             "metric": metric,
             "sort": [{"field": metric, "direction": "ASC"}],
+            "margin_policy": policy.get("margin_policy") or {},
+            "year_weighting": _year_weighting_summary(policy, inputs.year),
+            "major_match": {
+                "mode": inputs.major_match_mode,
+                "terms": inputs.major_terms,
+            },
+            "bucket_counts": bucket_counts,
             "top_k": policy.get("limit") or DEFAULT_LIMIT,
             "hard_rule_ids": [rule["rule_id"] for rule in inputs.executed_rules],
             "skipped_soft_rule_ids": [],
@@ -427,7 +439,10 @@ class AdmissionsQueryPlanner:
                     "只提供分数没有位次；系统只按历史最低分 margin 分组，不能判断录取概率。",
                 )
             )
-        major_terms, candidates = self._major_terms(config, user_request)
+        major_terms, candidates, major_match_mode = self._major_terms(
+            config,
+            user_request,
+        )
         school_provinces = self._school_provinces(config, user_request)
         no_schema, schema_rules = self._schema_sensitive_avoidance_rules(
             user_request,
@@ -461,6 +476,7 @@ class AdmissionsQueryPlanner:
             score=score,
             rank=rank,
             major_terms=major_terms,
+            major_match_mode=major_match_mode,
             school_provinces=school_provinces,
             no_schema_preferences=no_schema,
             warnings=warnings,
@@ -468,7 +484,11 @@ class AdmissionsQueryPlanner:
             candidates_to_confirm=candidates,
         )
 
-    def _major_terms(self, config: Any, user_request: str) -> tuple[list[str], list[dict[str, Any]]]:
+    def _major_terms(
+        self,
+        config: Any,
+        user_request: str,
+    ) -> tuple[list[str], list[dict[str, Any]], str]:
         hard = config.hard_filters
         hard_terms = _clean_list(
             hard.get("major_keywords")
@@ -476,13 +496,14 @@ class AdmissionsQueryPlanner:
             or hard.get("major_keyword")
         )
         if hard_terms:
-            return hard_terms, []
+            return hard_terms, [], "deterministic_fields"
         found = []
         for canonical, aliases in (self.aliases.get("major_aliases") or {}).items():
             if any(alias in user_request for alias in aliases):
                 found.append(str(canonical))
         found = _unique(found)
         candidates = []
+        used_confirmed_candidate = False
         for mapping in self.domain_config.workbench.get("reviewed_candidate_mappings") or []:
             if mapping.get("field_id") != "major_name":
                 continue
@@ -505,6 +526,7 @@ class AdmissionsQueryPlanner:
             )
             if candidate_id in set(config.confirmed_candidates or []):
                 found.extend(_clean_list(mapping.get("value")))
+                used_confirmed_candidate = True
                 continue
             candidates.append(
                 {
@@ -521,7 +543,16 @@ class AdmissionsQueryPlanner:
                     "matched_values": [],
                 }
             )
-        return _unique(found), candidates
+        mode = "none"
+        if used_confirmed_candidate:
+            mode = "confirmed_candidates"
+        elif found and candidates:
+            mode = "exact_keywords_with_unconfirmed_candidates"
+        elif found:
+            mode = "exact_major_keywords"
+        elif candidates:
+            mode = "candidates_to_confirm"
+        return _unique(found), candidates, mode
 
     def _school_provinces(self, config: Any, user_request: str) -> list[str]:
         hard = config.hard_filters
@@ -1086,6 +1117,20 @@ def _empty_recommendation_sections() -> dict[str, Any]:
         "match": {"label": "稳", "items": []},
         "safety": {"label": "保", "items": []},
     }
+
+
+def _year_weighting_summary(policy: dict[str, Any], selected_year: int) -> dict[str, Any]:
+    configured = dict(policy.get("year_weighting") or {})
+    if not configured:
+        configured = {
+            "mode": "latest_available_year",
+            "selected_year_weight": 1.0,
+        }
+    configured["selected_year"] = selected_year
+    configured["executed_cross_year_weighting"] = (
+        configured.get("mode") != "latest_available_year"
+    )
+    return configured
 
 
 def _empty_execution_summary(

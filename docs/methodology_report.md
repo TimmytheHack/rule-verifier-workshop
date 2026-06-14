@@ -498,9 +498,11 @@ Workbench API 返回固定的 `WorkbenchResponse` contract：
   `group_detail_report` 和 `recommendation`。前者按 domain pack 配置的默认
   `group_min_score_2024` 指标生成专业组聚合和组内专业明细；后者基于历史最低分/
   最低位次生成 `reach`、`match`、`safety`（冲/稳/保）分组。只有分数没有位次时
-  返回 warning；有位次时优先按 `rank_margin` 排序。`不想去国外`、`不要中外合作`
+  返回 warning；有位次时优先按 `rank_margin` 排序。推荐 EvidencePack 会记录
+  `margin_policy`、`year_weighting`、`major_match` 和 `bucket_counts`，当前只执行
+  `latest_available_year`，不把多年度权重作为 SQL 条件。`不想去国外`、`不要中外合作`
   只有在 domain pack 启用对应已审核字段时才执行，否则保留在
-  `no_schema_field_preferences`。
+  `no_schema_field_preferences`。这些分组是历史数据 margin 解释，不是录取概率。
 - 完整字段和 JSON 示例见 `docs/api_contract.md`。
 
 ## 9. LLM 边界

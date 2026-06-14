@@ -79,6 +79,26 @@ class AdmissionsQueryTypesTest(unittest.TestCase):
         self.assertIn("不是录取概率判断", result["answer"])
         self.assertIn("历史最低分/最低位次", result["answer"])
 
+    def test_recommendation_evidence_records_calibration_policy(self) -> None:
+        result = _run(RECOMMENDATION_QUERY)
+
+        execution = result["evidence_pack"]["execution_summary"]
+        self.assertEqual(execution["major_match"]["mode"], "exact_major_keywords")
+        self.assertEqual(execution["major_match"]["terms"], ["计算机", "人工智能"])
+        self.assertEqual(
+            set(execution["bucket_counts"]),
+            {"reach", "match", "safety"},
+        )
+        self.assertIn("score_margin", execution["margin_policy"])
+        self.assertIn("rank_margin", execution["margin_policy"])
+        self.assertEqual(
+            execution["year_weighting"]["mode"],
+            "latest_available_year",
+        )
+        self.assertFalse(
+            execution["year_weighting"]["executed_cross_year_weighting"]
+        )
+
     def test_score_without_rank_adds_warning(self) -> None:
         result = _run(RECOMMENDATION_QUERY)
 
@@ -193,6 +213,26 @@ class AdmissionsQueryTypesTest(unittest.TestCase):
         params = result["evidence_pack"]["execution_summary"]["params"]
         self.assertIn("软件工程", params)
         self.assertNotIn("人工智能", params)
+
+    def test_confirmed_major_candidate_records_match_mode(self) -> None:
+        query = "我今年高考分数 630，想读计算机相关，想留在广东省"
+        first = _run(query)
+        candidate_id = first["candidates_to_confirm"][0]["candidate_id"]
+
+        result = run_workbench_with_test_warehouse(
+            WorkbenchConfig(
+                user_input=query,
+                soft_preferences={"prompt": query},
+                extractor="regex",
+                confirmed_candidates=[candidate_id],
+            )
+        )
+
+        execution = result["evidence_pack"]["execution_summary"]
+        self.assertEqual(result["query_type"], "recommendation")
+        self.assertEqual(execution["major_match"]["mode"], "confirmed_candidates")
+        self.assertIn("软件工程", execution["major_match"]["terms"])
+        self.assertFalse(result["candidates_to_confirm"])
 
     def test_planned_sql_is_parameterized_and_traced(self) -> None:
         result = _run(GROUP_DETAIL_QUERY)

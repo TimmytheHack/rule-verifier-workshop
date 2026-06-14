@@ -125,6 +125,7 @@ deterministic over-promotion rate
 | P4.9 | 真实招生 Excel Operator Trial | 已实现，包含 `scripts/run_operator_trial.py`、`make operator-trial`、`docs/operator_trial_checklist.md` 和 `docs/operator_feedback_template.md` |
 | P4.10 | Release Tag + Demo Package | 已实现候选发布包，包含 `CHANGELOG.md`、`RELEASE_CHECKLIST.md`、`docs/demo_script.md`、`release_manifest.json`、`sample_data/`、`sample_outputs/` 和 `make release-check` |
 | P4.11 | Frontend Productization | 已实现 operator UI 增强：上传/profile/review/warehouse/query、`items` 与 `result_sections` 优先展示、candidate confirmation 交互、warnings/blocked/no_results 状态和前端操作审计记录 |
+| P4.12 | Admissions Recommendation Calibration | 已实现 EvidencePack 级校准记录：`score_margin` / `rank_margin`、`latest_available_year` 策略、专业匹配来源和冲/稳/保 bucket 计数；不输出录取概率 |
 | P5 | 非结构化政策/章程小型知识库，只做解释和候选，不进执行 | 待做 |
 | P6 | 可选模型/embedding 接入 | 暂不接入 |
 

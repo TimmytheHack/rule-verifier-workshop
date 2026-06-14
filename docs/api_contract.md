@@ -309,7 +309,10 @@ housing/products 使用各自 `top_result_mapping.yaml` 输出。测试和 demo 
   deterministic fields 优先于自然语言；自然语言只补充 preferences/candidates。输出
   `result_sections.reach`、`result_sections.match`、`result_sections.safety`，展示标签为
   `冲`、`稳`、`保`。如果用户只有分数没有位次，必须返回 `score_without_rank` warning；
-  有位次时按 `rank_margin` 优先排序。回答不得声称录取概率。
+  有位次时按 `rank_margin` 优先排序。`EvidencePack.execution_summary` 必须记录
+  `margin_policy`、`year_weighting`、`major_match` 和 `bucket_counts`：当前策略只执行
+  `latest_available_year`，不跨年加权；专业匹配来源必须区分 deterministic fields、
+  exact keywords 和 confirmed candidates。回答不得声称录取概率。
 
 ## 示例：admissions ok
 

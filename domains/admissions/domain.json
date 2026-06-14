@@ -165,6 +165,12 @@
           "match_max": 15000,
           "safety_min": 30000
         }
+      },
+      "year_weighting": {
+        "mode": "latest_available_year",
+        "selected_year_weight": 1.0,
+        "historical_decay": 0.75,
+        "notes": "当前 admissions recommendation 只执行 latest_available_year；多年度趋势接入前只在 EvidencePack 记录策略，不跨年加权执行。"
       }
     }
   },

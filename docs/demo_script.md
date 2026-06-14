@@ -86,6 +86,7 @@ outputs/operator_trial/<run_id>/report.json
 - `safe_auto_suggest_approvals` 只是人工审查建议，不会自动变成 executable hard filters。
 - build warehouse 后必须通过 fingerprint guard。
 - 两条目标 query 分别展示 `group_detail_report` 和 `recommendation`。
+- `recommendation` 的冲/稳/保来自历史最低分/最低位次 margin，`EvidencePack` 会记录 `margin_policy`、`year_weighting`、`major_match` 和 `bucket_counts`，演示时不能把它讲成录取概率。
 
 ## 4. Agent Tool Acceptance
 

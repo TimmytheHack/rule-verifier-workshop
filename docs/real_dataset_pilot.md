@@ -113,7 +113,7 @@ pilot 固定跑两条 admissions query：
 假设我今年的高考分数是630分，想读人工智能，计算机，而且不想去国外，想留在广东省，请给出推荐
 ```
 
-该查询应返回 `query_type=recommendation`。如果只有分数没有位次，必须给出 `score_without_rank` warning，并且回答不能声称录取概率。`不想去国外`、`中外合作`、`境外培养`、`专项计划` 等偏好只有在对应已审核字段存在时才执行，否则进入 `no_schema_field_preferences`。
+该查询应返回 `query_type=recommendation`。如果只有分数没有位次，必须给出 `score_without_rank` warning，并且回答不能声称录取概率。`EvidencePack.execution_summary` 需要记录 `margin_policy`、`year_weighting`、`major_match` 和 `bucket_counts`，说明当前按历史最低分/最低位次 margin 分组，且只执行已配置的最新年份策略。`不想去国外`、`中外合作`、`境外培养`、`专项计划` 等偏好只有在对应已审核字段存在时才执行，否则进入 `no_schema_field_preferences`。
 
 ## 报告字段
 
