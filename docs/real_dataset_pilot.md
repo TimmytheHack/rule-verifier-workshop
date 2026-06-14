@@ -2,7 +2,7 @@
 
 `scripts/run_real_dataset_pilot.py` 用于在真实招生 CSV/Excel 进入生产前，跑一遍可审计的上传、审查、建仓和查询验收流程。它不接 Qwen、BGE 或向量库，也不会把自然语言直接变成 hard filter。
 
-在 functional tool layer 中，同一能力通过 `pilot.run` 暴露为 diagnostics tool。`pilot.run` 不是 LLM-safe tool；它会写报告和临时 uploaded dataset artifacts，必须由具备 `diagnostics` 权限的调用方触发。
+在 functional tool layer 中，同一能力通过 `pilot.run` 暴露为 diagnostics tool。`pilot.run` 不是 LLM-safe tool；它会写报告和临时 uploaded dataset artifacts，必须由具备 `diagnostics` 权限的调用方触发。发布前建议顺序为：`make demo` -> `make pilot` -> `make quality`。pilot 通过不等于 production 可用；最终仍以 Quality Gate 和人工 review/approval 结果为准。
 
 ## 命令
 
@@ -16,6 +16,12 @@ python scripts/run_real_dataset_pilot.py path/to/admissions.xlsx
 
 ```bash
 python scripts/run_real_dataset_pilot.py --fixture
+```
+
+也可以通过发布入口运行：
+
+```bash
+make pilot
 ```
 
 可选指定 sheet：

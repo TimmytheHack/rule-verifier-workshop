@@ -136,17 +136,23 @@ workbench.confirm
 evidence.get
 ```
 
-这些是唯一 LLM-safe tools。`dataset.upload`、`dataset.generate_domain_pack`、`approve-*`、`build-warehouse`、`quality.run` 和 `pilot.run` 都是写入或管理类工具，需要对应权限，不能自动暴露给 LLM。tool registry 位于 `src/api/tool_registry.py`，机器可读契约位于 `schemas/tools/*.json`，使用指南见 [功能工具契约](docs/tool_contract.md) 和 [Agent 使用指南](docs/agent_usage_guide.md)。
+这些是唯一 LLM-safe tools。`dataset.upload`、`dataset.generate_domain_pack`、`approve-*`、`build-warehouse`、`quality.run` 和 `pilot.run` 都是写入或管理类工具，需要对应权限，不能自动暴露给 LLM。tool registry 位于 `src/api/tool_registry.py`，机器可读契约位于 `schemas/tools/*.json`。HTTP 包装层提供 `GET /tools/list`、`GET /tools/{tool_name}/schema`、`POST /tools/{tool_name}/invoke`、`GET /healthz`、`GET /readyz` 和 `GET /version`。使用指南见 [功能工具契约](docs/tool_contract.md)、[Agent 使用指南](docs/agent_usage_guide.md)、[本地部署说明](docs/local_deployment.md)、[Operator 操作指南](docs/operator_guide.md) 和 [故障排查](docs/troubleshooting.md)。
+
+发布前可以导出接入契约：
+
+```bash
+.venv/bin/python scripts/export_openapi.py
+.venv/bin/python scripts/export_tool_manifest.py
+```
+
+输出分别位于 `outputs/openapi/openapi.json` 和 `outputs/tool_manifest/tool_manifest.json`。
 
 ## 启动后端
 
-在仓库根目录创建并启用 Python 虚拟环境：
+推荐用 Makefile 创建环境并安装依赖：
 
 ```bash
-python3 -m venv .venv
-source .venv/bin/activate
-python -m pip install --upgrade pip
-python -m pip install -r requirements.txt
+make bootstrap
 ```
 
 创建本地环境变量文件：
@@ -155,33 +161,32 @@ python -m pip install -r requirements.txt
 cp .env.example .env
 ```
 
-`.env` 里需要配置：
+`.env.example` 默认保持：
 
 ```text
-DEEPSEEK_API_KEY=replace_with_your_deepseek_api_key
-DEEPSEEK_MODEL=deepseek-chat
+ENABLE_LLM=false
+DEEPSEEK_API_KEY=
 ```
 
-只使用前端 demo 模式、regex 抽取或模板证据回答时不需要 DeepSeek key；选择 LLM 辅助抽取或 LLM 证据回答时需要有效 key。
+只使用前端 demo 模式、regex 抽取、模板证据回答、uploaded dataset、Quality Gate 或 tool server 时不需要 DeepSeek key；只有显式开启可选 LLM 辅助生成时才需要配置 key。
 
 启动 FastAPI：
 
 ```bash
-source .venv/bin/activate
-python -m uvicorn src.api.server:app --reload --port 8001
+make serve
 ```
 
-检查后端健康状态：
+检查后端健康、就绪和版本：
 
 ```bash
-curl http://127.0.0.1:8001/health
+curl http://127.0.0.1:8001/healthz
+curl http://127.0.0.1:8001/readyz
+curl http://127.0.0.1:8001/version
 ```
 
-预期返回：
+`/readyz` 会检查 data root 可写、tool schemas 可加载、内置 DomainConfig 可加载和 Quality Gate 基础依赖存在。
 
-```json
-{"status":"ok"}
-```
+旧的 `/health` endpoint 仍保留为兼容入口。
 
 ## 启动前端
 
@@ -244,20 +249,19 @@ python3 scripts/eval_fuzzy_inputs.py --methods regex
 运行真实数据集 pilot fixture：
 
 ```bash
-python3 scripts/run_real_dataset_pilot.py --fixture
+make pilot
 ```
 
 运行统一质量门禁：
 
 ```bash
-python3 scripts/run_quality_gate.py
+make quality
 ```
 
 构建前端：
 
 ```bash
-cd frontend
-npm run build
+make frontend
 ```
 
 可选 DeepSeek-backed 评估：

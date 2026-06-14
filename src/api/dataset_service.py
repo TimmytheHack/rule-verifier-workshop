@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import os
 import re
 import shutil
 from dataclasses import dataclass
@@ -59,7 +60,16 @@ DOMAIN_PACK_TEMPLATE_FILES = [
 SUPPORTED_UPLOAD_EXTENSIONS = {".csv", ".xlsx", ".xlsm", ".xls"}
 RESERVED_DATASET_IDS = {"admissions", "housing", "products"}
 DATASET_ID_PATTERN = re.compile(r"^[A-Za-z0-9][A-Za-z0-9_-]{2,79}$")
-MAX_UPLOAD_BYTES = 25 * 1024 * 1024
+
+
+def _upload_max_bytes() -> int:
+    try:
+        return int(float(os.getenv("UPLOAD_MAX_MB", "25")) * 1024 * 1024)
+    except ValueError:
+        return 25 * 1024 * 1024
+
+
+MAX_UPLOAD_BYTES = _upload_max_bytes()
 WARNING_ROW_LIMIT = 100_000
 ERROR_ROW_LIMIT = 250_000
 WARNING_COLUMN_LIMIT = 200

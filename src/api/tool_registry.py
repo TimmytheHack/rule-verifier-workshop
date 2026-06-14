@@ -5,6 +5,7 @@ from __future__ import annotations
 import base64
 import json
 import re
+import time
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from pathlib import Path
@@ -29,6 +30,7 @@ from src.api.workbench import WorkbenchConfig, run_workbench
 ROOT_DIR = Path(__file__).resolve().parents[2]
 TOOL_SCHEMA_DIR = ROOT_DIR / "schemas/tools"
 DEFAULT_AUDIT_PATH = ROOT_DIR / "outputs/tool_audit/audit.jsonl"
+TOOL_CONTRACT_VERSION = "tools.v1"
 LLM_SAFE_TOOL_NAMES = {
     "dataset.profile",
     "dataset.review_summary",
@@ -59,7 +61,9 @@ SECRET_KEY_PATTERN = re.compile(
     r"(secret|api[_-]?key|token|password|passwd|env|traceback|stack)",
     re.IGNORECASE,
 )
-ABSOLUTE_PATH_PATTERN = re.compile(r"^(/Users/|/var/|/tmp/|/[A-Za-z0-9_.-]+/)")
+ABSOLUTE_PATH_PATTERN = re.compile(
+    r"(/Users/[^\s\"']+|/tmp/[^\s\"']+|/var/[^\s\"']+)"
+)
 
 
 class ToolRegistryError(ValueError):
@@ -78,17 +82,23 @@ class ToolInvocation:
     actor_id: str
     permission_scope: str
     status: str
+    duration_seconds: float
+    side_effects: list[str]
     message: str | None = None
     dataset_id: str | None = None
+    error_code: str | None = None
 
     def to_dict(self) -> dict[str, Any]:
         return {
             "tool_name": self.tool_name,
-            "actor_id": self.actor_id,
+            "actor_id": _sanitize_audit_value(self.actor_id),
             "permission_scope": self.permission_scope,
             "status": self.status,
-            "message": self.message,
-            "dataset_id": self.dataset_id,
+            "duration_seconds": round(self.duration_seconds, 3),
+            "side_effects": self.side_effects,
+            "message": _sanitize_audit_value(self.message),
+            "dataset_id": _sanitize_audit_value(self.dataset_id),
+            "error_code": self.error_code,
             "created_at": _utc_now(),
         }
 
@@ -135,6 +145,7 @@ def invoke_tool(
     contract = get_tool_schema(tool_name)
     actor_id = str(actor_context.get("actor_id") or "anonymous")
     dataset_id = _payload_dataset_id(payload)
+    started = time.monotonic()
     try:
         _enforce_permission(contract, actor_context)
         _validate_payload(contract, payload)
@@ -148,6 +159,8 @@ def invoke_tool(
                 actor_id=actor_id,
                 permission_scope=contract["permission_scope"],
                 status="ok",
+                duration_seconds=time.monotonic() - started,
+                side_effects=list(contract.get("side_effects") or []),
                 dataset_id=dataset_id,
             ),
         )
@@ -160,8 +173,11 @@ def invoke_tool(
                 actor_id=actor_id,
                 permission_scope=contract["permission_scope"],
                 status="error",
+                duration_seconds=time.monotonic() - started,
+                side_effects=list(contract.get("side_effects") or []),
                 message=str(exc),
                 dataset_id=dataset_id,
+                error_code=_error_code(exc),
             ),
         )
         raise
@@ -242,6 +258,7 @@ def _tool_dataset_upload(
     content_base64 = payload.get("content_base64")
     if source_path:
         path = Path(str(source_path))
+        _reject_path_traversal(path)
         filename = filename or path.name
         content = path.read_bytes()
     elif content_base64:
@@ -324,12 +341,14 @@ def _tool_evidence_get(payload: dict[str, Any]) -> dict[str, Any]:
 
 
 def _tool_quality_run(payload: dict[str, Any]) -> dict[str, Any]:
+    output_dir = Path(str(payload.get("output_dir") or "outputs/quality_gate"))
+    _reject_path_traversal(output_dir)
     options = QualityGateOptions(
         fail_fast=bool(payload.get("fail_fast") or False),
         skip_frontend=bool(payload.get("skip_frontend") or False),
         skip_demo=bool(payload.get("skip_demo") or False),
         domains=list(payload.get("domains") or ["admissions", "housing", "products"]),
-        output_dir=Path(str(payload.get("output_dir") or "outputs/quality_gate")),
+        output_dir=output_dir,
         json_only=False,
         strict=bool(payload.get("strict") or False),
     )
@@ -338,10 +357,12 @@ def _tool_quality_run(payload: dict[str, Any]) -> dict[str, Any]:
 
 def _tool_pilot_run(payload: dict[str, Any]) -> dict[str, Any]:
     output_dir = Path(str(payload.get("output_dir") or "outputs/real_dataset_pilot"))
+    _reject_path_traversal(output_dir)
     if payload.get("fixture"):
         source_path = _fixture_path()
     elif payload.get("source_path"):
         source_path = Path(str(payload["source_path"]))
+        _reject_path_traversal(source_path)
     else:
         raise ToolRegistryError("pilot.run requires source_path or fixture=true")
     report = run_pilot(
@@ -423,7 +444,9 @@ def _reject_forbidden_input_fields(payload: Any) -> None:
 
 
 def _dataset_service(actor_context: dict[str, Any]) -> DatasetService:
-    return DatasetService(actor_context.get("dataset_root") or "outputs/uploaded_datasets")
+    root = Path(str(actor_context.get("dataset_root") or "outputs/uploaded_datasets"))
+    _reject_path_traversal(root)
+    return DatasetService(root)
 
 
 def _reviewed_by(actor_context: dict[str, Any]) -> str:
@@ -435,6 +458,7 @@ def _write_audit_event(
     invocation: ToolInvocation,
 ) -> None:
     audit_path = Path(actor_context.get("audit_path") or DEFAULT_AUDIT_PATH)
+    _reject_path_traversal(audit_path)
     audit_path.parent.mkdir(parents=True, exist_ok=True)
     audit_path.write_text("", encoding="utf-8") if not audit_path.exists() else None
     with audit_path.open("a", encoding="utf-8") as handle:
@@ -462,6 +486,27 @@ def _sanitize_evidence(value: Any) -> Any:
         if ABSOLUTE_PATH_PATTERN.search(value):
             return "[redacted_path]"
     return value
+
+
+def _sanitize_audit_value(value: Any) -> Any:
+    if value is None:
+        return None
+    return _sanitize_evidence(value)
+
+
+def _error_code(exc: Exception) -> str:
+    if isinstance(exc, ToolPermissionError):
+        return "permission_denied"
+    if isinstance(exc, ToolRegistryError):
+        return "invalid_tool_request"
+    if isinstance(exc, DatasetServiceError):
+        return exc.code
+    return "tool_error"
+
+
+def _reject_path_traversal(path: Path) -> None:
+    if ".." in path.parts:
+        raise ToolRegistryError("Path traversal is not allowed")
 
 
 def _utc_now() -> str:

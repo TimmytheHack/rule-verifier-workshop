@@ -108,6 +108,61 @@ endpoint：
 | `POST /datasets/{dataset_id}/build-warehouse` | 基于 approved pack 构建 DuckDB warehouse 和 value index。 |
 | `POST /workbench/query` | 支持 `dataset_id` / `domain_name`，返回同一 `WorkbenchResponse` contract。 |
 
+这些 endpoint 与 tool registry 使用同一套 actor context 和 permission enforcement。HTTP 调用方可以通过 `X-Actor-Id` 与 `X-Permission-Scopes` 传递身份和权限；`POST /tools/{tool_name}/invoke` 也可以在 body 的 `actor_context` 中传递同样字段。
+
+## Tool Server API
+
+工具层把 DatasetService、Workbench、EvidencePack、Quality Gate 和 Real Dataset Pilot 包装成 stable tool contracts，不复制业务逻辑。
+
+| endpoint | 返回 |
+|---|---|
+| `GET /tools/list` | 当前 actor 可见的 tool 摘要。支持 `permission_scope` 和 `llm_safe_only` query 参数。 |
+| `GET /tools/{tool_name}/schema` | 单个 `schemas/tools/*.json` contract。 |
+| `POST /tools/{tool_name}/invoke` | 调用 `src/api/tool_registry.py` 中的 `invoke_tool`，成功时返回 tool 原始 output，失败时返回 structured error。 |
+| `GET /healthz` | liveness，固定 `{"status":"ok"}`。 |
+| `GET /readyz` | readiness，检查 data root、tool schemas、DomainConfig 和 Quality Gate 基础依赖。 |
+| `GET /version` | 返回 `git_commit`、`schema_version`、`api_version`、`tool_contract_version`。 |
+
+`POST /tools/{tool_name}/invoke` 请求形状：
+
+```json
+{
+  "payload": {},
+  "actor_context": {
+    "actor_id": "operator",
+    "permission_scopes": ["query"],
+    "dataset_root": "outputs/uploaded_datasets",
+    "audit_path": "outputs/tool_audit/audit.jsonl"
+  }
+}
+```
+
+LLM-safe tools 只能是：
+
+```text
+dataset.profile
+dataset.review_summary
+workbench.query
+workbench.confirm
+evidence.get
+```
+
+LLM-facing input schema 不允许出现 `raw_sql`、`sql`、`executable_rules`、`hard_rules`、`approved_ops`、`domain_pack_status` 等可绕过 verifier 的字段。`workbench.query` 只接受 `dataset_id`、`domain`、`deterministic_fields`、`natural_language`、`confirmed_candidate_ids`、`top_k`；`workbench.confirm` 只能引用上一轮系统生成的 `candidate_id`。
+
+所有 tool invoke 都写 audit event，包含 `actor_id`、`tool_name`、`dataset_id`、`status`、`duration_seconds`、`side_effects` 和 `error_code`。audit log 不记录密钥、完整上传文件内容或环境变量；`evidence.get` 和错误响应不能暴露 stack trace、绝对路径或 secret。
+
+tool manifest 可通过命令导出：
+
+```bash
+.venv/bin/python scripts/export_tool_manifest.py
+```
+
+输出固定为：
+
+```text
+outputs/tool_manifest/tool_manifest.json
+```
+
 安全语义：
 
 - `dataset_id` 只能包含字母、数字、下划线和连字符，禁止目录穿越；上传数据不能覆盖内置 `admissions`、`housing`、`products`。

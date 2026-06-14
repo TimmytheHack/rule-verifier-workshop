@@ -20,6 +20,10 @@ const dataset = ref(null);
 const profile = ref(null);
 const reviewSummary = ref(null);
 const queryResult = ref(null);
+const operatorHeaders = {
+  'X-Actor-Id': 'frontend_operator',
+  'X-Permission-Scopes': 'dataset_write,read_only,review_admin,warehouse_admin,query',
+};
 
 const datasetId = computed(() => dataset.value?.dataset_id || '');
 const reviewFields = computed(() => reviewSummary.value?.reviewable_fields || []);
@@ -179,7 +183,13 @@ async function runStep(fn) {
 }
 
 async function requestJson(url, options = {}) {
-  const response = await fetch(url, options);
+  const response = await fetch(url, {
+    ...options,
+    headers: {
+      ...operatorHeaders,
+      ...(options.headers || {}),
+    },
+  });
   const payload = await response.json();
   if (!response.ok) {
     throw new Error(payload.detail?.message || payload.detail || 'API 请求失败');

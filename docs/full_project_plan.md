@@ -120,6 +120,7 @@ deterministic over-promotion rate
 | P4 | 统一 Quality Gate，交付前运行测试、评估、demo acceptance、domain/warehouse guard 和前端 build | 已实现 |
 | P4.5 | 真实招生 Excel 上传、profile、审查、建仓、目标查询 pilot | 已实现，输出 `outputs/real_dataset_pilot/report.md` 与 `report.json` |
 | P4.6 | LLM/agent/前端可调用 functional tool layer 和机器可读 tool contracts | 已实现，见 `src/api/tool_registry.py`、`schemas/tools/*.json`、`docs/tool_contract.md` |
+| P4.7 | release packaging + tool server deployment hardening | 已实现，包含 `Makefile`、`.env.example`、`/tools/*`、`/healthz`、`/readyz`、`/version`、OpenAPI/tool manifest 导出和 operator/troubleshooting 文档 |
 | P5 | 非结构化政策/章程小型知识库，只做解释和候选，不进执行 | 待做 |
 | P6 | 可选模型/embedding 接入 | 暂不接入 |
 
@@ -134,7 +135,7 @@ deterministic over-promotion rate
 5. 在更长、更乱、不完整和矛盾输入上 stress-test DeepSeek extraction。
 6. 将 recommendation quality evaluation 与 rule-verification evaluation 分开。
 7. 在不改变执行边界的前提下，把 uploaded dataset review UI 从当前 sheet/header/risk 摘要面板演进为更完整的人工审查工作台。
-8. 为外部 agent runtime 增加 tool registry HTTP endpoint 或 MCP adapter，但必须复用 `schemas/tools/*.json` 和现有权限模型。
+8. 如需接入外部 agent runtime，可以基于当前 `/tools/list`、`/tools/{tool_name}/schema`、`/tools/{tool_name}/invoke` 或导出的 `outputs/tool_manifest/tool_manifest.json` 做 adapter；adapter 必须复用 `schemas/tools/*.json` 和现有权限模型。
 
 当前 benchmark snapshot：
 

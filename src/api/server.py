@@ -2,6 +2,10 @@
 
 from __future__ import annotations
 
+import os
+import re
+import subprocess
+from pathlib import Path
 from typing import Any
 
 from fastapi import FastAPI, HTTPException, Query, Request
@@ -9,11 +13,38 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 
 from src.api.dataset_service import DatasetService, DatasetServiceError
+from src.api.tool_registry import (
+    TOOL_CONTRACT_VERSION,
+    ToolPermissionError,
+    ToolRegistryError,
+    get_tool_schema,
+    invoke_tool,
+    list_tools as list_registered_tools,
+)
 from src.api.workbench import (
     DEFAULT_USER_INPUT,
+    WORKBENCH_SCHEMA_VERSION,
     WorkbenchConfig,
     available_options,
     run_workbench,
+)
+from src.domains import DomainConfig
+
+
+ROOT_DIR = Path(__file__).resolve().parents[2]
+API_VERSION = "api.v1"
+DATA_ROOT = Path(os.getenv("DATA_ROOT", "outputs/uploaded_datasets"))
+OUTPUT_ROOT = Path(os.getenv("OUTPUT_ROOT", "outputs"))
+DEFAULT_FRONTEND_ORIGINS = [
+    "http://127.0.0.1:5173",
+    "http://localhost:5173",
+]
+SENSITIVE_ERROR_PATTERN = re.compile(
+    r"(secret|api[_-]?key|token|password|passwd|traceback|stack|\.env)",
+    re.IGNORECASE,
+)
+ABSOLUTE_PATH_PATTERN = re.compile(
+    r"(/Users/[^\s\"']+|/tmp/[^\s\"']+|/var/[^\s\"']+)"
 )
 
 
@@ -102,18 +133,33 @@ class WorkbenchQueryRequest(BaseModel):
     confirmed_candidates: list[str] = Field(default_factory=list)
 
 
+class ToolInvokeRequest(BaseModel):
+    """通用 tool invoke 请求。"""
+
+    payload: dict[str, Any] = Field(default_factory=dict)
+    actor_context: dict[str, Any] = Field(default_factory=dict)
+
+
+def _frontend_origins() -> list[str]:
+    configured = os.getenv("FRONTEND_ORIGIN")
+    if not configured:
+        return DEFAULT_FRONTEND_ORIGINS
+    return [
+        origin.strip()
+        for origin in configured.split(",")
+        if origin.strip()
+    ] or DEFAULT_FRONTEND_ORIGINS
+
+
 app = FastAPI(title="Preference-to-Rule Workbench API")
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://127.0.0.1:5173",
-        "http://localhost:5173",
-    ],
+    allow_origins=_frontend_origins(),
     allow_credentials=False,
     allow_methods=["GET", "POST", "OPTIONS"],
     allow_headers=["*"],
 )
-dataset_service = DatasetService()
+dataset_service = DatasetService(DATA_ROOT)
 
 
 @app.get("/health")
@@ -121,6 +167,41 @@ def health() -> dict[str, str]:
     """Return a simple health signal."""
 
     return {"status": "ok"}
+
+
+@app.get("/healthz")
+def healthz() -> dict[str, str]:
+    """Kubernetes-style liveness probe。"""
+
+    return {"status": "ok"}
+
+
+@app.get("/readyz")
+def readyz() -> dict[str, Any]:
+    """检查发布运行所需的基础依赖。"""
+
+    checks = [
+        _check_data_root_writable(),
+        _check_tool_schemas(),
+        _check_domain_configs(),
+        _check_quality_gate_dependencies(),
+    ]
+    return {
+        "status": "ok" if all(check["ok"] for check in checks) else "error",
+        "checks": checks,
+    }
+
+
+@app.get("/version")
+def version() -> dict[str, str]:
+    """返回 API、response contract 和 tool contract 版本。"""
+
+    return {
+        "git_commit": _git_commit(),
+        "schema_version": WORKBENCH_SCHEMA_VERSION,
+        "api_version": API_VERSION,
+        "tool_contract_version": TOOL_CONTRACT_VERSION,
+    }
 
 
 @app.get("/api/workbench/options")
@@ -159,6 +240,7 @@ async def upload_dataset(
     """上传 CSV/Excel 到托管数据目录。"""
 
     try:
+        _ensure_scope(_actor_context_from_request(request), "dataset_write")
         content = await request.body()
         return dataset_service.upload(
             filename=filename,
@@ -174,10 +256,12 @@ async def upload_dataset(
 def generate_dataset_domain_pack(
     dataset_id: str,
     request: GenerateDomainPackRequest,
+    http_request: Request,
 ) -> dict[str, object]:
     """为上传数据集生成 draft domain pack。"""
 
     try:
+        _ensure_scope(_actor_context_from_request(http_request), "dataset_write")
         return dataset_service.generate_domain_pack(
             dataset_id,
             domain_name=request.domain_name,
@@ -189,20 +273,22 @@ def generate_dataset_domain_pack(
 
 
 @app.get("/datasets/{dataset_id}/profile")
-def dataset_profile(dataset_id: str) -> dict[str, object]:
+def dataset_profile(dataset_id: str, request: Request) -> dict[str, object]:
     """返回 schema profile。"""
 
     try:
+        _ensure_scope(_actor_context_from_request(request), "read_only")
         return dataset_service.profile(dataset_id)
     except DatasetServiceError as exc:
         raise _dataset_http_error(exc) from exc
 
 
 @app.get("/datasets/{dataset_id}/review-summary")
-def dataset_review_summary(dataset_id: str) -> dict[str, object]:
+def dataset_review_summary(dataset_id: str, request: Request) -> dict[str, object]:
     """返回 domain pack review 摘要。"""
 
     try:
+        _ensure_scope(_actor_context_from_request(request), "read_only")
         return dataset_service.review_summary(dataset_id)
     except DatasetServiceError as exc:
         raise _dataset_http_error(exc) from exc
@@ -212,10 +298,12 @@ def dataset_review_summary(dataset_id: str) -> dict[str, object]:
 def dataset_approve_field(
     dataset_id: str,
     request: FieldReviewRequest,
+    http_request: Request,
 ) -> dict[str, object]:
     """批准字段进入可执行审查范围。"""
 
     try:
+        _ensure_scope(_actor_context_from_request(http_request), "review_admin")
         return dataset_service.approve_field(
             dataset_id,
             request.field_id,
@@ -230,10 +318,12 @@ def dataset_approve_field(
 def dataset_approve_op(
     dataset_id: str,
     request: OpReviewRequest,
+    http_request: Request,
 ) -> dict[str, object]:
     """批准字段的单个 op。"""
 
     try:
+        _ensure_scope(_actor_context_from_request(http_request), "review_admin")
         return dataset_service.approve_op(
             dataset_id,
             request.field_id,
@@ -249,10 +339,12 @@ def dataset_approve_op(
 def dataset_block_field(
     dataset_id: str,
     request: FieldReviewRequest,
+    http_request: Request,
 ) -> dict[str, object]:
     """阻断字段执行。"""
 
     try:
+        _ensure_scope(_actor_context_from_request(http_request), "review_admin")
         return dataset_service.block_field(
             dataset_id,
             request.field_id,
@@ -267,10 +359,12 @@ def dataset_block_field(
 def dataset_approve_domain(
     dataset_id: str,
     request: ApproveDomainRequest,
+    http_request: Request,
 ) -> dict[str, object]:
     """批准整个 uploaded domain pack。"""
 
     try:
+        _ensure_scope(_actor_context_from_request(http_request), "review_admin")
         return dataset_service.approve_domain(
             dataset_id,
             title_field=request.title_field,
@@ -285,20 +379,25 @@ def dataset_approve_domain(
 
 
 @app.post("/datasets/{dataset_id}/build-warehouse")
-def dataset_build_warehouse(dataset_id: str) -> dict[str, object]:
+def dataset_build_warehouse(dataset_id: str, request: Request) -> dict[str, object]:
     """为 approved uploaded domain pack 构建 DuckDB warehouse。"""
 
     try:
+        _ensure_scope(_actor_context_from_request(request), "warehouse_admin")
         return dataset_service.build_warehouse(dataset_id)
     except DatasetServiceError as exc:
         raise _dataset_http_error(exc) from exc
 
 
 @app.post("/workbench/query")
-def query_workbench(request: WorkbenchQueryRequest) -> dict[str, object]:
+def query_workbench(
+    request: WorkbenchQueryRequest,
+    http_request: Request,
+) -> dict[str, object]:
     """统一查询入口，支持内置 domain 或 uploaded dataset。"""
 
     try:
+        _ensure_scope(_actor_context_from_request(http_request), "query")
         if request.dataset_id:
             return dataset_service.query(
                 request.dataset_id,
@@ -327,6 +426,52 @@ def query_workbench(request: WorkbenchQueryRequest) -> dict[str, object]:
         raise _dataset_http_error(exc) from exc
 
 
+@app.get("/tools/list")
+def tools_list(
+    request: Request,
+    permission_scope: str | None = Query(default=None),
+    llm_safe_only: bool = Query(default=False),
+) -> dict[str, Any]:
+    """列出当前 actor 可见的 tool contracts。"""
+
+    actor_context = _actor_context_from_request(request)
+    tools = list_registered_tools(
+        permission_scope=permission_scope,
+        llm_safe_only=llm_safe_only,
+    )
+    return {
+        "tool_contract_version": TOOL_CONTRACT_VERSION,
+        "tools": _filter_tools_for_actor(tools, actor_context, llm_safe_only),
+    }
+
+
+@app.get("/tools/{tool_name}/schema")
+def tool_schema(tool_name: str) -> dict[str, Any]:
+    """返回单个 tool 的 JSON contract。"""
+
+    try:
+        return get_tool_schema(tool_name)
+    except ToolRegistryError as exc:
+        raise _tool_http_error(exc) from exc
+
+
+@app.post("/tools/{tool_name}/invoke")
+def tool_invoke(
+    tool_name: str,
+    request: ToolInvokeRequest,
+    http_request: Request,
+) -> dict[str, Any]:
+    """通过 ToolRegistry 调用 tool，不复制业务逻辑。"""
+
+    actor_context = _actor_context_from_request(http_request, request.actor_context)
+    try:
+        return invoke_tool(tool_name, request.payload, actor_context)
+    except (ToolPermissionError, ToolRegistryError, DatasetServiceError) as exc:
+        raise _tool_http_error(exc) from exc
+    except Exception as exc:  # noqa: BLE001 - API 边界统一净化未知异常。
+        raise _tool_http_error(exc) from exc
+
+
 def _dataset_http_error(exc: DatasetServiceError) -> HTTPException:
     return HTTPException(
         status_code=exc.status_code,
@@ -336,3 +481,153 @@ def _dataset_http_error(exc: DatasetServiceError) -> HTTPException:
             "details": exc.details or {},
         },
     )
+
+
+def _tool_http_error(exc: Exception) -> HTTPException:
+    status_code = 500
+    code = "tool_error"
+    if isinstance(exc, ToolPermissionError):
+        status_code = 403
+        code = "permission_denied"
+    elif isinstance(exc, ToolRegistryError):
+        status_code = 400
+        code = "invalid_tool_request"
+    elif isinstance(exc, DatasetServiceError):
+        status_code = exc.status_code
+        code = exc.code
+    return HTTPException(
+        status_code=status_code,
+        detail={
+            "code": code,
+            "message": _sanitize_error_message(str(exc)),
+            "details": {},
+        },
+    )
+
+
+def _actor_context_from_request(
+    request: Request,
+    body_context: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    context = dict(body_context or {})
+    context.setdefault("actor_id", request.headers.get("X-Actor-Id") or "api_client")
+    scopes = set(context.get("permission_scopes") or [])
+    if context.get("permission_scope"):
+        scopes.add(str(context["permission_scope"]))
+    header_scopes = request.headers.get("X-Permission-Scopes") or request.headers.get(
+        "X-Permission-Scope",
+    )
+    if header_scopes:
+        scopes.update(
+            scope.strip()
+            for scope in header_scopes.split(",")
+            if scope.strip()
+        )
+    if scopes:
+        context["permission_scopes"] = sorted(scopes)
+    context.setdefault("dataset_root", str(DATA_ROOT))
+    context.setdefault(
+        "audit_path",
+        os.getenv("TOOL_AUDIT_LOG_PATH", str(OUTPUT_ROOT / "tool_audit/audit.jsonl")),
+    )
+    return context
+
+
+def _ensure_scope(actor_context: dict[str, Any], required_scope: str) -> None:
+    granted = _granted_scopes(actor_context, llm_safe_only=False)
+    if "*" in granted or required_scope in granted:
+        return
+    raise _tool_http_error(
+        ToolPermissionError(f"Tool requires permission_scope={required_scope}")
+    )
+
+
+def _filter_tools_for_actor(
+    tools: list[dict[str, Any]],
+    actor_context: dict[str, Any],
+    llm_safe_only: bool,
+) -> list[dict[str, Any]]:
+    granted = _granted_scopes(actor_context, llm_safe_only=llm_safe_only)
+    if "*" in granted:
+        return tools
+    return [
+        tool
+        for tool in tools
+        if tool.get("permission_scope") in granted
+    ]
+
+
+def _granted_scopes(
+    actor_context: dict[str, Any],
+    *,
+    llm_safe_only: bool,
+) -> set[str]:
+    granted = set(actor_context.get("permission_scopes") or [])
+    if actor_context.get("permission_scope"):
+        granted.add(str(actor_context["permission_scope"]))
+    if not granted and llm_safe_only:
+        return {"read_only", "query", "confirm"}
+    return granted
+
+
+def _check_data_root_writable() -> dict[str, Any]:
+    try:
+        root = DATA_ROOT
+        root.mkdir(parents=True, exist_ok=True)
+        probe = root / ".readyz_write_test"
+        probe.write_text("ok", encoding="utf-8")
+        probe.unlink(missing_ok=True)
+        return {"name": "data_root_writable", "ok": True}
+    except Exception as exc:  # noqa: BLE001
+        return {"name": "data_root_writable", "ok": False, "message": str(exc)}
+
+
+def _check_tool_schemas() -> dict[str, Any]:
+    try:
+        tools = list_registered_tools()
+        return {"name": "tool_schemas", "ok": bool(tools), "count": len(tools)}
+    except Exception as exc:  # noqa: BLE001
+        return {"name": "tool_schemas", "ok": False, "message": str(exc)}
+
+
+def _check_domain_configs() -> dict[str, Any]:
+    failures = []
+    for domain in ["admissions", "housing", "products"]:
+        try:
+            DomainConfig.load(domain)
+        except Exception as exc:  # noqa: BLE001
+            failures.append(f"{domain}: {_sanitize_error_message(str(exc))}")
+    return {
+        "name": "domain_configs",
+        "ok": not failures,
+        "domains": ["admissions", "housing", "products"],
+        "failures": failures,
+    }
+
+
+def _check_quality_gate_dependencies() -> dict[str, Any]:
+    python_path = ROOT_DIR / ".venv/bin/python"
+    script_path = ROOT_DIR / "scripts/run_quality_gate.py"
+    return {
+        "name": "quality_gate_dependencies",
+        "ok": python_path.exists() and script_path.exists(),
+        "python": ".venv/bin/python",
+        "script": "scripts/run_quality_gate.py",
+    }
+
+
+def _git_commit() -> str:
+    completed = subprocess.run(
+        ["git", "rev-parse", "--short", "HEAD"],
+        cwd=str(ROOT_DIR),
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+    return completed.stdout.strip() or "unknown"
+
+
+def _sanitize_error_message(message: str) -> str:
+    if SENSITIVE_ERROR_PATTERN.search(message):
+        return "[redacted]"
+    return ABSOLUTE_PATH_PATTERN.sub("[redacted_path]", message)

@@ -625,6 +625,19 @@ evidence pack 支持，不等于 raw Excel workbook 中一定不存在。
 
 目前最强的证据不是 LLM 没有用，而是：当 symbolic verification 控制执行时，LLM extraction 会更安全。
 
+## 11.5 Tool Server 发布边界
+
+当前工程已经包装为 `LLM-safe structured data query tool server for Excel/CSV`。发布层新增的是稳定调用面，而不是新的执行策略：
+
+- `schemas/tools/*.json` 定义机器可读 tool contracts；
+- `src/api/tool_registry.py` 组合 DatasetService、Workbench、EvidencePack、Quality Gate 和 Real Dataset Pilot；
+- `GET /tools/list`、`GET /tools/{tool_name}/schema`、`POST /tools/{tool_name}/invoke` 作为 HTTP tool server 入口；
+- `GET /healthz`、`GET /readyz`、`GET /version` 支持部署探针；
+- `scripts/export_openapi.py` 和 `scripts/export_tool_manifest.py` 支持前端、agent 网关和 operator 控制台读取契约；
+- `Makefile`、`.env.example`、`docs/local_deployment.md`、`docs/operator_guide.md`、`docs/troubleshooting.md` 说明本地部署、权限、审计和故障排查。
+
+这个发布层仍遵守同一条不变量：LLM-safe tools 只能读取 profile/review summary、调用 Workbench query/confirm 或取净化 EvidencePack；`approve-*`、`build-warehouse`、`quality.run` 和 `pilot.run` 必须由 operator/admin 权限触发。tool invoke audit 只记录 actor、tool、dataset、status、duration、side effects 和 error code，不记录完整上传文件内容、环境变量或密钥。
+
 ## 12. 当前局限性
 
 当前系统仍然很窄。

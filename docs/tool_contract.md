@@ -20,6 +20,24 @@ schemas/tools/*.json
 src/api/tool_registry.py
 ```
 
+HTTP 发布入口位于：
+
+```text
+GET /tools/list
+GET /tools/{tool_name}/schema
+POST /tools/{tool_name}/invoke
+```
+
+服务版本入口：
+
+```text
+GET /healthz
+GET /readyz
+GET /version
+```
+
+`/version` 当前返回 `api_version=api.v1`、`schema_version=workbench_response.v1` 和 `tool_contract_version=tools.v1`。
+
 ## 权限范围
 
 | permission_scope | 含义 |
@@ -158,6 +176,54 @@ outputs/tool_audit/audit.jsonl
 
 调用方也可以在 `actor_context.audit_path` 指定审计文件。
 
+HTTP tool invoke 请求体固定为：
+
+```json
+{
+  "payload": {},
+  "actor_context": {
+    "actor_id": "agent",
+    "permission_scopes": ["query"],
+    "dataset_root": "outputs/uploaded_datasets",
+    "audit_path": "outputs/tool_audit/audit.jsonl"
+  }
+}
+```
+
+HTTP headers 也可提供同样权限信息：
+
+```text
+X-Actor-Id: agent
+X-Permission-Scopes: query,read_only
+```
+
+`GET /tools/list?llm_safe_only=true` 在无权限 header 时只暴露 LLM-safe scopes；普通 `GET /tools/list` 会按 actor permission 过滤，不默认展示 admin tools。
+
+## Tool Manifest
+
+发布时可导出统一 manifest：
+
+```bash
+.venv/bin/python scripts/export_tool_manifest.py
+```
+
+输出：
+
+```text
+outputs/tool_manifest/tool_manifest.json
+```
+
+manifest 顶层结构：
+
+```json
+{
+  "tool_contract_version": "tools.v1",
+  "tools": []
+}
+```
+
+每个 tool 条目都会标记 `permission_scope`、`llm_safe`、`side_effects`、`executes_sql`、`writes_files`、`required_domain_status`、`input_schema`、`output_schema`、`status_enum` 和 `security_notes`。
+
 ## 安全规则
 
 - `draft`、`needs_review`、`blocked` domain pack 调用 `workbench.query` 必须返回 `blocked`，不执行 SQL。
@@ -166,3 +232,4 @@ outputs/tool_audit/audit.jsonl
 - `quality.run` 和 `pilot.run` 是 diagnostics/admin tools，不暴露给 LLM 自动调用。
 - `evidence.get` 会移除 stack trace、环境变量、密钥和绝对本地路径。
 - LLM 不允许生成 SQL、不允许构造 hard rules、不允许伪造 `candidate_id`。
+- 每次 tool invoke 都写 audit event；audit event 只记录摘要和副作用，不记录完整上传文件内容、环境变量或 secret。
