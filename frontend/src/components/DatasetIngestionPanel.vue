@@ -3,6 +3,8 @@ import { computed, ref } from 'vue';
 import {
   Check,
   DataAnalysis,
+  Refresh,
+  Search,
   UploadFilled,
   Warning,
 } from '@element-plus/icons-vue';
@@ -20,6 +22,8 @@ const dataset = ref(null);
 const profile = ref(null);
 const reviewSummary = ref(null);
 const queryResult = ref(null);
+const selectedCandidateIds = ref([]);
+const auditEvents = ref([]);
 const operatorHeaders = {
   'X-Actor-Id': 'frontend_operator',
   'X-Permission-Scopes': 'dataset_write,read_only,review_admin,warehouse_admin,query',
@@ -40,6 +44,9 @@ const datasetWarnings = computed(() => (
 const requiredFields = computed(() => reviewSummary.value?.required_fields || []);
 const missingFields = computed(() => reviewSummary.value?.missing_fields || []);
 const riskyFields = computed(() => reviewSummary.value?.risky_fields || []);
+const candidatesToConfirm = computed(() => queryResult.value?.candidates_to_confirm || []);
+const queryItems = computed(() => queryResult.value?.items || []);
+const sectionEntries = computed(() => Object.entries(queryResult.value?.result_sections || {}));
 const queryOverview = computed(() => {
   if (!queryResult.value) {
     return null;
@@ -52,6 +59,19 @@ const queryOverview = computed(() => {
     section_keys: Object.keys(queryResult.value.result_sections || {}),
   };
 });
+const queryStatusMessage = computed(() => {
+  if (!queryResult.value) {
+    return '';
+  }
+  const messages = {
+    ok: '已执行已审核 hard filters，可展示推荐或明细。',
+    needs_confirmation: '存在待确认候选；这些 candidate 还没有进入 executed_filters。',
+    no_results: 'SQL 正常执行但结果为 0，前端不能编造推荐。',
+    blocked: '安全阻断，SQL 不应执行；请检查 domain status、fingerprint 或 confirmation。',
+    error: '后端返回 structured error，前端不展示 stack trace。',
+  };
+  return messages[queryResult.value.status] || '未知状态，请检查 EvidencePack。';
+});
 
 function beforeUpload(selectedFile) {
   file.value = selectedFile;
@@ -63,7 +83,7 @@ async function uploadDataset() {
     errorText.value = '请先选择 CSV 或 Excel 文件。';
     return;
   }
-  await runStep(async () => {
+  await runStep('upload', async () => {
     const params = new URLSearchParams({ filename: file.value.name });
     dataset.value = await requestJson(`/datasets/upload?${params}`, {
       method: 'POST',
@@ -76,7 +96,7 @@ async function uploadDataset() {
 }
 
 async function generateDomainPack() {
-  await runStep(async () => {
+  await runStep('generate_domain_pack', async () => {
     dataset.value = await requestJson(
       `/datasets/${datasetId.value}/generate-domain-pack`,
       {
@@ -96,10 +116,19 @@ async function generateDomainPack() {
 
 async function refreshProfile() {
   profile.value = await requestJson(`/datasets/${datasetId.value}/profile`);
+  appendAuditEvent('profile', 'pass', {
+    field_count: profile.value?.fields?.length || 0,
+    warnings: profile.value?.warnings?.length || 0,
+  });
 }
 
 async function refreshReviewSummary() {
   reviewSummary.value = await requestJson(`/datasets/${datasetId.value}/review-summary`);
+  appendAuditEvent('review_summary', 'pass', {
+    reviewable_fields: reviewSummary.value?.reviewable_fields?.length || 0,
+    missing_fields: reviewSummary.value?.missing_fields?.length || 0,
+    risky_fields: reviewSummary.value?.risky_fields?.length || 0,
+  });
 }
 
 async function approveField() {
@@ -118,7 +147,7 @@ async function approveOp() {
 }
 
 async function approveDomain() {
-  await runStep(async () => {
+  await runStep('approve_domain', async () => {
     dataset.value = await requestJson(`/datasets/${datasetId.value}/approve-domain`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -135,32 +164,45 @@ async function approveDomain() {
 }
 
 async function buildWarehouse() {
-  await runStep(async () => {
+  await runStep('build_warehouse', async () => {
     dataset.value = await requestJson(`/datasets/${datasetId.value}/build-warehouse`, {
       method: 'POST',
     });
   });
 }
 
-async function runUploadedQuery() {
-  await runStep(async () => {
-    queryResult.value = await requestJson('/workbench/query', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        dataset_id: datasetId.value,
-        domain_name: domainName.value,
-        user_input: queryText.value,
-        soft_preferences: { prompt: queryText.value },
-        extractor: 'regex',
-        generator: 'template_evidence',
-      }),
-    });
-  });
+async function runUploadedQuery(confirmedCandidateIds = []) {
+  await runStep(
+    confirmedCandidateIds.length ? 'query_confirmed_rerun' : 'query',
+    async () => {
+      queryResult.value = await requestJson('/workbench/query', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          dataset_id: datasetId.value,
+          domain_name: domainName.value,
+          user_input: queryText.value,
+          soft_preferences: { prompt: queryText.value },
+          extractor: 'regex',
+          generator: 'template_evidence',
+          confirmed_candidates: confirmedCandidateIds,
+        }),
+      });
+      selectedCandidateIds.value = [];
+    },
+  );
+}
+
+async function confirmSelectedCandidates() {
+  if (!selectedCandidateIds.value.length) {
+    errorText.value = '请选择上一轮系统返回的 candidate_id。';
+    return;
+  }
+  await runUploadedQuery(selectedCandidateIds.value);
 }
 
 async function reviewMutation(action, payload) {
-  await runStep(async () => {
+  await runStep(action, async () => {
     await requestJson(`/datasets/${datasetId.value}/${action}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -170,13 +212,23 @@ async function reviewMutation(action, payload) {
   });
 }
 
-async function runStep(fn) {
+async function runStep(stage, fn) {
   loading.value = true;
   errorText.value = '';
+  const started = Date.now();
   try {
     await fn();
+    appendAuditEvent(stage, 'pass', {
+      duration_ms: Date.now() - started,
+      dataset_id: datasetId.value || null,
+      status: queryResult.value?.status || dataset.value?.status || null,
+    });
   } catch (error) {
     errorText.value = error instanceof Error ? error.message : '数据集流程执行失败';
+    appendAuditEvent(stage, 'fail', {
+      duration_ms: Date.now() - started,
+      message: errorText.value,
+    });
   } finally {
     loading.value = false;
   }
@@ -200,6 +252,52 @@ async function requestJson(url, options = {}) {
 function jsonText(value) {
   return JSON.stringify(value || {}, null, 2);
 }
+
+function appendAuditEvent(stage, status, details = {}) {
+  auditEvents.value = [
+    {
+      id: `${Date.now()}_${stage}`,
+      created_at: new Date().toLocaleTimeString(),
+      stage,
+      status,
+      details,
+    },
+    ...auditEvents.value,
+  ].slice(0, 20);
+}
+
+function statusType(status) {
+  if (status === 'ok' || status === 'queryable') return 'success';
+  if (status === 'needs_confirmation') return 'warning';
+  if (status === 'no_results') return 'info';
+  if (status === 'blocked' || status === 'error') return 'danger';
+  return 'warning';
+}
+
+function candidateId(candidate) {
+  return candidate.candidate_id || candidate.id;
+}
+
+function candidateTitle(candidate) {
+  return (
+    candidate.label
+    || candidate.preference
+    || candidate.value
+    || candidate.normalized_value
+    || candidateId(candidate)
+  );
+}
+
+function candidateSummary(candidate) {
+  return candidate.reason || candidate.match_type || candidate.field_id || '待用户确认';
+}
+
+function itemAttributes(item) {
+  return [
+    ...(item.primary_attributes || []),
+    ...(item.secondary_attributes || []),
+  ].slice(0, 6);
+}
 </script>
 
 <template>
@@ -210,7 +308,7 @@ function jsonText(value) {
           <p class="section-kicker">Dataset / Ingestion API</p>
           <h2>上传数据集接入流程</h2>
         </div>
-        <el-tag :type="dataset?.status === 'queryable' ? 'success' : 'warning'" effect="plain">
+        <el-tag :type="statusType(dataset?.status)" effect="plain">
           {{ dataset?.status || '未上传' }}
         </el-tag>
       </div>
@@ -286,7 +384,14 @@ function jsonText(value) {
           :rows="4"
           placeholder="输入招生查询"
         />
-        <el-button class="wide-button" type="primary" :disabled="!datasetId" :loading="loading" @click="runUploadedQuery">
+        <el-button
+          class="wide-button"
+          type="primary"
+          :icon="Search"
+          :disabled="!datasetId"
+          :loading="loading"
+          @click="runUploadedQuery()"
+        >
           运行 WorkbenchResponse
         </el-button>
       </section>
@@ -378,6 +483,22 @@ function jsonText(value) {
         <h3>review summary</h3>
         <pre>{{ jsonText(reviewSummary) }}</pre>
       </article>
+      <article>
+        <h3>前端操作审计记录</h3>
+        <div v-if="auditEvents.length" class="audit-event-list">
+          <div v-for="event in auditEvents" :key="event.id" class="audit-event">
+            <div class="audit-event-main">
+              <strong>{{ event.stage }}</strong>
+              <span>{{ event.created_at }}</span>
+            </div>
+            <el-tag :type="event.status === 'pass' ? 'success' : 'danger'" effect="plain">
+              {{ event.status }}
+            </el-tag>
+            <pre>{{ jsonText(event.details) }}</pre>
+          </div>
+        </div>
+        <el-empty v-else description="尚无前端操作记录" />
+      </article>
     </section>
 
     <el-table v-if="reviewFields.length" class="review-table" :data="reviewFields" border stripe>
@@ -399,6 +520,84 @@ function jsonText(value) {
         </template>
       </el-table-column>
     </el-table>
+
+    <section v-if="queryResult" class="query-response-panel">
+      <div class="query-status-row">
+        <el-tag size="large" :type="statusType(queryResult.status)" effect="light">
+          {{ queryResult.status }}
+        </el-tag>
+        <strong>{{ queryResult.query_type || 'unknown_query_type' }}</strong>
+        <span>{{ queryStatusMessage }}</span>
+      </div>
+
+      <el-alert
+        v-for="warning in queryResult.warnings || []"
+        :key="warning.code + warning.message"
+        class="inline-alert"
+        :type="warning.severity === 'error' ? 'error' : 'warning'"
+        :closable="false"
+        show-icon
+        :title="`${warning.code}: ${warning.message}`"
+      />
+
+      <section v-if="candidatesToConfirm.length" class="confirmation-workflow">
+        <div class="card-header">
+          <div>
+            <p class="section-kicker">确认闭环</p>
+            <h3>待用户确认的候选</h3>
+          </div>
+          <el-button
+            :icon="Refresh"
+            type="warning"
+            :disabled="!selectedCandidateIds.length"
+            :loading="loading"
+            @click="confirmSelectedCandidates"
+          >
+            用 candidate_id 重跑
+          </el-button>
+        </div>
+        <el-checkbox-group v-model="selectedCandidateIds" class="candidate-checkboxes">
+          <label
+            v-for="candidate in candidatesToConfirm"
+            :key="candidateId(candidate)"
+            class="candidate-confirm-row"
+          >
+            <el-checkbox :label="candidateId(candidate)">
+              {{ candidateId(candidate) }}
+            </el-checkbox>
+            <strong>{{ candidateTitle(candidate) }}</strong>
+            <span>{{ candidateSummary(candidate) }}</span>
+          </label>
+        </el-checkbox-group>
+      </section>
+
+      <section v-if="queryItems.length" class="item-card-grid">
+        <article v-for="item in queryItems" :key="item.item_id" class="item-card">
+          <div class="item-card-title">
+            <strong>{{ item.title }}</strong>
+            <el-tag effect="plain">{{ item.item_id }}</el-tag>
+          </div>
+          <p>{{ item.subtitle }}</p>
+          <div class="field-list">
+            <el-tag
+              v-for="attribute in itemAttributes(item)"
+              :key="attribute.key"
+              effect="plain"
+              class="field-tag"
+            >
+              {{ attribute.label }}：{{ attribute.value ?? '暂无' }}
+            </el-tag>
+          </div>
+        </article>
+      </section>
+
+      <section v-if="sectionEntries.length" class="section-summary-grid">
+        <article v-for="[key, value] in sectionEntries" :key="key">
+          <h3>{{ key }}</h3>
+          <pre>{{ jsonText(value) }}</pre>
+        </article>
+      </section>
+    </section>
 
     <section v-if="queryResult" class="dataset-json-grid result-json-grid">
       <article>

@@ -341,6 +341,123 @@ input {
   grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
+.query-response-panel {
+  margin-top: 16px;
+  padding: 14px;
+  border: 1px solid #d8e4df;
+  border-radius: 8px;
+  background: #fbfefd;
+}
+
+.query-status-row,
+.audit-event-main,
+.item-card-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.query-status-row {
+  flex-wrap: wrap;
+  margin-bottom: 12px;
+  color: #40515b;
+  line-height: 1.5;
+}
+
+.query-status-row strong {
+  color: #1d3039;
+}
+
+.confirmation-workflow {
+  margin-top: 12px;
+  padding: 12px;
+  border: 1px solid #ead59b;
+  border-radius: 8px;
+  background: #fffdf8;
+}
+
+.candidate-checkboxes,
+.audit-event-list {
+  display: grid;
+  gap: 10px;
+}
+
+.candidate-checkboxes {
+  margin-top: 12px;
+}
+
+.candidate-confirm-row {
+  display: grid;
+  grid-template-columns: minmax(160px, auto) minmax(140px, 1fr) minmax(180px, 2fr);
+  gap: 10px;
+  align-items: center;
+  padding: 10px;
+  border: 1px solid #e5e9ed;
+  border-radius: 8px;
+  background: #ffffff;
+  color: #465a64;
+}
+
+.candidate-confirm-row strong {
+  color: #1d3039;
+}
+
+.item-card-grid,
+.section-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  margin-top: 12px;
+}
+
+.item-card,
+.section-summary-grid article {
+  min-width: 0;
+  padding: 12px;
+  border: 1px solid #dfe8ec;
+  border-radius: 8px;
+  background: #ffffff;
+}
+
+.item-card p {
+  margin: 8px 0 0;
+  color: #5f6c76;
+  line-height: 1.5;
+}
+
+.section-summary-grid pre,
+.audit-event pre {
+  max-height: 220px;
+  margin: 8px 0 0;
+  overflow: auto;
+  color: #263944;
+  font-family:
+    "SFMono-Regular", Consolas, "Liberation Mono", "PingFang SC",
+    "Microsoft YaHei", monospace;
+  font-size: 12px;
+  line-height: 1.6;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.audit-event {
+  min-width: 0;
+  padding: 10px;
+  border: 1px solid #dfe8ec;
+  border-radius: 8px;
+  background: #ffffff;
+}
+
+.audit-event-main {
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.audit-event-main span {
+  color: #66717c;
+  font-size: 12px;
+}
+
 .review-table {
   width: 100%;
   margin-top: 16px;
@@ -843,6 +960,8 @@ input {
   .verification-grid,
   .dataset-flow-grid,
   .dataset-json-grid,
+  .item-card-grid,
+  .section-summary-grid,
   .mode-grid,
   .hard-form-grid,
   .soft-form-grid,
@@ -876,6 +995,8 @@ input {
   .verification-grid,
   .dataset-flow-grid,
   .dataset-json-grid,
+  .item-card-grid,
+  .section-summary-grid,
   .mode-grid,
   .hard-form-grid,
   .soft-form-grid,
@@ -891,5 +1012,9 @@ input {
 
   .stage-pill {
     width: 100%;
+  }
+
+  .candidate-confirm-row {
+    grid-template-columns: 1fr;
   }
 }

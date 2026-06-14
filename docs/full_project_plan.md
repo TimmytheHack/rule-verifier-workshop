@@ -124,6 +124,7 @@ deterministic over-promotion rate
 | P4.8 | Agent Adapter + Black-box Tool-use Acceptance | 已实现，包含 OpenAI-compatible tools export、MCP adapter 和 `scripts/run_agent_tool_acceptance.py` |
 | P4.9 | 真实招生 Excel Operator Trial | 已实现，包含 `scripts/run_operator_trial.py`、`make operator-trial`、`docs/operator_trial_checklist.md` 和 `docs/operator_feedback_template.md` |
 | P4.10 | Release Tag + Demo Package | 已实现候选发布包，包含 `CHANGELOG.md`、`RELEASE_CHECKLIST.md`、`docs/demo_script.md`、`release_manifest.json`、`sample_data/`、`sample_outputs/` 和 `make release-check` |
+| P4.11 | Frontend Productization | 已实现 operator UI 增强：上传/profile/review/warehouse/query、`items` 与 `result_sections` 优先展示、candidate confirmation 交互、warnings/blocked/no_results 状态和前端操作审计记录 |
 | P5 | 非结构化政策/章程小型知识库，只做解释和候选，不进执行 | 待做 |
 | P6 | 可选模型/embedding 接入 | 暂不接入 |
 
@@ -141,6 +142,7 @@ deterministic over-promotion rate
 8. 如需接入外部 agent runtime，可以基于当前 `/tools/list`、`/tools/{tool_name}/schema`、`/tools/{tool_name}/invoke`、OpenAI-compatible tools export 或 MCP adapter 做集成；adapter 必须复用 `schemas/tools/*.json` 和现有权限模型。
 9. 真实招生 Excel 首次接入前，先运行 `scripts/run_operator_trial.py path/to/admissions.xlsx`，用分目录报告记录 sheet/header/profile/review/approve/build/query 的人工卡点；通过后再进入 demo acceptance、real dataset pilot 和 Quality Gate。
 10. 候选发布前运行 `make release-check`，确认 release manifest、sample data、sample outputs、发布文档和关键 Makefile 入口可审计；最终 tag 只在 Quality Gate 和真实数据试运行通过后创建。
+11. 前端只展示 API/WorkbenchResponse 输出；operator UI 可以选择系统返回的 `candidate_id` 重跑，但不能从自由文本生成 hard filter。
 
 当前 benchmark snapshot：
 
