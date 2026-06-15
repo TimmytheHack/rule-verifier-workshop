@@ -1,5 +1,5 @@
 <script setup>
-import { computed, ref } from 'vue';
+import { computed, ref, watch } from 'vue';
 
 import UserInputPanel from './components/UserInputPanel.vue';
 import WorkbenchModePanel from './components/WorkbenchModePanel.vue';
@@ -30,6 +30,18 @@ const defaultSoftPreferences = {
   safety_margin_percent: null,
   tuition_cap_yuan: null,
 };
+const BUILTIN_DATA_SOURCE = {
+  id: 'builtin_admissions',
+  type: 'builtin',
+  datasetId: null,
+  domainName: 'admissions',
+  label: '内置招生数据',
+  description: '使用仓库内置 admissions 数据。',
+};
+const DATA_SOURCES_STORAGE_KEY = 'szu_uploaded_data_sources';
+const SELECTED_SOURCE_STORAGE_KEY = 'szu_selected_data_source';
+const initialUploadedDataSources = loadUploadedDataSources();
+const initialDataSourceId = loadSelectedDataSourceId(initialUploadedDataSources);
 
 const runData = ref({
   ...demoRun,
@@ -43,16 +55,40 @@ const runData = ref({
 const activeResult = ref(null);
 const traceVisible = ref(false);
 const activeWorkspace = ref('query');
-const mode = ref('demo');
+const mode = ref(initialDataSourceId === BUILTIN_DATA_SOURCE.id ? 'demo' : 'api');
 const extractor = ref('regex');
 const generator = ref('template_evidence');
 const model = ref('deepseek-v4-flash');
 const loading = ref(false);
 const apiError = ref('');
+const uploadedDataSources = ref(initialUploadedDataSources);
+const selectedDataSourceId = ref(initialDataSourceId);
 
 const resultRows = computed(() => (
   runData.value?.items?.length ? runData.value.items : runData.value?.top_results || []
 ));
+const dataSourceOptions = computed(() => [
+  BUILTIN_DATA_SOURCE,
+  ...uploadedDataSources.value,
+]);
+const selectedDataSource = computed(() => (
+  dataSourceOptions.value.find((source) => source.id === selectedDataSourceId.value)
+  || BUILTIN_DATA_SOURCE
+));
+const dataSourceTitle = computed(() => (
+  mode.value === 'demo' ? '演示数据' : selectedDataSource.value.label
+));
+const dataSourceDescription = computed(() => {
+  if (mode.value === 'demo') {
+    return '当前显示演示结果；切到后端后使用所选数据。';
+  }
+  return selectedDataSource.value.description;
+});
+const dataSourceTag = computed(() => {
+  if (mode.value === 'demo') return { type: 'info', label: '演示' };
+  if (selectedDataSource.value.datasetId) return { type: 'success', label: '上传表格' };
+  return { type: 'warning', label: '内置' };
+});
 const quickStats = computed(() => {
   const data = runData.value || {};
   return [
@@ -63,6 +99,9 @@ const quickStats = computed(() => {
     { label: '未参与', value: data.not_executed_preferences?.length || data.unexecuted_preferences?.length || data.no_schema_field_preferences?.length || 0, tone: 'blocked' },
   ];
 });
+
+watch(uploadedDataSources, persistUploadedDataSources, { deep: true });
+watch(selectedDataSourceId, persistSelectedDataSourceId);
 
 function runDemo(runRequest, selectedOptions = {}) {
   runData.value = {
@@ -88,6 +127,19 @@ async function runWorkbench(runRequest) {
 
   loading.value = true;
   apiError.value = '';
+  const source = selectedDataSource.value;
+  const requestBody = {
+    domain_name: source.domainName || 'admissions',
+    user_input: runRequest.user_input,
+    hard_filters: runRequest.hard_filters,
+    soft_preferences: runRequest.soft_preferences,
+    extractor: extractor.value,
+    generator: generator.value,
+    model: model.value,
+  };
+  if (source.datasetId) {
+    requestBody.dataset_id = source.datasetId;
+  }
   try {
     const response = await fetch('/workbench/query', {
       method: 'POST',
@@ -95,21 +147,19 @@ async function runWorkbench(runRequest) {
         'Content-Type': 'application/json',
         ...authHeaders(),
       },
-      body: JSON.stringify({
-        domain_name: 'admissions',
-        user_input: runRequest.user_input,
-        hard_filters: runRequest.hard_filters,
-        soft_preferences: runRequest.soft_preferences,
-        extractor: extractor.value,
-        generator: generator.value,
-        model: model.value,
-      }),
+      body: JSON.stringify(requestBody),
     });
     const apiPayload = await response.json();
     if (!response.ok) {
       throw new Error(apiPayload.detail || '后端运行失败');
     }
-    runData.value = apiPayload;
+    runData.value = {
+      ...apiPayload,
+      selected_options: {
+        ...(apiPayload.selected_options || {}),
+        data_source: source.label,
+      },
+    };
   } catch (error) {
     apiError.value = error instanceof Error ? error.message : '后端运行失败';
   } finally {
@@ -122,9 +172,97 @@ function openTrace(result) {
   traceVisible.value = true;
 }
 
+function handleDataSourceChange() {
+  mode.value = 'api';
+  apiError.value = '';
+}
+
+function goToUpload() {
+  activeWorkspace.value = 'dataset';
+}
+
+function activateUploadedSource(payload) {
+  const source = normalizeUploadedDataSource(payload);
+  if (!source) {
+    return;
+  }
+  uploadedDataSources.value = [
+    source,
+    ...uploadedDataSources.value.filter((item) => item.id !== source.id),
+  ].slice(0, 5);
+  selectedDataSourceId.value = source.id;
+  mode.value = 'api';
+  activeWorkspace.value = 'query';
+  apiError.value = '';
+}
+
 function authHeaders() {
-  const token = window.localStorage.getItem('actor_token') || '';
+  const token = localStorageSafe()?.getItem('actor_token') || '';
   return token ? { 'X-Actor-Token': token } : {};
+}
+
+function loadUploadedDataSources() {
+  try {
+    const raw = localStorageSafe()?.getItem(DATA_SOURCES_STORAGE_KEY);
+    const parsed = raw ? JSON.parse(raw) : [];
+    return Array.isArray(parsed)
+      ? parsed.filter((source) => source?.id && source?.datasetId && source?.domainName)
+      : [];
+  } catch {
+    return [];
+  }
+}
+
+function loadSelectedDataSourceId(sources = []) {
+  const saved = localStorageSafe()?.getItem(SELECTED_SOURCE_STORAGE_KEY);
+  if (
+    saved === BUILTIN_DATA_SOURCE.id
+    || sources.some((source) => source.id === saved)
+  ) {
+    return saved;
+  }
+  return BUILTIN_DATA_SOURCE.id;
+}
+
+function persistUploadedDataSources(value) {
+  localStorageSafe()?.setItem(DATA_SOURCES_STORAGE_KEY, JSON.stringify(value));
+}
+
+function persistSelectedDataSourceId(value) {
+  localStorageSafe()?.setItem(SELECTED_SOURCE_STORAGE_KEY, value || BUILTIN_DATA_SOURCE.id);
+}
+
+function normalizeUploadedDataSource(payload) {
+  const datasetId = payload?.dataset_id;
+  if (!datasetId) {
+    return null;
+  }
+  const rowCount = payload?.warehouse?.row_count || payload?.row_count || null;
+  const columnCount = payload?.warehouse?.column_count || payload?.column_count || null;
+  const fileName = payload?.file_name || payload?.source_name || datasetId;
+  const sizeText = rowCount && columnCount
+    ? `${formatNumber(rowCount)} 行，${formatNumber(columnCount)} 列`
+    : '已生成可查询数据';
+  return {
+    id: `uploaded:${datasetId}`,
+    type: 'uploaded',
+    datasetId,
+    domainName: payload?.domain_name || 'admissions',
+    label: `上传：${fileName}`,
+    description: `${sizeText}，使用上传表格查询。`,
+    rowCount,
+    columnCount,
+    updatedAt: payload?.updated_at || new Date().toISOString(),
+  };
+}
+
+function formatNumber(value) {
+  const number = Number(value);
+  return Number.isNaN(number) ? value : number.toLocaleString('zh-CN');
+}
+
+function localStorageSafe() {
+  return typeof window === 'undefined' ? null : window.localStorage;
 }
 
 function statusLabel(status) {
@@ -160,6 +298,34 @@ function statusLabel(status) {
               :loading="loading"
               @run="runWorkbench"
             />
+            <section class="data-source-panel" aria-label="查询数据源">
+              <div class="data-source-copy">
+                <span class="control-label">数据源</span>
+                <strong>{{ dataSourceTitle }}</strong>
+                <p>{{ dataSourceDescription }}</p>
+              </div>
+              <div class="data-source-actions">
+                <el-select
+                  v-model="selectedDataSourceId"
+                  class="data-source-select"
+                  size="small"
+                  @change="handleDataSourceChange"
+                >
+                  <el-option
+                    v-for="source in dataSourceOptions"
+                    :key="source.id"
+                    :label="source.label"
+                    :value="source.id"
+                  />
+                </el-select>
+                <el-tag :type="dataSourceTag.type" effect="plain">
+                  {{ dataSourceTag.label }}
+                </el-tag>
+                <el-button size="small" @click="goToUpload">
+                  上传
+                </el-button>
+              </div>
+            </section>
             <el-collapse class="advanced-collapse">
               <el-collapse-item title="高级选项" name="advanced">
                 <WorkbenchModePanel
@@ -216,7 +382,7 @@ function statusLabel(status) {
 
       <el-tab-pane label="上传表格" name="dataset">
         <section class="workspace-panel single-scroll">
-          <DatasetIngestionPanel />
+          <DatasetIngestionPanel @source-ready="activateUploadedSource" />
         </section>
       </el-tab-pane>
 

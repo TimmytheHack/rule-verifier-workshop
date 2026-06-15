@@ -25,6 +25,8 @@ const queryResult = ref(null);
 const selectedCandidateIds = ref([]);
 const auditEvents = ref([]);
 
+const emit = defineEmits(['source-ready']);
+
 const datasetId = computed(() => dataset.value?.dataset_id || '');
 const reviewFields = computed(() => reviewSummary.value?.reviewable_fields || []);
 const sheetSummaries = computed(() => (
@@ -222,6 +224,9 @@ async function buildWarehouse() {
     dataset.value = await requestJson(`/datasets/${datasetId.value}/build-warehouse`, {
       method: 'POST',
     });
+    if (dataset.value?.status === 'queryable') {
+      emit('source-ready', sourceReadyPayload(dataset.value));
+    }
   });
 }
 
@@ -318,6 +323,18 @@ function appendAuditEvent(stage, status, details = {}) {
     },
     ...auditEvents.value,
   ].slice(0, 20);
+}
+
+function sourceReadyPayload(payload) {
+  return {
+    dataset_id: payload?.dataset_id || datasetId.value,
+    domain_name: payload?.domain_name || domainName.value || 'admissions',
+    file_name: file.value?.name || payload?.source_name || payload?.dataset_id,
+    row_count: payload?.warehouse?.row_count || payload?.row_count || null,
+    column_count: payload?.warehouse?.column_count || payload?.column_count || null,
+    status: payload?.status,
+    updated_at: payload?.updated_at,
+  };
 }
 
 function authHeaders() {

@@ -106,7 +106,7 @@ uploaded
 -> queryable
 ```
 
-核心 endpoint 包括 `POST /datasets/upload`、`POST /datasets/{dataset_id}/generate-domain-pack`、`GET /datasets/{dataset_id}/profile`、`GET /datasets/{dataset_id}/review-summary`、`POST /datasets/{dataset_id}/approve-field`、`POST /datasets/{dataset_id}/approve-op`、`POST /datasets/{dataset_id}/block-field`、`POST /datasets/{dataset_id}/approve-domain`、`POST /datasets/{dataset_id}/build-warehouse` 和 `POST /workbench/query`。上传文件保存在 `outputs/uploaded_datasets/<dataset_id>/`，不会覆盖内置 `admissions`、`housing`、`products` domain pack。Excel ingestion 会返回 sheet list、默认选中的非空 sheet、detected header row、重复列安全映射、合并单元格/隐藏行列/公式单元格 warning，以及行列规模 warning/error。未 approved 的 pack、stale warehouse fingerprint、非法 `dataset_id` 或缺失 warehouse 都返回结构化 `blocked` / error，不执行 SQL。前端“上传数据集接入流程”面板只调用这些 API，并展示 profile、review summary、required/missing/risky fields、`items`、`top_results`、`result_sections`、`EvidencePack`、warnings、blocked/no_results 状态、candidate confirmation 交互和前端操作审计记录，不在前端生成推荐逻辑。
+核心 endpoint 包括 `POST /datasets/upload`、`POST /datasets/{dataset_id}/generate-domain-pack`、`GET /datasets/{dataset_id}/profile`、`GET /datasets/{dataset_id}/review-summary`、`POST /datasets/{dataset_id}/approve-field`、`POST /datasets/{dataset_id}/approve-op`、`POST /datasets/{dataset_id}/block-field`、`POST /datasets/{dataset_id}/approve-domain`、`POST /datasets/{dataset_id}/build-warehouse` 和 `POST /workbench/query`。上传文件保存在 `outputs/uploaded_datasets/<dataset_id>/`，不会覆盖内置 `admissions`、`housing`、`products` domain pack。Excel ingestion 会返回 sheet list、默认选中的非空 sheet、detected header row、重复列安全映射、合并单元格/隐藏行列/公式单元格 warning，以及行列规模 warning/error。未 approved 的 pack、stale warehouse fingerprint、非法 `dataset_id` 或缺失 warehouse 都返回结构化 `blocked` / error，不执行 SQL。前端“上传数据集接入流程”面板只调用这些 API，并展示 profile、review summary、required/missing/risky fields、`items`、`top_results`、`result_sections`、`EvidencePack`、warnings、blocked/no_results 状态、candidate confirmation 交互和前端操作审计记录，不在前端生成推荐逻辑。上传数据集完成 `build-warehouse` 且状态为 `queryable` 后，主查询页会自动切到后端模式并选中这份上传数据源；之后也可以在主查询页“数据源”处切换内置 admissions 数据或最近上传的数据。
 
 真实招生 Excel 上线前可以先跑 pilot：
 
@@ -250,7 +250,7 @@ http://127.0.0.1:5173
 ```
 
 Vite 已配置把 `/api` 代理到 `http://127.0.0.1:8001`。如果只看 demo 模式，前端可以不启动后端；如果切到 API 模式，需要后端正在运行。
-上传数据集面板还会调用 `/datasets` 和 `/workbench`，同样由 Vite 代理到后端。
+上传数据集面板还会调用 `/datasets` 和 `/workbench`，同样由 Vite 代理到后端。上传数据源会保存在浏览器本地状态中，刷新后主查询页仍会显示最近上传且已生成可查询数据的数据源；如果后端 `DATA_ROOT` 已清理，需要重新上传或切回内置数据。
 
 ## 如何测试工作台
 
