@@ -18,6 +18,8 @@ outputs/demo_acceptance/uploaded_datasets/
 outputs/demo_acceptance/uploaded_sources/
 outputs/quality_gate/warehouses/
 outputs/quality_gate/tmp/
+outputs/quality_gate/report.json
+outputs/quality_gate/report.md
 outputs/uploaded_datasets/
 outputs/real_dataset_pilot/fixtures/
 outputs/real_dataset_pilot/uploaded_datasets/

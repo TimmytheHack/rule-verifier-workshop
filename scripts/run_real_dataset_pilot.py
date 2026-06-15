@@ -34,6 +34,19 @@ TARGET_QUERIES = [
         "想留在广东省，请给出推荐"
     ),
 ]
+REPORT_PATH_KEYS = {
+    "source_path",
+    "warehouse_path",
+    "database_path",
+    "domain_dir",
+    "schema_profile_path",
+    "schema_value_index_path",
+    "ingestion_summary_path",
+    "json_report",
+    "markdown_report",
+    "workbook_path",
+    "fixture_path",
+}
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -181,7 +194,7 @@ def run_pilot(
                 "message": "至少一条目标 query 返回 blocked/error，请查看 EvidencePack。",
             }
         )
-    return report
+    return _sanitize_report_paths(report, base_dir=output_dir)
 
 
 def _target_query_record(query: str, response: dict[str, Any]) -> dict[str, Any]:
@@ -492,6 +505,51 @@ def _json_ready(value: Any) -> Any:
     if isinstance(value, float) and math.isnan(value):
         return None
     return value
+
+
+def _sanitize_report_paths(value: Any, *, base_dir: Path) -> Any:
+    """净化报告中的路径字段，避免固化本机绝对路径。"""
+
+    return _sanitize_report_path_value(value, base_dir=base_dir, key=None)
+
+
+def _sanitize_report_path_value(
+    value: Any,
+    *,
+    base_dir: Path,
+    key: str | None,
+) -> Any:
+    if isinstance(value, dict):
+        return {
+            str(item_key): _sanitize_report_path_value(
+                item,
+                base_dir=base_dir,
+                key=str(item_key),
+            )
+            for item_key, item in value.items()
+        }
+    if isinstance(value, list):
+        return [
+            _sanitize_report_path_value(item, base_dir=base_dir, key=key)
+            for item in value
+        ]
+    if isinstance(value, Path):
+        return _safe_report_path(value, base_dir=base_dir)
+    if isinstance(value, str) and key in REPORT_PATH_KEYS:
+        return _safe_report_path(value, base_dir=base_dir)
+    return value
+
+
+def _safe_report_path(value: str | Path, *, base_dir: Path) -> str:
+    path = Path(value)
+    if not path.is_absolute():
+        return str(path)
+    for root in (base_dir, ROOT_DIR):
+        try:
+            return str(path.resolve().relative_to(root.resolve()))
+        except ValueError:
+            continue
+    return path.name
 
 
 def _arg_parser() -> argparse.ArgumentParser:

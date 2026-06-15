@@ -3,12 +3,12 @@
 - status：`pass`
 - source_path：`outputs/real_dataset_pilot/fixtures/real_like_admissions_pilot.xlsx`
 - dataset_id：`ds_real_pilot_real_like_admissions_pil`
-- source_fingerprint：`c64a0f6bc01a8282d63a69abe2268a6a7c5abe8329f4501607229a904fefe507`
+- source_fingerprint：`e371c6c65607bb49079016bfe386e705be90b1bf867a2e72ddd6b6c0109d6a15`
 - sheet_name：`招生数据`
 - row_count / column_count：`6` / `25`
 - detected_header_row：`3`
-- warehouse_path：`/Users/tz/Desktop/Projects/SZU/outputs/real_dataset_pilot/uploaded_datasets/ds_real_pilot_real_like_admissions_pil/domain_packs/admissions/warehouse/admissions.duckdb`
-- warehouse_fingerprint：`c64a0f6bc01a8282d63a69abe2268a6a7c5abe8329f4501607229a904fefe507`
+- warehouse_path：`uploaded_datasets/ds_real_pilot_real_like_admissions_pil/domain_packs/admissions/warehouse/admissions.duckdb`
+- warehouse_fingerprint：`e371c6c65607bb49079016bfe386e705be90b1bf867a2e72ddd6b6c0109d6a15`
 
 ## Schema Profile Summary
 ```json
@@ -43,7 +43,7 @@
       "code": "upload_received",
       "severity": "info",
       "message": "文件已保存到托管数据目录。",
-      "size_bytes": 6556,
+      "size_bytes": 6557,
       "extension": ".xlsx"
     },
     {
@@ -1388,7 +1388,7 @@
     "code": "upload_received",
     "severity": "info",
     "message": "文件已保存到托管数据目录。",
-    "size_bytes": 6556,
+    "size_bytes": 6557,
     "extension": ".xlsx"
   },
   {

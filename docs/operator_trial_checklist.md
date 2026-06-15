@@ -64,6 +64,9 @@ outputs/operator_trial/<run_id>/report.json
 - `warnings`
 - `failures`
 
+`source_path`、`warehouse_path`、`operation_cards`、`manual_checkpoints` 和 `artifacts`
+里的 path-like 字段应为相对路径或文件名，不应出现本机绝对路径。
+
 ## 人工卡点处理
 
 `manual_checkpoints` 是报告中面向人工收敛的摘要层。operator 应逐项确认：

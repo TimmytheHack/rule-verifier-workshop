@@ -23,6 +23,7 @@ from scripts.run_real_dataset_pilot import (
     _fixture_path,
     _manual_approval_fixture,
     _safe_auto_suggest_approvals,
+    _sanitize_report_paths,
     _target_query_record,
 )
 from src.api.dataset_service import DatasetService, DatasetServiceError
@@ -242,7 +243,7 @@ def build_report(
         "schema_value_index_path": generated.get("schema_value_index_path"),
         "ingestion_summary_path": generated.get("ingestion_summary_path"),
     }
-    return {
+    report = {
         "status": "fail" if context.failures else "pass",
         "generated_at": _utc_now(),
         "run_id": context.output_dir.name,
@@ -283,6 +284,7 @@ def build_report(
         "failures": context.failures,
         "artifacts": artifacts,
     }
+    return _sanitize_report_paths(report, base_dir=context.output_dir)
 
 
 def write_report(report: dict[str, Any], output_dir: Path) -> None:

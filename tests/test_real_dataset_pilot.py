@@ -234,12 +234,16 @@ class RealDatasetPilotTest(unittest.TestCase):
 
             report = json.loads((output_dir / "report.json").read_text(encoding="utf-8"))
             markdown = (output_dir / "report.md").read_text(encoding="utf-8")
+            serialized = json.dumps(report, ensure_ascii=False)
 
         self.assertEqual(exit_code, 0)
         self.assertEqual(report["status"], "pass")
         self.assertFalse(report["failures"])
         self.assertIn("target_query_results", report)
         self.assertIn("# Real Dataset Pilot 报告", markdown)
+        self.assertNotIn(str(root), serialized)
+        self.assertNotIn(str(root), markdown)
+        self.assertFalse(Path(str(report["warehouse_path"])).is_absolute())
 
 
 def _queryable_real_like_dataset(root: Path) -> tuple[DatasetService, str]:

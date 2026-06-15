@@ -140,4 +140,7 @@ pilot 固定跑两条 admissions query：
 - `warnings`
 - `failures`
 
+`source_path`、`warehouse_path` 和 `artifacts` 中的 path-like 字段只保留 repo-relative
+路径、report 目录相对路径或源文件名，不写入本机绝对路径。
+
 任何目标 query 返回 `error`、缺少必要 warning，或报告出现 failure 时，pilot 退出码为非 0。

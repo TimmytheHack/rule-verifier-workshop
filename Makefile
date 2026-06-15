@@ -49,6 +49,8 @@ clean-artifacts:
 	rm -rf outputs/tool_audit
 	rm -rf outputs/answer_demo
 	find outputs/mvp_demo -type f ! -name 'AGENTS.override.md' -delete 2>/dev/null || true
+	rm -f outputs/quality_gate/report.json
+	rm -f outputs/quality_gate/report.md
 	rm -rf outputs/quality_gate/tmp
 	rm -rf outputs/quality_gate/warehouses
 	rm -rf outputs/demo_acceptance/uploaded_datasets

@@ -26,6 +26,7 @@ class OperatorTrialTest(unittest.TestCase):
             report_dir = root / "operator_trial/20260614_fixture"
             loaded = json.loads((report_dir / "report.json").read_text(encoding="utf-8"))
             markdown = (report_dir / "report.md").read_text(encoding="utf-8")
+            serialized = json.dumps(loaded, ensure_ascii=False)
 
         self.assertEqual(report["status"], "pass")
         self.assertEqual(loaded["status"], "pass")
@@ -56,6 +57,9 @@ class OperatorTrialTest(unittest.TestCase):
         self.assertTrue(loaded["failure_playbook"])
         self.assertIn("人工检查卡点", markdown)
         self.assertIn("常见失败处理", markdown)
+        self.assertNotIn(str(root), serialized)
+        self.assertNotIn(str(root), markdown)
+        self.assertFalse(Path(str(loaded["warehouse_path"])).is_absolute())
         self.assertFalse(loaded["failures"])
 
     def test_operator_trial_records_review_blockers(self) -> None:

@@ -1,9 +1,9 @@
 {
   "status": "pass",
-  "generated_at": "2026-06-14T16:25:25.034979Z",
+  "generated_at": "2026-06-15T07:17:08.396675Z",
   "source_path": "outputs/real_dataset_pilot/fixtures/real_like_admissions_pilot.xlsx",
   "dataset_id": "ds_real_pilot_real_like_admissions_pil",
-  "source_fingerprint": "c64a0f6bc01a8282d63a69abe2268a6a7c5abe8329f4501607229a904fefe507",
+  "source_fingerprint": "e371c6c65607bb49079016bfe386e705be90b1bf867a2e72ddd6b6c0109d6a15",
   "sheet_name": "招生数据",
   "row_count": 6,
   "column_count": 25,
@@ -39,7 +39,7 @@
         "code": "upload_received",
         "severity": "info",
         "message": "文件已保存到托管数据目录。",
-        "size_bytes": 6556,
+        "size_bytes": 6557,
         "extension": ".xlsx"
       },
       {
@@ -408,8 +408,8 @@
     "year"
   ],
   "blocked_fields": [],
-  "warehouse_path": "/Users/tz/Desktop/Projects/SZU/outputs/real_dataset_pilot/uploaded_datasets/ds_real_pilot_real_like_admissions_pil/domain_packs/admissions/warehouse/admissions.duckdb",
-  "warehouse_fingerprint": "c64a0f6bc01a8282d63a69abe2268a6a7c5abe8329f4501607229a904fefe507",
+  "warehouse_path": "uploaded_datasets/ds_real_pilot_real_like_admissions_pil/domain_packs/admissions/warehouse/admissions.duckdb",
+  "warehouse_fingerprint": "e371c6c65607bb49079016bfe386e705be90b1bf867a2e72ddd6b6c0109d6a15",
   "target_query_results": [
     {
       "query": "列出25年深圳大学录取最高的专业组及专业组里面的各个专业最低录取分数",
@@ -1599,7 +1599,7 @@
       "code": "upload_received",
       "severity": "info",
       "message": "文件已保存到托管数据目录。",
-      "size_bytes": 6556,
+      "size_bytes": 6557,
       "extension": ".xlsx"
     },
     {
@@ -1630,9 +1630,9 @@
   ],
   "failures": [],
   "artifacts": {
-    "domain_dir": "/Users/tz/Desktop/Projects/SZU/outputs/real_dataset_pilot/uploaded_datasets/ds_real_pilot_real_like_admissions_pil/domain_packs/admissions",
-    "schema_profile_path": "/Users/tz/Desktop/Projects/SZU/outputs/real_dataset_pilot/uploaded_datasets/ds_real_pilot_real_like_admissions_pil/domain_packs/admissions/schema_profile.json",
-    "schema_value_index_path": "/Users/tz/Desktop/Projects/SZU/outputs/real_dataset_pilot/uploaded_datasets/ds_real_pilot_real_like_admissions_pil/domain_packs/admissions/schema_value_index.json",
-    "ingestion_summary_path": "/Users/tz/Desktop/Projects/SZU/outputs/real_dataset_pilot/uploaded_datasets/ds_real_pilot_real_like_admissions_pil/domain_packs/admissions/ingestion_summary.json"
+    "domain_dir": "uploaded_datasets/ds_real_pilot_real_like_admissions_pil/domain_packs/admissions",
+    "schema_profile_path": "uploaded_datasets/ds_real_pilot_real_like_admissions_pil/domain_packs/admissions/schema_profile.json",
+    "schema_value_index_path": "uploaded_datasets/ds_real_pilot_real_like_admissions_pil/domain_packs/admissions/schema_value_index.json",
+    "ingestion_summary_path": "uploaded_datasets/ds_real_pilot_real_like_admissions_pil/domain_packs/admissions/ingestion_summary.json"
   }
 }

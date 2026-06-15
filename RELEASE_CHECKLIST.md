@@ -18,7 +18,7 @@ sample_outputs/operator_trial_summary.md
 - [ ] `make serve` 通过，`/healthz`、`/readyz`、`/version` 可访问，`llm_safe_only=true` 只返回五个 LLM-safe tools。
 - [ ] `make demo` 通过：29/29 pass；admissions 19、housing 5、products 5；uploaded dataset acceptance 2。
 - [ ] `make pilot` 通过：`ds_real_pilot_real_like_admissions_pil` 的 source fingerprint 与 warehouse fingerprint 一致。
-- [ ] `make operator-trial` 通过：`20260614_163130` fixture 覆盖 sheet/header/profile/review/approve/build/query 卡点。
+- [ ] `make operator-trial` 通过：`20260615_071741` fixture 覆盖 sheet/header/profile/review/approve/build/query 卡点。
 - [ ] `make agent-acceptance` 通过：fake agent 调用 `dataset.approve_op` 被 `tool_not_allowed` 拒绝。
 - [ ] `make quality` 通过：11 pass、0 fail、1 warning；唯一 warning 是既有前端 build warning。
 - [ ] `make clean-artifacts` 后没有临时 quality/operator/agent/audit/warehouse/upload 产物留在工作区。

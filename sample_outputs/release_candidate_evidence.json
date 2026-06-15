@@ -1,6 +1,6 @@
 {
   "release_candidate": "v0.1.0-rc1",
-  "captured_at": "2026-06-15T00:44:41+08:00",
+  "captured_at": "2026-06-15T15:18:15+08:00",
   "positioning": "LLM-safe structured data query tool server for Excel/CSV",
   "command_evidence": [
     {
@@ -60,8 +60,8 @@
         "dataset_id": "ds_real_pilot_real_like_admissions_pil",
         "sheet_name": "招生数据",
         "detected_header_row": 3,
-        "source_fingerprint": "c64a0f6bc01a8282d63a69abe2268a6a7c5abe8329f4501607229a904fefe507",
-        "warehouse_fingerprint": "c64a0f6bc01a8282d63a69abe2268a6a7c5abe8329f4501607229a904fefe507",
+        "source_fingerprint": "e371c6c65607bb49079016bfe386e705be90b1bf867a2e72ddd6b6c0109d6a15",
+        "warehouse_fingerprint": "e371c6c65607bb49079016bfe386e705be90b1bf867a2e72ddd6b6c0109d6a15",
         "failures": []
       }
     },
@@ -69,14 +69,14 @@
       "command": "make operator-trial",
       "status": "pass",
       "evidence": {
-        "run_id": "20260614_163130",
+        "run_id": "20260615_071741",
         "dataset_id": "ds_operator_trial_real_like_admissions_pil",
         "sheet_name": "招生数据",
         "detected_header_row": 3,
         "row_count": 6,
         "column_count": 25,
-        "source_fingerprint": "70cc9586a0ca2d152d4e7959c66c1e573654fa9e3e678960dd7622e5f738b445",
-        "warehouse_fingerprint": "70cc9586a0ca2d152d4e7959c66c1e573654fa9e3e678960dd7622e5f738b445",
+        "source_fingerprint": "5c09708420f07113750eb89388926240845ced4e902473a0107405ea910639ee",
+        "warehouse_fingerprint": "5c09708420f07113750eb89388926240845ced4e902473a0107405ea910639ee",
         "target_queries": [
           {
             "query_type": "group_detail_report",
