@@ -41,17 +41,17 @@ const safetyOptionsForBeginners = [
 ];
 const quickExamples = [
   {
-    label: '计算机，广州深圳',
+    label: '我想学计算机',
     hard: { major_keyword: '计算机', preferred_cities: ['广州', '深圳'] },
     soft: { prompt: '想学计算机，最好在广州深圳，学校稳一点。' },
   },
   {
-    label: '学费两万以内',
+    label: '预算 2 万以内',
     hard: { tuition_cap_yuan: 20000 },
     soft: { tuition_cap_yuan: 20000, prompt: '想找学费两万以内的专业。' },
   },
   {
-    label: '先看稳妥选择',
+    label: '先看稳一点',
     hard: {},
     soft: { safety_margin_percent: 10, prompt: '学校稳一点，专业不要太冷门。' },
   },
@@ -153,17 +153,17 @@ function trimSentence(value) {
     <template #header>
       <div class="card-header">
         <div>
-          <h2>填报信息</h2>
+          <h2>先填这几项</h2>
         </div>
         <el-tag :type="mode === 'api' ? 'warning' : 'info'" effect="plain">
-          {{ mode === 'api' ? '连接后端' : '演示数据' }}
+          {{ mode === 'api' ? '实时查询' : '演示' }}
         </el-tag>
       </div>
     </template>
 
     <section class="input-section">
       <div class="input-section-title">
-        <h3>第一步：基础信息</h3>
+        <h3>基本情况</h3>
         <el-tag type="success" effect="plain">必填</el-tag>
       </div>
       <div class="hard-form-grid">
@@ -180,7 +180,7 @@ function trimSentence(value) {
         </label>
 
         <label class="control-block">
-          <span class="control-label">物理 / 历史</span>
+          <span class="control-label">科类</span>
           <el-segmented
             v-model="hard.subject_type"
             :options="subjectOptions"
@@ -200,7 +200,7 @@ function trimSentence(value) {
         </label>
 
         <label class="control-block wide-field">
-          <span class="control-label">再选科目</span>
+          <span class="control-label">选考科目</span>
           <el-checkbox-group
             v-model="hard.reselected_subjects"
             :max="2"
@@ -223,7 +223,7 @@ function trimSentence(value) {
 
     <section class="input-section soft-section">
       <div class="input-section-title">
-        <h3>第二步：想要什么</h3>
+        <h3>想看的方向</h3>
         <el-tag type="warning" effect="plain">可选</el-tag>
       </div>
       <div class="quick-example-row" aria-label="常用示例">
@@ -249,7 +249,7 @@ function trimSentence(value) {
         </label>
 
         <label class="control-block">
-          <span class="control-label">想去城市</span>
+          <span class="control-label">城市偏好</span>
           <el-select
             v-model="hard.preferred_cities"
             class="full-control"
@@ -300,7 +300,7 @@ function trimSentence(value) {
         </label>
 
         <label class="control-block prompt-field">
-          <span class="control-label">其他想法</span>
+          <span class="control-label">补充偏好</span>
           <el-input
             v-model="soft.prompt"
             class="input-textarea"
@@ -323,10 +323,10 @@ function trimSentence(value) {
         :loading="loading"
         @click="submitRun"
       >
-        开始筛选
+        查看可筛结果
       </el-button>
       <span class="muted-note">
-        {{ mode === 'api' ? '连接后端' : '演示结果' }}
+        {{ mode === 'api' ? '实时查询' : '演示结果' }}
       </span>
     </div>
   </el-card>

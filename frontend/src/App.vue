@@ -56,11 +56,11 @@ const resultRows = computed(() => (
 const quickStats = computed(() => {
   const data = runData.value || {};
   return [
-    { label: '状态', value: statusLabel(data.status || 'ok'), tone: data.status || 'ok' },
-    { label: '结果', value: data.result_count ?? 0, tone: 'ok' },
-    { label: '已执行', value: data.executable_rules?.length || data.executed_filters?.length || 0, tone: 'ok' },
+    { label: '处理状态', value: statusLabel(data.status || 'ok'), tone: data.status || 'ok' },
+    { label: '可看结果', value: data.result_count ?? 0, tone: 'ok' },
+    { label: '已用条件', value: data.executable_rules?.length || data.executed_filters?.length || 0, tone: 'ok' },
     { label: '待确认', value: data.candidate_rules?.length || data.candidates_to_confirm?.length || 0, tone: 'needs_confirmation' },
-    { label: '未执行', value: data.not_executed_preferences?.length || data.unexecuted_preferences?.length || 0, tone: 'blocked' },
+    { label: '未参与', value: data.not_executed_preferences?.length || data.unexecuted_preferences?.length || data.no_schema_field_preferences?.length || 0, tone: 'blocked' },
   ];
 });
 
@@ -144,13 +144,13 @@ function statusLabel(status) {
     <header class="app-header">
       <div>
         <h1>招生筛选助手</h1>
-        <p class="header-copy">填排位和偏好，先看可验证筛选结果。</p>
+        <p class="header-copy">填排位、专业和城市，查看哪些结果通过了数据筛选。</p>
       </div>
-      <el-tag size="large" effect="plain" type="warning">不是志愿建议</el-tag>
+      <el-tag size="large" effect="plain" type="warning">仅做筛选</el-tag>
     </header>
 
     <el-tabs v-model="activeWorkspace" class="workspace-tabs">
-      <el-tab-pane label="开始查询" name="query">
+      <el-tab-pane label="我要查询" name="query">
         <section class="workspace-panel query-workspace">
           <aside class="control-column">
             <UserInputPanel
@@ -161,7 +161,7 @@ function statusLabel(status) {
               @run="runWorkbench"
             />
             <el-collapse class="advanced-collapse">
-              <el-collapse-item title="高级设置" name="advanced">
+              <el-collapse-item title="高级选项" name="advanced">
                 <WorkbenchModePanel
                   v-model:mode="mode"
                   v-model:extractor="extractor"
@@ -198,10 +198,10 @@ function statusLabel(status) {
           <aside class="evidence-column">
             <BeginnerDecisionPanel :run-data="runData" />
             <el-collapse class="detail-collapse">
-              <el-collapse-item title="查看证据回答" name="evidence">
+              <el-collapse-item title="为什么这样筛" name="evidence">
                 <EvidenceReport :report="runData?.natural_language_report" />
               </el-collapse-item>
-              <el-collapse-item title="查看质量检查" name="audit">
+              <el-collapse-item title="检查详情" name="audit">
                 <EvalSummary :run-data="runData" />
                 <TokenUsagePanel
                   :token-usage="runData?.token_usage"
@@ -220,7 +220,7 @@ function statusLabel(status) {
         </section>
       </el-tab-pane>
 
-      <el-tab-pane label="查看详情" name="details">
+      <el-tab-pane label="筛选依据" name="details">
         <section class="workspace-panel detail-workspace">
           <RuleSummaryCards
             :deterministic-rules="runData?.deterministic_rules"

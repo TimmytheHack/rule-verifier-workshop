@@ -60,10 +60,10 @@ const queryStatusMessage = computed(() => {
     return '';
   }
   const messages = {
-    ok: '已按审核规则执行，可展示结果。',
+    ok: '已按通过检查的条件筛选，可展示结果。',
     needs_confirmation: '存在待确认项，确认前不会执行。',
     no_results: '查询正常但结果为 0，前端不能编造推荐。',
-    blocked: '已被安全阻断，请检查数据状态、指纹或确认记录。',
+    blocked: '已拦截，没有参与筛选，请检查表格状态或确认记录。',
     error: '后端返回错误，前端不展示内部错误详情。',
   };
   return messages[queryResult.value.status] || '未知状态，请检查证据。';
@@ -85,8 +85,8 @@ const STATUS_LABELS = {
 const STAGE_LABELS = {
   upload: '上传',
   generate_domain_pack: '生成草稿',
-  profile: '字段画像',
-  review_summary: '审查摘要',
+  profile: '表格检查',
+  review_summary: '字段检查',
   approve_field: '批准字段',
   'approve-field': '批准字段',
   approve_op: '批准条件',
@@ -94,9 +94,9 @@ const STAGE_LABELS = {
   block_field: '阻断字段',
   'block-field': '阻断字段',
   approve_domain: '批准领域',
-  build_warehouse: '构建数据仓库',
+  build_warehouse: '生成可查询数据',
   query: '查询',
-  confirm_query: '确认后查询',
+  confirm_query: '确认后再查',
 };
 
 const ATTRIBUTE_LABELS = {
@@ -249,7 +249,7 @@ async function runUploadedQuery(confirmedCandidateIds = []) {
 
 async function confirmSelectedCandidates() {
   if (!selectedCandidateIds.value.length) {
-    errorText.value = '请选择上一轮系统返回的确认编号。';
+    errorText.value = '请先勾选要确认的项目。';
     return;
   }
   await runUploadedQuery(selectedCandidateIds.value);
@@ -462,7 +462,7 @@ function stageLabel(value) {
           </el-button>
         </div>
         <el-button class="wide-button" :disabled="!datasetId" :loading="loading" @click="buildWarehouse">
-          构建数据仓库
+          生成可查询数据
         </el-button>
       </section>
 
@@ -566,7 +566,7 @@ function stageLabel(value) {
         <pre>{{ jsonText(dataset) }}</pre>
       </article>
       <article>
-        <h3>字段画像</h3>
+        <h3>表格检查</h3>
         <pre>{{ jsonText(profile) }}</pre>
       </article>
       <article>
@@ -642,7 +642,7 @@ function stageLabel(value) {
             :loading="loading"
             @click="confirmSelectedCandidates"
           >
-            确认后重跑
+            确认后再查
           </el-button>
         </div>
         <el-checkbox-group v-model="selectedCandidateIds" class="candidate-checkboxes">
@@ -652,7 +652,7 @@ function stageLabel(value) {
             class="candidate-confirm-row"
           >
             <el-checkbox :label="candidateId(candidate)">
-              {{ candidateId(candidate) }}
+              确认使用
             </el-checkbox>
             <strong>{{ candidateTitle(candidate) }}</strong>
             <span>{{ candidateSummary(candidate) }}</span>
@@ -706,7 +706,7 @@ function stageLabel(value) {
         <pre>{{ jsonText(queryResult.result_sections) }}</pre>
       </article>
       <article>
-        <h3>证据与提醒</h3>
+        <h3>筛选依据与提醒</h3>
         <pre>{{ jsonText({ evidence_pack: queryResult.evidence_pack, warnings: queryResult.warnings }) }}</pre>
       </article>
     </section>
