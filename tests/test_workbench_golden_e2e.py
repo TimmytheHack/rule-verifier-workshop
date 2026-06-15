@@ -167,6 +167,16 @@ class WorkbenchGoldenE2ETest(unittest.TestCase):
         self.assertFalse(result["extracted_slots"]["fallback_extraction"]["used"])
         self.assertEqual(result["token_usage"]["extractor"], None)
 
+    def test_legacy_deepseek_slots_alias_is_accepted(self) -> None:
+        with patch("src.api.workbench.deepseek_slot_adapter_enabled", return_value=False):
+            result = _run_case(
+                "广东物理类，排位32000，想学计算机，广州。",
+                extractor="deepseek_slots",
+            )
+
+        self.assertNotEqual(result["status"], "error")
+        self.assertEqual(result["selected_options"]["extractor"], "LLM 辅助解析软偏好")
+
     def test_hybrid_llm_adapter_only_fills_missing_slots(self) -> None:
         class FakeAdapter:
             def extract(self, text: str, **_kwargs: object) -> dict[str, object]:

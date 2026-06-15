@@ -42,6 +42,9 @@ const BUILTIN_DATA_SOURCE = {
 const DATA_SOURCES_STORAGE_KEY = 'szu_uploaded_data_sources';
 const SELECTED_SOURCE_STORAGE_KEY = 'szu_selected_data_source';
 const DEFAULT_DEV_ACTOR_TOKEN = import.meta.env.DEV ? 'operator-token' : '';
+const EXTRACTOR_ALIASES = {
+  deepseek_slots: 'deepseek',
+};
 const initialUploadedDataSources = loadUploadedDataSources();
 const initialDataSourceId = loadSelectedDataSourceId(initialUploadedDataSources);
 
@@ -138,7 +141,7 @@ async function runWorkbench(runRequest) {
     user_input: runRequest.user_input,
     hard_filters: runRequest.hard_filters,
     soft_preferences: runRequest.soft_preferences,
-    extractor: extractor.value,
+    extractor: normalizedExtractor(),
     generator: generator.value,
     model: model.value,
   };
@@ -171,6 +174,10 @@ async function runWorkbench(runRequest) {
   } finally {
     loading.value = false;
   }
+}
+
+function normalizedExtractor() {
+  return EXTRACTOR_ALIASES[extractor.value] || extractor.value;
 }
 
 function openTrace(result) {

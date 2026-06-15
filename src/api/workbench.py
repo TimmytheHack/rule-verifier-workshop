@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import hashlib
 import json
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from functools import lru_cache
 from pathlib import Path
 from typing import Any
@@ -60,6 +60,9 @@ EXTRACTOR_OPTIONS = {
     "hybrid": "规则优先，LLM 补槽",
     "regex": "规则解析软偏好",
     "deepseek": "LLM 辅助解析软偏好",
+}
+EXTRACTOR_ALIASES = {
+    "deepseek_slots": "deepseek",
 }
 
 GENERATOR_OPTIONS = {
@@ -218,6 +221,7 @@ def _is_builtin_admissions_domain(domain_config: DomainConfig) -> bool:
 def run_workbench(config: WorkbenchConfig) -> dict[str, Any]:
     """Run the verified pipeline and return UI-ready artifacts."""
 
+    config = _normalize_config(config)
     try:
         return _run_workbench(config)
     except Exception as exc:  # noqa: BLE001 - API contract 不暴露内部 traceback。
@@ -1267,6 +1271,13 @@ def _validate_config(config: WorkbenchConfig) -> None:
         raise ValueError(f"不支持的证据回答方式：{config.generator}")
     if config.model not in MODEL_OPTIONS:
         raise ValueError(f"不支持的 LLM 模型：{config.model}")
+
+
+def _normalize_config(config: WorkbenchConfig) -> WorkbenchConfig:
+    extractor = EXTRACTOR_ALIASES.get(config.extractor, config.extractor)
+    if extractor == config.extractor:
+        return config
+    return replace(config, extractor=extractor)
 
 
 def _selected_options(config: WorkbenchConfig) -> dict[str, str]:
