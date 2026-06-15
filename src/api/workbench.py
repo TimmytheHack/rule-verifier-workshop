@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import re
 from dataclasses import dataclass, field, replace
 from functools import lru_cache
 from pathlib import Path
@@ -108,6 +109,15 @@ class WorkbenchConfig:
     domain_name: str = "admissions"
     domain_path: str | None = None
     dataset_id: str | None = None
+
+
+@dataclass(frozen=True)
+class RankWindowSelection:
+    """用户显式确认的位次窗口。"""
+
+    label: str
+    lower_percent: int
+    upper_percent: int
 
 
 @dataclass(frozen=True)
@@ -1452,11 +1462,11 @@ def _slots_from_inputs(
         preferences["tuition_cap_yuan"] = hard_tuition_cap
         preferences["tuition_preference_raw"] = None
 
-    safety_percent = _optional_int(soft.get("safety_margin_percent"))
-    if safety_percent in {5, 10, 15}:
+    rank_window = _rank_window_selection(soft)
+    if rank_window:
         preferences["risk_preference_raw"] = (
             preferences.get("risk_preference_raw")
-            or f"已选择{safety_percent}%位次窗口"
+            or f"已选择{_rank_window_boundary_text(rank_window)}"
         )
 
     soft_tuition_cap = _optional_int(soft.get("tuition_cap_yuan"))
@@ -1523,26 +1533,31 @@ def _apply_soft_confirmations(
             "recommendation_rank_floor"
         ]
 
-    safety_percent = _optional_int(soft.get("safety_margin_percent"))
+    rank_window = _rank_window_selection(soft)
     user_rank = _optional_int(slots.get("user_context", {}).get("user_rank"))
     rank_field = domain_config.source_column_or_none("group_min_rank_2024")
     if (
-        safety_percent in {5, 10, 15}
+        rank_window
         and "c_safety_margin" in candidate_rule_ids
         and user_rank
         and rank_field
     ):
-        lower_bound = max(1, int(user_rank * (1 - safety_percent / 100)))
-        upper_bound = int(user_rank * (1 + safety_percent / 100))
+        lower_bound = max(
+            1,
+            int(user_rank * (1 - rank_window.lower_percent / 100)),
+        )
+        upper_bound = int(user_rank * (1 + rank_window.upper_percent / 100))
         simulated["safety_margin"] = {
-            "selected_option": f"{safety_percent}%",
-            "label": f"{safety_percent}% 位次窗口",
+            "selected_option": (
+                f"-{rank_window.lower_percent}%/+{rank_window.upper_percent}%"
+            ),
+            "label": _rank_window_boundary_text(rank_window),
             "field": rank_field,
             "operator": "between",
             "value": [lower_bound, upper_bound],
             "source_expression": (
-                f"{user_rank} * {1 - safety_percent / 100:.2f} 到 "
-                f"{user_rank} * {1 + safety_percent / 100:.2f}"
+                f"{user_rank} * {1 - rank_window.lower_percent / 100:.2f} 到 "
+                f"{user_rank} * {1 + rank_window.upper_percent / 100:.2f}"
             ),
         }
 
@@ -2174,10 +2189,10 @@ def _compose_user_request(config: WorkbenchConfig) -> str:
         parts.append(f"硬性学费上限：{tuition_cap}元/年")
 
     boundary_parts = []
-    safety_percent = _optional_int(soft.get("safety_margin_percent"))
     soft_tuition_cap = _optional_int(soft.get("tuition_cap_yuan"))
-    if safety_percent:
-        boundary_parts.append(f"位次窗口 {safety_percent}%")
+    rank_window = _rank_window_selection(soft)
+    if rank_window:
+        boundary_parts.append(_rank_window_boundary_text(rank_window))
     if soft_tuition_cap and not tuition_cap:
         boundary_parts.append(f"费用上限 {soft_tuition_cap} 元/年")
     prompt = _clean_sentence(soft.get("prompt"))
@@ -2215,19 +2230,41 @@ def _display_hard_filters_for_domain(
 
 
 def _boundary_context(soft_preferences: dict[str, Any]) -> dict[str, Any]:
+    rank_window = _rank_window_selection(soft_preferences)
     return {
-        "safety_margin_percent": _optional_int(
-            soft_preferences.get("safety_margin_percent")
+        "safety_margin_percent": (
+            rank_window.lower_percent
+            if rank_window
+            and rank_window.lower_percent == rank_window.upper_percent
+            else None
+        ),
+        "rank_window_label": rank_window.label if rank_window else None,
+        "rank_window_lower_percent": (
+            rank_window.lower_percent if rank_window else None
+        ),
+        "rank_window_upper_percent": (
+            rank_window.upper_percent if rank_window else None
         ),
         "tuition_cap_yuan": _optional_int(soft_preferences.get("tuition_cap_yuan")),
     }
 
 
 def _display_soft_preferences(soft_preferences: dict[str, Any]) -> dict[str, Any]:
+    rank_window = _rank_window_selection(soft_preferences)
     return {
         "prompt": _clean_text(soft_preferences.get("prompt")),
-        "safety_margin_percent": _optional_int(
-            soft_preferences.get("safety_margin_percent")
+        "safety_margin_percent": (
+            rank_window.lower_percent
+            if rank_window
+            and rank_window.lower_percent == rank_window.upper_percent
+            else None
+        ),
+        "rank_window_label": rank_window.label if rank_window else None,
+        "rank_window_lower_percent": (
+            rank_window.lower_percent if rank_window else None
+        ),
+        "rank_window_upper_percent": (
+            rank_window.upper_percent if rank_window else None
         ),
         "tuition_cap_yuan": _optional_int(soft_preferences.get("tuition_cap_yuan")),
     }
@@ -2240,6 +2277,57 @@ def _display_soft_preferences_for_domain(
     if domain_config.domain_id == ADMISSIONS_DOMAIN.domain_id:
         return _display_soft_preferences(config.soft_preferences)
     return dict(config.soft_preferences)
+
+
+def _rank_window_selection(
+    soft_preferences: dict[str, Any],
+) -> RankWindowSelection | None:
+    lower_percent = _optional_percent(
+        soft_preferences.get("rank_window_lower_percent")
+    )
+    upper_percent = _optional_percent(
+        soft_preferences.get("rank_window_upper_percent")
+    )
+    if lower_percent is not None or upper_percent is not None:
+        lower = lower_percent if lower_percent is not None else 0
+        upper = upper_percent if upper_percent is not None else 0
+        return RankWindowSelection(
+            label=_rank_window_label(soft_preferences, lower, upper),
+            lower_percent=lower,
+            upper_percent=upper,
+        )
+
+    safety_percent = _optional_percent(soft_preferences.get("safety_margin_percent"))
+    if safety_percent is None:
+        return None
+    return RankWindowSelection(
+        label=_rank_window_label(soft_preferences, safety_percent, safety_percent),
+        lower_percent=safety_percent,
+        upper_percent=safety_percent,
+    )
+
+
+def _rank_window_label(
+    soft_preferences: dict[str, Any],
+    lower_percent: int,
+    upper_percent: int,
+) -> str:
+    explicit_label = _clean_text(
+        soft_preferences.get("rank_window_label")
+        or soft_preferences.get("safety_margin_label")
+    )
+    if explicit_label:
+        return explicit_label
+    if lower_percent == upper_percent:
+        return f"{lower_percent}% 位次窗口"
+    return f"前 {lower_percent}% / 后 {upper_percent}% 位次窗口"
+
+
+def _rank_window_boundary_text(rank_window: RankWindowSelection) -> str:
+    return (
+        f"{rank_window.label}（前 {rank_window.lower_percent}% / "
+        f"后 {rank_window.upper_percent}%）"
+    )
 
 
 def _clean_text(value: Any) -> str | None:
@@ -2282,6 +2370,16 @@ def _optional_int(value: Any) -> int | None:
     except (TypeError, ValueError):
         return None
     return parsed if parsed > 0 else None
+
+
+def _optional_percent(value: Any) -> int | None:
+    if value in (None, ""):
+        return None
+    try:
+        parsed = int(value)
+    except (TypeError, ValueError):
+        return None
+    return parsed if 0 <= parsed <= 100 else None
 
 
 def _extracted_preferences(
@@ -2573,15 +2671,17 @@ def _not_executed_override(
 
 def _simulated_confirmations(classified_rules: dict[str, Any]) -> dict[str, Any]:
     simulated = classified_rules.get("simulated_confirmations", {})
-    safety_value = simulated.get("safety_margin", {}).get("value")
+    safety_confirmation = simulated.get("safety_margin", {})
+    safety_value = safety_confirmation.get("value")
+    rank_window_bounds = _rank_window_bounds_from_confirmation(safety_confirmation)
     return {
         "recommendation_rank_floor": simulated.get(
             "recommendation_rank_floor",
             {},
         ).get("value"),
-        "safety_margin_percent": _confirmation_percent(
-            simulated.get("safety_margin", {}).get("label")
-        ),
+        "safety_margin_percent": _symmetric_rank_window_percent(rank_window_bounds),
+        "rank_window_label": safety_confirmation.get("label"),
+        "rank_window_bounds": rank_window_bounds,
         "safety_rank_cutoff": safety_value,
         "tuition_cap": simulated.get("tuition_threshold", {}).get("value"),
         "major_expansion": bool(
@@ -3055,14 +3155,28 @@ def _present(value: Any) -> bool:
     return True
 
 
-def _confirmation_percent(label: Any) -> int | None:
-    if not label:
+def _symmetric_rank_window_percent(
+    bounds: dict[str, int] | None,
+) -> int | None:
+    if not bounds:
         return None
-    text = str(label)
-    for percent in (5, 10, 15):
-        if f"{percent}%" in text:
-            return percent
-    return None
+    lower = bounds.get("lower_percent")
+    upper = bounds.get("upper_percent")
+    return lower if lower == upper else None
+
+
+def _rank_window_bounds_from_confirmation(
+    confirmation: dict[str, Any],
+) -> dict[str, int] | None:
+    option = str(confirmation.get("selected_option") or "")
+    match = re.fullmatch(r"-(\d{1,3})%/\+(\d{1,3})%", option)
+    if not match:
+        return None
+    lower = int(match.group(1))
+    upper = int(match.group(2))
+    if not (0 <= lower <= 100 and 0 <= upper <= 100):
+        return None
+    return {"lower_percent": lower, "upper_percent": upper}
 
 
 def _sanitize_user_text(text: str) -> str:

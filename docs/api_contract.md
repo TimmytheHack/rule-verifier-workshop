@@ -308,16 +308,25 @@ housing/products 使用各自 `top_result_mapping.yaml` 输出。测试和 demo 
 ## 确认候选执行边界
 
 结构化候选项只有在用户提交系统生成的 `candidate_id`，或前端以受控字段提交等价
-确认后，才可以提升为 hard filter。`admissions` 中的 `safety_margin_percent`
-和 `tuition_cap_yuan` 属于这类受控确认；推荐请求生成的
-`recommendation_rank_floor` 也必须在确认后执行。确认后的 `e_safety_margin`、
-`e_tuition_cap`、`e_recommendation_rank_floor` 必须进入 DuckDB hard filter，并记录在
-`executed_filters`、`EvidencePack.candidate_confirmations` 和
+确认后，才可以提升为 hard filter。`admissions` 中的 `rank_window_lower_percent`、
+`rank_window_upper_percent`、兼容字段 `safety_margin_percent` 和 `tuition_cap_yuan`
+属于这类受控确认；推荐请求生成的 `recommendation_rank_floor` 也必须在确认后执行。
+确认后的 `e_safety_margin`、`e_tuition_cap`、`e_recommendation_rank_floor` 必须进入
+DuckDB hard filter，并记录在 `executed_filters`、
+`EvidencePack.candidate_confirmations` 和
 `EvidencePack.execution_summary.hard_rule_ids` 中。通过显式 `candidate_id` 确认的规则
 还必须出现在顶层 `confirmed_rules`。
 
+位次窗口的百分比必须是 `0-100` 的整数。`rank_window_lower_percent` 表示允许筛选比
+用户排位更靠前多少，`rank_window_upper_percent` 表示允许筛选比用户排位更靠后多少。
+例如用户排位 `32000`，`rank_window_lower_percent=0` 且
+`rank_window_upper_percent=50` 会生成 `32000-48000` 的 hard filter。旧字段
+`safety_margin_percent=10` 等价于 `rank_window_lower_percent=10` 且
+`rank_window_upper_percent=10`。
+
 未确认的 `partial_match`、`no_schema_field`、reference-only 资料，以及
-`verification_origin=verified_proposed_rule` 的 LLM proposal 不能进入 SQL。
+`verification_origin=verified_proposed_rule` 的 LLM proposal 不能进入 SQL。LLM 可以在
+解释层建议某个档位，但不能替用户隐式提交位次窗口。
 
 ## admissions query_type
 

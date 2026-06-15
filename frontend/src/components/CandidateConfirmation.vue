@@ -14,7 +14,15 @@ const props = defineProps({
 
 const confirmationText = computed(() => {
   const items = [];
-  if (props.confirmations.safety_margin_percent) {
+  if (props.confirmations.rank_window_label) {
+    const bounds = props.confirmations.rank_window_bounds;
+    const suffix = bounds
+      ? `前 ${bounds.lower_percent}% / 后 ${bounds.upper_percent}%`
+      : props.confirmations.safety_margin_percent
+        ? `${props.confirmations.safety_margin_percent}%`
+        : '已选择';
+    items.push(`${props.confirmations.rank_window_label} = ${suffix}`);
+  } else if (props.confirmations.safety_margin_percent) {
     items.push(`位次窗口 = ${props.confirmations.safety_margin_percent}%`);
   }
   if (props.confirmations.tuition_cap) {

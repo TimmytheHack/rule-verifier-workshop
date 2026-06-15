@@ -625,6 +625,37 @@ class RuleVerifierTest(unittest.TestCase):
         self.assertEqual(final_by_id["e_safety_margin"]["value"], [28800, 35200])
         self.assertEqual(final_by_id["e_tuition_cap"]["value"], 20000)
 
+    def test_directional_rank_window_creates_structured_confirmed_rule(self) -> None:
+        config = WorkbenchConfig(
+            user_input="广东物理，排位32000。",
+            hard_filters={
+                "source_province": "广东",
+                "subject_type": "物理",
+                "user_rank": 32000,
+            },
+            soft_preferences={
+                "prompt": "",
+                "rank_window_label": "保底",
+                "rank_window_lower_percent": 0,
+                "rank_window_upper_percent": 50,
+            },
+        )
+        slots = _slots_from_inputs(RegexExtractor().extract(""), config)
+        classified = RuleClassifier(TAXONOMY_PATH, self.verifier).classify(slots)
+        classified = _apply_soft_confirmations(classified, config, slots)
+        final_rules = RulePromoter(
+            TAXONOMY_PATH,
+            simulated_confirmation_enabled=True,
+        ).final_executable_rules(classified)
+        final_by_id = {rule["rule_id"]: rule for rule in final_rules}
+
+        self.assertEqual(
+            slots["preferences"]["risk_preference_raw"],
+            "已选择保底（前 0% / 后 50%）",
+        )
+        self.assertEqual(final_by_id["e_safety_margin"]["operator"], "between")
+        self.assertEqual(final_by_id["e_safety_margin"]["value"], [32000, 48000])
+
     def test_empty_soft_prompt_does_not_fall_back_to_default_demo_input(self) -> None:
         config = WorkbenchConfig(
             hard_filters={
@@ -648,7 +679,10 @@ class RuleVerifierTest(unittest.TestCase):
         self.assertIsNone(slots["preferences"].get("major_keyword"))
         self.assertEqual(slots["preferences"].get("preferred_cities"), [])
         self.assertIsNone(slots["preferences"].get("cooperation_preference_raw"))
-        self.assertEqual(slots["preferences"]["risk_preference_raw"], "已选择10%位次窗口")
+        self.assertEqual(
+            slots["preferences"]["risk_preference_raw"],
+            "已选择10% 位次窗口（前 10% / 后 10%）",
+        )
         self.assertEqual(slots["preferences"]["tuition_preference_raw"], "已选择20000元费用上限")
 
     def test_reselected_subjects_become_verified_subject_requirement_rule(self) -> None:

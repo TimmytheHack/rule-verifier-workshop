@@ -33,11 +33,42 @@ const tuitionOptions = [
   { label: '20000 元/年', value: 20000 },
   { label: '40000 元/年', value: 40000 },
 ];
-const safetyOptionsForBeginners = [
-  { label: '先不选', value: '' },
-  { label: '稳一点', value: 5 },
-  { label: '更稳', value: 10 },
-  { label: '很稳', value: 15 },
+const rankWindowOptions = [
+  {
+    label: '先不选',
+    value: '',
+    lower: null,
+    upper: null,
+    description: '不按排位范围筛。',
+  },
+  {
+    label: '冲一冲',
+    value: 'reach',
+    lower: 20,
+    upper: 0,
+    description: '看比我排得更前 20% 以内的结果。',
+  },
+  {
+    label: '稳一点',
+    value: 'steady',
+    lower: 5,
+    upper: 15,
+    description: '看我附近，到稍微靠后的结果。',
+  },
+  {
+    label: '保底',
+    value: 'safe',
+    lower: 0,
+    upper: 50,
+    description: '只看比我排得更后 50% 以内的结果。',
+  },
+  {
+    label: '自定义',
+    value: 'custom',
+    lower: 10,
+    upper: 10,
+    description: '自己设置前后范围。',
+  },
 ];
 const quickExamples = [
   {
@@ -53,7 +84,7 @@ const quickExamples = [
   {
     label: '先看稳一点',
     hard: {},
-    soft: { safety_margin_percent: 10, prompt: '学校稳一点，专业不要太冷门。' },
+    soft: { rank_window_preset: 'steady', prompt: '学校稳一点，专业不要太冷门。' },
   },
 ];
 
@@ -76,6 +107,10 @@ function emptySoftPreferences() {
   return {
     prompt: '想学计算机，最好在广州深圳，学校稳一点，不想去太贵的中外合作。',
     safety_margin_percent: '',
+    rank_window_preset: '',
+    rank_window_lower_percent: 10,
+    rank_window_upper_percent: 10,
+    rank_window_label: '',
     tuition_cap_yuan: '',
   };
 }
@@ -85,6 +120,7 @@ function assignFormState() {
   hard.preferred_cities = [...(props.defaultHardFilters?.preferred_cities || hard.preferred_cities || [])];
   hard.reselected_subjects = [...(props.defaultHardFilters?.reselected_subjects || hard.reselected_subjects || [])];
   Object.assign(soft, emptySoftPreferences(), props.defaultSoftPreferences || {});
+  normalizeRankWindowState();
 }
 
 watch(
@@ -94,6 +130,7 @@ watch(
 );
 
 function submitRun() {
+  const rankWindow = selectedRankWindow();
   const hardPayload = {
     source_province: hard.source_province || null,
     subject_type: hard.subject_type || null,
@@ -105,7 +142,10 @@ function submitRun() {
   };
   const softPayload = {
     prompt: (soft.prompt || '').trim(),
-    safety_margin_percent: soft.safety_margin_percent || null,
+    safety_margin_percent: rankWindow && rankWindow.lower === rankWindow.upper ? rankWindow.lower : null,
+    rank_window_label: rankWindow?.label || null,
+    rank_window_lower_percent: rankWindow?.lower ?? null,
+    rank_window_upper_percent: rankWindow?.upper ?? null,
     tuition_cap_yuan: soft.tuition_cap_yuan || null,
   };
   emit('run', {
@@ -118,6 +158,9 @@ function submitRun() {
 function applyExample(example) {
   Object.assign(hard, example.hard || {});
   Object.assign(soft, example.soft || {});
+  if (example.soft?.rank_window_preset) {
+    applyRankWindowPreset(example.soft.rank_window_preset);
+  }
 }
 
 function composeRequest(hardPayload, softPayload) {
@@ -130,7 +173,7 @@ function composeRequest(hardPayload, softPayload) {
     hardPayload.preferred_cities.length ? `城市优先：${hardPayload.preferred_cities.join('、')}` : '',
   ].filter(Boolean);
   const boundaryParts = [
-    softPayload.safety_margin_percent ? `位次窗口 ${softPayload.safety_margin_percent}%` : '',
+    softPayload.rank_window_label ? rankWindowText(softPayload) : '',
     softPayload.tuition_cap_yuan ? `费用上限 ${softPayload.tuition_cap_yuan} 元/年` : '',
   ].filter(Boolean);
   const promptText = trimSentence(softPayload.prompt);
@@ -145,6 +188,74 @@ function composeRequest(hardPayload, softPayload) {
 
 function trimSentence(value) {
   return String(value || '').replace(/[。；;，,\s]+$/u, '');
+}
+
+function normalizeRankWindowState() {
+  if (soft.rank_window_lower_percent !== null && soft.rank_window_upper_percent !== null) {
+    return;
+  }
+  if (soft.safety_margin_percent !== null && soft.safety_margin_percent !== '') {
+    const percent = Number(soft.safety_margin_percent);
+    soft.rank_window_preset = 'custom';
+    soft.rank_window_lower_percent = percent;
+    soft.rank_window_upper_percent = percent;
+  }
+}
+
+function applyRankWindowPreset(value) {
+  const option = rankWindowOptions.find((item) => item.value === value);
+  if (!option || option.value === '') {
+    soft.rank_window_preset = '';
+    soft.rank_window_label = '';
+    return;
+  }
+  soft.rank_window_preset = option.value;
+  soft.rank_window_label = option.label;
+  if (option.value !== 'custom') {
+    soft.rank_window_lower_percent = option.lower;
+    soft.rank_window_upper_percent = option.upper;
+  } else {
+    soft.rank_window_lower_percent = soft.rank_window_lower_percent ?? option.lower;
+    soft.rank_window_upper_percent = soft.rank_window_upper_percent ?? option.upper;
+  }
+}
+
+function selectedRankWindow() {
+  if (!soft.rank_window_preset) return null;
+  const option = rankWindowOptions.find((item) => item.value === soft.rank_window_preset);
+  if (!option || option.value === '') return null;
+  const lower = clampPercent(soft.rank_window_lower_percent);
+  const upper = clampPercent(soft.rank_window_upper_percent);
+  return {
+    label: option.value === 'custom' ? '自定义' : option.label,
+    lower,
+    upper,
+  };
+}
+
+function clampPercent(value) {
+  const number = Number(value);
+  if (Number.isNaN(number)) return 0;
+  return Math.min(100, Math.max(0, Math.round(number)));
+}
+
+function selectedRankWindowDescription() {
+  const window = selectedRankWindow();
+  if (!window) return '不按排位范围筛。';
+  if (window.lower === 0 && window.upper === 0) {
+    return '只看历史位次和你基本相同的结果。';
+  }
+  if (window.lower > 0 && window.upper === 0) {
+    return `看比我排得更前 ${window.lower}% 以内的结果。`;
+  }
+  if (window.lower === 0 && window.upper > 0) {
+    return `看比我排得更后 ${window.upper}% 以内的结果。`;
+  }
+  return `看比我排得更前 ${window.lower}% 到更后 ${window.upper}% 的结果。`;
+}
+
+function rankWindowText(payload) {
+  return `${payload.rank_window_label}（前 ${payload.rank_window_lower_percent}% / 后 ${payload.rank_window_upper_percent}%）`;
 }
 </script>
 
@@ -268,20 +379,55 @@ function trimSentence(value) {
         </label>
 
         <label class="control-block">
-          <span class="control-label">稳妥程度</span>
+          <span class="control-label">排位范围</span>
           <el-select
-            v-model="soft.safety_margin_percent"
+            v-model="soft.rank_window_preset"
             class="full-control"
             placeholder="先不选"
+            @change="applyRankWindowPreset"
           >
             <el-option
-              v-for="option in safetyOptionsForBeginners"
+              v-for="option in rankWindowOptions"
               :key="String(option.value)"
               :label="option.label"
               :value="option.value"
-            />
+            >
+              <div class="rank-window-option">
+                <strong>{{ option.label }}</strong>
+                <span>{{ option.description }}</span>
+              </div>
+            </el-option>
           </el-select>
+          <span class="inline-help">{{ selectedRankWindowDescription() }}</span>
         </label>
+
+        <div
+          v-if="soft.rank_window_preset === 'custom'"
+          class="custom-window-row"
+        >
+          <label class="control-block">
+            <span class="control-label">看更前多少%</span>
+            <el-input-number
+              v-model="soft.rank_window_lower_percent"
+              class="full-control"
+              :min="0"
+              :max="100"
+              :step="1"
+              controls-position="right"
+            />
+          </label>
+          <label class="control-block">
+            <span class="control-label">看更后多少%</span>
+            <el-input-number
+              v-model="soft.rank_window_upper_percent"
+              class="full-control"
+              :min="0"
+              :max="100"
+              :step="1"
+              controls-position="right"
+            />
+          </label>
+        </div>
 
         <label class="control-block">
           <span class="control-label">学费上限</span>

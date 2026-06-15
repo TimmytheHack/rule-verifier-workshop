@@ -96,7 +96,7 @@ class WorkbenchApiContractTest(unittest.TestCase):
         self.assertTrue(result["items"][0]["matched_filters"])
         self.assertIn("sql", result["evidence_pack"]["execution_summary"])
 
-    def test_controlled_safety_margin_enters_hard_filter(self) -> None:
+    def test_controlled_rank_window_enters_hard_filter(self) -> None:
         result = run_workbench_with_test_warehouse(
             WorkbenchConfig(
                 user_input="广东物理，排位32000，计算机，广州。",
@@ -111,7 +111,9 @@ class WorkbenchApiContractTest(unittest.TestCase):
                 },
                 soft_preferences={
                     "prompt": "",
-                    "safety_margin_percent": 10,
+                    "rank_window_label": "保底",
+                    "rank_window_lower_percent": 0,
+                    "rank_window_upper_percent": 50,
                     "tuition_cap_yuan": 20000,
                 },
                 extractor="regex",
@@ -121,6 +123,8 @@ class WorkbenchApiContractTest(unittest.TestCase):
         assert_workbench_contract(self, result)
         self.assertIn("e_safety_margin", result["execution"]["hard_rule_ids"])
         self.assertIn("e_tuition_cap_explicit", result["execution"]["hard_rule_ids"])
+        self.assertIn(32000.0, result["execution"]["params"])
+        self.assertIn(48000.0, result["execution"]["params"])
         confirmations = {
             item["confirmation_id"]: item
             for item in result["evidence_pack"]["candidate_confirmations"]
@@ -129,11 +133,15 @@ class WorkbenchApiContractTest(unittest.TestCase):
             confirmations["safety_margin"]["status"],
             "promoted_to_executed_rule",
         )
+        self.assertEqual(
+            confirmations["safety_margin"]["selected_label"],
+            "保底（前 0% / 后 50%）",
+        )
         self.assertGreater(result["result_count"], 0)
         self.assertTrue(result["top_results"])
         for item in result["top_results"]:
-            self.assertGreaterEqual(item["group_min_rank"], 28800)
-            self.assertLessEqual(item["group_min_rank"], 35200)
+            self.assertGreaterEqual(item["group_min_rank"], 32000)
+            self.assertLessEqual(item["group_min_rank"], 48000)
 
     def test_needs_confirmation_keeps_partial_out_of_executed_filters(self) -> None:
         result = _run(JIKE_PROMPT)
