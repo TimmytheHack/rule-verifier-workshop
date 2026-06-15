@@ -108,6 +108,11 @@ endpoint：
 | `POST /datasets/{dataset_id}/build-warehouse` | 基于 approved pack 构建 DuckDB warehouse 和 value index。 |
 | `POST /workbench/query` | 支持 `dataset_id` / `domain_name`，返回同一 `WorkbenchResponse` contract。 |
 
+前端主查询页选择 uploaded admissions 数据源时，仍调用同一个
+`POST /workbench/query`，只是在 payload 中携带该数据集的 `dataset_id` 和
+`domain_name=admissions`。这只切换后端数据源，不改变 schema grounding、
+RuleVerifier、confirmation loop、DuckDB executor 或 `WorkbenchResponse` 字段。
+
 这些 endpoint 与 tool registry 使用同一套 permission enforcement。HTTP 权限只来自服务端
 `AUTH_TOKENS_JSON` token 映射，并通过 `Authorization: Bearer <token>`、`X-Actor-Token`
 或 `actor_token` cookie 传递。浏览器或 LLM 在 body `actor_context` 中传入的
@@ -178,6 +183,7 @@ outputs/tool_manifest/tool_manifest.json
 - `warehouse` metadata、schema/value index metadata 和源文件 fingerprint 不一致时返回 `blocked`。
 - `POST /workbench/query` 仍走 `DomainConfig`、`RuleVerifier`、confirmation loop 和参数化 DuckDB SQL；前端自然语言不能直接生成 hard filter。
 - uploaded admissions 数据集可以复用已审查 `admissions` domain pack，但仍必须先 `approve-domain` 并重建 warehouse。
+- 上传页 build 成功并进入 `queryable` 后，前端可以把该 `dataset_id` 注册为主查询页数据源；如果本地 `DATA_ROOT` 被清理，主查询页必须切回内置 admissions 或重新上传。
 
 ## Functional Tool Layer
 

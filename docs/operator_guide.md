@@ -162,6 +162,10 @@ curl -X POST \
   -d '{"payload":{"dataset_id":"<dataset_id>","domain":"admissions","natural_language":"我今年高考分数630，想读计算机，想留在广东省","deterministic_fields":{"user_score":630}}}'
 ```
 
+前端等价路径：上传表格页完成 approve 和 build 后，如果数据集进入 `queryable`，主查询页会把
+该 `dataset_id` 作为 admissions 数据源调用同一个 `/workbench/query`。如果本地
+`DATA_ROOT` 被清理，浏览器里保存的 uploaded 数据源会失效，需要切回内置 admissions 或重新上传。
+
 前端和 agent 应优先读取 `items`、`result_sections`、`warnings` 和 `evidence_pack`。`top_results` 只作为 domain-specific 兼容层。
 
 ## 发布流程

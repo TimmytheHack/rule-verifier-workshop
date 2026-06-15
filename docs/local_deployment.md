@@ -92,6 +92,10 @@ export AUTH_TOKENS_JSON='{"operator-token":{"actor_id":"operator","permission_sc
 
 请求通过 `Authorization: Bearer <token>` 或 `X-Actor-Token: <token>` 传递 token。服务端不信任浏览器或请求体传来的 `permission_scopes`、`actor_id`、`audit_path` 或 `dataset_root`。
 
+上传招生表格完成 approve 和 build 后，前端会把最近可查询的 uploaded admissions
+`dataset_id` 保存在浏览器本地状态，并在主查询页作为数据源使用。清理 `DATA_ROOT`、
+更换本地数据目录或重启到空目录后，需要在前端切回内置 admissions 或重新上传表格。
+
 `POST /tools/{tool_name}/invoke` 请求体：
 
 ```json

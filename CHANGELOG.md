@@ -17,6 +17,7 @@
 - 生产部署基础：`Dockerfile`、`docker-compose.yml`、生产部署说明、安全模型和备份恢复文档。
 - 统一 Quality Gate：语法检查、unit tests、regex evaluator、demo acceptance、domain review、warehouse fingerprint guard、前端 build。
 - Release package：`release_manifest.json`、`sample_data/`、`sample_outputs/`、`RELEASE_CHECKLIST.md` 和 `docs/demo_script.md`。
+- 前端主查询页支持选择已 build 且 `queryable` 的 uploaded admissions 数据源；上传页完成后只传递 `dataset_id` / `domain_name`，不在前端生成推荐规则。
 
 ### 安全边界
 

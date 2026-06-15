@@ -163,9 +163,11 @@ http://127.0.0.1:5173
 讲解点：
 
 - 前端展示 API 输出，不发明推荐逻辑。
+- 上传招生表格完成 build 后，页面会回到“我要查询”，数据源选中这份 uploaded admissions 数据。
 - 主列表优先读取 `items` 和 `result_sections`。
 - `top_results` 只做 admissions 兼容层。
 - warnings、blocked、no_results 和 no-schema preferences 必须清楚展示。
+- 切回内置 admissions 或重新上传，都只改变 `dataset_id` / `domain_name`，不改变前端展示 contract。
 
 ## 6. Quality Gate
 

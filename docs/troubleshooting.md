@@ -43,6 +43,28 @@
 2. 重新运行 `build-warehouse`。
 3. 不要手工修改 DuckDB、schema/value index 或 ingestion summary。
 
+## 主查询页 uploaded 数据源失效
+
+现象：
+
+- 上传页已经 build 成功，但主查询页选择 uploaded admissions 后返回 `blocked` 或 `dataset_not_found`；
+- 清理本地 artifacts 后，浏览器仍默认选择旧的 uploaded 数据源；
+- `/workbench/query` payload 中带有旧 `dataset_id`。
+
+原因：
+
+- `DATA_ROOT` 或 uploaded dataset 目录被清理；
+- 浏览器本地状态还保存旧 `dataset_id`；
+- warehouse metadata、schema/value index metadata 或源文件 fingerprint 已不一致；
+- 数据集尚未进入 `queryable`。
+
+处理：
+
+1. 在主查询页切回内置 admissions，再确认查询能正常返回。
+2. 如果要继续使用上传表格，重新上传、review、approve 并 build warehouse。
+3. 查看 `/datasets/<dataset_id>/profile` 和 `/datasets/<dataset_id>/review-summary`，确认状态和 warnings。
+4. 不要手工复制旧 DuckDB 或 schema/value index 到新的 `DATA_ROOT`。
+
 ## missing required fields
 
 现象：
