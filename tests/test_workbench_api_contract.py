@@ -96,6 +96,45 @@ class WorkbenchApiContractTest(unittest.TestCase):
         self.assertTrue(result["items"][0]["matched_filters"])
         self.assertIn("sql", result["evidence_pack"]["execution_summary"])
 
+    def test_controlled_safety_margin_enters_hard_filter(self) -> None:
+        result = run_workbench_with_test_warehouse(
+            WorkbenchConfig(
+                user_input="广东物理，排位32000，计算机，广州。",
+                hard_filters={
+                    "source_province": "广东",
+                    "subject_type": "物理",
+                    "reselected_subjects": ["化学", "生物"],
+                    "user_rank": 32000,
+                    "major_keyword": "计算机",
+                    "preferred_cities": ["广州"],
+                    "tuition_cap_yuan": 20000,
+                },
+                soft_preferences={
+                    "prompt": "",
+                    "safety_margin_percent": 10,
+                    "tuition_cap_yuan": 20000,
+                },
+                extractor="regex",
+            )
+        )
+
+        assert_workbench_contract(self, result)
+        self.assertIn("e_safety_margin", result["execution"]["hard_rule_ids"])
+        self.assertIn("e_tuition_cap_explicit", result["execution"]["hard_rule_ids"])
+        confirmations = {
+            item["confirmation_id"]: item
+            for item in result["evidence_pack"]["candidate_confirmations"]
+        }
+        self.assertEqual(
+            confirmations["safety_margin"]["status"],
+            "promoted_to_executed_rule",
+        )
+        self.assertGreater(result["result_count"], 0)
+        self.assertTrue(result["top_results"])
+        for item in result["top_results"]:
+            self.assertGreaterEqual(item["group_min_rank"], 28800)
+            self.assertLessEqual(item["group_min_rank"], 35200)
+
     def test_needs_confirmation_keeps_partial_out_of_executed_filters(self) -> None:
         result = _run(JIKE_PROMPT)
 

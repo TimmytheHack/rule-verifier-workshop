@@ -417,15 +417,16 @@
       },
       "hard_rule_ids": [
         "e_major_keyword",
-        "e_school_province"
+        "e_school_province",
+        "e_recommendation_rank_floor"
       ],
-      "result_count": 436,
+      "result_count": 426,
       "top": {
-        "university_name": "香港科技大学(广州)",
-        "group_code": "16412101",
-        "major_name": "人工智能",
-        "city": "广州",
-        "group_min_rank": 1424
+        "university_name": "深圳大学",
+        "group_code": "10590232",
+        "major_name": "计算机类",
+        "city": "深圳",
+        "group_min_rank": 12064
       },
       "answer_contains": [
         "[未执行] 不想去国外 -> 国家或境外办学字段：no_schema_field",

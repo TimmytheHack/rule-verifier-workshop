@@ -88,6 +88,30 @@ function rowMargin(row) {
   return attrValue(row, ['safety_margin']);
 }
 
+function marginNumber(row) {
+  const margin = rowMargin(row);
+  if (margin === null || margin === undefined || margin === '') return null;
+  const parsed = Number(String(margin).replace('%', '').replace(',', '').trim());
+  return Number.isNaN(parsed) ? null : parsed;
+}
+
+function marginType(row) {
+  const parsed = marginNumber(row);
+  if (parsed === null) return 'warning';
+  if (parsed < 0) return 'danger';
+  if (parsed > 0) return 'success';
+  return 'warning';
+}
+
+function marginLabel(row) {
+  const margin = rowMargin(row);
+  const parsed = marginNumber(row);
+  if (parsed === null) return `位次差距 ${margin}`;
+  if (parsed < 0) return `位次不够 ${margin}`;
+  if (parsed > 0) return `位次富余 ${margin}`;
+  return '刚好压线';
+}
+
 function formatMoney(value) {
   if (value === null || value === undefined || value === '') return '暂无';
   const number = Number(value);
@@ -157,10 +181,10 @@ function matchedCount(row) {
           </div>
         </div>
         <div class="result-item-actions">
-          <el-tag v-if="rowMargin(row)" type="warning" effect="plain">
-            差距 {{ rowMargin(row) }}
+          <el-tag v-if="rowMargin(row)" :type="marginType(row)" effect="plain">
+            {{ marginLabel(row) }}
           </el-tag>
-          <el-tag type="success" effect="plain">命中 {{ matchedCount(row) }} 条</el-tag>
+          <el-tag type="info" effect="plain">条件 {{ matchedCount(row) }} 项</el-tag>
           <el-button
             type="primary"
             link

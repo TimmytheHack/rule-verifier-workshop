@@ -133,17 +133,16 @@ def hard_filter_rules(
     hard_rules = []
     skipped_soft_rules = []
     for rule in executable_rules:
-        if _is_soft_confirmation_rule(rule) or rule.get("hard_filter_allowed") is False:
+        if _should_skip_hard_filter(rule):
             skipped_soft_rules.append(rule)
             continue
         hard_rules.append(rule)
     return hard_rules, skipped_soft_rules
 
 
-def _is_soft_confirmation_rule(rule: dict[str, Any]) -> bool:
-    derived_from = str(rule.get("derived_from") or "")
+def _should_skip_hard_filter(rule: dict[str, Any]) -> bool:
     return bool(
-        derived_from.startswith("c_")
+        rule.get("hard_filter_allowed") is False
         or rule.get("verification_origin") == "verified_proposed_rule"
     )
 

@@ -178,7 +178,7 @@ class DuckDBExecutorTest(unittest.TestCase):
                     ]
                 )
 
-    def test_soft_confirmation_rules_do_not_enter_hard_filter(self) -> None:
+    def test_confirmed_candidate_rules_enter_hard_filter(self) -> None:
         with TemporaryDirectory() as directory:
             database_path = Path(directory) / "sample.duckdb"
             _write_database(database_path, _sample_dataframe())
@@ -211,13 +211,89 @@ class DuckDBExecutorTest(unittest.TestCase):
                 user_rank=30000,
             )
 
-        self.assertEqual([row["ID"] for row in result.rows], [1, 2])
-        self.assertEqual(result.audit.skipped_soft_rule_ids, ["e_tuition_cap"])
-        self.assertNotIn(20000.0, result.audit.params)
+        self.assertEqual([row["ID"] for row in result.rows], [1])
+        self.assertEqual(result.audit.skipped_soft_rule_ids, [])
+        self.assertIn(20000.0, result.audit.params)
         self.assertEqual(
             result.audit.hard_rule_ids,
-            ["e_source_province", "e_city"],
+            ["e_source_province", "e_city", "e_tuition_cap"],
         )
+
+    def test_confirmed_safety_margin_filters_rank_window(self) -> None:
+        with TemporaryDirectory() as directory:
+            database_path = Path(directory) / "sample.duckdb"
+            _write_database(database_path, _sample_dataframe())
+
+            result = DuckDBExecutor(database_path).execute(
+                [
+                    {
+                        "rule_id": "e_source_province",
+                        "field": "生源地",
+                        "operator": "eq",
+                        "value": "广东",
+                    },
+                    {
+                        "rule_id": "e_subject_type",
+                        "field": "科类",
+                        "operator": "eq",
+                        "value": "物理",
+                    },
+                    {
+                        "rule_id": "e_safety_margin",
+                        "derived_from": "c_safety_margin",
+                        "field": "专业组最低位次1",
+                        "operator": "between",
+                        "value": [28800, 35200],
+                        "confirmation": "位次窗口已确认",
+                    },
+                ],
+                user_rank=32000,
+            )
+
+        self.assertEqual([row["ID"] for row in result.rows], [1])
+        self.assertEqual(result.audit.skipped_soft_rule_ids, [])
+        self.assertEqual(result.audit.params, ["广东", "物理", 28800.0, 35200.0])
+        self.assertIn("e_safety_margin", result.audit.hard_rule_ids)
+
+    def test_untrusted_or_disabled_rules_do_not_enter_hard_filter(self) -> None:
+        with TemporaryDirectory() as directory:
+            database_path = Path(directory) / "sample.duckdb"
+            _write_database(database_path, _sample_dataframe())
+
+            result = DuckDBExecutor(database_path).execute(
+                [
+                    {
+                        "rule_id": "e_source_province",
+                        "field": "生源地",
+                        "operator": "eq",
+                        "value": "广东",
+                    },
+                    {
+                        "rule_id": "e_school_quality",
+                        "field": "院校排名",
+                        "operator": "<=",
+                        "value": 100,
+                        "verification_origin": "verified_proposed_rule",
+                    },
+                    {
+                        "rule_id": "e_disabled",
+                        "field": "学费",
+                        "operator": "<=",
+                        "value": 20000,
+                        "hard_filter_allowed": False,
+                    },
+                ],
+                user_rank=30000,
+            )
+
+        self.assertEqual([row["ID"] for row in result.rows], [3, 1, 2])
+        self.assertEqual(
+            result.audit.skipped_soft_rule_ids,
+            ["e_school_quality", "e_disabled"],
+        )
+        self.assertEqual(result.audit.hard_rule_ids, ["e_source_province"])
+        self.assertNotIn(100.0, result.audit.params)
+        self.assertNotIn(20000.0, result.audit.params)
 
 
 if __name__ == "__main__":

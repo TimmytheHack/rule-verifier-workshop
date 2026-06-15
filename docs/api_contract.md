@@ -305,6 +305,20 @@ safety_margin
 housing/products 使用各自 `top_result_mapping.yaml` 输出。测试和 demo 应优先依赖
 `items`，只保留专门的 backward compatibility 测试防止 admissions 英文字段回归。
 
+## 确认候选执行边界
+
+结构化候选项只有在用户提交系统生成的 `candidate_id`，或前端以受控字段提交等价
+确认后，才可以提升为 hard filter。`admissions` 中的 `safety_margin_percent`
+和 `tuition_cap_yuan` 属于这类受控确认；推荐请求生成的
+`recommendation_rank_floor` 也必须在确认后执行。确认后的 `e_safety_margin`、
+`e_tuition_cap`、`e_recommendation_rank_floor` 必须进入 DuckDB hard filter，并记录在
+`executed_filters`、`EvidencePack.candidate_confirmations` 和
+`EvidencePack.execution_summary.hard_rule_ids` 中。通过显式 `candidate_id` 确认的规则
+还必须出现在顶层 `confirmed_rules`。
+
+未确认的 `partial_match`、`no_schema_field`、reference-only 资料，以及
+`verification_origin=verified_proposed_rule` 的 LLM proposal 不能进入 SQL。
+
 ## admissions query_type
 
 `admissions` domain 在通用 verified filter 外，新增两个 admissions-specific planner：
