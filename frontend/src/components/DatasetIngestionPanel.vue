@@ -8,6 +8,7 @@ import {
   UploadFilled,
   Warning,
 } from '@element-plus/icons-vue';
+import { formatApiError } from '../utils/apiError';
 
 const file = ref(null);
 const domainName = ref('admissions');
@@ -24,6 +25,7 @@ const reviewSummary = ref(null);
 const queryResult = ref(null);
 const selectedCandidateIds = ref([]);
 const auditEvents = ref([]);
+const DEFAULT_DEV_ACTOR_TOKEN = import.meta.env.DEV ? 'operator-token' : '';
 
 const emit = defineEmits(['source-ready']);
 
@@ -303,7 +305,7 @@ async function requestJson(url, options = {}) {
   });
   const payload = await response.json();
   if (!response.ok) {
-    throw new Error(payload.detail?.message || payload.detail || 'API 请求失败');
+    throw new Error(formatApiError(payload, 'API 请求失败'));
   }
   return payload;
 }
@@ -338,7 +340,7 @@ function sourceReadyPayload(payload) {
 }
 
 function authHeaders() {
-  const token = window.localStorage.getItem('actor_token') || '';
+  const token = window.localStorage.getItem('actor_token') || DEFAULT_DEV_ACTOR_TOKEN;
   return token ? { 'X-Actor-Token': token } : {};
 }
 

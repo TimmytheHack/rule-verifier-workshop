@@ -2,6 +2,7 @@ PYTHON ?= python3
 VENV ?= .venv
 VENVPY ?= $(VENV)/bin/python
 PIP ?= $(VENV)/bin/pip
+DEV_AUTH_TOKENS_JSON ?= {"operator-token":{"actor_id":"operator","permission_scopes":["read_only","query","confirm","dataset_write","review_admin","warehouse_admin","diagnostics"]},"agent-token":{"actor_id":"agent","permission_scopes":["read_only","query","confirm"]}}
 
 .PHONY: bootstrap test quality pilot operator-trial demo agent-acceptance release-check serve frontend clean-artifacts
 
@@ -32,7 +33,12 @@ release-check:
 	$(VENVPY) scripts/validate_release_package.py
 
 serve:
-	$(VENVPY) -m uvicorn src.api.server:app --reload --port 8001
+	@if [ -z "$$AUTH_TOKENS_JSON" ]; then \
+		export AUTH_TOKENS_JSON='$(DEV_AUTH_TOKENS_JSON)'; \
+		$(VENVPY) -m uvicorn src.api.server:app --reload --port 8001; \
+	else \
+		$(VENVPY) -m uvicorn src.api.server:app --reload --port 8001; \
+	fi
 
 frontend:
 	@if [ -d frontend ] && [ -f frontend/package.json ]; then \

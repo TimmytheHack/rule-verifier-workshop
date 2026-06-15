@@ -14,6 +14,7 @@ import EvidenceReport from './components/EvidenceReport.vue';
 import EvalSummary from './components/EvalSummary.vue';
 import TokenUsagePanel from './components/TokenUsagePanel.vue';
 import BeginnerDecisionPanel from './components/BeginnerDecisionPanel.vue';
+import { formatApiError } from './utils/apiError';
 import demoRun from './mock/demo_run.json';
 
 const defaultHardFilters = {
@@ -40,6 +41,7 @@ const BUILTIN_DATA_SOURCE = {
 };
 const DATA_SOURCES_STORAGE_KEY = 'szu_uploaded_data_sources';
 const SELECTED_SOURCE_STORAGE_KEY = 'szu_selected_data_source';
+const DEFAULT_DEV_ACTOR_TOKEN = import.meta.env.DEV ? 'operator-token' : '';
 const initialUploadedDataSources = loadUploadedDataSources();
 const initialDataSourceId = loadSelectedDataSourceId(initialUploadedDataSources);
 
@@ -61,6 +63,7 @@ const generator = ref('template_evidence');
 const model = ref('deepseek-v4-flash');
 const loading = ref(false);
 const apiError = ref('');
+const lastRunFailed = ref(false);
 const uploadedDataSources = ref(initialUploadedDataSources);
 const selectedDataSourceId = ref(initialDataSourceId);
 
@@ -113,6 +116,7 @@ function runDemo(runRequest, selectedOptions = {}) {
     token_usage: null,
   };
   apiError.value = '';
+  lastRunFailed.value = false;
 }
 
 async function runWorkbench(runRequest) {
@@ -127,6 +131,7 @@ async function runWorkbench(runRequest) {
 
   loading.value = true;
   apiError.value = '';
+  lastRunFailed.value = false;
   const source = selectedDataSource.value;
   const requestBody = {
     domain_name: source.domainName || 'admissions',
@@ -151,7 +156,7 @@ async function runWorkbench(runRequest) {
     });
     const apiPayload = await response.json();
     if (!response.ok) {
-      throw new Error(apiPayload.detail || '后端运行失败');
+      throw new Error(formatApiError(apiPayload, '后端运行失败'));
     }
     runData.value = {
       ...apiPayload,
@@ -161,7 +166,8 @@ async function runWorkbench(runRequest) {
       },
     };
   } catch (error) {
-    apiError.value = error instanceof Error ? error.message : '后端运行失败';
+    apiError.value = error instanceof Error ? error.message : formatApiError(error, '后端运行失败');
+    lastRunFailed.value = true;
   } finally {
     loading.value = false;
   }
@@ -175,6 +181,7 @@ function openTrace(result) {
 function handleDataSourceChange() {
   mode.value = 'api';
   apiError.value = '';
+  lastRunFailed.value = false;
 }
 
 function goToUpload() {
@@ -194,10 +201,11 @@ function activateUploadedSource(payload) {
   mode.value = 'api';
   activeWorkspace.value = 'query';
   apiError.value = '';
+  lastRunFailed.value = false;
 }
 
 function authHeaders() {
-  const token = localStorageSafe()?.getItem('actor_token') || '';
+  const token = localStorageSafe()?.getItem('actor_token') || DEFAULT_DEV_ACTOR_TOKEN;
   return token ? { 'X-Actor-Token': token } : {};
 }
 
@@ -347,35 +355,47 @@ function statusLabel(status) {
           </aside>
 
           <section class="result-column">
-            <div class="quick-stats">
-              <article v-for="item in quickStats" :key="item.label" :class="['quick-stat', `tone-${item.tone}`]">
-                <span>{{ item.label }}</span>
-                <strong>{{ item.value }}</strong>
-              </article>
-            </div>
+            <template v-if="!lastRunFailed">
+              <div class="quick-stats">
+                <article v-for="item in quickStats" :key="item.label" :class="['quick-stat', `tone-${item.tone}`]">
+                  <span>{{ item.label }}</span>
+                  <strong>{{ item.value }}</strong>
+                </article>
+              </div>
 
-            <ResultTable
-              :results="resultRows"
-              :total="runData?.result_count || 0"
-              @view-trace="openTrace"
-            />
+              <ResultTable
+                :results="resultRows"
+                :total="runData?.result_count || 0"
+                @view-trace="openTrace"
+              />
+            </template>
+            <el-card v-else class="workbench-card empty-run" shadow="never">
+              <el-empty description="这次没查成功">
+                <p class="beginner-empty">{{ apiError }}</p>
+              </el-empty>
+            </el-card>
           </section>
 
           <aside class="evidence-column">
-            <BeginnerDecisionPanel :run-data="runData" />
-            <el-collapse class="detail-collapse">
-              <el-collapse-item title="为什么这样筛" name="evidence">
-                <EvidenceReport :report="runData?.natural_language_report" />
-              </el-collapse-item>
-              <el-collapse-item title="检查详情" name="audit">
-                <EvalSummary :run-data="runData" />
-                <TokenUsagePanel
-                  :token-usage="runData?.token_usage"
-                  :mode="mode"
-                  :selected-options="runData?.selected_options"
-                />
-              </el-collapse-item>
-            </el-collapse>
+            <template v-if="!lastRunFailed">
+              <BeginnerDecisionPanel :run-data="runData" />
+              <el-collapse class="detail-collapse">
+                <el-collapse-item title="为什么这样筛" name="evidence">
+                  <EvidenceReport :report="runData?.natural_language_report" />
+                </el-collapse-item>
+                <el-collapse-item title="检查详情" name="audit">
+                  <EvalSummary :run-data="runData" />
+                  <TokenUsagePanel
+                    :token-usage="runData?.token_usage"
+                    :mode="mode"
+                    :selected-options="runData?.selected_options"
+                  />
+                </el-collapse-item>
+              </el-collapse>
+            </template>
+            <el-card v-else class="workbench-card" shadow="never">
+              <p class="beginner-empty">本次没有生成筛选依据。处理好左侧提示后再查一次。</p>
+            </el-card>
           </aside>
         </section>
       </el-tab-pane>
