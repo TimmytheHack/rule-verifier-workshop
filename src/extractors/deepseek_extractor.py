@@ -355,25 +355,29 @@ def normalize_slots(slots: dict[str, Any], original_text: str) -> dict[str, Any]
 
     aliases = _admissions_aliases()
     employment = preferences.get("employment_preference_raw")
-    if employment:
-        preferences["employment_preference_raw"] = str(employment)
-    else:
-        preferences["employment_preference_raw"] = _first_positive_present(
-            original_text,
-            aliases["employment_terms"],
-        )
+    normalized_employment = _first_positive_present(
+        original_text,
+        aliases["employment_terms"],
+    )
+    preferences["employment_preference_raw"] = (
+        str(employment)
+        if employment and str(employment) == normalized_employment
+        else normalized_employment
+    )
 
     family_resource = preferences.get("family_resource_raw")
-    if family_resource:
-        preferences["family_resource_raw"] = str(family_resource)
-    else:
-        preferences["family_resource_raw"] = _first_present(
-            original_text,
-            aliases["no_family_resource_terms"],
-        ) or _first_present(
-            original_text,
-            aliases["family_resource_terms"],
-        )
+    normalized_family_resource = _first_present(
+        original_text,
+        aliases["no_family_resource_terms"],
+    ) or _first_present(
+        original_text,
+        aliases["family_resource_terms"],
+    )
+    preferences["family_resource_raw"] = (
+        str(family_resource)
+        if family_resource and str(family_resource) == normalized_family_resource
+        else normalized_family_resource
+    )
 
     career_goal = preferences.get("career_goal_raw")
     normalized_career_goal = _career_goal_raw(
@@ -469,8 +473,7 @@ def _first_present(text: str, candidates: list[str]) -> str | None:
 
 def _first_positive_present(text: str, candidates: list[str]) -> str | None:
     for candidate in candidates:
-        index = text.find(candidate)
-        if index >= 0 and not _term_is_negated(text, index):
+        if _positive_term_index(text, candidate) is not None:
             return candidate
     return None
 
@@ -519,6 +522,17 @@ def _term_is_negated(text: str, term_index: int) -> bool:
             "无需",
         ]
     )
+
+
+def _positive_term_index(text: str, term: str) -> int | None:
+    start = 0
+    while True:
+        index = text.find(term, start)
+        if index < 0:
+            return None
+        if not _term_is_negated(text, index):
+            return index
+        start = index + len(term)
 
 
 def has_deepseek_api_key() -> bool:

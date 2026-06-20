@@ -60,11 +60,14 @@ class RegexExtractor:
             self.aliases["employment_terms"],
         )
         career_goal_raw = self._career_goal_raw(text, family_resource_raw)
-        other_vague_preferences = [
-            term
-            for term in self.aliases["other_vague_terms"]
-            if term in text
-        ]
+        other_vague_preferences = self._other_vague_preferences(
+            text,
+            family_resource_raw=family_resource_raw,
+            dedicated_preferences=[
+                employment_preference_raw,
+                career_goal_raw,
+            ],
+        )
 
         return {
             "input": text,
@@ -176,8 +179,7 @@ class RegexExtractor:
 
     def _first_positive_present(self, text: str, candidates: list[str]) -> str | None:
         for candidate in candidates:
-            index = text.find(candidate)
-            if index >= 0 and not _term_is_negated(text, index):
+            if _positive_term_index(text, candidate) is not None:
                 return candidate
         return None
 
@@ -225,6 +227,25 @@ class RegexExtractor:
         if not matches:
             return None
         return min(matches)[1]
+
+    def _other_vague_preferences(
+        self,
+        text: str,
+        family_resource_raw: str | None,
+        dedicated_preferences: list[str | None],
+    ) -> list[str]:
+        dedicated_terms = {term for term in dedicated_preferences if term}
+        return [
+            term
+            for term in self.aliases["other_vague_terms"]
+            if term not in dedicated_terms
+            and _positive_term_index(
+                text,
+                term,
+                blocked_phrase=family_resource_raw,
+            )
+            is not None
+        ]
 
     def _reselected_subjects(self, text: str) -> list[str]:
         normalized = text.replace("思想政治", "政治").replace("生物学", "生物")
@@ -409,3 +430,35 @@ def _term_is_negated(text: str, term_index: int) -> bool:
             "无需",
         ]
     )
+
+
+def _positive_term_index(
+    text: str,
+    term: str,
+    blocked_phrase: str | None = None,
+) -> int | None:
+    start = 0
+    while True:
+        index = text.find(term, start)
+        if index < 0:
+            return None
+        if not _term_is_negated(text, index) and not _term_is_in_phrase(
+            text,
+            index,
+            blocked_phrase,
+        ):
+            return index
+        start = index + len(term)
+
+
+def _term_is_in_phrase(
+    text: str,
+    term_index: int,
+    phrase: str | None,
+) -> bool:
+    if not phrase:
+        return False
+    phrase_index = text.find(phrase)
+    if phrase_index < 0:
+        return False
+    return phrase_index <= term_index < phrase_index + len(phrase)

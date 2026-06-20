@@ -75,11 +75,13 @@ class CareerGuidanceExtractionTest(unittest.TestCase):
         )
 
     def test_regex_does_not_extract_negated_career_or_employment(self) -> None:
-        for text in ["不想考公", "不考虑体制内"]:
+        for text, term in [("不想考公", "考公"), ("不考虑体制内", "体制内")]:
             slots = RegexExtractor().extract(text)
 
             self.assertIsNone(slots["preferences"]["career_goal_raw"])
             self.assertNotIn("preferences.career_goal_raw", slots["raw_sources"])
+            self.assertNotIn(term, slots["preferences"]["other_vague_preferences"])
+            self.assertNotIn("preferences.other_vague_preferences", slots["raw_sources"])
 
         slots = RegexExtractor().extract("不要求好就业")
 
@@ -88,6 +90,8 @@ class CareerGuidanceExtractionTest(unittest.TestCase):
             "preferences.employment_preference_raw",
             slots["raw_sources"],
         )
+        self.assertNotIn("好就业", slots["preferences"]["other_vague_preferences"])
+        self.assertNotIn("preferences.other_vague_preferences", slots["raw_sources"])
 
     def test_deepseek_normalize_falls_back_to_long_family_resource_alias(self) -> None:
         slots = normalize_slots(
@@ -125,13 +129,28 @@ class CareerGuidanceExtractionTest(unittest.TestCase):
         slots = normalize_slots(
             {
                 "user_context": {},
-                "preferences": {},
+                "preferences": {"employment_preference_raw": "好就业"},
                 "proposed_rules": [],
             },
             "不要求好就业，只想离家近。",
         )
 
         self.assertIsNone(slots["preferences"]["employment_preference_raw"])
+
+    def test_deepseek_family_resource_raw_matches_source_text(self) -> None:
+        slots = normalize_slots(
+            {
+                "user_context": {},
+                "preferences": {"family_resource_raw": "家里有资源"},
+                "proposed_rules": [],
+            },
+            "家里没有资源，想学法学。",
+        )
+
+        self.assertEqual(
+            slots["preferences"]["family_resource_raw"],
+            "家里没有资源",
+        )
 
     def test_family_resource_is_context_and_employment_is_no_schema(self) -> None:
         slots = RegexExtractor().extract(
