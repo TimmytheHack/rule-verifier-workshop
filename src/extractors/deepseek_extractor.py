@@ -533,7 +533,7 @@ def _term_is_negated(
         if text.find(punctuation, suffix_start) >= 0
     ]
     clause_end = min(clause_ends) if clause_ends else len(text)
-    prefix = text[clause_start:term_index]
+    prefix = _prefix_after_boundary(text[clause_start:term_index])
     suffix = _suffix_before_boundary(text[suffix_start:clause_end])
     prefix_markers = [
         "不优先考虑",
@@ -555,10 +555,28 @@ def _term_is_negated(
         "无所谓",
         "不优先",
     ]
-    return any(marker in prefix[-12:] for marker in prefix_markers) or any(
+    return any(marker in prefix for marker in prefix_markers) or any(
         marker in suffix[:10]
         for marker in suffix_markers
     )
+
+
+def _prefix_after_boundary(prefix: str) -> str:
+    boundary_ends = []
+    for marker in ["但是", "不过", "只是", "但"]:
+        start = 0
+        while True:
+            index = prefix.find(marker, start)
+            if index < 0:
+                break
+            if _contrast_marker_is_negated(prefix, index, marker):
+                start = index + len(marker)
+                continue
+            boundary_ends.append(index + len(marker))
+            start = index + len(marker)
+    if not boundary_ends:
+        return prefix
+    return prefix[max(boundary_ends):]
 
 
 def _suffix_before_boundary(suffix: str) -> str:
@@ -569,7 +587,7 @@ def _suffix_before_boundary(suffix: str) -> str:
             index = suffix.find(marker, start)
             if index < 0:
                 break
-            if marker == "但" and index > 0 and suffix[index - 1] == "不":
+            if _contrast_marker_is_negated(suffix, index, marker):
                 start = index + len(marker)
                 continue
             boundary_indexes.append(index)
@@ -577,6 +595,10 @@ def _suffix_before_boundary(suffix: str) -> str:
     if not boundary_indexes:
         return suffix
     return suffix[:min(boundary_indexes)]
+
+
+def _contrast_marker_is_negated(text: str, index: int, marker: str) -> bool:
+    return marker in {"但", "但是"} and index > 0 and text[index - 1] == "不"
 
 
 def _other_vague_preferences(

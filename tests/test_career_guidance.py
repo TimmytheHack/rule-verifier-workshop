@@ -104,6 +104,7 @@ class CareerGuidanceExtractionTest(unittest.TestCase):
             "家里没资源，好就业不是重点，只想离家近。",
             "家里没资源，好就业无所谓，只想离家近。",
             "家里没资源，好就业不优先，只想离家近。",
+            "家里没资源，好就业不但是不重要，只想离家近。",
         ]
         for text in cases:
             with self.subTest(text=text):
@@ -173,6 +174,11 @@ class CareerGuidanceExtractionTest(unittest.TestCase):
                 "employment_preference_raw",
                 "好就业",
             ),
+            (
+                "不优先考虑专业未来发展和行业口碑是否好就业",
+                "employment_preference_raw",
+                "好就业",
+            ),
             ("不优先考虑稳定就业", "career_goal_raw", "稳定就业"),
             ("不优先考虑考公", "career_goal_raw", "考公"),
         ]
@@ -183,6 +189,15 @@ class CareerGuidanceExtractionTest(unittest.TestCase):
                 self.assertIsNone(slots["preferences"][slot_name])
                 self.assertNotIn(f"preferences.{slot_name}", slots["raw_sources"])
                 self.assertNotIn(term, slots["preferences"]["other_vague_preferences"])
+
+    def test_regex_keeps_term_after_prefix_contrast_boundary(self) -> None:
+        slots = RegexExtractor().extract("家里没资源，不优先考虑学校但想选好就业。")
+
+        self.assertEqual(slots["preferences"]["employment_preference_raw"], "好就业")
+        self.assertEqual(
+            slots["raw_sources"]["preferences.employment_preference_raw"],
+            "好就业",
+        )
 
     def test_regex_ignores_unused_salary_goal_and_keeps_later_goal(self) -> None:
         slots = RegexExtractor().extract("不用考虑高薪，想稳定就业。")
@@ -256,20 +271,29 @@ class CareerGuidanceExtractionTest(unittest.TestCase):
         self.assertIsNone(slots["preferences"]["employment_preference_raw"])
 
     def test_deepseek_normalize_filters_post_term_negated_employment(self) -> None:
-        slots = normalize_slots(
-            {
-                "user_context": {},
-                "preferences": {
-                    "employment_preference_raw": "好就业",
-                    "other_vague_preferences": ["好就业"],
-                },
-                "proposed_rules": [],
-            },
+        cases = [
             "家里没资源，好就业不重要，只想离家近。",
-        )
+            "家里没资源，好就业不但是不重要，只想离家近。",
+        ]
+        for text in cases:
+            with self.subTest(text=text):
+                slots = normalize_slots(
+                    {
+                        "user_context": {},
+                        "preferences": {
+                            "employment_preference_raw": "好就业",
+                            "other_vague_preferences": ["好就业"],
+                        },
+                        "proposed_rules": [],
+                    },
+                    text,
+                )
 
-        self.assertIsNone(slots["preferences"]["employment_preference_raw"])
-        self.assertNotIn("好就业", slots["preferences"]["other_vague_preferences"])
+                self.assertIsNone(slots["preferences"]["employment_preference_raw"])
+                self.assertNotIn(
+                    "好就业",
+                    slots["preferences"]["other_vague_preferences"],
+                )
 
     def test_deepseek_normalize_filters_post_term_negated_career_goal(self) -> None:
         slots = normalize_slots(
@@ -325,6 +349,11 @@ class CareerGuidanceExtractionTest(unittest.TestCase):
                 "employment_preference_raw",
                 "好就业",
             ),
+            (
+                "不优先考虑专业未来发展和行业口碑是否好就业",
+                "employment_preference_raw",
+                "好就业",
+            ),
             ("不优先考虑稳定就业", "career_goal_raw", "稳定就业"),
             ("不优先考虑考公", "career_goal_raw", "考公"),
         ]
@@ -344,6 +373,18 @@ class CareerGuidanceExtractionTest(unittest.TestCase):
 
                 self.assertIsNone(slots["preferences"][slot_name])
                 self.assertNotIn(term, slots["preferences"]["other_vague_preferences"])
+
+    def test_deepseek_normalize_keeps_term_after_prefix_contrast_boundary(self) -> None:
+        slots = normalize_slots(
+            {
+                "user_context": {},
+                "preferences": {"employment_preference_raw": "好就业"},
+                "proposed_rules": [],
+            },
+            "家里没资源，不优先考虑学校但想选好就业。",
+        )
+
+        self.assertEqual(slots["preferences"]["employment_preference_raw"], "好就业")
 
     def test_deepseek_filters_negated_other_vague_preferences(self) -> None:
         slots = normalize_slots(
@@ -494,15 +535,33 @@ class CareerGuidancePolicyTest(unittest.TestCase):
         self.assertTrue(guidance["no_schema_field_preferences"])
 
     def test_prefix_not_prioritized_employment_does_not_match_guidance(self) -> None:
-        query = "家里没资源，不优先考虑好就业，只想离家近。"
+        for query in [
+            "家里没资源，不优先考虑好就业，只想离家近。",
+            "家里没资源，不优先考虑专业未来发展和行业口碑是否好就业。",
+        ]:
+            with self.subTest(query=query):
+                slots = RegexExtractor().extract(query)
+
+                guidance = career_guidance_for_query(query, slots, ADMISSIONS_DOMAIN)
+
+                self.assertIsNone(slots["preferences"]["employment_preference_raw"])
+                self.assertEqual(guidance["matched_rules"], [])
+                self.assertEqual(guidance["information_requests"], [])
+                self.assertEqual(guidance["no_schema_field_preferences"], [])
+
+    def test_contrast_before_employment_still_matches_guidance(self) -> None:
+        query = "家里没资源，不优先考虑学校但想选好就业。"
         slots = RegexExtractor().extract(query)
 
         guidance = career_guidance_for_query(query, slots, ADMISSIONS_DOMAIN)
 
-        self.assertIsNone(slots["preferences"]["employment_preference_raw"])
-        self.assertEqual(guidance["matched_rules"], [])
-        self.assertEqual(guidance["information_requests"], [])
-        self.assertEqual(guidance["no_schema_field_preferences"], [])
+        self.assertEqual(slots["preferences"]["employment_preference_raw"], "好就业")
+        self.assertIn(
+            "career_no_family_resource_goal",
+            [item["rule_id"] for item in guidance["matched_rules"]],
+        )
+        self.assertTrue(guidance["information_requests"])
+        self.assertTrue(guidance["no_schema_field_preferences"])
 
     def test_family_resource_negated_employment_does_not_match_guidance(self) -> None:
         query = (
