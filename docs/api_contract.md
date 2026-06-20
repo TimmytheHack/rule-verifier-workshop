@@ -327,6 +327,8 @@ DuckDB hard filter，并记录在 `executed_filters`、
 `1000` 且 `rank_window_upper_percent=15` 会生成 `专业组最低位次1 <= 1150`。
 `rank_window_lower_percent` 只保留为 UI 分区标签，不进入 hard filter。旧兼容字段
 `safety_margin_percent` 仍表示对称窗口。
+显式 `rank_window_*` 提交还必须匹配后端 `rank_windows` 白名单中的上界档位；
+非白名单上界会返回 Workbench `error` contract，不进入 SQL。
 
 未确认的 `partial_match`、`no_schema_field`、reference-only 资料，以及
 `verification_origin=verified_proposed_rule` 的 LLM proposal 不能进入 SQL。LLM 可以在

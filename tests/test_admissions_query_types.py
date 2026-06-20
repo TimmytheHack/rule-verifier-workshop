@@ -186,6 +186,31 @@ class AdmissionsQueryTypesTest(unittest.TestCase):
         )
         self.assertEqual(result["result_count"], visible_count)
 
+    def test_top_results_match_section_selected_recommendations(self) -> None:
+        with patch("src.api.admissions_query_planner.SECTION_LIMIT", 1):
+            result = run_workbench_with_test_warehouse(
+                WorkbenchConfig(
+                    user_input=RANK_ONLY_RECOMMENDATION_QUERY,
+                    soft_preferences={
+                        "prompt": RANK_ONLY_RECOMMENDATION_QUERY,
+                        "sort_mode": "rank_desc",
+                    },
+                    extractor="regex",
+                )
+            )
+
+        section_pairs = {
+            (item["university_name"], item["group_code"], item["major_code"])
+            for section in result["result_sections"].values()
+            for item in section["items"]
+        }
+        top_pairs = {
+            (item["university_name"], item["group_code"], item["major_code"])
+            for item in result["top_results"]
+        }
+        self.assertEqual(result["result_count"], len(section_pairs))
+        self.assertEqual(top_pairs, section_pairs)
+
     def test_explicit_rank_asc_uses_signed_rank_margin_order(self) -> None:
         result = run_workbench_with_test_warehouse(
             WorkbenchConfig(
@@ -212,7 +237,7 @@ class AdmissionsQueryTypesTest(unittest.TestCase):
         self.assertGreaterEqual(len(top_margins), 2)
         self.assertEqual(top_margins, sorted(top_margins))
 
-    def test_unsupported_school_rank_sort_mode_falls_back_to_rank_distance(self) -> None:
+    def test_school_rank_sort_mode_orders_recommendations_by_school_rank(self) -> None:
         result = run_workbench_with_test_warehouse(
             WorkbenchConfig(
                 user_input=RANK_ONLY_RECOMMENDATION_QUERY,
@@ -228,9 +253,16 @@ class AdmissionsQueryTypesTest(unittest.TestCase):
         execution = result["evidence_pack"]["execution_summary"]
         self.assertEqual(
             execution["sort"],
-            [{"field": "rank_distance", "direction": "ASC"}],
+            [{"field": "school_rank", "direction": "ASC"}],
         )
-        self.assertNotIn("院校排名", execution["sql"])
+        self.assertIn("院校排名", execution["sql"])
+        ranks = [
+            int(item["院校排名"])
+            for item in result["evidence_pack"]["top_k_results"]
+            if item.get("院校排名") is not None
+        ]
+        self.assertGreaterEqual(len(ranks), 2)
+        self.assertEqual(ranks, sorted(ranks))
 
     def test_free_form_sort_mode_falls_back_without_entering_sql(self) -> None:
         sort_mode = "rank_desc; DROP TABLE admissions"

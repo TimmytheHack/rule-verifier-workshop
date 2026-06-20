@@ -350,6 +350,7 @@ def _run_workbench(config: WorkbenchConfig) -> dict[str, Any]:
 
     _validate_config(config)
     domain_config = _domain_config(config)
+    _validate_controlled_options(config, domain_config)
     if not _domain_pack_can_execute(domain_config):
         return _domain_pack_blocked_payload(config, domain_config)
     warehouse_audit = _data_warehouse_audit(domain_config)
@@ -1702,6 +1703,44 @@ def _validate_config(config: WorkbenchConfig) -> None:
         raise ValueError(f"不支持的证据回答方式：{config.generator}")
     if config.model not in MODEL_OPTIONS:
         raise ValueError(f"不支持的 LLM 模型：{config.model}")
+
+
+def _validate_controlled_options(
+    config: WorkbenchConfig,
+    domain_config: DomainConfig,
+) -> None:
+    if domain_config.domain_id != ADMISSIONS_DOMAIN.domain_id:
+        return
+    _validate_rank_window_option(config.soft_preferences)
+
+
+def _validate_rank_window_option(soft_preferences: dict[str, Any]) -> None:
+    lower_supplied = soft_preferences.get("rank_window_lower_percent") not in (
+        None,
+        "",
+    )
+    upper_supplied = soft_preferences.get("rank_window_upper_percent") not in (
+        None,
+        "",
+    )
+    if not (lower_supplied or upper_supplied):
+        return
+
+    lower_percent = _optional_percent(
+        soft_preferences.get("rank_window_lower_percent")
+    )
+    upper_percent = _optional_percent(
+        soft_preferences.get("rank_window_upper_percent")
+    )
+    if (lower_supplied and lower_percent is None) or upper_percent is None:
+        raise ValueError("排位范围必须来自后端 rank_windows 白名单。")
+
+    allowed_upper_percents = {
+        int(item["rank_window_upper_percent"])
+        for item in RANK_WINDOW_OPTIONS
+    }
+    if upper_percent not in allowed_upper_percents:
+        raise ValueError("排位范围必须来自后端 rank_windows 白名单。")
 
 
 def _normalize_config(config: WorkbenchConfig) -> WorkbenchConfig:

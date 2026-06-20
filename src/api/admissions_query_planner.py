@@ -320,6 +320,7 @@ class AdmissionsQueryPlanner:
         major_score_col = self._source(fields["major_score"])
         major_rank_col = self._source(fields["major_rank"])
         plan_count_col = self._source(fields["plan_count"])
+        school_rank_col = self.domain_config.source_column_or_none("school_rank")
         with duckdb.connect(str(self.database_path), read_only=True) as connection:
             input_count = _input_row_count(connection, self.domain_config.table_name)
             rows, sql, params = self._fetch_recommendation_rows(
@@ -339,6 +340,7 @@ class AdmissionsQueryPlanner:
                 major_score_col=major_score_col,
                 major_rank_col=major_rank_col,
                 plan_count_col=plan_count_col,
+                school_rank_col=school_rank_col,
                 inputs=inputs,
                 policy=policy,
             )
@@ -354,16 +356,26 @@ class AdmissionsQueryPlanner:
             rank=inputs.rank,
             policy=policy,
         )
+        selected_rows = _selected_recommendation_rows(
+            rows=rows_with_margins,
+            score=inputs.score,
+            rank=inputs.rank,
+            policy=policy,
+        )
         visible_row_count = sum(
             len(section.get("items") or [])
             for section in section_payload.values()
         )
         projected_rows = [
             _recommendation_row_to_projected(row, self.domain_config)
-            for row in rows_with_margins[:visible_row_count]
+            for row in selected_rows[:visible_row_count]
         ]
         metric = "rank_margin" if inputs.rank else "score_margin"
-        sort_spec = _recommendation_sort(inputs, metric)
+        sort_spec = _recommendation_sort(
+            inputs,
+            metric,
+            school_rank_available=bool(school_rank_col),
+        )
         bucket_counts = {
             key: len(section.get("items") or [])
             for key, section in section_payload.items()
@@ -969,6 +981,7 @@ ORDER BY group_code ASC, min_score DESC NULLS LAST, major_code ASC
         sort_spec = _recommendation_sort(
             inputs,
             "rank_margin" if inputs.rank else "score_margin",
+            school_rank_available=bool(kwargs.get("school_rank_col")),
         )
         order_metric = ""
         order_direction = "ASC"
@@ -992,6 +1005,9 @@ ORDER BY group_code ASC, min_score DESC NULLS LAST, major_code ASC
                 order_metric = f"ABS({rank_expr} - ?)"
                 order_direction = "ASC"
                 order_params = [inputs.rank]
+            elif sort_spec == {"field": "school_rank", "direction": "ASC"}:
+                order_metric = _numeric_expr(str(kwargs["school_rank_col"]))
+                order_direction = "ASC"
             else:
                 order_metric = _numeric_expr(kwargs["group_rank_col"])
                 order_direction = "ASC"
@@ -1010,6 +1026,12 @@ ORDER BY group_code ASC, min_score DESC NULLS LAST, major_code ASC
             order_direction = "ASC"
             order_params = []
         where_sql = " AND ".join(conditions)
+        school_rank_col = kwargs.get("school_rank_col")
+        school_rank_select = (
+            f"{_numeric_expr(str(school_rank_col))} AS school_rank"
+            if school_rank_col
+            else "NULL AS school_rank"
+        )
         sql = f"""
 SELECT
   {_quote(kwargs["year_col"])} AS year,
@@ -1026,7 +1048,8 @@ SELECT
   {_numeric_expr(kwargs["group_rank_col"])} AS group_min_rank,
   {_numeric_expr(kwargs["major_score_col"])} AS major_min_score,
   {_numeric_expr(kwargs["major_rank_col"])} AS major_min_rank,
-  {_numeric_expr(kwargs["plan_count_col"])} AS plan_count
+  {_numeric_expr(kwargs["plan_count_col"])} AS plan_count,
+  {school_rank_select}
 FROM {table}
 WHERE {where_sql}
 ORDER BY {order_metric} {order_direction} NULLS LAST, group_min_score DESC NULLS LAST
@@ -1046,7 +1069,11 @@ LIMIT ?
 def _recommendation_sort(
     inputs: _RecommendationInputs,
     default_metric: str,
+    *,
+    school_rank_available: bool = False,
 ) -> dict[str, str]:
+    if inputs.sort_mode == "school_rank_asc" and school_rank_available:
+        return {"field": "school_rank", "direction": "ASC"}
     if inputs.sort_mode == "rank_desc" and inputs.rank:
         return {"field": "rank_margin", "direction": "DESC"}
     if inputs.sort_mode == "rank_asc" and inputs.rank:
@@ -1102,25 +1129,55 @@ def _sectioned_recommendations(
     rank: int | None,
     policy: dict[str, Any],
 ) -> dict[str, Any]:
+    selected_rows = _selected_recommendation_rows(
+        rows=rows,
+        score=score,
+        rank=rank,
+        policy=policy,
+    )
     sections = {
         "reach": {"label": "冲", "items": []},
         "match": {"label": "稳", "items": []},
         "safety": {"label": "保", "items": []},
     }
     margin_policy = policy.get("margin_policy") or {}
-    for row in rows:
-        item = dict(row)
-        if rank and item.get("rank_margin") is not None:
-            rank_margin = int(item["rank_margin"])
-            key = _rank_section(rank_margin, margin_policy.get("rank_margin") or {})
-        elif score and item.get("score_margin") is not None:
-            score_margin = int(item["score_margin"])
-            key = _score_section(score_margin, margin_policy.get("score_margin") or {})
-        else:
-            key = "match"
-        if len(sections[key]["items"]) < SECTION_LIMIT:
-            sections[key]["items"].append(_recommendation_section_item(item))
+    for row in selected_rows:
+        key = _recommendation_section_key(row, score, rank, margin_policy)
+        sections[key]["items"].append(_recommendation_section_item(row))
     return sections
+
+
+def _selected_recommendation_rows(
+    rows: list[dict[str, Any]],
+    score: int | None,
+    rank: int | None,
+    policy: dict[str, Any],
+) -> list[dict[str, Any]]:
+    sections = {"reach": 0, "match": 0, "safety": 0}
+    selected = []
+    margin_policy = policy.get("margin_policy") or {}
+    for row in rows:
+        key = _recommendation_section_key(row, score, rank, margin_policy)
+        if sections[key] >= SECTION_LIMIT:
+            continue
+        sections[key] += 1
+        selected.append(dict(row))
+    return selected
+
+
+def _recommendation_section_key(
+    row: dict[str, Any],
+    score: int | None,
+    rank: int | None,
+    margin_policy: dict[str, Any],
+) -> str:
+    if rank and row.get("rank_margin") is not None:
+        rank_margin = int(row["rank_margin"])
+        return _rank_section(rank_margin, margin_policy.get("rank_margin") or {})
+    if score and row.get("score_margin") is not None:
+        score_margin = int(row["score_margin"])
+        return _score_section(score_margin, margin_policy.get("score_margin") or {})
+    return "match"
 
 
 def _recommendation_rows_with_margins(
@@ -1174,6 +1231,7 @@ def _recommendation_section_item(row: dict[str, Any]) -> dict[str, Any]:
         "major_min_score",
         "major_min_rank",
         "plan_count",
+        "school_rank",
         "score_margin",
         "rank_margin",
     ]
@@ -1198,6 +1256,7 @@ def _recommendation_row_to_projected(
         "group_min_rank": "group_min_rank_2024",
         "major_min_rank": "major_min_rank_2024",
         "plan_count": "plan_count",
+        "school_rank": "school_rank",
     }
     projected = {}
     for source_key, field_id in mapping.items():
