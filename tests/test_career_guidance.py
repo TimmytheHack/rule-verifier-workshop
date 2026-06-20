@@ -41,8 +41,19 @@ class CareerGuidanceExtractionTest(unittest.TestCase):
             "好就业",
         )
 
+    def test_regex_extracts_career_goal_slot_and_source(self) -> None:
+        slots = RegexExtractor().extract("家里没有资源，想稳定就业。")
+
+        self.assertEqual(slots["preferences"]["career_goal_raw"], "稳定就业")
+        self.assertEqual(
+            slots["raw_sources"]["preferences.career_goal_raw"],
+            "稳定就业",
+        )
+
     def test_family_resource_is_context_and_employment_is_no_schema(self) -> None:
-        slots = RegexExtractor().extract("家里在医疗系统有资源，想选好就业专业。")
+        slots = RegexExtractor().extract(
+            "家里在医疗系统有资源，想选好就业专业，也想稳定就业。"
+        )
 
         grounding = AttributeGrounder(self.registry).ground(slots)
         by_path = {
@@ -63,6 +74,13 @@ class CareerGuidanceExtractionTest(unittest.TestCase):
         )
         self.assertFalse(
             by_path["preferences.employment_preference_raw"]["can_become_executable_rule"]
+        )
+        self.assertEqual(
+            by_path["preferences.career_goal_raw"]["status"],
+            "context_only",
+        )
+        self.assertFalse(
+            by_path["preferences.career_goal_raw"]["can_become_executable_rule"]
         )
 
 
