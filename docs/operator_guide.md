@@ -22,6 +22,8 @@
 `localStorage.actor_token` 覆盖默认值。生产前端应由真实登录态或网关注入 token，不能把
 admin token 暴露给普通 LLM/agent。
 
+本地 Vite 开发模式会默认发送 `operator-token`，只用于配合 `make serve` 的本机演示。生产部署不得接受示例 token，必须通过服务端 `AUTH_TOKENS_JSON` 配置真实 token，并在网关或运维系统中控制 operator token 的分发。
+
 ## 上传与 profile
 
 HTTP 上传：

@@ -94,6 +94,8 @@ export AUTH_TOKENS_JSON='{"operator-token":{"actor_id":"operator","permission_sc
 `npm run dev` 默认发送 `operator-token`，方便人工 demo 直接查询、上传、审核和建仓。
 生产构建不会内置默认 token，必须由真实登录态、网关或部署环境注入。
 
+本地 Vite 开发模式会默认发送 `operator-token`，只用于配合 `make serve` 的本机演示。生产部署不得接受示例 token，必须通过服务端 `AUTH_TOKENS_JSON` 配置真实 token，并在网关或运维系统中控制 operator token 的分发。
+
 请求通过 `Authorization: Bearer <token>` 或 `X-Actor-Token: <token>` 传递 token。服务端不信任浏览器或请求体传来的 `permission_scopes`、`actor_id`、`audit_path` 或 `dataset_root`。
 
 上传招生表格完成 approve 和 build 后，前端会把最近可查询的 uploaded admissions
