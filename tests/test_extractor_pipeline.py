@@ -69,6 +69,17 @@ class ExtractorFallbackPipelineTest(unittest.TestCase):
         self.assertEqual(slots["preferences"]["major_expansion_raw"], "计科")
         self.assertEqual(slots["preferences"]["preferred_cities"], ["广州", "深圳"])
 
+    def test_regex_extractor_parses_comma_separated_rank(self) -> None:
+        examples = [
+            "广东物理类，排位32,000，想学计算机。",
+            "广东物理类，排位32，000，想学计算机。",
+        ]
+        for text in examples:
+            with self.subTest(text=text):
+                slots = RegexExtractor().extract(text)
+
+                self.assertEqual(slots["user_context"]["user_rank"], 32000)
+
 
 if __name__ == "__main__":
     unittest.main()

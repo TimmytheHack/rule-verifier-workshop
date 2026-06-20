@@ -146,6 +146,71 @@ class DemoAcceptanceScriptTest(unittest.TestCase):
             record["failures"],
         )
 
+    def test_forced_no_rank_recommendation_cannot_pass_with_executed_payload(self) -> None:
+        case = DemoCase(
+            case_id="unit_forced_no_rank",
+            domain="admissions",
+            query="想读计算机，请推荐",
+            expected_status="needs_confirmation",
+        )
+        response = {
+            "schema_version": "workbench_response.v1",
+            "domain": "admissions",
+            "domain_version": "1",
+            "domain_pack_status": "approved",
+            "status": "ok",
+            "query_type": "recommendation",
+            "query": {
+                "text": case.query,
+                "hard_filters": {
+                    "query_type": "recommendation",
+                    "major_keywords": ["计算机"],
+                },
+            },
+            "answer": "推荐结果。",
+            "result_count": 1,
+            "items": [
+                {
+                    "item_id": "result_001",
+                    "title": "深圳大学",
+                    "subtitle": "计算机类",
+                    "primary_attributes": [],
+                    "secondary_attributes": [],
+                    "matched_filters": [],
+                    "raw": {},
+                }
+            ],
+            "top_results": [{"university_name": "深圳大学"}],
+            "result_sections": {
+                "reach": {"label": "冲", "items": []},
+                "match": {"label": "稳", "items": [{"university_name": "深圳大学"}]},
+                "safety": {"label": "保", "items": []},
+            },
+            "executed_filters": [],
+            "candidates_to_confirm": [],
+            "confirmed_rules": [],
+            "unconfirmed_candidates": [],
+            "unexecuted_preferences": [],
+            "no_schema_field_preferences": [],
+            "rejected_confirmations": [],
+            "warnings": [],
+            "evidence_pack": {
+                "execution_summary": {
+                    "sql": "SELECT * FROM admissions WHERE major_name LIKE ?",
+                    "params": ["%计算机%"],
+                }
+            },
+            "debug_trace": {},
+        }
+
+        record = record_from_response(case, response)
+
+        self.assertFalse(record["pass"])
+        self.assertIn(
+            "recommendation without rank executed payload",
+            record["failures"],
+        )
+
 
 if __name__ == "__main__":
     unittest.main()

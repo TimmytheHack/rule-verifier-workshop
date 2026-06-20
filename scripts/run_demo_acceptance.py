@@ -5,6 +5,7 @@ from __future__ import annotations
 import argparse
 import json
 import math
+import re
 import shutil
 import sys
 from collections import Counter
@@ -61,6 +62,13 @@ CONTRACT_KEYS = {
     "evidence_pack",
     "debug_trace",
 }
+RANK_INPUT_PATTERN = re.compile(
+    r"(?:排位|位次|排名|省排|省排名|全省)\s*"
+    r"(?:约|大概|大约|差不多)?\s*"
+    r"(?:(?:\d{1,3}(?:[,，]\d{3})+|\d+)(?:\.\d+)?\s*(?:万|w|W)?|"
+    r"[零〇一二两三四五六七八九十百千万点]+)\s*"
+    r"(?:名|左右)?"
+)
 ITEM_KEYS = {
     "item_id",
     "title",
@@ -714,6 +722,27 @@ def _sql_and_params(response: dict[str, Any]) -> tuple[str, list[Any]]:
     return str(execution.get("sql") or ""), list(execution.get("params") or [])
 
 
+def _query_payload(response: dict[str, Any]) -> dict[str, Any]:
+    query = response.get("query")
+    return query if isinstance(query, dict) else {}
+
+
+def _query_text(case: DemoCase, response: dict[str, Any]) -> str:
+    return str(_query_payload(response).get("text") or case.query or "")
+
+
+def _hard_filters(response: dict[str, Any]) -> dict[str, Any]:
+    hard_filters = _query_payload(response).get("hard_filters")
+    return hard_filters if isinstance(hard_filters, dict) else {}
+
+
+def _has_rank_input(case: DemoCase, response: dict[str, Any]) -> bool:
+    hard_filters = _hard_filters(response)
+    if hard_filters.get("user_rank") or hard_filters.get("rank"):
+        return True
+    return bool(RANK_INPUT_PATTERN.search(_query_text(case, response)))
+
+
 def _contract_failures(
     case: DemoCase,
     response: dict[str, Any],
@@ -765,11 +794,16 @@ def _contract_failures(
         if isinstance(item, dict)
     }
     is_missing_rank_confirmation = (
-        status == "needs_confirmation" and "score_without_rank" in warning_codes
+        status == "needs_confirmation"
+        and bool(warning_codes & {"score_without_rank", "missing_rank"})
     )
     is_score_without_rank_recommendation = (
         response.get("query_type") == "recommendation"
         and "score_without_rank" in warning_codes
+    )
+    is_recommendation_without_rank = (
+        response.get("query_type") == "recommendation"
+        and not _has_rank_input(case, response)
     )
     section_items = [
         item
@@ -787,6 +821,16 @@ def _contract_failures(
         or params
     ):
         failures.append("score_without_rank response executed recommendation payload")
+    if is_recommendation_without_rank and (
+        status != "needs_confirmation"
+        or response.get("result_count") != 0
+        or response.get("items")
+        or response.get("top_results")
+        or section_items
+        or sql
+        or params
+    ):
+        failures.append("recommendation without rank executed payload")
     if status in EXECUTED_STATUSES and not sql and not is_missing_rank_confirmation:
         failures.append("executed status has empty SQL")
     if status in EXECUTED_STATUSES and not isinstance(params, list):
@@ -795,7 +839,7 @@ def _contract_failures(
         failures.append("ok response has no items")
     if status == "needs_confirmation":
         has_warning = bool(
-            warning_codes & {"needs_confirmation", "score_without_rank"}
+            warning_codes & {"needs_confirmation", "score_without_rank", "missing_rank"}
         )
         evidence = response.get("evidence_pack") or {}
         has_evidence_confirmation = any(

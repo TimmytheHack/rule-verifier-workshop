@@ -17,8 +17,9 @@ import cn2an
 from src.domains import DomainConfig
 
 DEFAULT_ALIAS_PATH = DomainConfig.load("admissions").value_aliases_path
+ARABIC_QUANTITY_PATTERN = r"(?:\d{1,3}(?:[,，]\d{3})+|\d+)(?:\.\d+)?"
 NUMBER_TEXT_PATTERN = (
-    r"\d+(?:\.\d+)?\s*(?:万|w|W)?|[零〇一二两三四五六七八九十百千万点]+"
+    rf"{ARABIC_QUANTITY_PATTERN}\s*(?:万|w|W)?|[零〇一二两三四五六七八九十百千万点]+"
 )
 
 
@@ -307,7 +308,7 @@ class RegexExtractor:
 
 def _parse_quantity(value: str) -> int | None:
     text = (
-        value.strip()
+        re.sub(r"\s+", "", value.strip())
         .replace(",", "")
         .replace("，", "")
         .replace("W", "万")

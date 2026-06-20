@@ -148,6 +148,8 @@ class AdmissionsQueryTypesTest(unittest.TestCase):
             "我今年省排3.2w，想读人工智能、计算机，想留在广东省，请推荐",
             "我今年位次3.2 万，想读人工智能、计算机，想留在广东省，请推荐",
             "我今年省排3.2 w，想读人工智能、计算机，想留在广东省，请推荐",
+            "我今年排位32,000，想读人工智能、计算机，想留在广东省，请推荐",
+            "我今年排位32，000，想读人工智能、计算机，想留在广东省，请推荐",
         ]
         for query in examples:
             with self.subTest(query=query):
@@ -158,6 +160,7 @@ class AdmissionsQueryTypesTest(unittest.TestCase):
                 execution = result["evidence_pack"]["execution_summary"]
                 self.assertEqual(execution["metric"], "rank_margin")
                 self.assertIn(32000, execution["params"])
+                self.assertNotIn(32, execution["params"])
                 self.assertNotIn(3, execution["params"])
 
     def test_hard_filter_rank_quantity_accepts_spaced_unit(self) -> None:
@@ -206,6 +209,48 @@ class AdmissionsQueryTypesTest(unittest.TestCase):
         self.assertEqual(result["status"], "needs_confirmation")
         self.assertIsNone(result["evidence_pack"]["execution_summary"]["metric"])
         self.assertEqual(result["evidence_pack"]["execution_summary"]["sql"], "")
+
+    def test_forced_recommendation_without_rank_requires_rank_and_does_not_execute(self) -> None:
+        result = run_workbench_with_test_warehouse(
+            WorkbenchConfig(
+                user_input="想读计算机，请推荐",
+                hard_filters={
+                    "query_type": "recommendation",
+                    "major_keywords": ["计算机"],
+                },
+                soft_preferences={"prompt": "想读计算机，请推荐"},
+                extractor="regex",
+            )
+        )
+
+        self.assertEqual(result["query_type"], "recommendation")
+        self.assertEqual(result["status"], "needs_confirmation")
+        self.assertEqual(result["result_count"], 0)
+        self.assertEqual(result["items"], [])
+        self.assertEqual(result["top_results"], [])
+        self.assertIn("missing_rank", _warning_codes(result))
+        self.assertNotIn("score_without_rank", _warning_codes(result))
+        execution = result["evidence_pack"]["execution_summary"]
+        self.assertIsNone(execution["executor"])
+        self.assertEqual(execution["sql"], "")
+        self.assertEqual(execution["params"], [])
+
+    def test_score_only_recommendation_preserves_major_candidate_confirmation(self) -> None:
+        query = "630分，想读计算机相关，想留在广东省，请推荐"
+        result = _run(query)
+
+        self.assertEqual(result["status"], "needs_confirmation")
+        self.assertIn("score_without_rank", _warning_codes(result))
+        self.assertEqual(result["evidence_pack"]["execution_summary"]["sql"], "")
+        self.assertTrue(result["candidates_to_confirm"])
+        self.assertEqual(
+            result["candidates_to_confirm"][0]["match_type"],
+            "partial_match",
+        )
+        self.assertEqual(
+            result["evidence_pack"]["unconfirmed_candidates"],
+            result["candidates_to_confirm"],
+        )
 
     def test_rank_margin_takes_priority_when_rank_is_available(self) -> None:
         query = "我今年高考分数 630，位次 9000，想读人工智能、计算机，想留在广东省"

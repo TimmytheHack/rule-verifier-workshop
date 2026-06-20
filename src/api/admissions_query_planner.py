@@ -20,8 +20,9 @@ QUERY_TYPE_RECOMMENDATION = "recommendation"
 DEFAULT_LIMIT = 30
 SECTION_LIMIT = 5
 NUMBER_PATTERN = r"\d+(?:\.\d+)?"
+ARABIC_QUANTITY_PATTERN = r"(?:\d{1,3}(?:[,，]\d{3})+|\d+)(?:\.\d+)?"
 QUANTITY_PATTERN = (
-    r"\d+(?:\.\d+)?\s*(?:万|w|W)?|[零〇一二两三四五六七八九十百千万点]+"
+    rf"{ARABIC_QUANTITY_PATTERN}\s*(?:万|w|W)?|[零〇一二两三四五六七八九十百千万点]+"
 )
 
 
@@ -265,9 +266,9 @@ class AdmissionsQueryPlanner:
         policy = self.config.get(QUERY_TYPE_RECOMMENDATION) or {}
         score = _score_from_inputs(config, user_request)
         rank = _rank_from_inputs(config, user_request)
-        if score and not rank:
-            return self._score_without_rank_result(
-                self._score_without_rank_inputs(
+        if not rank:
+            return self._rank_required_result(
+                self._rank_required_inputs(
                     config=config,
                     user_request=user_request,
                     policy=policy,
@@ -279,8 +280,8 @@ class AdmissionsQueryPlanner:
             return readiness
         fields = policy.get("fields") or {}
         inputs = self._recommendation_inputs(config, user_request, policy)
-        if inputs.score and not inputs.rank:
-            return self._score_without_rank_result(inputs)
+        if not inputs.rank:
+            return self._rank_required_result(inputs)
         if not inputs.major_terms:
             warning = _warning(
                 "missing_major_terms",
@@ -401,13 +402,13 @@ class AdmissionsQueryPlanner:
             policy=policy.get("margin_policy") or {},
         )
 
-    def _score_without_rank_inputs(
+    def _rank_required_inputs(
         self,
         *,
         config: Any,
         user_request: str,
         policy: dict[str, Any],
-        score: int,
+        score: int | None,
     ) -> _RecommendationInputs:
         major_terms, candidates, major_match_mode = self._major_terms(
             config,
@@ -415,11 +416,18 @@ class AdmissionsQueryPlanner:
         )
         school_provinces = self._school_provinces(config, user_request)
         no_schema, _ = self._schema_sensitive_avoidance_rules(user_request, policy)
-        warning = _warning(
-            "score_without_rank",
-            "只提供分数没有位次；请补充广东省排位，系统不会仅凭分数执行推荐。",
-            severity="error",
-        )
+        if score:
+            warning = _warning(
+                "score_without_rank",
+                "只提供分数没有位次；请补充广东省排位，系统不会仅凭分数执行推荐。",
+                severity="error",
+            )
+        else:
+            warning = _warning(
+                "missing_rank",
+                "缺少广东省排位/位次；请补充位次后再执行推荐。",
+                severity="error",
+            )
         return _RecommendationInputs(
             year=int(self.config.get("latest_available_year") or 0),
             requested_year=None,
@@ -434,7 +442,7 @@ class AdmissionsQueryPlanner:
             candidates_to_confirm=candidates,
         )
 
-    def _score_without_rank_result(
+    def _rank_required_result(
         self,
         inputs: _RecommendationInputs,
     ) -> AdmissionsQueryResult:
@@ -442,19 +450,25 @@ class AdmissionsQueryPlanner:
             (
                 item
                 for item in inputs.warnings
-                if item.get("code") == "score_without_rank"
+                if item.get("code") in {"score_without_rank", "missing_rank"}
             ),
             _warning(
-                "score_without_rank",
-                "只提供分数没有位次；请补充广东省排位，系统不会仅凭分数执行推荐。",
+                "missing_rank",
+                "缺少广东省排位/位次；请补充位次后再执行推荐。",
                 severity="error",
             ),
         )
         warning = {**warning, "severity": "error"}
-        answer = (
-            "请先补充广东省排位/位次。当前只收到分数，系统不会仅凭分数执行推荐 SQL，"
-            "也不会把分数 margin 当作可执行录取判断。"
-        )
+        if warning.get("code") == "score_without_rank":
+            answer = (
+                "请先补充广东省排位/位次。当前只收到分数，系统不会仅凭分数执行推荐 SQL，"
+                "也不会把分数 margin 当作可执行录取判断。"
+            )
+        else:
+            answer = (
+                "请先补充广东省排位/位次。recommendation 必须有位次才能执行 SQL，"
+                "当前没有收到可用位次。"
+            )
         return AdmissionsQueryResult(
             query_type=QUERY_TYPE_RECOMMENDATION,
             status="needs_confirmation",
@@ -467,7 +481,7 @@ class AdmissionsQueryPlanner:
             answer=answer,
             warnings=[warning],
             executed_rules=[],
-            candidates_to_confirm=[],
+            candidates_to_confirm=inputs.candidates_to_confirm,
             no_schema_field_preferences=inputs.no_schema_preferences,
             extracted_preferences=_recommendation_extracted_preferences(inputs),
             policy={},
