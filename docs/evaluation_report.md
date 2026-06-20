@@ -84,6 +84,8 @@ schema-aware LLM-only baseline 能看到 schema，但仍然把模糊或不支持
 - `人工智能、软件工程、网络安全` 这类多专业偏好
 - `优先公办` 这类学校性质偏好
 
+“好就业/就业前景好/家里资源”可进入 `decision_guidance` 或 no-schema 说明，但不得进入 `executed_filters`、SQL params 或 recommendation bucket 依据。
+
 DeepSeek extractor 上一轮得分是 `314/320`。增加更严格的 representation normalization layer 后，得分提升到 `320/320`，同时 over-promotion 仍然是 `0.000`。这个提升来自更好的 slot representation，而不是放宽 verifier：
 
 - 明确的多个专业词会保存在 `major_exact_terms`；

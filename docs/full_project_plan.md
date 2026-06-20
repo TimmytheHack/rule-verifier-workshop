@@ -162,7 +162,7 @@ deterministic over-promotion rate
 
 - 完整志愿表 generation。
 - 没有 reviewed schema 的学校声誉排序逻辑。
-- 就业预测。
+- 就业预测；当前只允许 `EvidencePack.decision_guidance` 结构化记录就业/家庭资源偏好和补充问题，不参与筛选。
 - Web-search augmentation。
 - 多轮 advisor UI。
 - 通用 symbolic AI。

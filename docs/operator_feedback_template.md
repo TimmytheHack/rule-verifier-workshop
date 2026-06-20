@@ -99,6 +99,7 @@
 - 是否有 `score_without_rank` warning：
 - 是否避免“录取概率”表述：
 - `no_schema_field_preferences` 是否正确保留：
+- “好就业/就业前景好/家里资源”可进入 `decision_guidance` 或 no-schema 说明，但不得进入 `executed_filters`、SQL params 或 recommendation bucket 依据。
 - 中外合作/境外培养等偏好是否只在 approved 字段存在时执行：
 - 冲/稳/保分组是否可解释：
 - 问题：

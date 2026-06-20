@@ -82,6 +82,8 @@ outputs/operator_trial/<run_id>/report.json
 
 ## 阻断条件
 
+“好就业/就业前景好/家里资源”可进入 `decision_guidance` 或 no-schema 说明，但不得进入 `executed_filters`、SQL params 或 recommendation bucket 依据。
+
 出现以下情况时，不进入生产 queryable：
 
 - `status=fail`；
@@ -92,6 +94,7 @@ outputs/operator_trial/<run_id>/report.json
 - warehouse fingerprint 不一致；
 - `draft` / `needs_review` domain pack 被执行 SQL；
 - `no_schema_field_preferences` 被执行；
+- “好就业/就业前景好/家里资源”进入 `executed_filters`、SQL params 或 recommendation bucket 依据；
 - 报告或错误中出现 stack trace、secret、环境变量或危险绝对路径。
 
 ## 常见失败处理

@@ -358,6 +358,25 @@ DuckDB hard filter，并记录在 `executed_filters`、
 `does_not_change_sql_or_results`。前端和 agent 可以展示这些引用，但不能把它们
 当作 hard filter、candidate confirmation 或 recommendation bucket 的依据。
 
+## EvidencePack decision_guidance
+
+`EvidencePack.decision_guidance` 承载家庭资源、就业目标和“好就业”等表达的 deterministic guidance。它不是 hard rule，不参与 SQL，不改变 `executed_filters`、`result_count`、`result_sections` 或 `top_results`。
+
+固定结构：
+
+```json
+{
+  "status": "reference_only",
+  "execution_effect": "does_not_change_sql_or_results",
+  "executable": false,
+  "matched_rules": [{"rule_id": "career_no_family_resource_goal", "label": "家里缺少就业资源时先明确就业目标", "effect": "does_not_change_sql_or_results"}],
+  "information_requests": [{"question_id": "q_employment_goal", "label": "就业目标", "question": "请先选择更看重的就业目标：稳定就业、体制内/考公考编、高薪市场化、本地就业、升学深造。", "fixed_options": ["稳定就业", "体制内/考公考编", "高薪市场化", "本地就业", "升学深造"], "reason": "没有家庭资源时，系统不能把“好就业”直接翻译成专业筛选条件。"}],
+  "no_schema_field_preferences": [{"source_text": "好就业", "field_id": "employment_outlook", "field": "就业结果字段", "match_type": "no_schema_field", "executable": false, "reason": "当前数据中没有已审查就业结果字段，不能执行“好就业”筛选。"}]
+}
+```
+
+如果后续接入 reviewed 就业数据字段，必须先更新 `domains/admissions/schema_registry.json`、value index、RuleVerifier 测试和 API snapshot，再允许任何就业相关规则进入 execution。
+
 ## 示例：admissions ok
 
 ```json
