@@ -390,6 +390,16 @@ def normalize_slots(slots: dict[str, Any], original_text: str) -> dict[str, Any]
         if career_goal and str(career_goal) == normalized_career_goal
         else normalized_career_goal
     )
+    preferences["other_vague_preferences"] = _other_vague_preferences(
+        original_text,
+        preferences.get("other_vague_preferences"),
+        aliases,
+        preferences.get("family_resource_raw"),
+        [
+            preferences.get("employment_preference_raw"),
+            preferences.get("career_goal_raw"),
+        ],
+    )
 
     recommendation = preferences.get("recommendation_request_raw")
     if recommendation:
@@ -515,6 +525,7 @@ def _term_is_negated(text: str, term_index: int) -> bool:
         for marker in [
             "不要求",
             "不需要",
+            "不用考虑",
             "不想",
             "不考虑",
             "不要",
@@ -524,15 +535,68 @@ def _term_is_negated(text: str, term_index: int) -> bool:
     )
 
 
-def _positive_term_index(text: str, term: str) -> int | None:
+def _other_vague_preferences(
+    text: str,
+    raw_terms: Any,
+    aliases: dict[str, Any],
+    family_resource_raw: Any,
+    dedicated_preferences: list[Any],
+) -> list[str]:
+    if raw_terms is None:
+        return []
+    terms = raw_terms if isinstance(raw_terms, list) else [raw_terms]
+    alias_terms = set(aliases["other_vague_terms"])
+    dedicated_terms = {
+        str(term)
+        for term in dedicated_preferences
+        if term
+    }
+    output = []
+    for raw_term in terms:
+        term = str(raw_term).strip()
+        if not term or term not in alias_terms or term in dedicated_terms:
+            continue
+        if term in output:
+            continue
+        if _positive_term_index(
+            text,
+            term,
+            blocked_phrase=str(family_resource_raw) if family_resource_raw else None,
+        ) is not None:
+            output.append(term)
+    return output
+
+
+def _positive_term_index(
+    text: str,
+    term: str,
+    blocked_phrase: str | None = None,
+) -> int | None:
     start = 0
     while True:
         index = text.find(term, start)
         if index < 0:
             return None
-        if not _term_is_negated(text, index):
+        if not _term_is_negated(text, index) and not _term_is_in_phrase(
+            text,
+            index,
+            blocked_phrase,
+        ):
             return index
         start = index + len(term)
+
+
+def _term_is_in_phrase(
+    text: str,
+    term_index: int,
+    phrase: str | None,
+) -> bool:
+    if not phrase:
+        return False
+    phrase_index = text.find(phrase)
+    if phrase_index < 0:
+        return False
+    return phrase_index <= term_index < phrase_index + len(phrase)
 
 
 def has_deepseek_api_key() -> bool:

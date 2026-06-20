@@ -93,6 +93,33 @@ class CareerGuidanceExtractionTest(unittest.TestCase):
         self.assertNotIn("好就业", slots["preferences"]["other_vague_preferences"])
         self.assertNotIn("preferences.other_vague_preferences", slots["raw_sources"])
 
+    def test_regex_ignores_unused_salary_goal_and_keeps_later_goal(self) -> None:
+        slots = RegexExtractor().extract("不用考虑高薪，想稳定就业。")
+
+        self.assertEqual(slots["preferences"]["career_goal_raw"], "稳定就业")
+        self.assertNotIn("高薪", slots["preferences"]["other_vague_preferences"])
+        self.assertEqual(
+            slots["raw_sources"]["preferences.career_goal_raw"],
+            "稳定就业",
+        )
+
+    def test_salary_preference_stays_missing_schema_vague_term(self) -> None:
+        slots = RegexExtractor().extract("想高薪。")
+
+        self.assertIsNone(slots["preferences"]["career_goal_raw"])
+        self.assertEqual(slots["preferences"]["other_vague_preferences"], ["高薪"])
+
+        grounding = AttributeGrounder(self.registry).ground(slots)
+        salary_records = [
+            item
+            for item in grounding["attributes"]
+            if item["slot_path"] == "preferences.other_vague_preferences[]"
+            and item["value"] == "高薪"
+        ]
+
+        self.assertEqual(salary_records[0]["status"], "missing_schema")
+        self.assertFalse(salary_records[0]["can_become_executable_rule"])
+
     def test_deepseek_normalize_falls_back_to_long_family_resource_alias(self) -> None:
         slots = normalize_slots(
             {
@@ -136,6 +163,31 @@ class CareerGuidanceExtractionTest(unittest.TestCase):
         )
 
         self.assertIsNone(slots["preferences"]["employment_preference_raw"])
+
+    def test_deepseek_filters_negated_other_vague_preferences(self) -> None:
+        slots = normalize_slots(
+            {
+                "user_context": {},
+                "preferences": {"other_vague_preferences": ["考公"]},
+                "proposed_rules": [],
+            },
+            "不想考公，想学环境工程。",
+        )
+
+        self.assertNotIn("考公", slots["preferences"]["other_vague_preferences"])
+
+    def test_deepseek_ignores_unused_salary_goal_and_keeps_later_goal(self) -> None:
+        slots = normalize_slots(
+            {
+                "user_context": {},
+                "preferences": {"other_vague_preferences": ["高薪", "稳定就业"]},
+                "proposed_rules": [],
+            },
+            "不用考虑高薪，想稳定就业。",
+        )
+
+        self.assertEqual(slots["preferences"]["career_goal_raw"], "稳定就业")
+        self.assertNotIn("高薪", slots["preferences"]["other_vague_preferences"])
 
     def test_deepseek_family_resource_raw_matches_source_text(self) -> None:
         slots = normalize_slots(

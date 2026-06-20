@@ -423,6 +423,7 @@ def _term_is_negated(text: str, term_index: int) -> bool:
         for marker in [
             "不要求",
             "不需要",
+            "不用考虑",
             "不想",
             "不考虑",
             "不要",
