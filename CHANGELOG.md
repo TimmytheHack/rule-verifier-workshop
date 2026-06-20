@@ -1,5 +1,37 @@
 # 变更日志
 
+## 未发布（2026-06-21）
+
+### 新增
+
+- Admissions recommendation 增加 career guidance 证据层：保留家庭资源、就业目标、考公/稳定就业等偏好，但在缺少 reviewed schema 字段时只进入 `EvidencePack` 和前端提示，不生成 hard rule。
+- 新增 `career_decision_policy.json`、`career_guidance` reporting 和相关前端展示，支持解释资源行业、资源城市、就业目标等待补充信息。
+- `/api/workbench/options` 增加受控 `rank_windows` 和 `sort_modes`；前端必须从后端白名单选择排位窗口和排序方式后才能提交 admissions 查询。
+- 新增 `decision_option_suggestions` evidence-only 建议：后端可以建议 `rank_window` / `sort_mode` 选项，前端只展示“建议先确认”，不自动改写表单或触发查询。
+- DuckDBExecutor 和 admissions recommendation planner 增加受控排序策略，支持 `rank_asc`、`rank_desc` 和 `school_rank_asc`，排序字段均来自 reviewed schema/helper 白名单。
+
+### 变更
+
+- Admissions recommendation 严格执行“有分数但无位次时先追问省排位”，不再用分数单独估计录取风险。
+- 前端显式提交的 `rank_window_*` 改为只使用上界执行；例如排位 `1000` 且 `rank_window_upper_percent=15` 生成 `专业组最低位次1 <= 1150`，`rank_window_lower_percent` 仅作为 UI 档位提示。
+- 旧兼容字段 `safety_margin_percent` 继续表示对称窗口；新受控 `rank_window_*` 必须匹配后端 `rank_windows` 白名单，上界不在白名单或小数百分比会返回 Workbench `error` contract。
+- Admissions recommendation 的 `items`、`top_results`、`EvidencePack.top_k_results` 改为来自同一批 section-selected rows，避免与 `result_sections` 在分桶截断时不一致。
+- 前端输入面板将排位窗口和排序从可选偏好改为必选受控项，并阻止自由文本排序值进入 API payload。
+
+### 修复
+
+- 修复高排位考生在“稳一点”等窗口下因百分比下界过窄导致结果被错误筛空的问题。
+- 修复 `school_rank_asc` 在 recommendation 路径中已暴露但未执行的问题；缺少 reviewed `school_rank` 时保持安全回退。
+- 修复 career guidance 中否定表达、模糊就业偏好和 DeepSeek slot 的边界，避免把“不要求好就业”等文本误提为可执行偏好。
+- 修复 rank-only / score-only recommendation intent routing，确保强制 recommendation 也遵守排位优先规则。
+- 修复前端 rank window 文案、warning 识别、mock/demo 文本和 API contract 描述，统一为“只执行后向上界”。
+
+### 验证
+
+- 新增和更新 `tests/test_admissions_query_types.py`、`tests/test_workbench_api_contract.py`、`tests/test_rule_verifier.py`、`tests/test_duckdb_executor.py`、`tests/test_api_workbench.py`、`tests/test_career_guidance.py` 等回归覆盖。
+- 合并到 `master` 后已运行 `.venv/bin/python -m unittest discover -s tests`，结果为 `280 tests OK (expected failures=1)`。
+- 合并到 `master` 后已运行 `frontend npm run build`，构建通过；仅保留既有 Vite/Rollup warning。
+
 ## v0.1.0-rc1 候选
 
 本候选版本把项目包装为 `LLM-safe structured data query tool server for Excel/CSV`，面向前端、LLM/agent 和 operator 提供受控 functional tools。
