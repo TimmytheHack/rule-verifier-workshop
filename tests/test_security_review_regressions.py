@@ -66,6 +66,17 @@ class SecurityReviewRegressionTest(unittest.TestCase):
                 _audit_path({})
 
     @unittest.expectedFailure
+    def test_quality_run_rejects_shell_metacharacters_in_output_dir(self) -> None:
+        from src.api.tool_registry import ToolRegistryError, _tool_quality_run
+
+        with patch("src.api.tool_registry.run_quality_gate") as run_gate:
+            with self.assertRaises(ToolRegistryError):
+                _tool_quality_run(
+                    {"output_dir": "outputs/quality_gate;touch /tmp/szu_quality_pwned"}
+                )
+            run_gate.assert_not_called()
+
+    @unittest.expectedFailure
     def test_score_only_query_is_blocked_from_recommendation_execution(self) -> None:
         result = run_workbench_with_test_warehouse(
             WorkbenchConfig(
