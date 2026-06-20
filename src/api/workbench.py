@@ -2993,6 +2993,8 @@ def _top_result(
         key = item["key"]
         if item.get("computed") == "percent:safety_margin_pct":
             result[key] = _percent(row.get("safety_margin_pct"))
+            if result[key] == "" and row.get("rank_margin") not in (None, ""):
+                result[key] = row.get("rank_margin")
         elif item.get("field_id"):
             result[key] = row.get(domain_config.source_column(item["field_id"]))
         else:

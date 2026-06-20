@@ -1339,7 +1339,7 @@ def _parse_quantity(value: Any) -> int | None:
 
 
 def _parse_year(text: str) -> int | None:
-    match = re.search(r"(20\d{2})\s*年?", text)
+    match = re.search(r"(?<!\d)(20\d{2})(?!\d)\s*年?", text)
     if match:
         return int(match.group(1))
     match = re.search(r"(?<!\d)(\d{2})\s*年", text)

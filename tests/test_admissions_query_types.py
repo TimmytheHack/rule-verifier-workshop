@@ -141,6 +141,19 @@ class AdmissionsQueryTypesTest(unittest.TestCase):
         self.assertEqual(execution["sort"], [{"field": "rank_margin", "direction": "ASC"}])
         self.assertNotIn("score_without_rank", _warning_codes(result))
 
+    def test_rank_ending_in_four_digits_is_not_parsed_as_year(self) -> None:
+        result = _run(
+            "我今年位次 32000，想读人工智能、计算机，想留在广东省，请推荐"
+        )
+
+        self.assertEqual(result["query_type"], "recommendation")
+        self.assertEqual(result["status"], "ok")
+        self.assertIn("default_year_used", _warning_codes(result))
+        self.assertNotIn("requested_year_unavailable", _warning_codes(result))
+        execution = result["evidence_pack"]["execution_summary"]
+        self.assertIn(32000, execution["params"])
+        self.assertNotIn(2000, execution["params"])
+
     def test_decimal_rank_quantities_are_parsed_for_recommendations(self) -> None:
         examples = [
             "我今年位次3.2万，想读人工智能、计算机，想留在广东省，请推荐",
@@ -280,6 +293,15 @@ class AdmissionsQueryTypesTest(unittest.TestCase):
                 for section in result["result_sections"].values()
                 for item in section["items"]
             )
+        )
+
+    def test_recommendation_top_results_expose_rank_margin_as_safety_margin(self) -> None:
+        result = _run(RANK_ONLY_RECOMMENDATION_QUERY)
+
+        self.assertEqual(result["query_type"], "recommendation")
+        self.assertTrue(result["top_results"])
+        self.assertTrue(
+            any(item.get("safety_margin") for item in result["top_results"])
         )
 
     def test_overseas_preference_is_not_executed_without_schema_field(self) -> None:

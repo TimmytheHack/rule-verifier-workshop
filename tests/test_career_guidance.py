@@ -500,6 +500,25 @@ class CareerGuidancePolicyTest(unittest.TestCase):
         self.assertIn("q_family_resource_city", question_ids)
         self.assertFalse(guidance["executable"])
 
+    def test_family_resource_with_career_goal_asks_for_resource_details(self) -> None:
+        query = "家里在医疗系统有资源，希望稳定就业。"
+        slots = RegexExtractor().extract(query)
+
+        guidance = career_guidance_for_query(query, slots, ADMISSIONS_DOMAIN)
+
+        question_ids = {
+            item["question_id"]
+            for item in guidance["information_requests"]
+        }
+        self.assertIn("career_family_resource_goal_context", [
+            item["rule_id"]
+            for item in guidance["matched_rules"]
+        ])
+        self.assertIn("q_family_resource_industry", question_ids)
+        self.assertIn("q_family_resource_city", question_ids)
+        self.assertEqual(guidance["no_schema_field_preferences"], [])
+        self.assertFalse(guidance["executable"])
+
     def test_no_resource_negated_employment_does_not_match_guidance(self) -> None:
         query = "家里没资源，但不要求好就业，只想离家近。"
         slots = RegexExtractor().extract(query)

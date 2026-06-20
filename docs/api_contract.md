@@ -344,7 +344,8 @@ DuckDB hard filter，并记录在 `executed_filters`、
   `status=needs_confirmation` 和 `score_without_rank` warning，
   `execution_summary.sql` 为空，`result_count=0`。系统应要求用户补充广东省排位/位次，
   不能仅凭分数执行 SQL，也不能把分数 margin 解释成录取概率。有位次时按
-  `rank_margin` 优先排序。`EvidencePack.execution_summary` 必须记录
+  `rank_margin` 优先排序；`top_results[].safety_margin` 可展示该位次差距。
+  `EvidencePack.execution_summary` 必须记录
   `margin_policy`、`year_weighting`、`major_match` 和 `bucket_counts`：当前策略只执行
   `latest_available_year`，不跨年加权；专业匹配来源必须区分 deterministic fields、
   exact keywords 和 confirmed candidates。回答不得声称录取概率。
@@ -376,6 +377,8 @@ DuckDB hard filter，并记录在 `executed_filters`、
 ```
 
 如果后续接入 reviewed 就业数据字段，必须先更新 `domains/admissions/schema_registry.json`、value index、RuleVerifier 测试和 API snapshot，再允许任何就业相关规则进入 execution。
+
+如果用户同时表达“家里有资源”和明确就业目标，例如“家里在医疗系统有资源，希望稳定就业”，系统只能追问资源行业和资源城市；除非原文另有“好就业/就业前景好”等就业结果表达，否则不得额外生成 `employment_outlook` no-schema 记录。
 
 ## 示例：admissions ok
 
