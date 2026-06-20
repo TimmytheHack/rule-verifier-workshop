@@ -18,12 +18,12 @@ class SecurityReviewRegressionTest(unittest.TestCase):
             )
         )
 
-        self.assertIn(result["status"], {"blocked", "needs_confirmation", "ok", "no_results"})
+        self.assertIn(result["status"], {"blocked", "needs_confirmation"})
+        self.assertEqual(result["result_count"], 0)
+        self.assertEqual(result["debug_trace"]["execution"]["sql"], "")
         serialized = str(result)
         self.assertNotIn("录取概率", serialized)
         self.assertNotIn("仅按分数估计风险", serialized)
-        if result["query_type"] == "recommendation":
-            self.assertEqual(result["debug_trace"]["execution"]["sql"], "")
 
     def test_no_schema_preference_never_becomes_executed_filter(self) -> None:
         prompt = "广东物理，排名3.2万，计算机相关，珠三角优先，不要校企合作。"

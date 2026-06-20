@@ -6,7 +6,7 @@
 
 ## 审查范围
 
-| lane | 范围 | 负责人 |
+| 审查线 | 范围 | 负责人 |
 |---|---|---|
 | 后端规则管线 | Extractor 到 EvidencePack 的执行边界、hard rule 来源、candidate_id、no-schema 偏好 | Agent 1 |
 | API/tool 权限 | HTTP 鉴权、LLM-safe tool、audit、路径、错误净化、schema contract | Agent 2 |
@@ -31,15 +31,15 @@ rg -n "(/Users/|outputs/|广东省|duckdb|localhost|127\\.0\\.0\\.1|deepseek|api
 
 ## 发现列表
 
-| id | severity | lane | 文件 | 证据 | 风险 | 建议 | 状态 |
+| 编号 | 严重级别 | 审查线 | 文件 | 证据 | 风险 | 建议 | 状态 |
 |---|---|---|---|---|---|---|---|
 | A1-001 | P2 | 后端规则管线 | `src/api/workbench.py:90` | 内置 admissions warehouse 路径默认指向 `outputs/data/guangdong_admissions.duckdb` | 非内置 domain 或生产部署可能被误读为同一数据源 | 保持内置路径但在部署文档和 readiness 中明确需要构建 warehouse；不要静默 fallback 到 Excel/Pandas | confirmed |
 | A1-002 | P1 | 后端规则管线 | `src/api/admissions_query_planner.py:852` | `.venv/bin/python -m unittest tests.test_security_review_regressions tests.test_workbench_confirmation_loop tests.test_workbench_api_contract` 显示 `test_score_only_query_is_blocked_from_recommendation_execution` 为 expected failure；score-only recommendation 仍生成 `score_margin` SQL 并返回结果 | 用户只有分数没有省排时，系统可执行推荐 SQL，违反“只给分数应要求省排”的 domain rule，且容易被解读为风险评估 | planned recommendation 在缺少 `user_rank` 时应返回 blocked/needs_confirmation，并保留“需要省排” warning；修复前保留 expected-failure regression | confirmed |
-| A1-003 | P2 | 后端规则管线 | `src/api/workbench.py:54` | 硬编码扫描命令命中 admissions 中文默认 query、`domain_name="admissions"`、`model="deepseek-v4-flash"` | API/server 默认值带有 admissions 演示语境，非 admissions domain 或生产调用若未显式传参会产生领域歧义 | 部署文档和 readiness 明确生产必须显式配置 domain、dataset、model；必要时将 demo default 与生产 API default 分离 | confirmed |
+| A1-003 | P2 | 后端规则管线 | `src/api/workbench.py:54`、`src/api/workbench.py:107`、`src/api/workbench.py:109` | 硬编码扫描命令命中 admissions 中文默认 query 和 `model="deepseek-v4-flash"`；代码审查同时确认 `domain_name="admissions"` | API/server 默认值带有 admissions 演示语境，非 admissions domain 或生产调用若未显式传参会产生领域歧义 | 部署文档和 readiness 明确生产必须显式配置 domain、dataset、model；必要时将 demo default 与生产 API default 分离 | confirmed |
 
 ## 已确认安全不变量
 
-| invariant | 证据 | 覆盖测试 |
+| 安全不变量 | 证据 | 覆盖测试 |
 |---|---|---|
 | legacy Workbench 路径在执行前完成 extraction、AttributeGrounder、candidate_id confirmation、RuleVerifier、RulePromoter | `nl -ba src/api/workbench.py | sed -n '240,335p;1667,1823p'`：`_extract_slots` 后进入 `AttributeGrounder.ground`，`_resolve_confirmed_candidates` 只接受当前 `candidate_id`，`verifier.attach_verification` 通过后才加入 `confirmed_rules`，最后 `_execute_verified_hard_rules` 执行 | `tests.test_workbench_confirmation_loop`、`tests.test_workbench_api_contract`、`tests.test_security_review_regressions` |
 | no-schema preference 即使带 `candidate_id` 确认也不会进入 executed filters 或 SQL params | `src/api/workbench.py:1694` 对 `executable=False` candidate 返回 `candidate_not_executable`；回归测试确认“不要校企合作”不进入 `executed_filters` 和 execution params | `tests.test_security_review_regressions.SecurityReviewRegressionTest.test_no_schema_preference_never_becomes_executed_filter` |
