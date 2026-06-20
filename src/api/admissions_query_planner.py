@@ -1306,7 +1306,7 @@ def _parse_quantity(value: Any) -> int | None:
     if value in (None, ""):
         return None
     text = (
-        str(value).strip()
+        re.sub(r"\s+", "", str(value).strip())
         .replace(",", "")
         .replace("，", "")
         .replace("W", "万")

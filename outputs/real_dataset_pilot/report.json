@@ -466,16 +466,16 @@
               "field": "年份",
               "operator": "eq",
               "value": 2025,
-              "matched": false,
-              "text": ""
+              "matched": true,
+              "text": "年份 eq 2025 已执行"
             },
             {
               "id": "planned_university_name",
               "field": "院校名称",
               "operator": "contains",
               "value": "深圳大学",
-              "matched": false,
-              "text": ""
+              "matched": true,
+              "text": "院校名称 包含 深圳大学 已执行"
             }
           ],
           "raw": {
@@ -492,7 +492,16 @@
       "top_results": [
         {
           "id": "result_001",
-          "trace": [],
+          "trace": [
+            {
+              "status": "pass",
+              "text": "年份 eq 2025 已执行"
+            },
+            {
+              "status": "pass",
+              "text": "院校名称 包含 深圳大学 已执行"
+            }
+          ],
           "year": 2025,
           "batch": null,
           "university_code": null,
@@ -576,27 +585,33 @@
         "result_count": 1,
         "top_k_results": [
           {
-            "id": "result_001",
-            "trace": [],
-            "year": 2025,
-            "batch": null,
-            "university_code": null,
-            "university_name": "深圳大学",
-            "group_code": "10590225",
-            "group_name": "物理225组",
-            "major_code": null,
-            "major_name": "物理225组（2 个专业）",
-            "full_major_name": null,
-            "subject_requirement": null,
-            "province": null,
-            "city": null,
-            "tuition": null,
-            "rank_2024": 7800,
-            "major_rank_2024": null,
-            "plan_count": null,
-            "group_min_rank": 7800,
-            "major_min_rank": null,
-            "safety_margin": ""
+            "年份": 2025,
+            "院校名称": "深圳大学",
+            "院校专业组代码": "10590225",
+            "专业组名称": "物理225组",
+            "专业组最低分1": 634,
+            "专业组最低位次1": 7800,
+            "专业名称": "物理225组（2 个专业）",
+            "trace": [
+              {
+                "rule_id": "planned_year",
+                "field": "年份",
+                "operator": "eq",
+                "value": 2025,
+                "status": "pass",
+                "reason": "年份 eq 2025 已执行",
+                "matched_value": 2025
+              },
+              {
+                "rule_id": "planned_university_name",
+                "field": "院校名称",
+                "operator": "contains",
+                "value": "深圳大学",
+                "status": "pass",
+                "reason": "院校名称 contains 深圳大学 已执行",
+                "matched_value": "深圳大学"
+              }
+            ]
           }
         ],
         "result_sections": {
@@ -631,9 +646,14 @@
           ]
         },
         "trace_summary": {
+          "executed_rule_ids": [
+            "planned_year",
+            "planned_university_name"
+          ],
           "top_k": 5,
           "query_type": "group_detail_report",
-          "result_count": 1
+          "result_count": 1,
+          "traced_result_count": 1
         },
         "extracted_preferences": [
           {
@@ -771,9 +791,11 @@
           }
         },
         "trace_summary": {
+          "executed_rule_ids": [],
           "top_k": 5,
           "query_type": "recommendation",
-          "result_count": 0
+          "result_count": 0,
+          "traced_result_count": 0
         },
         "extracted_preferences": [
           {

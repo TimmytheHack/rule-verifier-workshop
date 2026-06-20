@@ -19476,16 +19476,16 @@ candidate_id 确认状态：
         "field": "年份",
         "operator": "eq",
         "value": 2024,
-        "matched": false,
-        "text": ""
+        "matched": true,
+        "text": "年份 eq 2024 已执行"
       },
       {
         "id": "planned_university_name",
         "field": "院校名称",
         "operator": "contains",
         "value": "深圳大学",
-        "matched": false,
-        "text": ""
+        "matched": true,
+        "text": "院校名称 包含 深圳大学 已执行"
       }
     ],
     "raw": {
@@ -19547,16 +19547,16 @@ candidate_id 确认状态：
         "field": "年份",
         "operator": "eq",
         "value": 2024,
-        "matched": false,
-        "text": ""
+        "matched": true,
+        "text": "年份 eq 2024 已执行"
       },
       {
         "id": "planned_university_name",
         "field": "院校名称",
         "operator": "contains",
         "value": "深圳大学",
-        "matched": false,
-        "text": ""
+        "matched": true,
+        "text": "院校名称 包含 深圳大学 已执行"
       }
     ],
     "raw": {
@@ -19618,16 +19618,16 @@ candidate_id 确认状态：
         "field": "年份",
         "operator": "eq",
         "value": 2024,
-        "matched": false,
-        "text": ""
+        "matched": true,
+        "text": "年份 eq 2024 已执行"
       },
       {
         "id": "planned_university_name",
         "field": "院校名称",
         "operator": "contains",
         "value": "深圳大学",
-        "matched": false,
-        "text": ""
+        "matched": true,
+        "text": "院校名称 包含 深圳大学 已执行"
       }
     ],
     "raw": {
@@ -19689,16 +19689,16 @@ candidate_id 确认状态：
         "field": "年份",
         "operator": "eq",
         "value": 2024,
-        "matched": false,
-        "text": ""
+        "matched": true,
+        "text": "年份 eq 2024 已执行"
       },
       {
         "id": "planned_university_name",
         "field": "院校名称",
         "operator": "contains",
         "value": "深圳大学",
-        "matched": false,
-        "text": ""
+        "matched": true,
+        "text": "院校名称 包含 深圳大学 已执行"
       }
     ],
     "raw": {
@@ -19760,16 +19760,16 @@ candidate_id 确认状态：
         "field": "年份",
         "operator": "eq",
         "value": 2024,
-        "matched": false,
-        "text": ""
+        "matched": true,
+        "text": "年份 eq 2024 已执行"
       },
       {
         "id": "planned_university_name",
         "field": "院校名称",
         "operator": "contains",
         "value": "深圳大学",
-        "matched": false,
-        "text": ""
+        "matched": true,
+        "text": "院校名称 包含 深圳大学 已执行"
       }
     ],
     "raw": {
@@ -19789,7 +19789,16 @@ candidate_id 确认状态：
 [
   {
     "id": "result_001",
-    "trace": [],
+    "trace": [
+      {
+        "status": "pass",
+        "text": "年份 eq 2024 已执行"
+      },
+      {
+        "status": "pass",
+        "text": "院校名称 包含 深圳大学 已执行"
+      }
+    ],
     "year": 2024,
     "batch": null,
     "university_code": null,
@@ -19812,7 +19821,16 @@ candidate_id 确认状态：
   },
   {
     "id": "result_002",
-    "trace": [],
+    "trace": [
+      {
+        "status": "pass",
+        "text": "年份 eq 2024 已执行"
+      },
+      {
+        "status": "pass",
+        "text": "院校名称 包含 深圳大学 已执行"
+      }
+    ],
     "year": 2024,
     "batch": null,
     "university_code": null,
@@ -19835,7 +19853,16 @@ candidate_id 确认状态：
   },
   {
     "id": "result_003",
-    "trace": [],
+    "trace": [
+      {
+        "status": "pass",
+        "text": "年份 eq 2024 已执行"
+      },
+      {
+        "status": "pass",
+        "text": "院校名称 包含 深圳大学 已执行"
+      }
+    ],
     "year": 2024,
     "batch": null,
     "university_code": null,
@@ -19858,7 +19885,16 @@ candidate_id 确认状态：
   },
   {
     "id": "result_004",
-    "trace": [],
+    "trace": [
+      {
+        "status": "pass",
+        "text": "年份 eq 2024 已执行"
+      },
+      {
+        "status": "pass",
+        "text": "院校名称 包含 深圳大学 已执行"
+      }
+    ],
     "year": 2024,
     "batch": null,
     "university_code": null,
@@ -19881,7 +19917,16 @@ candidate_id 确认状态：
   },
   {
     "id": "result_005",
-    "trace": [],
+    "trace": [
+      {
+        "status": "pass",
+        "text": "年份 eq 2024 已执行"
+      },
+      {
+        "status": "pass",
+        "text": "院校名称 包含 深圳大学 已执行"
+      }
+    ],
     "year": 2024,
     "batch": null,
     "university_code": null,
@@ -20105,119 +20150,149 @@ candidate_id 确认状态：
   "result_count": 5,
   "top_k_results": [
     {
-      "id": "result_001",
-      "trace": [],
-      "year": 2024,
-      "batch": null,
-      "university_code": null,
-      "university_name": "深圳大学",
-      "group_code": "10590221",
-      "group_name": "221组",
-      "major_code": null,
-      "major_name": "221组（1 个专业）",
-      "full_major_name": null,
-      "subject_requirement": null,
-      "province": null,
-      "city": null,
-      "tuition": null,
-      "rank_2024": 8237,
-      "major_rank_2024": null,
-      "plan_count": null,
-      "group_min_rank": 8237,
-      "major_min_rank": null,
-      "safety_margin": ""
+      "年份": 2024,
+      "院校名称": "深圳大学",
+      "院校专业组代码": "10590221",
+      "专业组名称": "221组",
+      "专业组最低分1": 628,
+      "专业组最低位次1": 8237,
+      "专业名称": "221组（1 个专业）",
+      "trace": [
+        {
+          "rule_id": "planned_year",
+          "field": "年份",
+          "operator": "eq",
+          "value": 2024,
+          "status": "pass",
+          "reason": "年份 eq 2024 已执行",
+          "matched_value": 2024
+        },
+        {
+          "rule_id": "planned_university_name",
+          "field": "院校名称",
+          "operator": "contains",
+          "value": "深圳大学",
+          "status": "pass",
+          "reason": "院校名称 contains 深圳大学 已执行",
+          "matched_value": "深圳大学"
+        }
+      ]
     },
     {
-      "id": "result_002",
-      "trace": [],
-      "year": 2024,
-      "batch": null,
-      "university_code": null,
-      "university_name": "深圳大学",
-      "group_code": "10590232",
-      "group_name": "232组",
-      "major_code": null,
-      "major_name": "232组（3 个专业）",
-      "full_major_name": null,
-      "subject_requirement": null,
-      "province": null,
-      "city": null,
-      "tuition": null,
-      "rank_2024": 12064,
-      "major_rank_2024": null,
-      "plan_count": null,
-      "group_min_rank": 12064,
-      "major_min_rank": null,
-      "safety_margin": ""
+      "年份": 2024,
+      "院校名称": "深圳大学",
+      "院校专业组代码": "10590232",
+      "专业组名称": "232组",
+      "专业组最低分1": 618,
+      "专业组最低位次1": 12064,
+      "专业名称": "232组（3 个专业）",
+      "trace": [
+        {
+          "rule_id": "planned_year",
+          "field": "年份",
+          "operator": "eq",
+          "value": 2024,
+          "status": "pass",
+          "reason": "年份 eq 2024 已执行",
+          "matched_value": 2024
+        },
+        {
+          "rule_id": "planned_university_name",
+          "field": "院校名称",
+          "operator": "contains",
+          "value": "深圳大学",
+          "status": "pass",
+          "reason": "院校名称 contains 深圳大学 已执行",
+          "matched_value": "深圳大学"
+        }
+      ]
     },
     {
-      "id": "result_003",
-      "trace": [],
-      "year": 2024,
-      "batch": null,
-      "university_code": null,
-      "university_name": "深圳大学",
-      "group_code": "10590233",
-      "group_name": "233组",
-      "major_code": null,
-      "major_name": "233组（1 个专业）",
-      "full_major_name": null,
-      "subject_requirement": null,
-      "province": null,
-      "city": null,
-      "tuition": null,
-      "rank_2024": 14657,
-      "major_rank_2024": null,
-      "plan_count": null,
-      "group_min_rank": 14657,
-      "major_min_rank": null,
-      "safety_margin": ""
+      "年份": 2024,
+      "院校名称": "深圳大学",
+      "院校专业组代码": "10590233",
+      "专业组名称": "233组",
+      "专业组最低分1": 613,
+      "专业组最低位次1": 14657,
+      "专业名称": "233组（1 个专业）",
+      "trace": [
+        {
+          "rule_id": "planned_year",
+          "field": "年份",
+          "operator": "eq",
+          "value": 2024,
+          "status": "pass",
+          "reason": "年份 eq 2024 已执行",
+          "matched_value": 2024
+        },
+        {
+          "rule_id": "planned_university_name",
+          "field": "院校名称",
+          "operator": "contains",
+          "value": "深圳大学",
+          "status": "pass",
+          "reason": "院校名称 contains 深圳大学 已执行",
+          "matched_value": "深圳大学"
+        }
+      ]
     },
     {
-      "id": "result_004",
-      "trace": [],
-      "year": 2024,
-      "batch": null,
-      "university_code": null,
-      "university_name": "深圳大学",
-      "group_code": "10590224",
-      "group_name": "224组",
-      "major_code": null,
-      "major_name": "224组（2 个专业）",
-      "full_major_name": null,
-      "subject_requirement": null,
-      "province": null,
-      "city": null,
-      "tuition": null,
-      "rank_2024": 15759,
-      "major_rank_2024": null,
-      "plan_count": null,
-      "group_min_rank": 15759,
-      "major_min_rank": null,
-      "safety_margin": ""
+      "年份": 2024,
+      "院校名称": "深圳大学",
+      "院校专业组代码": "10590224",
+      "专业组名称": "224组",
+      "专业组最低分1": 610,
+      "专业组最低位次1": 15759,
+      "专业名称": "224组（2 个专业）",
+      "trace": [
+        {
+          "rule_id": "planned_year",
+          "field": "年份",
+          "operator": "eq",
+          "value": 2024,
+          "status": "pass",
+          "reason": "年份 eq 2024 已执行",
+          "matched_value": 2024
+        },
+        {
+          "rule_id": "planned_university_name",
+          "field": "院校名称",
+          "operator": "contains",
+          "value": "深圳大学",
+          "status": "pass",
+          "reason": "院校名称 contains 深圳大学 已执行",
+          "matched_value": "深圳大学"
+        }
+      ]
     },
     {
-      "id": "result_005",
-      "trace": [],
-      "year": 2024,
-      "batch": null,
-      "university_code": null,
-      "university_name": "深圳大学",
-      "group_code": "10590227",
-      "group_name": "227组",
-      "major_code": null,
-      "major_name": "227组（2 个专业）",
-      "full_major_name": null,
-      "subject_requirement": null,
-      "province": null,
-      "city": null,
-      "tuition": null,
-      "rank_2024": 16114,
-      "major_rank_2024": null,
-      "plan_count": null,
-      "group_min_rank": 16114,
-      "major_min_rank": null,
-      "safety_margin": ""
+      "年份": 2024,
+      "院校名称": "深圳大学",
+      "院校专业组代码": "10590227",
+      "专业组名称": "227组",
+      "专业组最低分1": 610,
+      "专业组最低位次1": 16114,
+      "专业名称": "227组（2 个专业）",
+      "trace": [
+        {
+          "rule_id": "planned_year",
+          "field": "年份",
+          "operator": "eq",
+          "value": 2024,
+          "status": "pass",
+          "reason": "年份 eq 2024 已执行",
+          "matched_value": 2024
+        },
+        {
+          "rule_id": "planned_university_name",
+          "field": "院校名称",
+          "operator": "contains",
+          "value": "深圳大学",
+          "status": "pass",
+          "reason": "院校名称 contains 深圳大学 已执行",
+          "matched_value": "深圳大学"
+        }
+      ]
     }
   ],
   "result_sections": {
@@ -20351,9 +20426,14 @@ candidate_id 确认状态：
     ]
   },
   "trace_summary": {
+    "executed_rule_ids": [
+      "planned_year",
+      "planned_university_name"
+    ],
     "top_k": 5,
     "query_type": "group_detail_report",
-    "result_count": 5
+    "result_count": 5,
+    "traced_result_count": 5
   },
   "extracted_preferences": [
     {
@@ -20438,6 +20518,14 @@ candidate_id 确认状态：
 ### answer
 
 按 2025 年请求已改用当前可用的 2024 年 数据，深圳大学 录取分数最高的专业组是 10590221（221组），专业组最低分为 628。以下 sections.groups 展开了组内专业最低分。
+
+字段值审计解释：
+- [已执行] 2024 -> 年份：eq
+- [已执行] 深圳大学 -> 院校名称：contains
+
+已执行规则：
+- planned_year：年份 eq 2024
+- planned_university_name：院校名称 contains 深圳大学
 
 ## admissions_17_recommendation_policy `通过`
 
@@ -20539,9 +20627,11 @@ candidate_id 确认状态：
     }
   },
   "trace_summary": {
+    "executed_rule_ids": [],
     "top_k": 5,
     "query_type": "recommendation",
-    "result_count": 0
+    "result_count": 0,
+    "traced_result_count": 0
   },
   "extracted_preferences": [
     {
@@ -20626,6 +20716,11 @@ candidate_id 确认状态：
 ### answer
 
 请先补充广东省排位/位次。当前只收到分数，系统不会仅凭分数执行推荐 SQL，也不会把分数 margin 当作可执行录取判断。
+
+字段值审计解释：
+- [未执行] 不想去国外 -> 无可执行字段：no_schema_field
+
+已执行规则：
 
 参考说明（不参与筛选）：
 - 合作办学与境外培养说明 status: approved 招生数据中如果没有经过审查的 `cooperation_type`、`school_country_or_region` 或同等字段，系统不能执行“排除中外合作”“不要境外培养”“不想去国外”之类的 hard filter。此类偏好应进入 `no_schema_field_preferences`，只能作为未执行说明 或人工审查线索。 如果后续 domain pack 增加并批准了合作办学类型、培养地点或境外培养字段，才能由 RuleVerifier 校验 operator 和 value 后进入参数化 SQL。：...region` 或同等字段，系统不能执行“排除中外合作”“不要境外培养”“不想去国外”之类的 hard filter。此类偏好应进入 `no_schema_field_preferences`，只能作为未执行说明 或人工审查线索。 如果后续 domain pack 增加并批准了合作办学类型、培养地点或境外培养字段，才能由 RuleVerifier 校验 op...；来源：policy_references/cooperation_programs.md；命中：国外；该说明不参与筛选。
@@ -25706,16 +25801,16 @@ candidate_id 确认状态：
         "field": "年份",
         "operator": "eq",
         "value": 2025,
-        "matched": false,
-        "text": ""
+        "matched": true,
+        "text": "年份 eq 2025 已执行"
       },
       {
         "id": "planned_university_name",
         "field": "院校名称",
         "operator": "contains",
         "value": "深圳大学",
-        "matched": false,
-        "text": ""
+        "matched": true,
+        "text": "院校名称 包含 深圳大学 已执行"
       }
     ],
     "raw": {
@@ -25735,7 +25830,16 @@ candidate_id 确认状态：
 [
   {
     "id": "result_001",
-    "trace": [],
+    "trace": [
+      {
+        "status": "pass",
+        "text": "年份 eq 2025 已执行"
+      },
+      {
+        "status": "pass",
+        "text": "院校名称 包含 深圳大学 已执行"
+      }
+    ],
     "year": 2025,
     "batch": null,
     "university_code": null,
@@ -25840,7 +25944,7 @@ candidate_id 确认状态：
   "generate_status": "needs_review",
   "approve_ok": true,
   "build_status": "queryable",
-  "source_fingerprint": "6e1c639ab9049890bfbf5ca08f1849738bbb7bc01af9fff1f7fc0a4a5efa522b"
+  "source_fingerprint": "791b717197a13aa13179e17032590b116ba23eb71273447a5a234ef96c00aa63"
 }
 ```
 ### EvidencePack
@@ -25867,27 +25971,33 @@ candidate_id 确认状态：
   "result_count": 1,
   "top_k_results": [
     {
-      "id": "result_001",
-      "trace": [],
-      "year": 2025,
-      "batch": null,
-      "university_code": null,
-      "university_name": "深圳大学",
-      "group_code": "10590225",
-      "group_name": "物理225组",
-      "major_code": null,
-      "major_name": "物理225组（2 个专业）",
-      "full_major_name": null,
-      "subject_requirement": null,
-      "province": null,
-      "city": null,
-      "tuition": null,
-      "rank_2024": 7800,
-      "major_rank_2024": null,
-      "plan_count": null,
-      "group_min_rank": 7800,
-      "major_min_rank": null,
-      "safety_margin": ""
+      "年份": 2025,
+      "院校名称": "深圳大学",
+      "院校专业组代码": "10590225",
+      "专业组名称": "物理225组",
+      "专业组最低分1": 634,
+      "专业组最低位次1": 7800,
+      "专业名称": "物理225组（2 个专业）",
+      "trace": [
+        {
+          "rule_id": "planned_year",
+          "field": "年份",
+          "operator": "eq",
+          "value": 2025,
+          "status": "pass",
+          "reason": "年份 eq 2025 已执行",
+          "matched_value": 2025
+        },
+        {
+          "rule_id": "planned_university_name",
+          "field": "院校名称",
+          "operator": "contains",
+          "value": "深圳大学",
+          "status": "pass",
+          "reason": "院校名称 contains 深圳大学 已执行",
+          "matched_value": "深圳大学"
+        }
+      ]
     }
   ],
   "result_sections": {
@@ -25922,9 +26032,14 @@ candidate_id 确认状态：
     ]
   },
   "trace_summary": {
+    "executed_rule_ids": [
+      "planned_year",
+      "planned_university_name"
+    ],
     "top_k": 5,
     "query_type": "group_detail_report",
-    "result_count": 1
+    "result_count": 1,
+    "traced_result_count": 1
   },
   "extracted_preferences": [
     {
@@ -25998,6 +26113,14 @@ candidate_id 确认状态：
 ### answer
 
 按 2025 年 数据，深圳大学 录取分数最高的专业组是 10590225（物理225组），专业组最低分为 634。以下 sections.groups 展开了组内专业最低分。
+
+字段值审计解释：
+- [已执行] 2025 -> 年份：eq
+- [已执行] 深圳大学 -> 院校名称：contains
+
+已执行规则：
+- planned_year：年份 eq 2025
+- planned_university_name：院校名称 contains 深圳大学
 
 ## uploaded_dataset_02_recommendation_csv `通过`
 
@@ -26106,9 +26229,11 @@ candidate_id 确认状态：
     }
   },
   "trace_summary": {
+    "executed_rule_ids": [],
     "top_k": 5,
     "query_type": "recommendation",
-    "result_count": 0
+    "result_count": 0,
+    "traced_result_count": 0
   },
   "extracted_preferences": [
     {
@@ -26181,3 +26306,8 @@ candidate_id 确认状态：
 ### answer
 
 请先补充广东省排位/位次。当前只收到分数，系统不会仅凭分数执行推荐 SQL，也不会把分数 margin 当作可执行录取判断。
+
+字段值审计解释：
+- [未执行] 不想去国外 -> 无可执行字段：no_schema_field
+
+已执行规则：

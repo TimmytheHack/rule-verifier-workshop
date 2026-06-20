@@ -87,6 +87,65 @@ class DemoAcceptanceScriptTest(unittest.TestCase):
         ]:
             self.assertIn(key, record)
 
+    def test_score_without_rank_cannot_pass_with_executed_payload(self) -> None:
+        case = DemoCase(
+            case_id="unit_score_only",
+            domain="admissions",
+            query="我今年高考分数 630，想读计算机，想留在广东省",
+            expected_status="needs_confirmation",
+        )
+        response = {
+            "schema_version": "workbench_response.v1",
+            "domain": "admissions",
+            "domain_version": "1",
+            "domain_pack_status": "approved",
+            "status": "needs_confirmation",
+            "query_type": "recommendation",
+            "query": {"text": case.query},
+            "answer": "请补充位次。",
+            "result_count": 1,
+            "items": [
+                {
+                    "item_id": "result_001",
+                    "title": "深圳大学",
+                    "subtitle": "计算机类",
+                    "primary_attributes": [],
+                    "secondary_attributes": [],
+                    "matched_filters": [],
+                    "raw": {},
+                }
+            ],
+            "top_results": [{"university_name": "深圳大学"}],
+            "result_sections": {
+                "reach": {"label": "冲", "items": [{"university_name": "深圳大学"}]},
+                "match": {"label": "稳", "items": []},
+                "safety": {"label": "保", "items": []},
+            },
+            "executed_filters": [],
+            "candidates_to_confirm": [],
+            "confirmed_rules": [],
+            "unconfirmed_candidates": [],
+            "unexecuted_preferences": [],
+            "no_schema_field_preferences": [],
+            "rejected_confirmations": [],
+            "warnings": [{"code": "score_without_rank", "severity": "error"}],
+            "evidence_pack": {
+                "execution_summary": {
+                    "sql": "SELECT * FROM admissions WHERE score_margin > ?",
+                    "params": [0],
+                }
+            },
+            "debug_trace": {},
+        }
+
+        record = record_from_response(case, response)
+
+        self.assertFalse(record["pass"])
+        self.assertIn(
+            "score_without_rank response executed recommendation payload",
+            record["failures"],
+        )
+
 
 if __name__ == "__main__":
     unittest.main()

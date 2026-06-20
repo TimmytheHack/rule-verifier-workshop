@@ -402,35 +402,25 @@
     {
       "case_id": "g15_stay_guangdong_recommend",
       "input": "排位10000名，想读人工智能，计算机，而且不想去国外，想留在广东省，请给出推荐。",
-      "status": "needs_confirmation",
-      "slots": {
-        "user_context.source_province": null,
-        "preferences.major_exact_terms": [
-          "人工智能",
-          "计算机"
-        ],
-        "preferences.preferred_school_provinces": [
-          "广东"
-        ],
-        "preferences.overseas_preference_raw": "不想去国外",
-        "preferences.recommendation_request_raw": "给出推荐"
-      },
+      "status": "ok",
+      "slots": {},
       "hard_rule_ids": [
-        "e_major_keyword",
-        "e_school_province",
-        "e_recommendation_rank_floor"
+        "planned_year",
+        "planned_major_keywords",
+        "planned_school_province"
       ],
-      "result_count": 426,
+      "result_count": 15,
       "top": {
-        "university_name": "深圳大学",
-        "group_code": "10590232",
-        "major_name": "计算机类",
+        "university_name": "深圳理工大学",
+        "group_code": "14880201",
+        "major_name": "计算机科学与技术",
         "city": "深圳",
-        "group_min_rank": 12064
+        "group_min_rank": 9667
       },
       "answer_contains": [
-        "[未执行] 不想去国外 -> 国家或境外办学字段：no_schema_field",
-        "[需确认] 给出推荐 -> 专业组最低位次1：partial_match"
+        "基于历史最低分/最低位次和位次 10000",
+        "按位次 margin分为冲、稳、保",
+        "该分组不是录取概率判断"
       ]
     },
     {

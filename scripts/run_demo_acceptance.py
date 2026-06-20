@@ -767,6 +767,26 @@ def _contract_failures(
     is_missing_rank_confirmation = (
         status == "needs_confirmation" and "score_without_rank" in warning_codes
     )
+    is_score_without_rank_recommendation = (
+        response.get("query_type") == "recommendation"
+        and "score_without_rank" in warning_codes
+    )
+    section_items = [
+        item
+        for section in (response.get("result_sections") or {}).values()
+        if isinstance(section, dict)
+        for item in (section.get("items") or [])
+    ]
+    if is_score_without_rank_recommendation and (
+        status != "needs_confirmation"
+        or response.get("result_count") != 0
+        or response.get("items")
+        or response.get("top_results")
+        or section_items
+        or sql
+        or params
+    ):
+        failures.append("score_without_rank response executed recommendation payload")
     if status in EXECUTED_STATUSES and not sql and not is_missing_rank_confirmation:
         failures.append("executed status has empty SQL")
     if status in EXECUTED_STATUSES and not isinstance(params, list):

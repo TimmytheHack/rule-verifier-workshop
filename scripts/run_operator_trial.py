@@ -123,6 +123,15 @@ def run_operator_trial(
     )
     review_blockers = _review_blockers(review)
     if review_blockers:
+        context.failures.append(
+            {
+                "stage": "review_blockers",
+                "message": "review_summary 存在阻断项，不能标记 trial pass。",
+                "missing_fields": review.get("missing_fields") or [],
+                "risky_fields": review.get("risky_fields") or [],
+                "blockers": review_blockers,
+            }
+        )
         context.operation_cards.append(
             _manual_card(
                 "review_blockers",

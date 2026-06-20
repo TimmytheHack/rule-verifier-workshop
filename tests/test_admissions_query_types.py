@@ -146,6 +146,8 @@ class AdmissionsQueryTypesTest(unittest.TestCase):
             "我今年位次3.2万，想读人工智能、计算机，想留在广东省，请推荐",
             "我今年排名3.2万，想读人工智能、计算机，想留在广东省，请推荐",
             "我今年省排3.2w，想读人工智能、计算机，想留在广东省，请推荐",
+            "我今年位次3.2 万，想读人工智能、计算机，想留在广东省，请推荐",
+            "我今年省排3.2 w，想读人工智能、计算机，想留在广东省，请推荐",
         ]
         for query in examples:
             with self.subTest(query=query):
@@ -157,6 +159,24 @@ class AdmissionsQueryTypesTest(unittest.TestCase):
                 self.assertEqual(execution["metric"], "rank_margin")
                 self.assertIn(32000, execution["params"])
                 self.assertNotIn(3, execution["params"])
+
+    def test_hard_filter_rank_quantity_accepts_spaced_unit(self) -> None:
+        query = "我今年想读人工智能、计算机，想留在广东省，请推荐"
+        result = run_workbench_with_test_warehouse(
+            WorkbenchConfig(
+                user_input=query,
+                hard_filters={"user_rank": "3.2 万"},
+                soft_preferences={"prompt": query},
+                extractor="regex",
+            )
+        )
+
+        self.assertEqual(result["query_type"], "recommendation")
+        self.assertEqual(result["status"], "ok")
+        execution = result["evidence_pack"]["execution_summary"]
+        self.assertEqual(execution["metric"], "rank_margin")
+        self.assertIn(32000, execution["params"])
+        self.assertNotIn(3, execution["params"])
 
     def test_recommendation_evidence_records_calibration_policy(self) -> None:
         result = _run(RECOMMENDATION_QUERY)

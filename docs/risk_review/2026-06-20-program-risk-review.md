@@ -34,7 +34,7 @@ rg -n "(/Users/|outputs/|广东省|duckdb|localhost|127\\.0\\.0\\.1|deepseek|api
 | 编号 | 严重级别 | 审查线 | 文件 | 证据 | 风险 | 建议 | 状态 |
 |---|---|---|---|---|---|---|---|
 | A1-001 | P2 | 后端规则管线 | `src/api/workbench.py:90` | 内置 admissions warehouse 路径默认指向 `outputs/data/guangdong_admissions.duckdb` | 非内置 domain 或生产部署可能被误读为同一数据源 | 保持内置路径但在部署文档和 readiness 中明确需要构建 warehouse；不要静默 fallback 到 Excel/Pandas | confirmed |
-| A1-002 | P1 | 后端规则管线 | `src/api/admissions_query_planner.py:852` | `.venv/bin/python -m unittest tests.test_security_review_regressions tests.test_workbench_confirmation_loop tests.test_workbench_api_contract` 显示 `test_score_only_query_is_blocked_from_recommendation_execution` 为 expected failure；score-only recommendation 仍生成 `score_margin` SQL 并返回结果 | 用户只有分数没有省排时，系统可执行推荐 SQL，违反“只给分数应要求省排”的 domain rule，且容易被解读为风险评估 | planned recommendation 在缺少 `user_rank` 时应返回 blocked/needs_confirmation，并保留“需要省排” warning；修复前保留 expected-failure regression | confirmed |
+| A1-002 | P1 | 后端规则管线 | `src/api/admissions_query_planner.py` | 本分支 Task 1 已整改：score-only recommendation 返回 `status=needs_confirmation`、`score_without_rank` warning、`result_count=0`，且 `execution_summary.sql` / `params` 为空；`test_score_only_query_is_blocked_from_recommendation_execution` 已作为必过回归执行，不再是 expected failure | 用户只有分数没有省排时，系统不会执行 recommendation SQL，也不会把 `score_margin` 解释成录取概率；需继续守护该回归 | 保留 score-only 非执行测试、demo acceptance evidence 和 real dataset pilot 检查，防止后续恢复仅凭分数推荐 | fixed |
 | A1-003 | P2 | 后端规则管线 | `src/api/workbench.py:54`、`src/api/workbench.py:107`、`src/api/workbench.py:109` | 硬编码扫描命令命中 admissions 中文默认 query 和 `model="deepseek-v4-flash"`；代码审查同时确认 `domain_name="admissions"` | API/server 默认值带有 admissions 演示语境，非 admissions domain 或生产调用若未显式传参会产生领域歧义 | 部署文档和 readiness 明确生产必须显式配置 domain、dataset、model；必要时将 demo default 与生产 API default 分离 | confirmed |
 | A2-001 | P2 | API/tool 权限 | `Makefile:5` | 本地 `DEV_AUTH_TOKENS_JSON` 包含 operator-token 全权限 | 本地开发方便但 operator token 名称容易被误用于非本地环境 | 文档继续要求生产配置真实 `AUTH_TOKENS_JSON`；前端 dev token 保持 `import.meta.env.DEV` 限制；发布 checklist 检查生产 token | confirmed |
 | A2-002 | P0 | API/tool 权限 | `src/api/tool_registry.py:347`、`scripts/run_quality_gate.py:62`、`scripts/run_quality_gate.py:215` | `quality.run` 从 payload 读取 `output_dir`，`run_quality_gate` 将该路径插入 shell command，`SubprocessRunner` 使用 `shell=True` | diagnostics 权限 actor 提供的 `output_dir` 可进入 shell command 字符串；当前仅拒绝 `..`，不足以阻断 shell metacharacters | 改为 argv list 执行或对所有 shell 参数做严格 allowlist/quoting；修复前不要向不可信 actor 授予 `diagnostics` | confirmed |
@@ -62,7 +62,7 @@ rg -n "(/Users/|outputs/|广东省|duckdb|localhost|127\\.0\\.0\\.1|deepseek|api
 
 | 风险 | 原因 | 后续动作 |
 |---|---|---|
-| score-only recommendation 仍可执行 | planned query path 在 `inputs.rank` 缺失但 `inputs.score` 存在时使用 `score_margin` 窗口执行 SQL；本轮回归测试以 expected failure 固化该缺陷 | 下一任务修复 planner 阻断逻辑后移除 `expectedFailure` |
+| score-only recommendation 回归需持续守护 | 本分支已修复只给分数仍执行 recommendation SQL 的问题；历史风险不再 expected-failure，但后续改动仍可能误恢复 `score_margin` 执行路径 | 保留必过回归：只给分数无位次时必须 `needs_confirmation`、`result_count=0`、SQL/params 为空，并提示补充广东省排位/位次 |
 | 内置 admissions 默认值需要生产显式覆盖 | `DEFAULT_USER_INPUT`、warehouse path、value index path、default domain/model 都偏演示环境 | 发布文档、readiness 和部署配置中声明必须预构建并显式选择 domain/dataset/model |
 | diagnostics quality runner 存在 shell command 注入面 | `quality.run` payload 的 `output_dir` 可进入 `scripts/run_quality_gate.py` 中的 shell command 字符串 | 修复 A2-002 前将 `diagnostics` 权限视为高危内部权限，不暴露给浏览器、LLM-safe adapter 或不可信自动化 |
 | 前端 dev token 仍是本地便利默认 | `rg -n "(DEFAULT_DEV_ACTOR_TOKEN|operator-token|localStorage|hard_filters|soft_preferences|confirmed_candidates|candidate_id|demoRun|mock|admissions|广东|32000|深圳大学|fetch\\(\\))" frontend/src`：命中项主要分为 demo default（`demoRun`、`广东`、`32000`、mock admissions）、dev auth（`DEFAULT_DEV_ACTOR_TOKEN`、`operator-token`、`localStorage`）、API payload（`hard_filters`、`soft_preferences`、`confirmed_candidates`、`candidate_id`）、frontend display（结果、确认、未执行文案）；唯一需要跟踪的风险是 dev mode operator token 误入可被生产接受的 token map | 保持 `import.meta.env.DEV` 限制，生产环境不要接受演示 token；后续可将本地 token 改成显式输入 |
@@ -72,15 +72,15 @@ rg -n "(/Users/|outputs/|广东省|duckdb|localhost|127\\.0\\.0\\.1|deepseek|api
 
 | 命令 | 结果 | 说明 |
 |---|---|---|
-| `.venv/bin/python -m unittest discover -s tests` | 通过 | 运行 209 个测试，包含 2 个 expected failures，对应 A1-002 与 A2-002 的未整改风险 guard。 |
+| `.venv/bin/python -m unittest discover -s tests` | 通过 | 当前分支运行 216 个测试，包含 1 个既有 expected failure；Task 1 回归不再 expected-failure，A1-002 已整改为必过 guard。 |
 | `cd frontend && npm run build` | 通过 | Vite build 退出 0；仍有既有 Rollup annotation notices 和 chunk-size warning。 |
 | `git diff --check` | 通过 | 未发现 whitespace/error marker 问题。 |
 
 ## 汇总结论
 
 - P0 数量：1（A2-002）
-- P1 数量：1（A1-002）
+- P1 数量：0（A1-002 已在 Task 1 整改）
 - P2 数量：6（A1-001、A1-003、A2-001、A3-001、A4-001、A4-002）
 - P3 数量：0
-- 可以直接进入整改的批次：R1、R2、R3、R4；优先从 R1 开始。
+- 可以直接进入整改的批次：R2、R3、R4；A1-002 所属 R1 已在 Task 1 整改。
 - 暂不整改但需要发布说明的风险：A4-001 已通过文档补充处理；前端 rendered smoke 尚未自动化，放入 R3；tracked `outputs/` evidence 边界放入 R4。

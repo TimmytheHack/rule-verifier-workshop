@@ -434,6 +434,37 @@ def _run_admissions_planned_query(
     ).run(config, _compose_user_request(config))
 
 
+def _planned_rows_with_trace(
+    rows: list[dict[str, Any]],
+    hard_rules: list[dict[str, Any]],
+) -> list[dict[str, Any]]:
+    traced_rows = []
+    for row in rows:
+        traced = dict(row)
+        traced["trace"] = [
+            _planned_trace_item(rule, row)
+            for rule in hard_rules
+        ]
+        traced_rows.append(traced)
+    return traced_rows
+
+
+def _planned_trace_item(
+    rule: dict[str, Any],
+    row: dict[str, Any],
+) -> dict[str, Any]:
+    field = rule.get("field")
+    return {
+        "rule_id": rule.get("rule_id"),
+        "field": field,
+        "operator": rule.get("operator"),
+        "value": rule.get("value"),
+        "status": "pass",
+        "reason": f"{field} {rule.get('operator')} {rule.get('value')} 已执行",
+        "matched_value": row.get(str(field)) if field else None,
+    }
+
+
 def _planned_query_payload(
     *,
     config: WorkbenchConfig,
@@ -442,18 +473,27 @@ def _planned_query_payload(
     planned_result: Any,
 ) -> dict[str, Any]:
     hard_rules = list(planned_result.executed_rules)
+    planned_rows = _planned_rows_with_trace(planned_result.rows, hard_rules)
     top_results = [
         _top_result(rank, row, domain_config)
-        for rank, row in enumerate(planned_result.rows[:EVIDENCE_TOP_K], start=1)
+        for rank, row in enumerate(planned_rows[:EVIDENCE_TOP_K], start=1)
+    ]
+    evidence_top_results = [
+        dict(row)
+        for row in planned_rows[:EVIDENCE_TOP_K]
     ]
     items = [
         _item_card(rank, row, hard_rules, domain_config)
-        for rank, row in enumerate(planned_result.rows[:EVIDENCE_TOP_K], start=1)
+        for rank, row in enumerate(planned_rows[:EVIDENCE_TOP_K], start=1)
     ]
-    result_count = len(planned_result.rows)
+    result_count = len(planned_rows)
     policy_references = _policy_references_for_config(config, domain_config)
     answer = _append_policy_reference_answer(
-        planned_result.answer,
+        _planned_answer_with_audit(
+            planned_result.answer,
+            hard_rules,
+            planned_result.no_schema_field_preferences,
+        ),
         policy_references,
     )
     evidence_pack = {
@@ -463,12 +503,17 @@ def _planned_query_payload(
         "candidate_confirmations": planned_result.candidates_to_confirm,
         "not_executed_preferences": planned_result.no_schema_field_preferences,
         "result_count": result_count,
-        "top_k_results": top_results,
+        "top_k_results": evidence_top_results,
         "result_sections": planned_result.result_sections,
         "trace_summary": {
+            "executed_rule_ids": [
+                rule.get("rule_id")
+                for rule in hard_rules
+            ],
             "top_k": EVIDENCE_TOP_K,
             "query_type": planned_result.query_type,
             "result_count": result_count,
+            "traced_result_count": result_count,
         },
         "extracted_preferences": planned_result.extracted_preferences,
         "attribute_grounding_summary": {},
@@ -581,6 +626,34 @@ def _planned_query_disclaimer(planned_result: Any) -> str:
     if "score_without_rank" in warning_codes:
         return "只给分数时不会执行 recommendation SQL；请补充广东省排位/位次。"
     return "推荐分组基于历史最低分/最低位次，不代表录取概率。"
+
+
+def _planned_answer_with_audit(
+    answer: str,
+    hard_rules: list[dict[str, Any]],
+    no_schema_preferences: list[dict[str, Any]],
+) -> str:
+    lines = [answer, "", "字段值审计解释："]
+    for rule in hard_rules:
+        lines.append(
+            "- "
+            f"[已执行] {rule.get('value')} -> {rule.get('field')}："
+            f"{rule.get('operator')}"
+        )
+    for preference in no_schema_preferences:
+        lines.append(
+            "- "
+            f"[未执行] {preference.get('source_text')} -> "
+            f"{preference.get('field')}：no_schema_field"
+        )
+    lines.extend(["", "已执行规则："])
+    for rule in hard_rules:
+        lines.append(
+            "- "
+            f"{rule.get('rule_id')}：{rule.get('field')} "
+            f"{rule.get('operator')} {rule.get('value')}"
+        )
+    return "\n".join(lines)
 
 
 def _policy_references_for_config(
