@@ -354,9 +354,13 @@ class AdmissionsQueryPlanner:
             rank=inputs.rank,
             policy=policy,
         )
+        visible_row_count = sum(
+            len(section.get("items") or [])
+            for section in section_payload.values()
+        )
         projected_rows = [
             _recommendation_row_to_projected(row, self.domain_config)
-            for row in rows_with_margins
+            for row in rows_with_margins[:visible_row_count]
         ]
         metric = "rank_margin" if inputs.rank else "score_margin"
         sort_spec = _recommendation_sort(inputs, metric)
@@ -981,6 +985,10 @@ ORDER BY group_code ASC, min_score DESC NULLS LAST, major_code ASC
                 order_direction = "DESC"
                 order_params = [inputs.rank]
             elif sort_spec == {"field": "rank_margin", "direction": "ASC"}:
+                order_metric = f"({rank_expr} - ?)"
+                order_direction = "ASC"
+                order_params = [inputs.rank]
+            elif sort_spec == {"field": "rank_distance", "direction": "ASC"}:
                 order_metric = f"ABS({rank_expr} - ?)"
                 order_direction = "ASC"
                 order_params = [inputs.rank]
@@ -1043,6 +1051,8 @@ def _recommendation_sort(
         return {"field": "rank_margin", "direction": "DESC"}
     if inputs.sort_mode == "rank_asc" and inputs.rank:
         return {"field": "rank_margin", "direction": "ASC"}
+    if inputs.rank and default_metric == "rank_margin":
+        return {"field": "rank_distance", "direction": "ASC"}
     return {"field": default_metric, "direction": "ASC"}
 
 

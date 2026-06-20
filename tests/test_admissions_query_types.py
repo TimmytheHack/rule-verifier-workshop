@@ -138,7 +138,7 @@ class AdmissionsQueryTypesTest(unittest.TestCase):
         self.assertEqual(result["status"], "ok")
         execution = result["evidence_pack"]["execution_summary"]
         self.assertEqual(execution["metric"], "rank_margin")
-        self.assertEqual(execution["sort"], [{"field": "rank_margin", "direction": "ASC"}])
+        self.assertEqual(execution["sort"], [{"field": "rank_distance", "direction": "ASC"}])
         self.assertNotIn("score_without_rank", _warning_codes(result))
 
     def test_recommendation_sort_mode_is_recorded_and_applied(self) -> None:
@@ -171,8 +171,39 @@ class AdmissionsQueryTypesTest(unittest.TestCase):
         self.assertGreaterEqual(len(top_margins), 2)
         self.assertGreater(top_margins[0], 0)
         self.assertEqual(top_margins, sorted(top_margins, reverse=True))
+        visible_count = sum(
+            len(section["items"])
+            for section in result["result_sections"].values()
+        )
+        self.assertEqual(result["result_count"], visible_count)
 
-    def test_unsupported_school_rank_sort_mode_falls_back_to_rank_margin(self) -> None:
+    def test_explicit_rank_asc_uses_signed_rank_margin_order(self) -> None:
+        result = run_workbench_with_test_warehouse(
+            WorkbenchConfig(
+                user_input=RANK_ONLY_RECOMMENDATION_QUERY,
+                soft_preferences={
+                    "prompt": RANK_ONLY_RECOMMENDATION_QUERY,
+                    "sort_mode": "rank_asc",
+                },
+                extractor="regex",
+            )
+        )
+
+        self.assertEqual(result["query_type"], "recommendation")
+        execution = result["evidence_pack"]["execution_summary"]
+        self.assertEqual(
+            execution["sort"],
+            [{"field": "rank_margin", "direction": "ASC"}],
+        )
+        self.assertNotIn("ABS(", execution["sql"])
+        top_margins = [
+            int(item["safety_margin"])
+            for item in result["top_results"][:5]
+        ]
+        self.assertGreaterEqual(len(top_margins), 2)
+        self.assertEqual(top_margins, sorted(top_margins))
+
+    def test_unsupported_school_rank_sort_mode_falls_back_to_rank_distance(self) -> None:
         result = run_workbench_with_test_warehouse(
             WorkbenchConfig(
                 user_input=RANK_ONLY_RECOMMENDATION_QUERY,
@@ -188,9 +219,32 @@ class AdmissionsQueryTypesTest(unittest.TestCase):
         execution = result["evidence_pack"]["execution_summary"]
         self.assertEqual(
             execution["sort"],
-            [{"field": "rank_margin", "direction": "ASC"}],
+            [{"field": "rank_distance", "direction": "ASC"}],
         )
         self.assertNotIn("院校排名", execution["sql"])
+
+    def test_free_form_sort_mode_falls_back_without_entering_sql(self) -> None:
+        sort_mode = "rank_desc; DROP TABLE admissions"
+        result = run_workbench_with_test_warehouse(
+            WorkbenchConfig(
+                user_input=RANK_ONLY_RECOMMENDATION_QUERY,
+                soft_preferences={
+                    "prompt": RANK_ONLY_RECOMMENDATION_QUERY,
+                    "sort_mode": sort_mode,
+                },
+                extractor="regex",
+            )
+        )
+
+        self.assertEqual(result["query_type"], "recommendation")
+        execution = result["evidence_pack"]["execution_summary"]
+        self.assertEqual(
+            execution["sort"],
+            [{"field": "rank_distance", "direction": "ASC"}],
+        )
+        self.assertNotIn(sort_mode, execution["sql"])
+        self.assertNotIn("DROP TABLE", execution["sql"])
+        self.assertIn("ABS(", execution["sql"])
 
     def test_rank_ending_in_four_digits_is_not_parsed_as_year(self) -> None:
         result = _run(
@@ -337,7 +391,7 @@ class AdmissionsQueryTypesTest(unittest.TestCase):
         self.assertEqual(result["query_type"], "recommendation")
         execution = result["evidence_pack"]["execution_summary"]
         self.assertEqual(execution["metric"], "rank_margin")
-        self.assertEqual(execution["sort"], [{"field": "rank_margin", "direction": "ASC"}])
+        self.assertEqual(execution["sort"], [{"field": "rank_distance", "direction": "ASC"}])
         self.assertTrue(
             any(
                 "rank_margin" in item
