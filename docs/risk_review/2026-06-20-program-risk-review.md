@@ -67,3 +67,12 @@ rg -n "(/Users/|outputs/|广东省|duckdb|localhost|127\\.0\\.0\\.1|deepseek|api
 | diagnostics quality runner 存在 shell command 注入面 | `quality.run` payload 的 `output_dir` 可进入 `scripts/run_quality_gate.py` 中的 shell command 字符串 | 修复 A2-002 前将 `diagnostics` 权限视为高危内部权限，不暴露给浏览器、LLM-safe adapter 或不可信自动化 |
 | 前端 dev token 仍是本地便利默认 | `rg -n "(DEFAULT_DEV_ACTOR_TOKEN|operator-token|localStorage|hard_filters|soft_preferences|confirmed_candidates|candidate_id|demoRun|mock|admissions|广东|32000|深圳大学|fetch\\(\\))" frontend/src`：命中项主要分为 demo default（`demoRun`、`广东`、`32000`、mock admissions）、dev auth（`DEFAULT_DEV_ACTOR_TOKEN`、`operator-token`、`localStorage`）、API payload（`hard_filters`、`soft_preferences`、`confirmed_candidates`、`candidate_id`）、frontend display（结果、确认、未执行文案）；唯一需要跟踪的风险是 dev mode operator token 误入可被生产接受的 token map | 保持 `import.meta.env.DEV` 限制，生产环境不要接受演示 token；后续可将本地 token 改成显式输入 |
 | tracked `outputs/` 证据边界需要继续显式化 | 本轮 release package validation 通过，但 artifact scan 命中多个 tracked `outputs/` evidence 文件；这不是临时 DuckDB、上传目录、audit 或密钥泄露，但与“outputs 默认不提交”容易混淆 | 后续 release 清单应列出允许跟踪的 `outputs/` evidence 路径，清理命令继续删除 `outputs/tool_manifest/review_tool_manifest.json`、`outputs/openapi/review_openapi.json` 等临时 review export |
+
+## 汇总结论
+
+- P0 数量：1（A2-002）
+- P1 数量：1（A1-002）
+- P2 数量：6（A1-001、A1-003、A2-001、A3-001、A4-001、A4-002）
+- P3 数量：0
+- 可以直接进入整改的批次：R1、R2、R3、R4；优先从 R1 开始。
+- 暂不整改但需要发布说明的风险：A4-001 已通过文档补充处理；前端 rendered smoke 尚未自动化，放入 R3；tracked `outputs/` evidence 边界放入 R4。
