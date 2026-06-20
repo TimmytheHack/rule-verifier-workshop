@@ -12,6 +12,17 @@ from typing import Any
 from src.domains import DomainConfig
 
 
+def _default_decision_guidance() -> dict[str, Any]:
+    return {
+        "status": "reference_only",
+        "execution_effect": "does_not_change_sql_or_results",
+        "executable": False,
+        "matched_rules": [],
+        "information_requests": [],
+        "no_schema_field_preferences": [],
+    }
+
+
 @dataclass(frozen=True)
 class EvidencePack:
     """Serializable evidence passed to deterministic and optional LLM answers."""
@@ -35,6 +46,9 @@ class EvidencePack:
     no_schema_field_preferences: list[dict[str, Any]] = field(default_factory=list)
     rejected_confirmations: list[dict[str, Any]] = field(default_factory=list)
     policy_references: list[dict[str, Any]] = field(default_factory=list)
+    decision_guidance: dict[str, Any] = field(
+        default_factory=_default_decision_guidance
+    )
 
     @classmethod
     def from_verified_pipeline(
@@ -51,6 +65,7 @@ class EvidencePack:
         confirmation_state: dict[str, Any] | None = None,
         domain_config: DomainConfig | None = None,
         policy_references: list[dict[str, Any]] | None = None,
+        decision_guidance: dict[str, Any] | None = None,
     ) -> "EvidencePack":
         """Build an answer-safe evidence pack from post-execution artifacts."""
 
@@ -58,12 +73,17 @@ class EvidencePack:
         compact_rules = [_compact_rule(rule, domain_config) for rule in executed_rules]
         execution = execution_summary or {}
         confirmation = confirmation_state or classified_rules.get("confirmation_state") or {}
+        guidance = decision_guidance or _default_decision_guidance()
+        guidance_not_executed = _guidance_not_executed_preferences(guidance)
         confirmations = _candidate_confirmations(
             classified_rules,
             execution,
             domain_config,
         )
-        not_executed = _not_executed_preferences(classified_rules)
+        not_executed = (
+            _not_executed_preferences(classified_rules)
+            + guidance_not_executed
+        )
         top_results = [
             _compact_result(rank, row, domain_config)
             for rank, row in enumerate(traced_results[:top_k], start=1)
@@ -102,12 +122,13 @@ class EvidencePack:
                 [],
             ),
             unconfirmed_candidates=confirmation.get("unconfirmed_candidates", []),
-            no_schema_field_preferences=confirmation.get(
-                "no_schema_field_preferences",
-                [],
+            no_schema_field_preferences=(
+                confirmation.get("no_schema_field_preferences", [])
+                + (guidance.get("no_schema_field_preferences") or [])
             ),
             rejected_confirmations=confirmation.get("rejected_candidates", []),
             policy_references=policy_references or [],
+            decision_guidance=guidance,
         )
 
     def to_dict(self) -> dict[str, Any]:
@@ -120,6 +141,34 @@ def evidence_to_dict(evidence_pack: EvidencePack | dict[str, Any]) -> dict[str, 
     if isinstance(evidence_pack, EvidencePack):
         return evidence_pack.to_dict()
     return dict(evidence_pack)
+
+
+def _guidance_not_executed_preferences(
+    guidance: dict[str, Any],
+) -> list[dict[str, Any]]:
+    items = []
+    for index, item in enumerate(
+        guidance.get("no_schema_field_preferences") or [],
+        start=1,
+    ):
+        source_text = str(item.get("source_text") or "就业偏好")
+        reason = str(item.get("reason") or "当前数据中没有可执行字段。")
+        items.append(
+            {
+                "id": f"career_guidance_not_exec_{index}",
+                "source_text": source_text,
+                "preference": source_text,
+                "display": f"{source_text}未执行：{reason}",
+                "reason": reason,
+                "missing_field": (
+                    item.get("field")
+                    or item.get("field_id")
+                    or "缺少已审查数据字段"
+                ),
+                "source_span": source_text,
+            }
+        )
+    return items
 
 
 def _compact_rule(

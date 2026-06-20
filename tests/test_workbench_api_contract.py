@@ -66,6 +66,11 @@ class WorkbenchApiContractTest(unittest.TestCase):
         result = _run(OK_PROMPT)
 
         assert_workbench_contract(self, result)
+        self.assertIn("decision_guidance", result["evidence_pack"])
+        self.assertEqual(
+            result["evidence_pack"]["decision_guidance"]["execution_effect"],
+            "does_not_change_sql_or_results",
+        )
         self.assertEqual(result["schema_version"], "workbench_response.v1")
         self.assertEqual(result["domain"], "admissions")
         self.assertEqual(result["domain_pack_status"], "approved")

@@ -84,6 +84,18 @@ class TemplateReportBuilder:
                 _policy_reference_line(reference)
                 for reference in evidence["policy_references"]
             )
+        if evidence.get("decision_guidance", {}).get("matched_rules"):
+            lines.extend(["", "就业与家庭资源说明（不参与筛选）："])
+            lines.extend(
+                _decision_guidance_line(item)
+                for item in evidence["decision_guidance"].get("matched_rules", [])
+            )
+            if evidence["decision_guidance"].get("information_requests"):
+                lines.extend(["", "需要补充的信息："])
+                lines.extend(
+                    _information_request_line(item)
+                    for item in evidence["decision_guidance"]["information_requests"]
+                )
 
         lines.extend(["", "未执行但已保留的偏好："])
         if evidence["not_executed_preferences"]:
@@ -175,6 +187,23 @@ def _policy_reference_line(reference: dict[str, Any]) -> str:
         f"来源：{reference.get('source')}；命中：{terms}；"
         "该说明不参与筛选。"
     )
+
+
+def _decision_guidance_line(item: dict[str, Any]) -> str:
+    return (
+        f"- {item.get('label')}：该规则只进入解释证据，"
+        "不改变 SQL、不改变结果数量。"
+    )
+
+
+def _information_request_line(item: dict[str, Any]) -> str:
+    options = item.get("fixed_options") or []
+    option_text = (
+        f"固定选项：{'、'.join(str(option) for option in options)}。"
+        if options
+        else ""
+    )
+    return f"- {item.get('label')}：{item.get('question')}{option_text}"
 
 
 def _extracted_preference_line(preference: dict[str, Any]) -> str:

@@ -5,12 +5,14 @@ import tempfile
 import unittest
 from pathlib import Path
 
+from src.api.workbench import WorkbenchConfig
 from src.domains import DomainConfig
 from src.extractors.deepseek_extractor import normalize_slots
 from src.extractors.regex_extractor import RegexExtractor
 from src.reporting.career_guidance import career_guidance_for_query
 from src.schema.attribute_grounder import AttributeGrounder
 from src.schema.schema_registry import SchemaRegistry
+from tests.warehouse_test_utils import run_workbench_with_test_warehouse
 
 
 ADMISSIONS_DOMAIN = DomainConfig.load("admissions")
@@ -648,6 +650,57 @@ class CareerGuidancePolicyTest(unittest.TestCase):
         self.assertEqual(second["matched_rules"], [])
         self.assertEqual(second["information_requests"], [])
         self.assertEqual(second["no_schema_field_preferences"], [])
+
+
+class CareerGuidanceWorkbenchTest(unittest.TestCase):
+    def test_good_employment_guidance_does_not_enter_sql(self) -> None:
+        query = "广东物理，位次9000，想读计算机，家里没资源，想选好就业的专业，请推荐。"
+
+        result = run_workbench_with_test_warehouse(
+            WorkbenchConfig(
+                user_input=query,
+                soft_preferences={"prompt": query},
+                extractor="regex",
+            )
+        )
+
+        guidance = result["evidence_pack"]["decision_guidance"]
+        self.assertEqual(guidance["execution_effect"], "does_not_change_sql_or_results")
+        self.assertFalse(guidance["executable"])
+        self.assertTrue(guidance["information_requests"])
+        self.assertNotIn(
+            "employment_outlook",
+            [item["field"] for item in result["executed_filters"]],
+        )
+        self.assertNotIn(
+            "就业结果字段",
+            str(result["evidence_pack"]["execution_summary"].get("params")),
+        )
+        self.assertIn("就业与家庭资源说明（不参与筛选）", result["answer"])
+
+    def test_score_only_with_career_guidance_still_does_not_execute(self) -> None:
+        query = "广东物理，630分，家里没资源，想选好就业的计算机专业。"
+
+        result = run_workbench_with_test_warehouse(
+            WorkbenchConfig(
+                user_input=query,
+                hard_filters={
+                    "source_province": "广东",
+                    "subject_type": "物理",
+                    "user_score": 630,
+                },
+                soft_preferences={"prompt": query},
+                extractor="regex",
+            )
+        )
+
+        self.assertEqual(result["status"], "needs_confirmation")
+        self.assertEqual(result["result_count"], 0)
+        self.assertEqual(result["debug_trace"]["execution"]["sql"], "")
+        self.assertEqual(
+            result["evidence_pack"]["decision_guidance"]["execution_effect"],
+            "does_not_change_sql_or_results",
+        )
 
 
 if __name__ == "__main__":

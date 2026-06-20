@@ -37,6 +37,7 @@ from src.extractors.llm_slot_adapter import (
     llm_runtime_enabled,
 )
 from src.extractors.regex_extractor import RegexExtractor
+from src.reporting.career_guidance import career_guidance_for_query
 from src.reporting.deepseek_answer_generator import (
     DeepSeekAnswerGenerator,
 )
@@ -341,6 +342,15 @@ def _run_workbench(config: WorkbenchConfig) -> dict[str, Any]:
     )
     extracted_preferences = _extracted_preferences(slots, domain_config)
     policy_references = _policy_references_for_config(config, domain_config)
+    decision_guidance = _decision_guidance_for_payload(
+        config,
+        domain_config,
+        slots,
+    )
+    guidance_not_executed = _guidance_not_executed_preferences(decision_guidance)
+    guidance_no_schema = (
+        decision_guidance.get("no_schema_field_preferences") or []
+    )
     evidence = EvidencePack.from_verified_pipeline(
         user_request=_compose_user_request(config),
         executed_rules=hard_rules,
@@ -354,6 +364,7 @@ def _run_workbench(config: WorkbenchConfig) -> dict[str, Any]:
         confirmation_state=confirmation_state,
         domain_config=domain_config,
         policy_references=policy_references,
+        decision_guidance=decision_guidance,
     )
     report, generator_usage = _generate_report(
         config=config,
@@ -384,9 +395,16 @@ def _run_workbench(config: WorkbenchConfig) -> dict[str, Any]:
         "proposed_rules": _display_proposed_rules(proposed_rules),
         "deterministic_rules": [_display_rule(rule) for rule in classified_rules["deterministic_rules"]],
         "candidate_rules": _candidate_rules(classified_rules),
-        "not_executed_preferences": _not_executed_preferences(
-            classified_rules,
-            domain_config,
+        "not_executed_preferences": (
+            _not_executed_preferences(
+                classified_rules,
+                domain_config,
+            )
+            + guidance_not_executed
+        ),
+        "no_schema_field_preferences": (
+            confirmation_state.get("no_schema_field_preferences", [])
+            + guidance_no_schema
         ),
         "simulated_confirmations": _simulated_confirmations(classified_rules),
         "executable_rules": [_executable_rule(rule) for rule in hard_rules],
@@ -488,11 +506,27 @@ def _planned_query_payload(
     ]
     result_count = len(planned_rows)
     policy_references = _policy_references_for_config(config, domain_config)
+    decision_guidance = _decision_guidance_for_payload(
+        config,
+        domain_config,
+        _guidance_slots_for_payload(config, domain_config),
+    )
+    guidance_not_executed = _guidance_not_executed_preferences(decision_guidance)
+    guidance_no_schema = (
+        decision_guidance.get("no_schema_field_preferences") or []
+    )
+    combined_no_schema_preferences = (
+        planned_result.no_schema_field_preferences
+        + guidance_no_schema
+    )
     answer = _append_policy_reference_answer(
-        _planned_answer_with_audit(
-            planned_result.answer,
-            hard_rules,
-            planned_result.no_schema_field_preferences,
+        _append_decision_guidance_answer(
+            _planned_answer_with_audit(
+                planned_result.answer,
+                hard_rules,
+                combined_no_schema_preferences,
+            ),
+            decision_guidance,
         ),
         policy_references,
     )
@@ -501,7 +535,10 @@ def _planned_query_payload(
         "query_type": planned_result.query_type,
         "executed_rules": hard_rules,
         "candidate_confirmations": planned_result.candidates_to_confirm,
-        "not_executed_preferences": planned_result.no_schema_field_preferences,
+        "not_executed_preferences": (
+            planned_result.no_schema_field_preferences
+            + guidance_not_executed
+        ),
         "result_count": result_count,
         "top_k_results": evidence_top_results,
         "result_sections": planned_result.result_sections,
@@ -524,9 +561,10 @@ def _planned_query_payload(
         "confirmation_source": [],
         "executed_after_confirmation": [],
         "unconfirmed_candidates": planned_result.candidates_to_confirm,
-        "no_schema_field_preferences": planned_result.no_schema_field_preferences,
+        "no_schema_field_preferences": combined_no_schema_preferences,
         "rejected_confirmations": [],
         "policy_references": policy_references,
+        "decision_guidance": decision_guidance,
     }
     legacy_payload = {
         "mode": "api",
@@ -552,7 +590,7 @@ def _planned_query_payload(
             "confirmation_source": [],
             "executed_after_confirmation": [],
             "unconfirmed_candidates": planned_result.candidates_to_confirm,
-            "no_schema_field_preferences": planned_result.no_schema_field_preferences,
+            "no_schema_field_preferences": combined_no_schema_preferences,
         },
         "proposed_rules": [],
         "deterministic_rules": [_display_rule(rule) for rule in hard_rules],
@@ -563,7 +601,7 @@ def _planned_query_payload(
                 planned_result.no_schema_field_preferences,
                 start=1,
             )
-        ],
+        ] + guidance_not_executed,
         "simulated_confirmations": {},
         "executable_rules": [_executable_rule(rule) for rule in hard_rules],
         "execution": _display_execution_summary(planned_result.execution_summary),
@@ -608,7 +646,7 @@ def _planned_query_payload(
         confirmed_rules=[],
         unconfirmed_candidates=planned_result.candidates_to_confirm,
         unexecuted_preferences=legacy_payload["not_executed_preferences"],
-        no_schema_field_preferences=planned_result.no_schema_field_preferences,
+        no_schema_field_preferences=combined_no_schema_preferences,
         rejected_confirmations=[],
         warnings=_contract_warnings(
             planned_result.warnings,
@@ -680,6 +718,94 @@ def _append_policy_reference_answer(
     return "\n".join(lines)
 
 
+def _append_decision_guidance_answer(
+    answer: str,
+    decision_guidance: dict[str, Any],
+) -> str:
+    if not decision_guidance.get("matched_rules"):
+        return answer
+    lines = [answer, "", "就业与家庭资源说明（不参与筛选）："]
+    lines.extend(
+        _decision_guidance_line(item)
+        for item in decision_guidance.get("matched_rules", [])
+    )
+    if decision_guidance.get("information_requests"):
+        lines.extend(["", "需要补充的信息："])
+        lines.extend(
+            _information_request_line(item)
+            for item in decision_guidance["information_requests"]
+        )
+    return "\n".join(lines)
+
+
+def _decision_guidance_for_payload(
+    config: WorkbenchConfig,
+    domain_config: DomainConfig,
+    slots: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    return career_guidance_for_query(
+        _compose_user_request(config),
+        slots or {},
+        domain_config,
+    )
+
+
+def _guidance_slots_for_payload(
+    config: WorkbenchConfig,
+    domain_config: DomainConfig,
+) -> dict[str, Any]:
+    if domain_config.domain_id != ADMISSIONS_DOMAIN.domain_id:
+        return {}
+    prompt = _soft_prompt(config) or config.user_input or _compose_user_request(config)
+    slots = RegexExtractor(alias_path=domain_config.value_aliases_path).extract(prompt)
+    return _slots_from_inputs(slots, config=config)
+
+
+def _guidance_not_executed_preferences(
+    guidance: dict[str, Any],
+) -> list[dict[str, Any]]:
+    items = []
+    for index, item in enumerate(
+        guidance.get("no_schema_field_preferences") or [],
+        start=1,
+    ):
+        source_text = str(item.get("source_text") or "就业偏好")
+        reason = str(item.get("reason") or "当前数据中没有可执行字段。")
+        items.append(
+            {
+                "id": f"career_guidance_not_exec_{index}",
+                "source_text": source_text,
+                "preference": source_text,
+                "display": f"{source_text}未执行：{reason}",
+                "reason": reason,
+                "missing_field": (
+                    item.get("field")
+                    or item.get("field_id")
+                    or "缺少已审查数据字段"
+                ),
+                "source_span": source_text,
+            }
+        )
+    return items
+
+
+def _decision_guidance_line(item: dict[str, Any]) -> str:
+    return (
+        f"- {item.get('label')}：该规则只进入解释证据，"
+        "不改变 SQL、不改变结果数量。"
+    )
+
+
+def _information_request_line(item: dict[str, Any]) -> str:
+    options = item.get("fixed_options") or []
+    option_text = (
+        f"固定选项：{'、'.join(str(option) for option in options)}。"
+        if options
+        else ""
+    )
+    return f"- {item.get('label')}：{item.get('question')}{option_text}"
+
+
 def _planned_not_executed_preference(
     index: int,
     item: dict[str, Any],
@@ -704,6 +830,12 @@ def _contract_success_payload(
     domain_config: DomainConfig,
 ) -> dict[str, Any]:
     status = _success_status(legacy_payload, confirmation_state)
+    no_schema_preferences = legacy_payload.get("no_schema_field_preferences")
+    if no_schema_preferences is None:
+        no_schema_preferences = confirmation_state.get(
+            "no_schema_field_preferences",
+            [],
+        )
     response = WorkbenchResponse(
         schema_version=WORKBENCH_SCHEMA_VERSION,
         domain=domain_config.domain_id,
@@ -722,10 +854,7 @@ def _contract_success_payload(
         confirmed_rules=_contract_confirmed_rules(confirmation_state),
         unconfirmed_candidates=confirmation_state.get("unconfirmed_candidates", []),
         unexecuted_preferences=legacy_payload["not_executed_preferences"],
-        no_schema_field_preferences=confirmation_state.get(
-            "no_schema_field_preferences",
-            [],
-        ),
+        no_schema_field_preferences=no_schema_preferences,
         rejected_confirmations=confirmation_state.get("rejected_candidates", []),
         warnings=_contract_warnings(
             legacy_payload.get("natural_language_report", {}).get("warnings", []),

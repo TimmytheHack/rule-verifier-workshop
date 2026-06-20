@@ -34,8 +34,10 @@ class DeepSeekAnswerGenerator:
             ),
             user_prompt=(
                 "请基于以下证据包生成一段简明中文回答。回答必须包含：结果总数、"
-                "抽取结果、规则提议审查、已执行规则、候选偏好确认、前置结果、"
-                "未执行偏好和安全警告。每条前置结果如果存在这些字段，都要写出："
+                "抽取结果、规则提议审查、已执行规则、候选偏好确认、"
+                "就业与家庭资源说明、前置结果、未执行偏好和安全警告。"
+                "decision_guidance 只能解释和追问，不得改变 SQL、结果数或 executed_rules。"
+                "每条前置结果如果存在这些字段，都要写出："
                 "院校名称、院校专业组代码、专业名称、专业代码、专业全称、选科要求、"
                 "城市、学费、专业组最低位次、专业最低位次、相对排位差。证据包 JSON："
                 f"{json.dumps(evidence, ensure_ascii=False)}"
@@ -164,6 +166,18 @@ def _evidence_coverage_appendix(evidence: dict[str, Any]) -> str:
             f"  - 已拒绝：{item.get('candidate_id')}，原因：{item.get('reason')}"
             for item in evidence["rejected_confirmations"]
         )
+    guidance = evidence.get("decision_guidance") or {}
+    if guidance.get("matched_rules"):
+        lines.extend(["- 就业与家庭资源说明（不参与筛选）："])
+        lines.extend(
+            f"  - {item.get('label')}：不改变 SQL、不改变结果数量。"
+            for item in guidance.get("matched_rules") or []
+        )
+        if guidance.get("information_requests"):
+            lines.extend(
+                f"  - 需要补充：{item.get('label')}：{item.get('question')}"
+                for item in guidance["information_requests"]
+            )
     lines.extend(["- 前置结果："])
     lines.extend(_top_result_text(row) for row in evidence["top_k_results"])
     lines.extend(["- 未执行偏好："])

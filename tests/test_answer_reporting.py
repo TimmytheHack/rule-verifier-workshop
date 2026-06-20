@@ -121,6 +121,38 @@ def sample_evidence() -> EvidencePack:
     )
 
 
+def sample_decision_guidance() -> dict[str, object]:
+    return {
+        "status": "reference_only",
+        "execution_effect": "does_not_change_sql_or_results",
+        "executable": False,
+        "matched_rules": [
+            {
+                "rule_id": "career_no_family_resource_goal",
+                "label": "家里缺少就业资源时先明确就业目标",
+                "effect": "does_not_change_sql_or_results",
+            }
+        ],
+        "information_requests": [
+            {
+                "question_id": "q_employment_goal",
+                "label": "就业目标",
+                "question": "请先选择更看重的就业目标。",
+                "fixed_options": ["稳定就业", "体制内/考公考编"],
+                "reason": "不能把好就业直接翻译成筛选条件。",
+            }
+        ],
+        "no_schema_field_preferences": [
+            {
+                "source_text": "好就业",
+                "field_id": "employment_outlook",
+                "field": "就业结果字段",
+                "reason": "当前数据中没有已审查就业结果字段。",
+            }
+        ],
+    }
+
+
 class AnswerReportingTest(unittest.TestCase):
     def test_template_answer_is_fully_evidence_aligned(self) -> None:
         evidence = sample_evidence().to_dict()
@@ -130,6 +162,16 @@ class AnswerReportingTest(unittest.TestCase):
         self.assertIn("共筛选到 1 条", answer)
         self.assertIn("未执行，未参与筛选", answer)
         self.assertEqual(score["task_success_score"], score["max_score"])
+
+    def test_template_answer_displays_career_guidance_as_reference_only(self) -> None:
+        evidence = sample_evidence().to_dict()
+        evidence["decision_guidance"] = sample_decision_guidance()
+        answer = TemplateReportBuilder().build(evidence)
+
+        self.assertIn("就业与家庭资源说明（不参与筛选）", answer)
+        self.assertIn("家里缺少就业资源时先明确就业目标", answer)
+        self.assertIn("不改变 SQL、不改变结果数量", answer)
+        self.assertIn("固定选项：稳定就业、体制内/考公考编", answer)
 
     def test_answer_evaluator_flags_unsupported_claims(self) -> None:
         evidence = sample_evidence().to_dict()
@@ -159,12 +201,25 @@ class AnswerReportingTest(unittest.TestCase):
         self.assertIn("not_executed_preferences", fake_client.last_user_prompt)
         self.assertIn("院校专业组代码", fake_client.last_user_prompt)
         self.assertIn("不想去太贵的中外合作", fake_client.last_user_prompt)
+        self.assertIn("decision_guidance 只能解释和追问", fake_client.last_user_prompt)
         self.assertNotIn("ExcelAdapter", fake_client.last_user_prompt)
         self.assertIn("证据覆盖清单", result["answer"])
         self.assertIn("院校专业组代码：10590251", result["answer"])
         self.assertIn("专业代码：353", result["answer"])
         self.assertIn("专业全称：计算机类", result["answer"])
         self.assertEqual(score["task_success_score"], score["max_score"])
+
+    def test_deepseek_coverage_appendix_lists_decision_guidance(self) -> None:
+        fake_client = FakeDeepSeekClient()
+        evidence = sample_evidence().to_dict()
+        evidence["decision_guidance"] = sample_decision_guidance()
+        result = DeepSeekAnswerGenerator(client=fake_client).generate(evidence)
+
+        self.assertIn("decision_guidance", fake_client.last_user_prompt)
+        self.assertIn("不得改变 SQL、结果数或 executed_rules", fake_client.last_user_prompt)
+        self.assertIn("就业与家庭资源说明（不参与筛选）", result["answer"])
+        self.assertIn("不改变 SQL、不改变结果数量", result["answer"])
+        self.assertIn("需要补充：就业目标", result["answer"])
 
     def test_compare_answers_skips_deepseek_when_not_requested(self) -> None:
         registry = SchemaRegistry(active_fields={}, configured_fields={})
