@@ -164,6 +164,33 @@ class AdmissionsQueryTypesTest(unittest.TestCase):
             "DESC NULLS LAST, group_min_score DESC NULLS LAST",
             execution["sql"],
         )
+        top_margins = [
+            int(item["safety_margin"])
+            for item in result["top_results"][:3]
+        ]
+        self.assertGreaterEqual(len(top_margins), 2)
+        self.assertGreater(top_margins[0], 0)
+        self.assertEqual(top_margins, sorted(top_margins, reverse=True))
+
+    def test_unsupported_school_rank_sort_mode_falls_back_to_rank_margin(self) -> None:
+        result = run_workbench_with_test_warehouse(
+            WorkbenchConfig(
+                user_input=RANK_ONLY_RECOMMENDATION_QUERY,
+                soft_preferences={
+                    "prompt": RANK_ONLY_RECOMMENDATION_QUERY,
+                    "sort_mode": "school_rank_asc",
+                },
+                extractor="regex",
+            )
+        )
+
+        self.assertEqual(result["query_type"], "recommendation")
+        execution = result["evidence_pack"]["execution_summary"]
+        self.assertEqual(
+            execution["sort"],
+            [{"field": "rank_margin", "direction": "ASC"}],
+        )
+        self.assertNotIn("院校排名", execution["sql"])
 
     def test_rank_ending_in_four_digits_is_not_parsed_as_year(self) -> None:
         result = _run(

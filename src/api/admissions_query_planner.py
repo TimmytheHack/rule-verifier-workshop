@@ -343,16 +343,20 @@ class AdmissionsQueryPlanner:
                 policy=policy,
             )
 
-        section_payload = _sectioned_recommendations(
+        rows_with_margins = _recommendation_rows_with_margins(
             rows=rows,
+            score=inputs.score,
+            rank=inputs.rank,
+        )
+        section_payload = _sectioned_recommendations(
+            rows=rows_with_margins,
             score=inputs.score,
             rank=inputs.rank,
             policy=policy,
         )
         projected_rows = [
             _recommendation_row_to_projected(row, self.domain_config)
-            for section in section_payload.values()
-            for row in section["items"]
+            for row in rows_with_margins
         ]
         metric = "rank_margin" if inputs.rank else "score_margin"
         sort_spec = _recommendation_sort(inputs, metric)
@@ -981,15 +985,7 @@ ORDER BY group_code ASC, min_score DESC NULLS LAST, major_code ASC
                 order_direction = "ASC"
                 order_params = [inputs.rank]
             else:
-                school_rank_col = self.domain_config.source_column_or_none("school_rank")
-                if (
-                    sort_spec == {"field": "school_rank", "direction": "ASC"}
-                    and school_rank_col
-                    and school_rank_col in self._table_columns()
-                ):
-                    order_metric = _numeric_expr(school_rank_col)
-                else:
-                    order_metric = _numeric_expr(kwargs["group_rank_col"])
+                order_metric = _numeric_expr(kwargs["group_rank_col"])
                 order_direction = "ASC"
         elif inputs.score:
             score_expr = _numeric_expr(kwargs["group_score_col"])
@@ -1047,8 +1043,6 @@ def _recommendation_sort(
         return {"field": "rank_margin", "direction": "DESC"}
     if inputs.sort_mode == "rank_asc" and inputs.rank:
         return {"field": "rank_margin", "direction": "ASC"}
-    if inputs.sort_mode == "school_rank_asc":
-        return {"field": "school_rank", "direction": "ASC"}
     return {"field": default_metric, "direction": "ASC"}
 
 
@@ -1106,19 +1100,35 @@ def _sectioned_recommendations(
     margin_policy = policy.get("margin_policy") or {}
     for row in rows:
         item = dict(row)
-        if rank and _int_or_none(row.get("group_min_rank")) is not None:
-            rank_margin = int(row["group_min_rank"]) - rank
-            item["rank_margin"] = rank_margin
+        if rank and item.get("rank_margin") is not None:
+            rank_margin = int(item["rank_margin"])
             key = _rank_section(rank_margin, margin_policy.get("rank_margin") or {})
-        elif score and _int_or_none(row.get("group_min_score")) is not None:
-            score_margin = score - int(row["group_min_score"])
-            item["score_margin"] = score_margin
+        elif score and item.get("score_margin") is not None:
+            score_margin = int(item["score_margin"])
             key = _score_section(score_margin, margin_policy.get("score_margin") or {})
         else:
             key = "match"
         if len(sections[key]["items"]) < SECTION_LIMIT:
             sections[key]["items"].append(_recommendation_section_item(item))
     return sections
+
+
+def _recommendation_rows_with_margins(
+    rows: list[dict[str, Any]],
+    score: int | None,
+    rank: int | None,
+) -> list[dict[str, Any]]:
+    enriched = []
+    for row in rows:
+        item = dict(row)
+        group_rank = _int_or_none(row.get("group_min_rank"))
+        group_score = _int_or_none(row.get("group_min_score"))
+        if rank and group_rank is not None:
+            item["rank_margin"] = group_rank - rank
+        elif score and group_score is not None:
+            item["score_margin"] = score - group_score
+        enriched.append(item)
+    return enriched
 
 
 def _rank_section(rank_margin: int, policy: dict[str, Any]) -> str:
