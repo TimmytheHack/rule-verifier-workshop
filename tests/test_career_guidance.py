@@ -5,6 +5,7 @@ import unittest
 from src.domains import DomainConfig
 from src.extractors.deepseek_extractor import normalize_slots
 from src.extractors.regex_extractor import RegexExtractor
+from src.reporting.career_guidance import career_guidance_for_query
 from src.schema.attribute_grounder import AttributeGrounder
 from src.schema.schema_registry import SchemaRegistry
 
@@ -236,6 +237,45 @@ class CareerGuidanceExtractionTest(unittest.TestCase):
         self.assertFalse(
             by_path["preferences.career_goal_raw"]["can_become_executable_rule"]
         )
+
+
+class CareerGuidancePolicyTest(unittest.TestCase):
+    def test_no_resource_good_employment_returns_information_request_only(self) -> None:
+        query = "家里没资源，不知道怎么选专业，想选好就业的。"
+        slots = RegexExtractor().extract(query)
+
+        guidance = career_guidance_for_query(query, slots, ADMISSIONS_DOMAIN)
+
+        self.assertEqual(guidance["status"], "reference_only")
+        self.assertEqual(guidance["execution_effect"], "does_not_change_sql_or_results")
+        self.assertIn(
+            "career_no_family_resource_goal",
+            [item["rule_id"] for item in guidance["matched_rules"]],
+        )
+        self.assertIn(
+            "employment_outlook",
+            [item["field_id"] for item in guidance["no_schema_field_preferences"]],
+        )
+        self.assertTrue(
+            any(
+                item["question_id"] == "q_employment_goal"
+                for item in guidance["information_requests"]
+            )
+        )
+
+    def test_family_resource_query_asks_for_resource_details(self) -> None:
+        query = "家里在医疗系统有资源，想看以后更好就业的专业。"
+        slots = RegexExtractor().extract(query)
+
+        guidance = career_guidance_for_query(query, slots, ADMISSIONS_DOMAIN)
+
+        question_ids = {
+            item["question_id"]
+            for item in guidance["information_requests"]
+        }
+        self.assertIn("q_family_resource_industry", question_ids)
+        self.assertIn("q_family_resource_city", question_ids)
+        self.assertFalse(guidance["executable"])
 
 
 if __name__ == "__main__":

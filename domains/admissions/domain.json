@@ -26,7 +26,8 @@
     "answer_templates": "answer_templates.json",
     "golden_cases": "golden_cases.json",
     "top_result_mapping": "top_result_mapping.yaml",
-    "policy_references": "policy_references"
+    "policy_references": "policy_references",
+    "career_decision_policy": "career_decision_policy.json"
   },
   "policy_references": {
     "enabled": true,

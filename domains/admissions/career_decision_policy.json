@@ -1,0 +1,86 @@
+{
+  "description": "家庭资源与就业偏好 deterministic guidance policy。该文件不是知识库，不参与 SQL，只产生 EvidencePack 中的解释和信息需求。",
+  "status": "approved",
+  "execution_effect": "does_not_change_sql_or_results",
+  "rules": [
+    {
+      "rule_id": "career_no_family_resource_goal",
+      "label": "家里缺少就业资源时先明确就业目标",
+      "trigger_slots": {
+        "preferences.family_resource_raw": ["家里没有资源", "家里没资源", "没有资源", "没资源", "家里帮不上"]
+      },
+      "trigger_terms": ["好就业", "就业前景好", "好找工作", "就业更好", "将来好就业"],
+      "information_requests": [
+        {
+          "question_id": "q_employment_goal",
+          "label": "就业目标",
+          "question": "请先选择更看重的就业目标：稳定就业、体制内/考公考编、高薪市场化、本地就业、升学深造。",
+          "fixed_options": ["稳定就业", "体制内/考公考编", "高薪市场化", "本地就业", "升学深造"],
+          "reason": "没有家庭资源时，系统不能把“好就业”直接翻译成专业筛选条件。"
+        }
+      ],
+      "no_schema_field_preferences": [
+        {
+          "source_text": "好就业",
+          "field_id": "employment_outlook",
+          "field": "就业结果字段",
+          "match_type": "no_schema_field",
+          "executable": false,
+          "reason": "当前数据中没有已审查就业结果字段，不能执行“好就业”筛选。"
+        }
+      ]
+    },
+    {
+      "rule_id": "career_family_resource_context",
+      "label": "家庭资源只能作为上下文补充",
+      "trigger_slots": {
+        "preferences.family_resource_raw": ["家里有资源", "家里资源", "父母资源", "亲戚资源", "行业资源", "家里在医疗系统有资源", "家里在体制内有资源"]
+      },
+      "trigger_terms": ["好就业", "就业前景好", "好找工作", "就业更好", "将来好就业"],
+      "information_requests": [
+        {
+          "question_id": "q_family_resource_industry",
+          "label": "资源行业",
+          "question": "请说明家庭资源所在行业或单位类型，例如医疗、教育、金融、制造、互联网、体制内。",
+          "fixed_options": ["医疗", "教育", "金融", "制造", "互联网", "体制内", "其他"],
+          "reason": "行业资源必须先结构化，不能让系统从自由文本推断专业筛选条件。"
+        },
+        {
+          "question_id": "q_family_resource_city",
+          "label": "资源城市",
+          "question": "请说明资源主要所在城市或是否必须本地就业。",
+          "fixed_options": ["广州", "深圳", "佛山", "东莞", "珠海", "其他广东城市", "不限城市"],
+          "reason": "城市边界明确后，仍需走 city 字段 grounding 和 confirmation。"
+        }
+      ],
+      "no_schema_field_preferences": [
+        {
+          "source_text": "就业前景好",
+          "field_id": "employment_outlook",
+          "field": "就业结果字段",
+          "match_type": "no_schema_field",
+          "executable": false,
+          "reason": "当前数据中没有已审查就业结果字段，家庭资源也不能替代就业数据字段。"
+        }
+      ]
+    },
+    {
+      "rule_id": "career_goal_context_only",
+      "label": "就业目标作为上下文保留",
+      "trigger_slots": {
+        "preferences.career_goal_raw": ["稳定就业", "体制内", "考公", "考编", "高薪", "本地就业", "升学深造", "读研"]
+      },
+      "trigger_terms": [],
+      "information_requests": [
+        {
+          "question_id": "q_goal_to_candidate_major_set",
+          "label": "专业集合确认",
+          "question": "如果要把就业目标变成专业集合，必须先由 reviewed policy 给出候选专业集合，并通过 candidate_id 确认。",
+          "fixed_options": ["暂不转成筛选条件"],
+          "reason": "当前版本不把就业目标直接映射到专业集合。"
+        }
+      ],
+      "no_schema_field_preferences": []
+    }
+  ]
+}

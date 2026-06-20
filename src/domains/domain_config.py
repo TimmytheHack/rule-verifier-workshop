@@ -81,6 +81,13 @@ class DomainConfig:
         return self.resolve_path(paths["top_result_mapping"])
 
     @property
+    def career_decision_policy_path(self) -> Path | None:
+        paths = self.payload.get("paths") or {}
+        if "career_decision_policy" not in paths:
+            return None
+        return self.resolve_path(paths["career_decision_policy"])
+
+    @property
     def domain_version(self) -> str:
         return str(self.payload.get("domain_version") or "1")
 
