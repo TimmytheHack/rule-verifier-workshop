@@ -317,7 +317,7 @@ function rankWindowText(payload) {
     <section class="input-section soft-section">
       <div class="input-section-title">
         <h3>想看的方向</h3>
-        <el-tag type="warning" effect="plain">可选</el-tag>
+        <el-tag type="warning" effect="plain">含必填</el-tag>
       </div>
       <div class="quick-example-row" aria-label="常用示例">
         <el-button
