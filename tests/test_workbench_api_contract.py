@@ -344,9 +344,44 @@ class WorkbenchApiContractTest(unittest.TestCase):
             ["reach", "steady", "safe"],
         )
         self.assertEqual(
+            [
+                (
+                    item["rank_window_lower_percent"],
+                    item["rank_window_upper_percent"],
+                )
+                for item in options["rank_windows"]
+            ],
+            [(0, 0), (0, 15), (0, 50)],
+        )
+        self.assertEqual(
             [item["value"] for item in options["sort_modes"]],
             ["rank_asc", "rank_desc", "school_rank_asc"],
         )
+
+    def test_available_options_rank_windows_are_isolated_from_mutation(
+        self,
+    ) -> None:
+        from src.api.workbench import available_options
+
+        options = available_options()
+        first_window = options["rank_windows"][0]
+        original_value = first_window["value"]
+        original_upper_percent = first_window["rank_window_upper_percent"]
+
+        try:
+            first_window["value"] = "mutated"
+            first_window["rank_window_upper_percent"] = 99
+
+            fresh_options = available_options()
+
+            self.assertEqual(fresh_options["rank_windows"][0]["value"], "reach")
+            self.assertEqual(
+                fresh_options["rank_windows"][0]["rank_window_upper_percent"],
+                0,
+            )
+        finally:
+            first_window["value"] = original_value
+            first_window["rank_window_upper_percent"] = original_upper_percent
 
 
 if __name__ == "__main__":

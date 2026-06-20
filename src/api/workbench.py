@@ -296,7 +296,7 @@ def available_options() -> dict[str, Any]:
         "extractors": _options(EXTRACTOR_OPTIONS),
         "generators": _options(GENERATOR_OPTIONS),
         "models": _options(MODEL_OPTIONS),
-        "rank_windows": RANK_WINDOW_OPTIONS,
+        "rank_windows": [dict(item) for item in RANK_WINDOW_OPTIONS],
         "sort_modes": _options(SORT_MODE_OPTIONS),
     }
 
