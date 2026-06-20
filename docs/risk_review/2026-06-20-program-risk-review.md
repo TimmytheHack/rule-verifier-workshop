@@ -68,6 +68,14 @@ rg -n "(/Users/|outputs/|广东省|duckdb|localhost|127\\.0\\.0\\.1|deepseek|api
 | 前端 dev token 仍是本地便利默认 | `rg -n "(DEFAULT_DEV_ACTOR_TOKEN|operator-token|localStorage|hard_filters|soft_preferences|confirmed_candidates|candidate_id|demoRun|mock|admissions|广东|32000|深圳大学|fetch\\(\\))" frontend/src`：命中项主要分为 demo default（`demoRun`、`广东`、`32000`、mock admissions）、dev auth（`DEFAULT_DEV_ACTOR_TOKEN`、`operator-token`、`localStorage`）、API payload（`hard_filters`、`soft_preferences`、`confirmed_candidates`、`candidate_id`）、frontend display（结果、确认、未执行文案）；唯一需要跟踪的风险是 dev mode operator token 误入可被生产接受的 token map | 保持 `import.meta.env.DEV` 限制，生产环境不要接受演示 token；后续可将本地 token 改成显式输入 |
 | tracked `outputs/` 证据边界需要继续显式化 | 本轮 release package validation 通过，但 artifact scan 命中多个 tracked `outputs/` evidence 文件；这不是临时 DuckDB、上传目录、audit 或密钥泄露，但与“outputs 默认不提交”容易混淆 | 后续 release 清单应列出允许跟踪的 `outputs/` evidence 路径，清理命令继续删除 `outputs/tool_manifest/review_tool_manifest.json`、`outputs/openapi/review_openapi.json` 等临时 review export |
 
+## 最终验证
+
+| 命令 | 结果 | 说明 |
+|---|---|---|
+| `.venv/bin/python -m unittest discover -s tests` | 通过 | 运行 209 个测试，包含 2 个 expected failures，对应 A1-002 与 A2-002 的未整改风险 guard。 |
+| `cd frontend && npm run build` | 通过 | Vite build 退出 0；仍有既有 Rollup annotation notices 和 chunk-size warning。 |
+| `git diff --check` | 通过 | 未发现 whitespace/error marker 问题。 |
+
 ## 汇总结论
 
 - P0 数量：1（A2-002）
