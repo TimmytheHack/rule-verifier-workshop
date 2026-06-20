@@ -347,9 +347,17 @@ def _run_workbench(config: WorkbenchConfig) -> dict[str, Any]:
         domain_config,
         slots,
     )
-    guidance_not_executed = _guidance_not_executed_preferences(decision_guidance)
-    guidance_no_schema = (
-        decision_guidance.get("no_schema_field_preferences") or []
+    base_no_schema_preferences = confirmation_state.get(
+        "no_schema_field_preferences",
+        [],
+    )
+    guidance_no_schema = _guidance_no_schema_preferences(
+        decision_guidance,
+        existing_preferences=base_no_schema_preferences,
+    )
+    guidance_not_executed = _guidance_not_executed_preferences(
+        decision_guidance,
+        guidance_no_schema,
     )
     evidence = EvidencePack.from_verified_pipeline(
         user_request=_compose_user_request(config),
@@ -403,7 +411,7 @@ def _run_workbench(config: WorkbenchConfig) -> dict[str, Any]:
             + guidance_not_executed
         ),
         "no_schema_field_preferences": (
-            confirmation_state.get("no_schema_field_preferences", [])
+            base_no_schema_preferences
             + guidance_no_schema
         ),
         "simulated_confirmations": _simulated_confirmations(classified_rules),
@@ -511,12 +519,17 @@ def _planned_query_payload(
         domain_config,
         _guidance_slots_for_payload(config, domain_config),
     )
-    guidance_not_executed = _guidance_not_executed_preferences(decision_guidance)
-    guidance_no_schema = (
-        decision_guidance.get("no_schema_field_preferences") or []
+    planned_no_schema_preferences = planned_result.no_schema_field_preferences
+    guidance_no_schema = _guidance_no_schema_preferences(
+        decision_guidance,
+        existing_preferences=planned_no_schema_preferences,
+    )
+    guidance_not_executed = _guidance_not_executed_preferences(
+        decision_guidance,
+        guidance_no_schema,
     )
     combined_no_schema_preferences = (
-        planned_result.no_schema_field_preferences
+        planned_no_schema_preferences
         + guidance_no_schema
     )
     answer = _append_policy_reference_answer(
@@ -536,7 +549,7 @@ def _planned_query_payload(
         "executed_rules": hard_rules,
         "candidate_confirmations": planned_result.candidates_to_confirm,
         "not_executed_preferences": (
-            planned_result.no_schema_field_preferences
+            planned_no_schema_preferences
             + guidance_not_executed
         ),
         "result_count": result_count,
@@ -598,7 +611,7 @@ def _planned_query_payload(
         "not_executed_preferences": [
             _planned_not_executed_preference(index, item)
             for index, item in enumerate(
-                planned_result.no_schema_field_preferences,
+                planned_no_schema_preferences,
                 start=1,
             )
         ] + guidance_not_executed,
@@ -763,10 +776,13 @@ def _guidance_slots_for_payload(
 
 def _guidance_not_executed_preferences(
     guidance: dict[str, Any],
+    no_schema_preferences: list[dict[str, Any]] | None = None,
 ) -> list[dict[str, Any]]:
     items = []
     for index, item in enumerate(
-        guidance.get("no_schema_field_preferences") or [],
+        no_schema_preferences
+        if no_schema_preferences is not None
+        else guidance.get("no_schema_field_preferences") or [],
         start=1,
     ):
         source_text = str(item.get("source_text") or "就业偏好")
@@ -787,6 +803,48 @@ def _guidance_not_executed_preferences(
             }
         )
     return items
+
+
+def _guidance_no_schema_preferences(
+    guidance: dict[str, Any],
+    existing_preferences: list[dict[str, Any]],
+) -> list[dict[str, Any]]:
+    return _records_without_existing_preference_keys(
+        guidance.get("no_schema_field_preferences") or [],
+        existing_preferences,
+    )
+
+
+def _records_without_existing_preference_keys(
+    records: list[dict[str, Any]],
+    existing_records: list[dict[str, Any]],
+) -> list[dict[str, Any]]:
+    seen = {
+        key
+        for item in existing_records
+        if (key := _preference_record_key(item)) is not None
+    }
+    output = []
+    for item in records:
+        key = _preference_record_key(item)
+        if key is not None and key in seen:
+            continue
+        output.append(item)
+        if key is not None:
+            seen.add(key)
+    return output
+
+
+def _preference_record_key(item: dict[str, Any]) -> tuple[str, str] | None:
+    source_text = item.get("source_text") or item.get("source_span")
+    if source_text in (None, ""):
+        source_text = item.get("preference")
+    if source_text in (None, ""):
+        return None
+    field_id = item.get("field_id")
+    if field_id not in (None, ""):
+        return (str(field_id), str(source_text))
+    return ("source_text", str(source_text))
 
 
 def _decision_guidance_line(item: dict[str, Any]) -> str:

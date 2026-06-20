@@ -678,6 +678,50 @@ class CareerGuidanceWorkbenchTest(unittest.TestCase):
         )
         self.assertIn("就业与家庭资源说明（不参与筛选）", result["answer"])
 
+    def test_good_employment_guidance_is_deduped_in_display_lists(self) -> None:
+        query = "广东物理，位次9000，想读计算机，家里没资源，想选好就业的专业。"
+
+        result = run_workbench_with_test_warehouse(
+            WorkbenchConfig(
+                user_input=query,
+                soft_preferences={"prompt": query},
+                extractor="regex",
+            )
+        )
+
+        def source_text(item: dict[str, object]) -> object:
+            return item.get("source_text") or item.get("preference") or item.get(
+                "source_span"
+            )
+
+        def no_schema_key_count(items: list[dict[str, object]]) -> int:
+            return [
+                (item.get("field_id"), source_text(item))
+                for item in items
+            ].count(("employment_outlook", "好就业"))
+
+        def not_executed_count(items: list[dict[str, object]]) -> int:
+            return [source_text(item) for item in items].count("好就业")
+
+        self.assertEqual(no_schema_key_count(result["no_schema_field_preferences"]), 1)
+        self.assertEqual(not_executed_count(result["unexecuted_preferences"]), 1)
+        self.assertEqual(
+            no_schema_key_count(result["evidence_pack"]["no_schema_field_preferences"]),
+            1,
+        )
+        self.assertEqual(
+            not_executed_count(result["evidence_pack"]["not_executed_preferences"]),
+            1,
+        )
+        self.assertEqual(
+            no_schema_key_count(
+                result["evidence_pack"]["decision_guidance"][
+                    "no_schema_field_preferences"
+                ]
+            ),
+            1,
+        )
+
     def test_score_only_with_career_guidance_still_does_not_execute(self) -> None:
         query = "广东物理，630分，家里没资源，想选好就业的计算机专业。"
 

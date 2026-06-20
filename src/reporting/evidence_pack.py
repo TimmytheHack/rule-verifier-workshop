@@ -74,7 +74,18 @@ class EvidencePack:
         execution = execution_summary or {}
         confirmation = confirmation_state or classified_rules.get("confirmation_state") or {}
         guidance = decision_guidance or _default_decision_guidance()
-        guidance_not_executed = _guidance_not_executed_preferences(guidance)
+        base_no_schema_preferences = confirmation.get(
+            "no_schema_field_preferences",
+            [],
+        )
+        guidance_no_schema_preferences = _guidance_no_schema_preferences(
+            guidance,
+            existing_preferences=base_no_schema_preferences,
+        )
+        guidance_not_executed = _guidance_not_executed_preferences(
+            guidance,
+            guidance_no_schema_preferences,
+        )
         confirmations = _candidate_confirmations(
             classified_rules,
             execution,
@@ -123,8 +134,8 @@ class EvidencePack:
             ),
             unconfirmed_candidates=confirmation.get("unconfirmed_candidates", []),
             no_schema_field_preferences=(
-                confirmation.get("no_schema_field_preferences", [])
-                + (guidance.get("no_schema_field_preferences") or [])
+                base_no_schema_preferences
+                + guidance_no_schema_preferences
             ),
             rejected_confirmations=confirmation.get("rejected_candidates", []),
             policy_references=policy_references or [],
@@ -145,10 +156,13 @@ def evidence_to_dict(evidence_pack: EvidencePack | dict[str, Any]) -> dict[str, 
 
 def _guidance_not_executed_preferences(
     guidance: dict[str, Any],
+    no_schema_preferences: list[dict[str, Any]] | None = None,
 ) -> list[dict[str, Any]]:
     items = []
     for index, item in enumerate(
-        guidance.get("no_schema_field_preferences") or [],
+        no_schema_preferences
+        if no_schema_preferences is not None
+        else guidance.get("no_schema_field_preferences") or [],
         start=1,
     ):
         source_text = str(item.get("source_text") or "就业偏好")
@@ -169,6 +183,48 @@ def _guidance_not_executed_preferences(
             }
         )
     return items
+
+
+def _guidance_no_schema_preferences(
+    guidance: dict[str, Any],
+    existing_preferences: list[dict[str, Any]],
+) -> list[dict[str, Any]]:
+    return _records_without_existing_preference_keys(
+        guidance.get("no_schema_field_preferences") or [],
+        existing_preferences,
+    )
+
+
+def _records_without_existing_preference_keys(
+    records: list[dict[str, Any]],
+    existing_records: list[dict[str, Any]],
+) -> list[dict[str, Any]]:
+    seen = {
+        key
+        for item in existing_records
+        if (key := _preference_record_key(item)) is not None
+    }
+    output = []
+    for item in records:
+        key = _preference_record_key(item)
+        if key is not None and key in seen:
+            continue
+        output.append(item)
+        if key is not None:
+            seen.add(key)
+    return output
+
+
+def _preference_record_key(item: dict[str, Any]) -> tuple[str, str] | None:
+    source_text = item.get("source_text") or item.get("source_span")
+    if source_text in (None, ""):
+        source_text = item.get("preference")
+    if source_text in (None, ""):
+        return None
+    field_id = item.get("field_id")
+    if field_id not in (None, ""):
+        return (str(field_id), str(source_text))
+    return ("source_text", str(source_text))
 
 
 def _compact_rule(
