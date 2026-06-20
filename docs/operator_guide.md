@@ -17,12 +17,7 @@
 所有 tool invoke 都写入 audit event，字段包括 `actor_id`、`tool_name`、`dataset_id`、`status`、`duration_seconds`、`side_effects` 和 `error_code`。audit log 不记录原始上传内容、环境变量或密钥。
 
 生产服务端只信任 `AUTH_TOKENS_JSON` 中配置的 token 映射。浏览器、LLM 或请求体传来的
-`permission_scopes`、`actor_id` 不授予权限。`make serve` 会提供本地开发 token，
-前端 `npm run dev` 默认发送 `operator-token` 进行人工 demo；也可以把其他 token 放入
-`localStorage.actor_token` 覆盖默认值。生产前端应由真实登录态或网关注入 token，不能把
-admin token 暴露给普通 LLM/agent。
-
-本地 Vite 开发模式会默认发送 `operator-token`，只用于配合 `make serve` 的本机演示。生产部署不得接受示例 token，必须通过服务端 `AUTH_TOKENS_JSON` 配置真实 token，并在网关或运维系统中控制 operator token 的分发。
+`permission_scopes`、`actor_id` 不授予权限。`make serve` 会提供本地开发 token，本地 Vite 开发模式会默认发送 `operator-token`，只用于配合 `make serve` 的本机演示。生产部署不得接受示例 token，必须通过服务端 `AUTH_TOKENS_JSON` 配置真实 token，并在网关或运维系统中控制 operator token 的分发。也可以把其他本地 token 放入 `localStorage.actor_token` 覆盖默认值；生产前端应由真实登录态或网关注入 token，不能把 admin token 暴露给普通 LLM/agent。
 
 ## 上传与 profile
 

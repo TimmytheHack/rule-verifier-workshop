@@ -13,7 +13,7 @@ docker build -t szu-preference-rule-server:local .
 使用 compose 启动：
 
 ```bash
-export AUTH_TOKENS_JSON='{"operator-token":{"actor_id":"operator","permission_scopes":["read_only","query","confirm","dataset_write","review_admin","warehouse_admin","diagnostics"]},"agent-token":{"actor_id":"agent","permission_scopes":["read_only","query","confirm"]}}'
+export AUTH_TOKENS_JSON='{"prod-operator-token-from-secret-manager":{"actor_id":"operator","permission_scopes":["read_only","query","confirm","dataset_write","review_admin","warehouse_admin","diagnostics"]},"prod-agent-token-from-secret-manager":{"actor_id":"agent","permission_scopes":["read_only","query","confirm"]}}'
 docker compose up --build
 ```
 
@@ -49,11 +49,11 @@ token 到 actor 和权限的映射只来自服务端环境变量 `AUTH_TOKENS_JS
 
 ```json
 {
-  "operator-token": {
+  "prod-operator-token-from-secret-manager": {
     "actor_id": "operator",
     "permission_scopes": ["read_only", "query", "confirm", "dataset_write", "review_admin", "warehouse_admin", "diagnostics"]
   },
-  "agent-token": {
+  "prod-agent-token-from-secret-manager": {
     "actor_id": "agent",
     "permission_scopes": ["read_only", "query", "confirm"]
   }

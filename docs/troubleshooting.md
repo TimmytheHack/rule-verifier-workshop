@@ -200,8 +200,7 @@ Authorization: Bearer <operator-token>
 
 - 检查 `AUTH_TOKENS_JSON` 中 token 是否映射了所需 `permission_scopes`；
 - 检查 HTTP header 是否包含 `Authorization: Bearer <token>` 或 `X-Actor-Token: <token>`；
-- 本地 demo 优先用 `make serve` 启动后端，并用 `npm run dev` 启动前端；两者会默认匹配 `operator-token`；
-- 本地 Vite 开发模式会默认发送 `operator-token`，只用于配合 `make serve` 的本机演示。生产部署不得接受示例 token，必须通过服务端 `AUTH_TOKENS_JSON` 配置真实 token，并在网关或运维系统中控制 operator token 的分发。
+- 本地 demo 优先用 `make serve` 启动后端，并用 `npm run dev` 启动前端；本地 Vite 开发模式会默认发送 `operator-token`，只用于配合 `make serve` 的本机演示。生产部署不得接受示例 token，必须通过服务端 `AUTH_TOKENS_JSON` 配置真实 token，并在网关或运维系统中控制 operator token 的分发。
 - 不要依赖请求体 `actor_context.permission_scopes` 或旧 `X-Permission-Scopes` header；
 - 不要把 admin tools 暴露给 LLM 自动调用。
 
