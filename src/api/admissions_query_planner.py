@@ -84,7 +84,16 @@ class AdmissionsQueryPlanner:
             return QUERY_TYPE_GROUP_DETAIL
         if _score_from_inputs(config, text) is not None:
             return QUERY_TYPE_RECOMMENDATION
+        if (
+            _rank_from_inputs(config, text) is not None
+            and self._has_recommendation_intent(text)
+        ):
+            return QUERY_TYPE_RECOMMENDATION
         return None
+
+    def _has_recommendation_intent(self, text: str) -> bool:
+        terms = self.aliases.get("recommendation_terms") or []
+        return any(str(term) in text for term in terms)
 
     def _group_detail_report(
         self,
@@ -255,6 +264,8 @@ class AdmissionsQueryPlanner:
             return readiness
         fields = policy.get("fields") or {}
         inputs = self._recommendation_inputs(config, user_request, policy)
+        if inputs.score and not inputs.rank:
+            return self._score_without_rank_result(inputs)
         if not inputs.major_terms:
             warning = _warning(
                 "missing_major_terms",
@@ -375,6 +386,45 @@ class AdmissionsQueryPlanner:
             policy=policy.get("margin_policy") or {},
         )
 
+    def _score_without_rank_result(
+        self,
+        inputs: _RecommendationInputs,
+    ) -> AdmissionsQueryResult:
+        warning = next(
+            (
+                item
+                for item in inputs.warnings
+                if item.get("code") == "score_without_rank"
+            ),
+            _warning(
+                "score_without_rank",
+                "只提供分数没有位次；请补充广东省排位，系统不会仅凭分数执行推荐。",
+                severity="error",
+            ),
+        )
+        warning = {**warning, "severity": "error"}
+        answer = (
+            "请先补充广东省排位/位次。当前只收到分数，系统不会仅凭分数执行推荐 SQL，"
+            "也不会把分数 margin 当作可执行录取判断。"
+        )
+        return AdmissionsQueryResult(
+            query_type=QUERY_TYPE_RECOMMENDATION,
+            status="needs_confirmation",
+            rows=[],
+            result_sections=_empty_recommendation_sections(),
+            execution_summary=_empty_execution_summary(
+                QUERY_TYPE_RECOMMENDATION,
+                warnings=[warning],
+            ),
+            answer=answer,
+            warnings=[warning],
+            executed_rules=[],
+            candidates_to_confirm=[],
+            no_schema_field_preferences=inputs.no_schema_preferences,
+            extracted_preferences=_recommendation_extracted_preferences(inputs),
+            policy={},
+        )
+
     def _resolve_year(self, config: Any, user_request: str) -> dict[str, Any]:
         hard_year = _parse_positive_int(config.hard_filters.get("year"))
         requested_year = hard_year or _parse_year(user_request)
@@ -436,7 +486,8 @@ class AdmissionsQueryPlanner:
             warnings.append(
                 _warning(
                     "score_without_rank",
-                    "只提供分数没有位次；系统只按历史最低分 margin 分组，不能判断录取概率。",
+                    "只提供分数没有位次；请补充广东省排位，系统不会仅凭分数执行推荐。",
+                    severity="error",
                 )
             )
         major_terms, candidates, major_match_mode = self._major_terms(

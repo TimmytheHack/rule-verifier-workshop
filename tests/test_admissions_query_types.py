@@ -21,9 +21,16 @@ GROUP_DETAIL_QUERY = (
 GROUP_DETAIL_NO_YEAR_QUERY = (
     "列出深圳大学录取最高的专业组及专业组里面的各个专业最低录取分数"
 )
-RECOMMENDATION_QUERY = (
+SCORE_ONLY_RECOMMENDATION_QUERY = (
     "我今年高考分数 630，想读人工智能、计算机，不想去国外，想留在广东省"
 )
+RANK_RECOMMENDATION_QUERY = (
+    "我今年高考分数 630，位次 9000，想读人工智能、计算机，不想去国外，想留在广东省"
+)
+RANK_ONLY_RECOMMENDATION_QUERY = (
+    "我今年位次 9000，想读人工智能、计算机，想留在广东省，请推荐"
+)
+RECOMMENDATION_QUERY = RANK_RECOMMENDATION_QUERY
 
 
 class AdmissionsQueryTypesTest(unittest.TestCase):
@@ -77,7 +84,38 @@ class AdmissionsQueryTypesTest(unittest.TestCase):
         )
         self.assertNotIn("录取概率高", result["answer"])
         self.assertIn("不是录取概率判断", result["answer"])
+        self.assertIn("位次 margin", result["answer"])
         self.assertIn("历史最低分/最低位次", result["answer"])
+
+    def test_score_only_recommendation_requires_rank_and_does_not_execute_sql(self) -> None:
+        result = _run(SCORE_ONLY_RECOMMENDATION_QUERY)
+
+        assert_workbench_contract(self, result)
+        self.assertEqual(result["query_type"], "recommendation")
+        self.assertEqual(result["status"], "needs_confirmation")
+        self.assertEqual(result["result_count"], 0)
+        self.assertEqual(result["result_sections"], {
+            "reach": {"label": "冲", "items": []},
+            "match": {"label": "稳", "items": []},
+            "safety": {"label": "保", "items": []},
+        })
+        self.assertIn("score_without_rank", _warning_codes(result))
+        execution = result["evidence_pack"]["execution_summary"]
+        self.assertIsNone(execution["executor"])
+        self.assertEqual(execution["sql"], "")
+        self.assertEqual(execution["params"], [])
+        self.assertNotIn("录取概率", result["answer"])
+
+    def test_rank_only_recommendation_query_is_detected(self) -> None:
+        result = _run(RANK_ONLY_RECOMMENDATION_QUERY)
+
+        assert_workbench_contract(self, result)
+        self.assertEqual(result["query_type"], "recommendation")
+        self.assertEqual(result["status"], "ok")
+        execution = result["evidence_pack"]["execution_summary"]
+        self.assertEqual(execution["metric"], "rank_margin")
+        self.assertEqual(execution["sort"], [{"field": "rank_margin", "direction": "ASC"}])
+        self.assertNotIn("score_without_rank", _warning_codes(result))
 
     def test_recommendation_evidence_records_calibration_policy(self) -> None:
         result = _run(RECOMMENDATION_QUERY)
@@ -100,13 +138,12 @@ class AdmissionsQueryTypesTest(unittest.TestCase):
         )
 
     def test_score_without_rank_adds_warning(self) -> None:
-        result = _run(RECOMMENDATION_QUERY)
+        result = _run(SCORE_ONLY_RECOMMENDATION_QUERY)
 
         self.assertIn("score_without_rank", _warning_codes(result))
-        self.assertEqual(
-            result["evidence_pack"]["execution_summary"]["metric"],
-            "score_margin",
-        )
+        self.assertEqual(result["status"], "needs_confirmation")
+        self.assertIsNone(result["evidence_pack"]["execution_summary"]["metric"])
+        self.assertEqual(result["evidence_pack"]["execution_summary"]["sql"], "")
 
     def test_rank_margin_takes_priority_when_rank_is_available(self) -> None:
         query = "我今年高考分数 630，位次 9000，想读人工智能、计算机，想留在广东省"
@@ -191,14 +228,15 @@ class AdmissionsQueryTypesTest(unittest.TestCase):
     def test_frontend_deterministic_fields_override_natural_language(self) -> None:
         result = run_workbench_with_test_warehouse(
             WorkbenchConfig(
-                user_input="我今年高考分数 630，想读人工智能，想留在广东省",
+                user_input="我今年高考分数 630，位次 9000，想读人工智能，想留在广东省",
                 hard_filters={
                     "user_score": 630,
+                    "user_rank": 9000,
                     "major_keywords": ["软件工程"],
                     "preferred_school_provinces": ["广东"],
                 },
                 soft_preferences={
-                    "prompt": "我今年高考分数 630，想读人工智能，想留在广东省"
+                    "prompt": "我今年高考分数 630，位次 9000，想读人工智能，想留在广东省"
                 },
                 extractor="regex",
             )
@@ -215,7 +253,7 @@ class AdmissionsQueryTypesTest(unittest.TestCase):
         self.assertNotIn("人工智能", params)
 
     def test_confirmed_major_candidate_records_match_mode(self) -> None:
-        query = "我今年高考分数 630，想读计算机相关，想留在广东省"
+        query = "我今年高考分数 630，位次 9000，想读计算机相关，想留在广东省"
         first = _run(query)
         candidate_id = first["candidates_to_confirm"][0]["candidate_id"]
 

@@ -110,10 +110,10 @@ pilot 固定跑两条 admissions query：
 该查询应返回 `query_type=group_detail_report`。`EvidencePack.execution_summary` 必须记录参数化 SQL、params、`group_by`、`metric`、`sort` 和 `nested_result_count`。
 
 ```text
-假设我今年的高考分数是630分，想读人工智能，计算机，而且不想去国外，想留在广东省，请给出推荐
+假设我今年的高考分数是630分，位次9000，想读人工智能，计算机，而且不想去国外，想留在广东省，请给出推荐
 ```
 
-该查询应返回 `query_type=recommendation`。如果只有分数没有位次，必须给出 `score_without_rank` warning，并且回答不能声称录取概率。`EvidencePack.execution_summary` 需要记录 `margin_policy`、`year_weighting`、`major_match` 和 `bucket_counts`，说明当前按历史最低分/最低位次 margin 分组，且只执行已配置的最新年份策略。`不想去国外`、`中外合作`、`境外培养`、`专项计划` 等偏好只有在对应已审核字段存在时才执行，否则进入 `no_schema_field_preferences`。
+该查询应返回 `query_type=recommendation`。如果用户只有分数没有位次，`recommendation` 必须返回 `status=needs_confirmation` 和 `score_without_rank` warning，`execution_summary.sql` 为空，`result_count=0`。系统应要求用户补充广东省排位/位次，不能仅凭分数执行 SQL，也不能把分数 margin 解释成录取概率。有位次时，`EvidencePack.execution_summary` 需要记录 `margin_policy`、`year_weighting`、`major_match` 和 `bucket_counts`，说明当前按历史最低分/最低位次 margin 分组，且只执行已配置的最新年份策略。`不想去国外`、`中外合作`、`境外培养`、`专项计划` 等偏好只有在对应已审核字段存在时才执行，否则进入 `no_schema_field_preferences`。
 
 ## 报告字段
 

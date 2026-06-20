@@ -76,7 +76,6 @@ class SecurityReviewRegressionTest(unittest.TestCase):
                 )
             run_gate.assert_not_called()
 
-    @unittest.expectedFailure
     def test_score_only_query_is_blocked_from_recommendation_execution(self) -> None:
         result = run_workbench_with_test_warehouse(
             WorkbenchConfig(

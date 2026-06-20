@@ -79,7 +79,10 @@ draft pack、review summary、safe auto-suggest approvals、manual approval fixt
 构建和两条目标 admissions query 串成一个报告。目标 query 缺少必要 canonical fields 时必须
 返回 `blocked` 或 needs-review warning；“25年深圳大学录取最高专业组”会把最终使用的
 metric 和参数化 SQL 写入 EvidencePack；“630 分人工智能/计算机、广东、不想去国外”在没有
-位次时必须给 `score_without_rank` warning，且不声称录取概率。
+位次时，`recommendation` 必须返回 `status=needs_confirmation` 和
+`score_without_rank` warning，`execution_summary.sql` 为空，`result_count=0`。
+系统应要求用户补充广东省排位/位次，不能仅凭分数执行 SQL，也不能把分数 margin
+解释成录取概率。
 
 `scripts/run_operator_trial.py` 是面向 operator 的真实 Excel 人工试运行入口。它复用同一套
 DatasetService、review workflow、DuckDB warehouse、WorkbenchResponse 和 EvidencePack，不复制
@@ -501,8 +504,11 @@ Workbench API 返回固定的 `WorkbenchResponse` contract：
 - admissions 新增 `AdmissionsQueryPlanner`，只在招生 domain 内识别
   `group_detail_report` 和 `recommendation`。前者按 domain pack 配置的默认
   `group_min_score_2024` 指标生成专业组聚合和组内专业明细；后者基于历史最低分/
-  最低位次生成 `reach`、`match`、`safety`（冲/稳/保）分组。只有分数没有位次时
-  返回 warning；有位次时优先按 `rank_margin` 排序。推荐 EvidencePack 会记录
+  最低位次生成 `reach`、`match`、`safety`（冲/稳/保）分组。如果用户只有分数没有
+  位次，`recommendation` 必须返回 `status=needs_confirmation` 和
+  `score_without_rank` warning，`execution_summary.sql` 为空，`result_count=0`。
+  系统应要求用户补充广东省排位/位次，不能仅凭分数执行 SQL，也不能把分数 margin
+  解释成录取概率。有位次时优先按 `rank_margin` 排序。推荐 EvidencePack 会记录
   `margin_policy`、`year_weighting`、`major_match` 和 `bucket_counts`，当前只执行
   `latest_available_year`，不把多年度权重作为 SQL 条件。`不想去国外`、`不要中外合作`
   只有在 domain pack 启用对应已审核字段时才执行，否则保留在

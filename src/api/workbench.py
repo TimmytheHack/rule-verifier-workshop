@@ -537,7 +537,7 @@ def _planned_query_payload(
             "attribute_explanations": [],
             "top_results": top_results,
             "warnings": planned_result.warnings,
-            "disclaimer": "推荐分组基于历史最低分/最低位次，不代表录取概率。",
+            "disclaimer": _planned_query_disclaimer(planned_result),
         },
         "token_usage": {
             "extractor": None,
@@ -574,6 +574,13 @@ def _planned_query_payload(
         debug_trace=_debug_trace(legacy_payload),
     ).to_dict()
     return {**legacy_payload, **response}
+
+
+def _planned_query_disclaimer(planned_result: Any) -> str:
+    warning_codes = {item.get("code") for item in planned_result.warnings}
+    if "score_without_rank" in warning_codes:
+        return "只给分数时不会执行 recommendation SQL；请补充广东省排位/位次。"
+    return "推荐分组基于历史最低分/最低位次，不代表录取概率。"
 
 
 def _policy_references_for_config(

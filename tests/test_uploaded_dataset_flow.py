@@ -17,7 +17,7 @@ GROUP_DETAIL_QUERY = (
     "列出 2025 年深圳大学录取最高的专业组及专业组里面的各个专业最低录取分数"
 )
 RECOMMENDATION_QUERY = (
-    "我今年高考分数 630，想读人工智能、计算机，不想去国外，想留在广东省"
+    "我今年高考分数 630，位次 9000，想读人工智能、计算机，不想去国外，想留在广东省"
 )
 
 
@@ -192,6 +192,7 @@ class UploadedDatasetFlowTest(unittest.TestCase):
         self.assertIn("university_name", response["top_results"][0])
 
     def test_uploaded_admissions_recommendation(self) -> None:
+        query = RECOMMENDATION_QUERY
         with TemporaryDirectory() as directory:
             service, dataset_id = _queryable_uploaded_admissions(
                 Path(directory),
@@ -200,8 +201,8 @@ class UploadedDatasetFlowTest(unittest.TestCase):
 
             response = service.query(
                 dataset_id,
-                user_input=RECOMMENDATION_QUERY,
-                soft_preferences={"prompt": RECOMMENDATION_QUERY},
+                user_input=query,
+                soft_preferences={"prompt": query},
             )
 
         assert_workbench_contract(self, response)
@@ -209,7 +210,7 @@ class UploadedDatasetFlowTest(unittest.TestCase):
         self.assertEqual(response["query_type"], "recommendation")
         self.assertTrue(response["items"])
         self.assertEqual(set(response["result_sections"]), {"reach", "match", "safety"})
-        self.assertIn("score_without_rank", [w["code"] for w in response["warnings"]])
+        self.assertNotIn("score_without_rank", [w["code"] for w in response["warnings"]])
 
 
 def _generated_generic_dataset(root: Path) -> tuple[DatasetService, str]:

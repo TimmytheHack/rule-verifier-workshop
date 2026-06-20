@@ -20,7 +20,7 @@ GROUP_DETAIL_QUERY = (
     "列出25年深圳大学录取最高的专业组及专业组里面的各个专业最低录取分数"
 )
 RECOMMENDATION_QUERY = (
-    "假设我今年的高考分数是630分，想读人工智能，计算机，而且不想去国外，"
+    "假设我今年的高考分数是630分，位次9000，想读人工智能，计算机，而且不想去国外，"
     "想留在广东省，请给出推荐"
 )
 ADMISSIONS_HEADERS = [
@@ -219,7 +219,7 @@ class RealDatasetPilotTest(unittest.TestCase):
         assert_workbench_contract(self, response)
         self.assertEqual(response["status"], "ok")
         self.assertEqual(response["query_type"], "recommendation")
-        self.assertIn("score_without_rank", _warning_codes(response))
+        self.assertNotIn("score_without_rank", _warning_codes(response))
         self.assertNotIn("录取概率高", response["answer"])
         self.assertTrue(response["items"])
 
