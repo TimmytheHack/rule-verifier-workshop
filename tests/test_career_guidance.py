@@ -138,6 +138,52 @@ class CareerGuidanceExtractionTest(unittest.TestCase):
                     slots["preferences"]["other_vague_preferences"],
                 )
 
+    def test_regex_keeps_positive_terms_before_contrast_negation(self) -> None:
+        cases = [
+            (
+                "家里没资源，想选好就业但学校不重要。",
+                "employment_preference_raw",
+                "好就业",
+            ),
+            (
+                "家里没资源，想稳定就业但高薪不重要。",
+                "career_goal_raw",
+                "稳定就业",
+            ),
+            (
+                "家里没资源，想考公但城市不是重点。",
+                "career_goal_raw",
+                "考公",
+            ),
+        ]
+        for text, slot_name, expected in cases:
+            with self.subTest(text=text):
+                slots = RegexExtractor().extract(text)
+
+                self.assertEqual(slots["preferences"][slot_name], expected)
+                self.assertEqual(
+                    slots["raw_sources"][f"preferences.{slot_name}"],
+                    expected,
+                )
+
+    def test_regex_does_not_extract_prefix_not_prioritized_terms(self) -> None:
+        cases = [
+            (
+                "家里没资源，不优先考虑好就业，只想离家近。",
+                "employment_preference_raw",
+                "好就业",
+            ),
+            ("不优先考虑稳定就业", "career_goal_raw", "稳定就业"),
+            ("不优先考虑考公", "career_goal_raw", "考公"),
+        ]
+        for text, slot_name, term in cases:
+            with self.subTest(text=text):
+                slots = RegexExtractor().extract(text)
+
+                self.assertIsNone(slots["preferences"][slot_name])
+                self.assertNotIn(f"preferences.{slot_name}", slots["raw_sources"])
+                self.assertNotIn(term, slots["preferences"]["other_vague_preferences"])
+
     def test_regex_ignores_unused_salary_goal_and_keeps_later_goal(self) -> None:
         slots = RegexExtractor().extract("不用考虑高薪，想稳定就业。")
 
@@ -240,6 +286,64 @@ class CareerGuidanceExtractionTest(unittest.TestCase):
 
         self.assertIsNone(slots["preferences"]["career_goal_raw"])
         self.assertNotIn("稳定就业", slots["preferences"]["other_vague_preferences"])
+
+    def test_deepseek_normalize_keeps_positive_terms_before_contrast_negation(self) -> None:
+        cases = [
+            (
+                "家里没资源，想选好就业但学校不重要。",
+                "employment_preference_raw",
+                "好就业",
+            ),
+            (
+                "家里没资源，想稳定就业但高薪不重要。",
+                "career_goal_raw",
+                "稳定就业",
+            ),
+            (
+                "家里没资源，想考公但城市不是重点。",
+                "career_goal_raw",
+                "考公",
+            ),
+        ]
+        for text, slot_name, expected in cases:
+            with self.subTest(text=text):
+                slots = normalize_slots(
+                    {
+                        "user_context": {},
+                        "preferences": {},
+                        "proposed_rules": [],
+                    },
+                    text,
+                )
+
+                self.assertEqual(slots["preferences"][slot_name], expected)
+
+    def test_deepseek_normalize_filters_prefix_not_prioritized_terms(self) -> None:
+        cases = [
+            (
+                "家里没资源，不优先考虑好就业，只想离家近。",
+                "employment_preference_raw",
+                "好就业",
+            ),
+            ("不优先考虑稳定就业", "career_goal_raw", "稳定就业"),
+            ("不优先考虑考公", "career_goal_raw", "考公"),
+        ]
+        for text, slot_name, term in cases:
+            with self.subTest(text=text):
+                slots = normalize_slots(
+                    {
+                        "user_context": {},
+                        "preferences": {
+                            slot_name: term,
+                            "other_vague_preferences": [term],
+                        },
+                        "proposed_rules": [],
+                    },
+                    text,
+                )
+
+                self.assertIsNone(slots["preferences"][slot_name])
+                self.assertNotIn(term, slots["preferences"]["other_vague_preferences"])
 
     def test_deepseek_filters_negated_other_vague_preferences(self) -> None:
         slots = normalize_slots(
@@ -366,6 +470,31 @@ class CareerGuidancePolicyTest(unittest.TestCase):
 
     def test_post_term_negated_employment_does_not_match_guidance(self) -> None:
         query = "家里没资源，好就业不重要，只想离家近。"
+        slots = RegexExtractor().extract(query)
+
+        guidance = career_guidance_for_query(query, slots, ADMISSIONS_DOMAIN)
+
+        self.assertIsNone(slots["preferences"]["employment_preference_raw"])
+        self.assertEqual(guidance["matched_rules"], [])
+        self.assertEqual(guidance["information_requests"], [])
+        self.assertEqual(guidance["no_schema_field_preferences"], [])
+
+    def test_contrast_after_employment_still_matches_guidance(self) -> None:
+        query = "家里没资源，想选好就业但学校不重要。"
+        slots = RegexExtractor().extract(query)
+
+        guidance = career_guidance_for_query(query, slots, ADMISSIONS_DOMAIN)
+
+        self.assertEqual(slots["preferences"]["employment_preference_raw"], "好就业")
+        self.assertIn(
+            "career_no_family_resource_goal",
+            [item["rule_id"] for item in guidance["matched_rules"]],
+        )
+        self.assertTrue(guidance["information_requests"])
+        self.assertTrue(guidance["no_schema_field_preferences"])
+
+    def test_prefix_not_prioritized_employment_does_not_match_guidance(self) -> None:
+        query = "家里没资源，不优先考虑好就业，只想离家近。"
         slots = RegexExtractor().extract(query)
 
         guidance = career_guidance_for_query(query, slots, ADMISSIONS_DOMAIN)

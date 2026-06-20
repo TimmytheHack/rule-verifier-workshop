@@ -126,8 +126,11 @@ def _term_is_negated(
     ]
     clause_end = min(clause_ends) if clause_ends else len(text)
     prefix = text[clause_start:term_index]
-    suffix = text[suffix_start:clause_end]
+    suffix = _suffix_before_boundary(text[suffix_start:clause_end])
     prefix_markers = [
+        "不优先考虑",
+        "不优先看重",
+        "不优先选择",
         "不要求",
         "不需要",
         "不用考虑",
@@ -148,6 +151,24 @@ def _term_is_negated(
         marker in suffix[:10]
         for marker in suffix_markers
     )
+
+
+def _suffix_before_boundary(suffix: str) -> str:
+    boundary_indexes = []
+    for marker in ["但是", "不过", "只是", "但"]:
+        start = 0
+        while True:
+            index = suffix.find(marker, start)
+            if index < 0:
+                break
+            if marker == "但" and index > 0 and suffix[index - 1] == "不":
+                start = index + len(marker)
+                continue
+            boundary_indexes.append(index)
+            break
+    if not boundary_indexes:
+        return suffix
+    return suffix[:min(boundary_indexes)]
 
 
 def _slot_trigger_matches(
