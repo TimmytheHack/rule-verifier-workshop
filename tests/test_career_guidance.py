@@ -74,6 +74,21 @@ class CareerGuidanceExtractionTest(unittest.TestCase):
             "考公",
         )
 
+    def test_regex_does_not_extract_negated_career_or_employment(self) -> None:
+        for text in ["不想考公", "不考虑体制内"]:
+            slots = RegexExtractor().extract(text)
+
+            self.assertIsNone(slots["preferences"]["career_goal_raw"])
+            self.assertNotIn("preferences.career_goal_raw", slots["raw_sources"])
+
+        slots = RegexExtractor().extract("不要求好就业")
+
+        self.assertIsNone(slots["preferences"]["employment_preference_raw"])
+        self.assertNotIn(
+            "preferences.employment_preference_raw",
+            slots["raw_sources"],
+        )
+
     def test_deepseek_normalize_falls_back_to_long_family_resource_alias(self) -> None:
         slots = normalize_slots(
             {
@@ -89,6 +104,34 @@ class CareerGuidanceExtractionTest(unittest.TestCase):
             "家里在体制内有资源",
         )
         self.assertIsNone(slots["preferences"]["career_goal_raw"])
+
+    def test_deepseek_normalize_revalidates_llm_career_goal_overlap(self) -> None:
+        slots = normalize_slots(
+            {
+                "user_context": {},
+                "preferences": {"career_goal_raw": "体制内"},
+                "proposed_rules": [],
+            },
+            "家里在体制内有资源，想学法学。",
+        )
+
+        self.assertEqual(
+            slots["preferences"]["family_resource_raw"],
+            "家里在体制内有资源",
+        )
+        self.assertIsNone(slots["preferences"]["career_goal_raw"])
+
+    def test_deepseek_employment_fallback_ignores_negated_preference(self) -> None:
+        slots = normalize_slots(
+            {
+                "user_context": {},
+                "preferences": {},
+                "proposed_rules": [],
+            },
+            "不要求好就业，只想离家近。",
+        )
+
+        self.assertIsNone(slots["preferences"]["employment_preference_raw"])
 
     def test_family_resource_is_context_and_employment_is_no_schema(self) -> None:
         slots = RegexExtractor().extract(

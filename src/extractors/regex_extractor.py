@@ -55,7 +55,7 @@ class RegexExtractor:
             self.aliases["cooperation_terms"],
         )
         family_resource_raw = self._family_resource_raw(text)
-        employment_preference_raw = self._first_present(
+        employment_preference_raw = self._first_positive_present(
             text,
             self.aliases["employment_terms"],
         )
@@ -174,6 +174,13 @@ class RegexExtractor:
                 return candidate
         return None
 
+    def _first_positive_present(self, text: str, candidates: list[str]) -> str | None:
+        for candidate in candidates:
+            index = text.find(candidate)
+            if index >= 0 and not _term_is_negated(text, index):
+                return candidate
+        return None
+
     def _source_province(self, text: str) -> str | None:
         if re.search(r"广东\s*(?:物理|历史)", text):
             return "广东"
@@ -211,6 +218,9 @@ class RegexExtractor:
             )
             match = pattern.search(search_text)
             if match:
+                term_index = search_text.find(term, match.start(), match.end())
+                if term_index >= 0 and _term_is_negated(search_text, term_index):
+                    continue
                 matches.append((match.start(), term))
         if not matches:
             return None
@@ -379,3 +389,23 @@ def _unique(values: list[str]) -> list[str]:
         if value not in output:
             output.append(value)
     return output
+
+
+def _term_is_negated(text: str, term_index: int) -> bool:
+    clause_start = (
+        max(text.rfind(punctuation, 0, term_index) for punctuation in "，。,.；;")
+        + 1
+    )
+    prefix = text[clause_start:term_index]
+    return any(
+        marker in prefix[-12:]
+        for marker in [
+            "不要求",
+            "不需要",
+            "不想",
+            "不考虑",
+            "不要",
+            "不看重",
+            "无需",
+        ]
+    )

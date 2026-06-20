@@ -353,19 +353,20 @@ def normalize_slots(slots: dict[str, Any], original_text: str) -> dict[str, Any]
                 preferences["school_ownership_preference_raw"] = term
                 break
 
+    aliases = _admissions_aliases()
     employment = preferences.get("employment_preference_raw")
     if employment:
         preferences["employment_preference_raw"] = str(employment)
-    elif any(term in original_text for term in ["就业前景好", "好就业", "好找工作", "就业更好", "将来好就业"]):
-        preferences["employment_preference_raw"] = "好就业"
     else:
-        preferences["employment_preference_raw"] = None
+        preferences["employment_preference_raw"] = _first_positive_present(
+            original_text,
+            aliases["employment_terms"],
+        )
 
     family_resource = preferences.get("family_resource_raw")
     if family_resource:
         preferences["family_resource_raw"] = str(family_resource)
     else:
-        aliases = _admissions_aliases()
         preferences["family_resource_raw"] = _first_present(
             original_text,
             aliases["no_family_resource_terms"],
@@ -375,15 +376,16 @@ def normalize_slots(slots: dict[str, Any], original_text: str) -> dict[str, Any]
         )
 
     career_goal = preferences.get("career_goal_raw")
-    if career_goal:
-        preferences["career_goal_raw"] = str(career_goal)
-    else:
-        aliases = _admissions_aliases()
-        preferences["career_goal_raw"] = _career_goal_raw(
-            original_text,
-            preferences.get("family_resource_raw"),
-            aliases["career_goal_terms"],
-        )
+    normalized_career_goal = _career_goal_raw(
+        original_text,
+        preferences.get("family_resource_raw"),
+        aliases["career_goal_terms"],
+    )
+    preferences["career_goal_raw"] = (
+        str(career_goal)
+        if career_goal and str(career_goal) == normalized_career_goal
+        else normalized_career_goal
+    )
 
     recommendation = preferences.get("recommendation_request_raw")
     if recommendation:
@@ -465,6 +467,14 @@ def _first_present(text: str, candidates: list[str]) -> str | None:
     return None
 
 
+def _first_positive_present(text: str, candidates: list[str]) -> str | None:
+    for candidate in candidates:
+        index = text.find(candidate)
+        if index >= 0 and not _term_is_negated(text, index):
+            return candidate
+    return None
+
+
 def _career_goal_raw(
     text: str,
     family_resource_raw: Any,
@@ -482,10 +492,33 @@ def _career_goal_raw(
         )
         match = pattern.search(search_text)
         if match:
+            term_index = search_text.find(term, match.start(), match.end())
+            if term_index >= 0 and _term_is_negated(search_text, term_index):
+                continue
             matches.append((match.start(), term))
     if not matches:
         return None
     return min(matches)[1]
+
+
+def _term_is_negated(text: str, term_index: int) -> bool:
+    clause_start = (
+        max(text.rfind(punctuation, 0, term_index) for punctuation in "，。,.；;")
+        + 1
+    )
+    prefix = text[clause_start:term_index]
+    return any(
+        marker in prefix[-12:]
+        for marker in [
+            "不要求",
+            "不需要",
+            "不想",
+            "不考虑",
+            "不要",
+            "不看重",
+            "无需",
+        ]
+    )
 
 
 def has_deepseek_api_key() -> bool:
