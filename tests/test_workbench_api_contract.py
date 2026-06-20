@@ -153,6 +153,39 @@ class WorkbenchApiContractTest(unittest.TestCase):
         for item in result["top_results"]:
             self.assertLessEqual(item["group_min_rank"], 48000)
 
+    def test_decision_option_suggestions_are_reference_only(self) -> None:
+        result = run_workbench_with_test_warehouse(
+            WorkbenchConfig(
+                user_input="广东物理，排位1000，想学计算机，学校稳一点。",
+                hard_filters={
+                    "source_province": "广东",
+                    "subject_type": "物理",
+                    "user_rank": 1000,
+                    "major_keyword": "计算机",
+                },
+                soft_preferences={
+                    "prompt": "学校稳一点。",
+                },
+                extractor="regex",
+            )
+        )
+
+        evidence_pack = result["evidence_pack"]
+        self.assertIn("decision_option_suggestions", evidence_pack)
+        suggestions = evidence_pack["decision_option_suggestions"]
+        self.assertEqual(suggestions["status"], "reference_only")
+        self.assertFalse(suggestions["executable"])
+        self.assertEqual(
+            suggestions["execution_effect"],
+            "does_not_change_sql_or_results",
+        )
+        self.assertIn("rank_window", suggestions["suggestions"])
+        self.assertIn("sort_mode", suggestions["suggestions"])
+        self.assertNotIn(
+            "e_safety_margin",
+            [item["id"] for item in result["executed_filters"]],
+        )
+
     def test_needs_confirmation_keeps_partial_out_of_executed_filters(self) -> None:
         result = _run(JIKE_PROMPT)
 

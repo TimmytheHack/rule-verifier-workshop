@@ -38,6 +38,9 @@ from src.extractors.llm_slot_adapter import (
 )
 from src.extractors.regex_extractor import RegexExtractor
 from src.reporting.career_guidance import career_guidance_for_query
+from src.reporting.decision_option_suggester import (
+    decision_option_suggestions_for_query,
+)
 from src.reporting.deepseek_answer_generator import (
     DeepSeekAnswerGenerator,
 )
@@ -451,6 +454,10 @@ def _run_workbench(config: WorkbenchConfig) -> dict[str, Any]:
         domain_config,
         slots,
     )
+    decision_option_suggestions = _decision_option_suggestions_for_payload(
+        config,
+        slots,
+    )
     base_no_schema_preferences = confirmation_state.get(
         "no_schema_field_preferences",
         [],
@@ -478,6 +485,8 @@ def _run_workbench(config: WorkbenchConfig) -> dict[str, Any]:
         policy_references=policy_references,
         decision_guidance=decision_guidance,
     )
+    evidence_pack = evidence.to_dict()
+    evidence_pack["decision_option_suggestions"] = decision_option_suggestions
     report, generator_usage = _generate_report(
         config=config,
         evidence=evidence,
@@ -531,7 +540,7 @@ def _run_workbench(config: WorkbenchConfig) -> dict[str, Any]:
             for rank, row in enumerate(traced_results[:EVIDENCE_TOP_K], start=1)
         ],
         "trace": {},
-        "evidence_pack": evidence.to_dict(),
+        "evidence_pack": evidence_pack,
         "natural_language_report": _with_context_warnings(
             report,
             slots,
@@ -618,10 +627,15 @@ def _planned_query_payload(
     ]
     result_count = len(planned_rows)
     policy_references = _policy_references_for_config(config, domain_config)
+    guidance_slots = _guidance_slots_for_payload(config, domain_config)
     decision_guidance = _decision_guidance_for_payload(
         config,
         domain_config,
-        _guidance_slots_for_payload(config, domain_config),
+        guidance_slots,
+    )
+    decision_option_suggestions = _decision_option_suggestions_for_payload(
+        config,
+        guidance_slots,
     )
     planned_no_schema_preferences = planned_result.no_schema_field_preferences
     guidance_no_schema = _guidance_no_schema_preferences(
@@ -682,6 +696,7 @@ def _planned_query_payload(
         "rejected_confirmations": [],
         "policy_references": policy_references,
         "decision_guidance": decision_guidance,
+        "decision_option_suggestions": decision_option_suggestions,
     }
     legacy_payload = {
         "mode": "api",
@@ -864,6 +879,16 @@ def _decision_guidance_for_payload(
         _compose_user_request(config),
         slots or {},
         domain_config,
+    )
+
+
+def _decision_option_suggestions_for_payload(
+    config: WorkbenchConfig,
+    slots: dict[str, Any],
+) -> dict[str, Any]:
+    return decision_option_suggestions_for_query(
+        _compose_user_request(config),
+        slots,
     )
 
 
