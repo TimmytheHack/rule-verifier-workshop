@@ -69,6 +69,7 @@ RANK_INPUT_PATTERN = re.compile(
     r"[零〇一二两三四五六七八九十百千万点]+)\s*"
     r"(?:名|左右)?"
 )
+RECOMMENDATION_INTENT_PATTERN = re.compile(r"推荐|recommendation")
 ITEM_KEYS = {
     "item_id",
     "title",
@@ -743,6 +744,13 @@ def _has_rank_input(case: DemoCase, response: dict[str, Any]) -> bool:
     return bool(RANK_INPUT_PATTERN.search(_query_text(case, response)))
 
 
+def _has_recommendation_intent(case: DemoCase, response: dict[str, Any]) -> bool:
+    hard_filters = _hard_filters(response)
+    if hard_filters.get("query_type") == "recommendation":
+        return True
+    return bool(RECOMMENDATION_INTENT_PATTERN.search(_query_text(case, response)))
+
+
 def _contract_failures(
     case: DemoCase,
     response: dict[str, Any],
@@ -805,6 +813,11 @@ def _contract_failures(
         response.get("query_type") == "recommendation"
         and not _has_rank_input(case, response)
     )
+    has_recommendation_intent_without_rank = (
+        case.domain == "admissions"
+        and _has_recommendation_intent(case, response)
+        and not _has_rank_input(case, response)
+    )
     section_items = [
         item
         for section in (response.get("result_sections") or {}).values()
@@ -831,6 +844,16 @@ def _contract_failures(
         or params
     ):
         failures.append("recommendation without rank executed payload")
+    if has_recommendation_intent_without_rank and (
+        status != "needs_confirmation"
+        or response.get("result_count") != 0
+        or response.get("items")
+        or response.get("top_results")
+        or section_items
+        or sql
+        or params
+    ):
+        failures.append("recommendation intent without rank executed payload")
     if status in EXECUTED_STATUSES and not sql and not is_missing_rank_confirmation:
         failures.append("executed status has empty SQL")
     if status in EXECUTED_STATUSES and not isinstance(params, list):

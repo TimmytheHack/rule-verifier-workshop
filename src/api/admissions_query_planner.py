@@ -94,6 +94,8 @@ class AdmissionsQueryPlanner:
             and self._has_recommendation_intent(text)
         ):
             return QUERY_TYPE_RECOMMENDATION
+        if self._has_recommendation_intent(text):
+            return QUERY_TYPE_RECOMMENDATION
         return None
 
     def _has_recommendation_intent(self, text: str) -> bool:

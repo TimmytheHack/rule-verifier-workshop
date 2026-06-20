@@ -211,6 +211,61 @@ class DemoAcceptanceScriptTest(unittest.TestCase):
             record["failures"],
         )
 
+    def test_misclassified_no_rank_recommendation_intent_cannot_pass(self) -> None:
+        case = DemoCase(
+            case_id="unit_misclassified_no_rank",
+            domain="admissions",
+            query="想读计算机，请推荐",
+            expected_status="ok",
+        )
+        response = {
+            "schema_version": "workbench_response.v1",
+            "domain": "admissions",
+            "domain_version": "1",
+            "domain_pack_status": "approved",
+            "status": "ok",
+            "query_type": "verified_filter",
+            "query": {"text": case.query, "hard_filters": {}},
+            "answer": "筛选结果。",
+            "result_count": 1,
+            "items": [
+                {
+                    "item_id": "result_001",
+                    "title": "深圳大学",
+                    "subtitle": "计算机类",
+                    "primary_attributes": [],
+                    "secondary_attributes": [],
+                    "matched_filters": [],
+                    "raw": {},
+                }
+            ],
+            "top_results": [{"university_name": "深圳大学"}],
+            "result_sections": {},
+            "executed_filters": [{"id": "e_major_keyword"}],
+            "candidates_to_confirm": [],
+            "confirmed_rules": [],
+            "unconfirmed_candidates": [],
+            "unexecuted_preferences": [],
+            "no_schema_field_preferences": [],
+            "rejected_confirmations": [],
+            "warnings": [],
+            "evidence_pack": {
+                "execution_summary": {
+                    "sql": "SELECT * FROM admissions WHERE major_name LIKE ?",
+                    "params": ["%计算机%"],
+                }
+            },
+            "debug_trace": {},
+        }
+
+        record = record_from_response(case, response)
+
+        self.assertFalse(record["pass"])
+        self.assertIn(
+            "recommendation intent without rank executed payload",
+            record["failures"],
+        )
+
 
 if __name__ == "__main__":
     unittest.main()

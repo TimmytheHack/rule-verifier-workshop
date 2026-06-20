@@ -235,6 +235,20 @@ class AdmissionsQueryTypesTest(unittest.TestCase):
         self.assertEqual(execution["sql"], "")
         self.assertEqual(execution["params"], [])
 
+    def test_unforced_recommendation_intent_without_rank_requires_rank(self) -> None:
+        result = _run("想读计算机，请推荐")
+
+        self.assertEqual(result["query_type"], "recommendation")
+        self.assertEqual(result["status"], "needs_confirmation")
+        self.assertEqual(result["result_count"], 0)
+        self.assertEqual(result["items"], [])
+        self.assertEqual(result["top_results"], [])
+        self.assertIn("missing_rank", _warning_codes(result))
+        execution = result["evidence_pack"]["execution_summary"]
+        self.assertIsNone(execution["executor"])
+        self.assertEqual(execution["sql"], "")
+        self.assertEqual(execution["params"], [])
+
     def test_score_only_recommendation_preserves_major_candidate_confirmation(self) -> None:
         query = "630分，想读计算机相关，想留在广东省，请推荐"
         result = _run(query)
