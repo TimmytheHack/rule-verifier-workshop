@@ -707,7 +707,10 @@ def _contract_warnings(
     confirmation_state: dict[str, Any] | None = None,
 ) -> list[dict[str, Any]]:
     warnings = [_normalize_warning(item) for item in raw_warnings]
-    if status == "needs_confirmation":
+    has_unconfirmed_candidates = bool(
+        (confirmation_state or {}).get("unconfirmed_candidates")
+    )
+    if status == "needs_confirmation" and has_unconfirmed_candidates:
         warnings.append(
             {
                 "code": "needs_confirmation",

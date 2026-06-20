@@ -14,7 +14,7 @@
 | status | 含义 |
 |---|---|
 | `ok` | 已执行安全 hard filters，可以展示基于已执行规则的结果。 |
-| `needs_confirmation` | 存在未确认的 `partial_match` candidate；这些 candidate 不能声称已执行。可以返回 provisional `items`。 |
+| `needs_confirmation` | 存在未确认的 `partial_match` candidate，或缺少必须由用户补充的关键信息（例如 recommendation 只有分数没有位次）。这些 candidate 或缺失信息不能声称已执行；缺少关键信息时不返回 provisional `items`。 |
 | `no_results` | SQL 正常执行，但 `filtered_row_count` 为 `0`。回答不能编造推荐。 |
 | `blocked` | fingerprint guard、未 approve 的 draft domain pack、伪造/过期/不属于当前 query 的 `candidate_id`、stale warehouse 等安全问题导致不执行 SQL。 |
 | `error` | 非预期异常。返回 structured error，不向前端暴露 stack trace。 |

@@ -65,7 +65,7 @@ const queryStatusMessage = computed(() => {
   }
   const messages = {
     ok: '已按通过检查的条件筛选，可展示结果。',
-    needs_confirmation: '存在待确认项，确认前不会执行。',
+    needs_confirmation: '存在待确认项或缺少必要信息，确认/补充前不会执行。',
     no_results: '查询正常但结果为 0，前端不能编造推荐。',
     blocked: '已拦截，没有参与筛选，请检查表格状态或确认记录。',
     error: '后端返回错误，前端不展示内部错误详情。',

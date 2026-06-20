@@ -11,7 +11,11 @@ from unittest.mock import patch
 from openpyxl import Workbook
 
 from scripts.generate_domain_pack import inspect_source_dataset
-from scripts.run_real_dataset_pilot import _admissions_rows, main as pilot_main
+from scripts.run_real_dataset_pilot import (
+    _admissions_rows,
+    _target_query_record,
+    main as pilot_main,
+)
 from src.api.dataset_service import DatasetService, DatasetServiceError
 from tests.workbench_contract_utils import assert_workbench_contract
 
@@ -244,6 +248,42 @@ class RealDatasetPilotTest(unittest.TestCase):
         self.assertNotIn(str(root), serialized)
         self.assertNotIn(str(root), markdown)
         self.assertFalse(Path(str(report["warehouse_path"])).is_absolute())
+
+    def test_pilot_rejects_score_only_recommendation_execution(self) -> None:
+        query = (
+            "假设我今年的高考分数是630分，想读人工智能，计算机，而且不想去国外，"
+            "想留在广东省，请给出推荐"
+        )
+        record = _target_query_record(
+            query,
+            {
+                "status": "ok",
+                "query_type": "recommendation",
+                "result_count": 3,
+                "items": [{"university_name": "深圳大学"}],
+                "warnings": [{"code": "score_without_rank"}],
+                "answer": "请补充位次。",
+                "evidence_pack": {
+                    "execution_summary": {
+                        "sql": "SELECT * FROM admissions",
+                        "params": [630],
+                    }
+                },
+            },
+        )
+
+        self.assertIn(
+            "score-only recommendation must return needs_confirmation",
+            record["failures"],
+        )
+        self.assertIn(
+            "score-only recommendation must return zero results",
+            record["failures"],
+        )
+        self.assertIn(
+            "score-only recommendation must not execute SQL",
+            record["failures"],
+        )
 
 
 def _queryable_real_like_dataset(root: Path) -> tuple[DatasetService, str]:

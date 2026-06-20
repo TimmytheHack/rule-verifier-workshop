@@ -31,7 +31,7 @@ Agent 可以通过 `GET /tools/list?llm_safe_only=true` 获取允许暴露的工
 1. 调用 `dataset.profile` 查看字段、类型、空值率、唯一值、样例值、sheet 和 ingestion warnings。
 2. 调用 `dataset.review_summary` 查看字段是否 approved、missing 或 risky。
 3. 只有 domain pack 已 approved 且 warehouse ready / queryable 时，才调用 `workbench.query`。
-4. 如果 `workbench.query` 返回 `needs_confirmation`，agent 必须把 `candidates_to_confirm` 展示给用户。
+4. 如果 `workbench.query` 返回 `needs_confirmation`，agent 必须先区分原因：有 `candidates_to_confirm` 时展示系统生成的 `candidate_id`；没有 candidate 但有 `score_without_rank` 等 warning 时，应要求用户补充必要信息，不能调用 `workbench.confirm`。
 5. 用户明确确认后，agent 只能用系统返回的 `candidate_id` 调用 `workbench.confirm`。
 6. 对 `no_schema_field_preferences` 只能解释“未执行及原因”，不能构造替代 hard filter。
 7. 需要人工批准字段或 op 时，交给拥有 `review_admin` 权限的人或系统调用 admin tools。
@@ -75,9 +75,10 @@ Agent 不允许：
 {
   "dataset_id": "ds_example",
   "domain": "admissions",
-  "natural_language": "我今年高考分数630，想读计算机，想留在广东省",
+  "natural_language": "我今年高考分数630，位次9000，想读计算机，想留在广东省",
   "deterministic_fields": {
-    "user_score": 630
+    "user_score": 630,
+    "user_rank": 9000
   },
   "confirmed_candidate_ids": [],
   "top_k": 10
@@ -90,7 +91,7 @@ Agent 不允许：
 
 ## workbench.confirm 使用方式
 
-当上一轮返回 `needs_confirmation`：
+当上一轮返回带 `candidates_to_confirm` 的 `needs_confirmation`：
 
 ```json
 {

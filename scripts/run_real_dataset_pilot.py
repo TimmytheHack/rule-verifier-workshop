@@ -52,9 +52,11 @@ REPORT_PATH_KEYS = {
 def main(argv: list[str] | None = None) -> int:
     args = _arg_parser().parse_args(argv)
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
-    if not args.fixture and not args.source_path:
-        raise SystemExit("source_path is required unless --fixture is used.")
-    source_path = _fixture_path() if args.fixture else Path(args.source_path)
+    source_path = (
+        _fixture_path()
+        if args.fixture or not args.source_path
+        else Path(args.source_path)
+    )
     report = run_pilot(
         source_path=source_path,
         sheet_name=args.sheet_name,
@@ -207,6 +209,15 @@ def _target_query_record(query: str, response: dict[str, Any]) -> dict[str, Any]
         warning_codes = [item.get("code") for item in response.get("warnings") or []]
         if "score_without_rank" not in warning_codes:
             failures.append("recommendation missing score_without_rank warning")
+        if _is_score_only_recommendation(query, warning_codes):
+            if response.get("status") != "needs_confirmation":
+                failures.append("score-only recommendation must return needs_confirmation")
+            if response.get("result_count") != 0:
+                failures.append("score-only recommendation must return zero results")
+            if execution.get("sql"):
+                failures.append("score-only recommendation must not execute SQL")
+            if execution.get("params"):
+                failures.append("score-only recommendation must not include SQL params")
         if "录取概率" in str(response.get("answer")) and "不是录取概率" not in str(
             response.get("answer")
         ):
@@ -225,6 +236,14 @@ def _target_query_record(query: str, response: dict[str, Any]) -> dict[str, Any]
         "params": execution.get("params", []),
         "failures": failures,
     }
+
+
+def _is_score_only_recommendation(query: str, warning_codes: list[Any]) -> bool:
+    if "score_without_rank" in warning_codes:
+        return True
+    has_score = "分" in query or "成绩" in query
+    has_rank = any(term in query for term in ["位次", "排位", "排名", "省排", "省排名"])
+    return has_score and not has_rank
 
 
 def _safe_auto_suggest_approvals(review: dict[str, Any]) -> list[dict[str, Any]]:

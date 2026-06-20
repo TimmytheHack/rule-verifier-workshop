@@ -38,7 +38,7 @@ npm run build
 
 页面中的“中外合作未执行：缺少合作办学类型字段”是安全约束展示项，不代表已过滤中外合作。
 
-“上传数据集接入流程”面板调用 `/datasets` 和 `/workbench/query`：上传 CSV/Excel、展示 schema profile、展示 review summary、执行 approve/block、构建 warehouse，并把 uploaded dataset 的 `WorkbenchResponse` 中的 `items`、`top_results`、`result_sections`、`EvidencePack` 和 warnings 展示出来。面板优先用 `items` 和 `result_sections` 展示结果；`top_results` 只作为兼容层。`needs_confirmation` 会展示上一轮系统生成的 `candidate_id` 并允许 operator 选择后重跑；`blocked`、`no_results`、warnings 和前端操作审计记录会单独显示。该面板不在前端生成 hard filter。
+“上传数据集接入流程”面板调用 `/datasets` 和 `/workbench/query`：上传 CSV/Excel、展示 schema profile、展示 review summary、执行 approve/block、构建 warehouse，并把 uploaded dataset 的 `WorkbenchResponse` 中的 `items`、`top_results`、`result_sections`、`EvidencePack` 和 warnings 展示出来。面板优先用 `items` 和 `result_sections` 展示结果；`top_results` 只作为兼容层。`needs_confirmation` 如果包含上一轮系统生成的 `candidate_id`，会允许 operator 选择后重跑；如果是缺少位次等必要信息，则只展示 warning 并等待补充输入。`blocked`、`no_results`、warnings 和前端操作审计记录会单独显示。该面板不在前端生成 hard filter。
 
 ## API 模式
 

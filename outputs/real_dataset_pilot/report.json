@@ -713,545 +713,19 @@
     },
     {
       "query": "假设我今年的高考分数是630分，想读人工智能，计算机，而且不想去国外，想留在广东省，请给出推荐",
-      "status": "ok",
+      "status": "needs_confirmation",
       "query_type": "recommendation",
-      "result_count": 3,
-      "items": [
-        {
-          "item_id": "result_001",
-          "title": "中山大学",
-          "subtitle": "计算机类",
-          "primary_attributes": [
-            {
-              "key": "year",
-              "label": "year",
-              "value": 2024
-            },
-            {
-              "key": "university_name",
-              "label": "university_name",
-              "value": "中山大学"
-            },
-            {
-              "key": "group_code",
-              "label": "group_code",
-              "value": 10558219
-            },
-            {
-              "key": "group_name",
-              "label": "group_name",
-              "value": "物理219组"
-            }
-          ],
-          "secondary_attributes": [
-            {
-              "key": "major_code",
-              "label": "major_code",
-              "value": 80901
-            },
-            {
-              "key": "major_name",
-              "label": "major_name",
-              "value": "计算机类"
-            },
-            {
-              "key": "full_major_name",
-              "label": "full_major_name",
-              "value": "计算机类"
-            },
-            {
-              "key": "province",
-              "label": "province",
-              "value": "广东"
-            },
-            {
-              "key": "city",
-              "label": "city",
-              "value": "广州"
-            },
-            {
-              "key": "tuition",
-              "label": "tuition",
-              "value": 6850
-            },
-            {
-              "key": "rank_2024",
-              "label": "rank_2024",
-              "value": 5000
-            },
-            {
-              "key": "major_rank_2024",
-              "label": "major_rank_2024",
-              "value": 5000
-            },
-            {
-              "key": "plan_count",
-              "label": "plan_count",
-              "value": 40
-            },
-            {
-              "key": "group_min_rank",
-              "label": "group_min_rank",
-              "value": 5000
-            },
-            {
-              "key": "major_min_rank",
-              "label": "major_min_rank",
-              "value": 5000
-            }
-          ],
-          "matched_filters": [
-            {
-              "id": "planned_year",
-              "field": "年份",
-              "operator": "eq",
-              "value": 2024,
-              "matched": false,
-              "text": ""
-            },
-            {
-              "id": "planned_major_keywords",
-              "field": "专业名称",
-              "operator": "contains_any",
-              "value": [
-                "计算机",
-                "人工智能"
-              ],
-              "matched": false,
-              "text": ""
-            },
-            {
-              "id": "planned_school_province",
-              "field": "所在省",
-              "operator": "in",
-              "value": [
-                "广东"
-              ],
-              "matched": false,
-              "text": ""
-            }
-          ],
-          "raw": {
-            "年份": 2024,
-            "院校名称": "中山大学",
-            "院校专业组代码": 10558219,
-            "专业组名称": "物理219组",
-            "专业代码": 80901,
-            "专业名称": "计算机类",
-            "专业全称": "计算机类",
-            "所在省": "广东",
-            "城市": "广州",
-            "学费": 6850,
-            "专业组最低位次1": 5000,
-            "最低位次1": 5000,
-            "计划人数": 40,
-            "group_min_score": 650,
-            "score_margin": -20,
-            "rank_margin": null
-          }
-        },
-        {
-          "item_id": "result_002",
-          "title": "深圳大学",
-          "subtitle": "计算机科学与技术",
-          "primary_attributes": [
-            {
-              "key": "year",
-              "label": "year",
-              "value": 2024
-            },
-            {
-              "key": "university_name",
-              "label": "university_name",
-              "value": "深圳大学"
-            },
-            {
-              "key": "group_code",
-              "label": "group_code",
-              "value": 10590221
-            },
-            {
-              "key": "group_name",
-              "label": "group_name",
-              "value": "物理221组"
-            }
-          ],
-          "secondary_attributes": [
-            {
-              "key": "major_code",
-              "label": "major_code",
-              "value": 80901
-            },
-            {
-              "key": "major_name",
-              "label": "major_name",
-              "value": "计算机科学与技术"
-            },
-            {
-              "key": "full_major_name",
-              "label": "full_major_name",
-              "value": "计算机科学与技术"
-            },
-            {
-              "key": "province",
-              "label": "province",
-              "value": "广东"
-            },
-            {
-              "key": "city",
-              "label": "city",
-              "value": "深圳"
-            },
-            {
-              "key": "tuition",
-              "label": "tuition",
-              "value": 6850
-            },
-            {
-              "key": "rank_2024",
-              "label": "rank_2024",
-              "value": 9000
-            },
-            {
-              "key": "major_rank_2024",
-              "label": "major_rank_2024",
-              "value": 8800
-            },
-            {
-              "key": "plan_count",
-              "label": "plan_count",
-              "value": 30
-            },
-            {
-              "key": "group_min_rank",
-              "label": "group_min_rank",
-              "value": 9000
-            },
-            {
-              "key": "major_min_rank",
-              "label": "major_min_rank",
-              "value": 8800
-            }
-          ],
-          "matched_filters": [
-            {
-              "id": "planned_year",
-              "field": "年份",
-              "operator": "eq",
-              "value": 2024,
-              "matched": false,
-              "text": ""
-            },
-            {
-              "id": "planned_major_keywords",
-              "field": "专业名称",
-              "operator": "contains_any",
-              "value": [
-                "计算机",
-                "人工智能"
-              ],
-              "matched": false,
-              "text": ""
-            },
-            {
-              "id": "planned_school_province",
-              "field": "所在省",
-              "operator": "in",
-              "value": [
-                "广东"
-              ],
-              "matched": false,
-              "text": ""
-            }
-          ],
-          "raw": {
-            "年份": 2024,
-            "院校名称": "深圳大学",
-            "院校专业组代码": 10590221,
-            "专业组名称": "物理221组",
-            "专业代码": 80901,
-            "专业名称": "计算机科学与技术",
-            "专业全称": "计算机科学与技术",
-            "所在省": "广东",
-            "城市": "深圳",
-            "学费": 6850,
-            "专业组最低位次1": 9000,
-            "最低位次1": 8800,
-            "计划人数": 30,
-            "group_min_score": 628,
-            "score_margin": 2,
-            "rank_margin": null
-          }
-        },
-        {
-          "item_id": "result_003",
-          "title": "深圳大学",
-          "subtitle": "人工智能",
-          "primary_attributes": [
-            {
-              "key": "year",
-              "label": "year",
-              "value": 2024
-            },
-            {
-              "key": "university_name",
-              "label": "university_name",
-              "value": "深圳大学"
-            },
-            {
-              "key": "group_code",
-              "label": "group_code",
-              "value": 10590221
-            },
-            {
-              "key": "group_name",
-              "label": "group_name",
-              "value": "物理221组"
-            }
-          ],
-          "secondary_attributes": [
-            {
-              "key": "major_code",
-              "label": "major_code",
-              "value": 80717
-            },
-            {
-              "key": "major_name",
-              "label": "major_name",
-              "value": "人工智能"
-            },
-            {
-              "key": "full_major_name",
-              "label": "full_major_name",
-              "value": "人工智能"
-            },
-            {
-              "key": "province",
-              "label": "province",
-              "value": "广东"
-            },
-            {
-              "key": "city",
-              "label": "city",
-              "value": "深圳"
-            },
-            {
-              "key": "tuition",
-              "label": "tuition",
-              "value": 6850
-            },
-            {
-              "key": "rank_2024",
-              "label": "rank_2024",
-              "value": 9000
-            },
-            {
-              "key": "major_rank_2024",
-              "label": "major_rank_2024",
-              "value": 9100
-            },
-            {
-              "key": "plan_count",
-              "label": "plan_count",
-              "value": 20
-            },
-            {
-              "key": "group_min_rank",
-              "label": "group_min_rank",
-              "value": 9000
-            },
-            {
-              "key": "major_min_rank",
-              "label": "major_min_rank",
-              "value": 9100
-            }
-          ],
-          "matched_filters": [
-            {
-              "id": "planned_year",
-              "field": "年份",
-              "operator": "eq",
-              "value": 2024,
-              "matched": false,
-              "text": ""
-            },
-            {
-              "id": "planned_major_keywords",
-              "field": "专业名称",
-              "operator": "contains_any",
-              "value": [
-                "计算机",
-                "人工智能"
-              ],
-              "matched": false,
-              "text": ""
-            },
-            {
-              "id": "planned_school_province",
-              "field": "所在省",
-              "operator": "in",
-              "value": [
-                "广东"
-              ],
-              "matched": false,
-              "text": ""
-            }
-          ],
-          "raw": {
-            "年份": 2024,
-            "院校名称": "深圳大学",
-            "院校专业组代码": 10590221,
-            "专业组名称": "物理221组",
-            "专业代码": 80717,
-            "专业名称": "人工智能",
-            "专业全称": "人工智能",
-            "所在省": "广东",
-            "城市": "深圳",
-            "学费": 6850,
-            "专业组最低位次1": 9000,
-            "最低位次1": 9100,
-            "计划人数": 20,
-            "group_min_score": 628,
-            "score_margin": 2,
-            "rank_margin": null
-          }
-        }
-      ],
-      "top_results": [
-        {
-          "id": "result_001",
-          "trace": [],
-          "year": 2024,
-          "batch": null,
-          "university_code": null,
-          "university_name": "中山大学",
-          "group_code": 10558219,
-          "group_name": "物理219组",
-          "major_code": 80901,
-          "major_name": "计算机类",
-          "full_major_name": "计算机类",
-          "subject_requirement": null,
-          "province": "广东",
-          "city": "广州",
-          "tuition": 6850,
-          "rank_2024": 5000,
-          "major_rank_2024": 5000,
-          "plan_count": 40,
-          "group_min_rank": 5000,
-          "major_min_rank": 5000,
-          "safety_margin": ""
-        },
-        {
-          "id": "result_002",
-          "trace": [],
-          "year": 2024,
-          "batch": null,
-          "university_code": null,
-          "university_name": "深圳大学",
-          "group_code": 10590221,
-          "group_name": "物理221组",
-          "major_code": 80901,
-          "major_name": "计算机科学与技术",
-          "full_major_name": "计算机科学与技术",
-          "subject_requirement": null,
-          "province": "广东",
-          "city": "深圳",
-          "tuition": 6850,
-          "rank_2024": 9000,
-          "major_rank_2024": 8800,
-          "plan_count": 30,
-          "group_min_rank": 9000,
-          "major_min_rank": 8800,
-          "safety_margin": ""
-        },
-        {
-          "id": "result_003",
-          "trace": [],
-          "year": 2024,
-          "batch": null,
-          "university_code": null,
-          "university_name": "深圳大学",
-          "group_code": 10590221,
-          "group_name": "物理221组",
-          "major_code": 80717,
-          "major_name": "人工智能",
-          "full_major_name": "人工智能",
-          "subject_requirement": null,
-          "province": "广东",
-          "city": "深圳",
-          "tuition": 6850,
-          "rank_2024": 9000,
-          "major_rank_2024": 9100,
-          "plan_count": 20,
-          "group_min_rank": 9000,
-          "major_min_rank": 9100,
-          "safety_margin": ""
-        }
-      ],
+      "result_count": 0,
+      "items": [],
+      "top_results": [],
       "result_sections": {
         "reach": {
           "label": "冲",
-          "items": [
-            {
-              "year": 2024,
-              "university_name": "中山大学",
-              "group_code": 10558219,
-              "group_title": "物理219组",
-              "major_code": 80901,
-              "major_name": "计算机类",
-              "full_major_name": "计算机类",
-              "school_province": "广东",
-              "city": "广州",
-              "tuition": 6850,
-              "group_min_score": 650,
-              "group_min_rank": 5000,
-              "major_min_score": 650,
-              "major_min_rank": 5000,
-              "plan_count": 40,
-              "score_margin": -20
-            }
-          ]
+          "items": []
         },
         "match": {
           "label": "稳",
-          "items": [
-            {
-              "year": 2024,
-              "university_name": "深圳大学",
-              "group_code": 10590221,
-              "group_title": "物理221组",
-              "major_code": 80901,
-              "major_name": "计算机科学与技术",
-              "full_major_name": "计算机科学与技术",
-              "school_province": "广东",
-              "city": "深圳",
-              "tuition": 6850,
-              "group_min_score": 628,
-              "group_min_rank": 9000,
-              "major_min_score": 626,
-              "major_min_rank": 8800,
-              "plan_count": 30,
-              "score_margin": 2
-            },
-            {
-              "year": 2024,
-              "university_name": "深圳大学",
-              "group_code": 10590221,
-              "group_title": "物理221组",
-              "major_code": 80717,
-              "major_name": "人工智能",
-              "full_major_name": "人工智能",
-              "school_province": "广东",
-              "city": "深圳",
-              "tuition": 6850,
-              "group_min_score": 628,
-              "group_min_rank": 9000,
-              "major_min_score": 625,
-              "major_min_rank": 9100,
-              "plan_count": 20,
-              "score_margin": 2
-            }
-          ]
+          "items": []
         },
         "safety": {
           "label": "保",
@@ -1260,45 +734,15 @@
       },
       "warnings": [
         {
-          "code": "default_year_used",
-          "severity": "warning",
-          "message": "未指定年份，默认使用 latest_available_year=2024。",
-          "year": 2024
-        },
-        {
           "code": "score_without_rank",
-          "severity": "warning",
-          "message": "只提供分数没有位次；系统只按历史最低分 margin 分组，不能判断录取概率。"
+          "severity": "error",
+          "message": "只提供分数没有位次；请补充广东省排位，系统不会仅凭分数执行推荐。"
         }
       ],
       "evidence_pack": {
         "user_request": "假设我今年的高考分数是630分，想读人工智能，计算机，而且不想去国外，想留在广东省，请给出推荐",
         "query_type": "recommendation",
-        "executed_rules": [
-          {
-            "rule_id": "planned_year",
-            "field": "年份",
-            "operator": "eq",
-            "value": 2024
-          },
-          {
-            "rule_id": "planned_major_keywords",
-            "field": "专业名称",
-            "operator": "contains_any",
-            "value": [
-              "计算机",
-              "人工智能"
-            ]
-          },
-          {
-            "rule_id": "planned_school_province",
-            "field": "所在省",
-            "operator": "in",
-            "value": [
-              "广东"
-            ]
-          }
-        ],
+        "executed_rules": [],
         "candidate_confirmations": [],
         "not_executed_preferences": [
           {
@@ -1310,142 +754,16 @@
             "reason": "当前 domain pack 未启用境外办学字段，不能执行该排除条件。"
           }
         ],
-        "result_count": 3,
-        "top_k_results": [
-          {
-            "id": "result_001",
-            "trace": [],
-            "year": 2024,
-            "batch": null,
-            "university_code": null,
-            "university_name": "中山大学",
-            "group_code": 10558219,
-            "group_name": "物理219组",
-            "major_code": 80901,
-            "major_name": "计算机类",
-            "full_major_name": "计算机类",
-            "subject_requirement": null,
-            "province": "广东",
-            "city": "广州",
-            "tuition": 6850,
-            "rank_2024": 5000,
-            "major_rank_2024": 5000,
-            "plan_count": 40,
-            "group_min_rank": 5000,
-            "major_min_rank": 5000,
-            "safety_margin": ""
-          },
-          {
-            "id": "result_002",
-            "trace": [],
-            "year": 2024,
-            "batch": null,
-            "university_code": null,
-            "university_name": "深圳大学",
-            "group_code": 10590221,
-            "group_name": "物理221组",
-            "major_code": 80901,
-            "major_name": "计算机科学与技术",
-            "full_major_name": "计算机科学与技术",
-            "subject_requirement": null,
-            "province": "广东",
-            "city": "深圳",
-            "tuition": 6850,
-            "rank_2024": 9000,
-            "major_rank_2024": 8800,
-            "plan_count": 30,
-            "group_min_rank": 9000,
-            "major_min_rank": 8800,
-            "safety_margin": ""
-          },
-          {
-            "id": "result_003",
-            "trace": [],
-            "year": 2024,
-            "batch": null,
-            "university_code": null,
-            "university_name": "深圳大学",
-            "group_code": 10590221,
-            "group_name": "物理221组",
-            "major_code": 80717,
-            "major_name": "人工智能",
-            "full_major_name": "人工智能",
-            "subject_requirement": null,
-            "province": "广东",
-            "city": "深圳",
-            "tuition": 6850,
-            "rank_2024": 9000,
-            "major_rank_2024": 9100,
-            "plan_count": 20,
-            "group_min_rank": 9000,
-            "major_min_rank": 9100,
-            "safety_margin": ""
-          }
-        ],
+        "result_count": 0,
+        "top_k_results": [],
         "result_sections": {
           "reach": {
             "label": "冲",
-            "items": [
-              {
-                "year": 2024,
-                "university_name": "中山大学",
-                "group_code": 10558219,
-                "group_title": "物理219组",
-                "major_code": 80901,
-                "major_name": "计算机类",
-                "full_major_name": "计算机类",
-                "school_province": "广东",
-                "city": "广州",
-                "tuition": 6850,
-                "group_min_score": 650,
-                "group_min_rank": 5000,
-                "major_min_score": 650,
-                "major_min_rank": 5000,
-                "plan_count": 40,
-                "score_margin": -20
-              }
-            ]
+            "items": []
           },
           "match": {
             "label": "稳",
-            "items": [
-              {
-                "year": 2024,
-                "university_name": "深圳大学",
-                "group_code": 10590221,
-                "group_title": "物理221组",
-                "major_code": 80901,
-                "major_name": "计算机科学与技术",
-                "full_major_name": "计算机科学与技术",
-                "school_province": "广东",
-                "city": "深圳",
-                "tuition": 6850,
-                "group_min_score": 628,
-                "group_min_rank": 9000,
-                "major_min_score": 626,
-                "major_min_rank": 8800,
-                "plan_count": 30,
-                "score_margin": 2
-              },
-              {
-                "year": 2024,
-                "university_name": "深圳大学",
-                "group_code": 10590221,
-                "group_title": "物理221组",
-                "major_code": 80717,
-                "major_name": "人工智能",
-                "full_major_name": "人工智能",
-                "school_province": "广东",
-                "city": "深圳",
-                "tuition": 6850,
-                "group_min_score": 628,
-                "group_min_rank": 9000,
-                "major_min_score": 625,
-                "major_min_rank": 9100,
-                "plan_count": 20,
-                "score_margin": 2
-              }
-            ]
+            "items": []
           },
           "safety": {
             "label": "保",
@@ -1455,7 +773,7 @@
         "trace_summary": {
           "top_k": 5,
           "query_type": "recommendation",
-          "result_count": 3
+          "result_count": 0
         },
         "extracted_preferences": [
           {
@@ -1471,7 +789,7 @@
             "id": "pref_score",
             "slot": "分数",
             "value": 630,
-            "status": "仅用于 score_margin"
+            "status": "等待补充位次，未用于执行"
           },
           {
             "id": "pref_school_province",
@@ -1485,80 +803,24 @@
         "attribute_grounding_summary": {},
         "proposed_rule_audit": [],
         "execution_summary": {
-          "executor": "duckdb",
+          "executor": null,
           "query_type": "recommendation",
-          "sql": "SELECT\n  \"年份\" AS year,\n  \"院校名称\" AS university_name,\n  \"院校专业组代码\" AS group_code,\n  \"专业组名称\" AS group_title,\n  \"专业代码\" AS major_code,\n  \"专业名称\" AS major_name,\n  \"专业全称\" AS full_major_name,\n  \"所在省\" AS school_province,\n  \"城市\" AS city,\n  \"学费\" AS tuition,\n  TRY_CAST(regexp_extract(REPLACE(CAST(\"专业组最低分1\" AS VARCHAR), ',', ''), '\\d+(?:\\.\\d+)?') AS DOUBLE) AS group_min_score,\n  TRY_CAST(regexp_extract(REPLACE(CAST(\"专业组最低位次1\" AS VARCHAR), ',', ''), '\\d+(?:\\.\\d+)?') AS DOUBLE) AS group_min_rank,\n  TRY_CAST(regexp_extract(REPLACE(CAST(\"最低分1\" AS VARCHAR), ',', ''), '\\d+(?:\\.\\d+)?') AS DOUBLE) AS major_min_score,\n  TRY_CAST(regexp_extract(REPLACE(CAST(\"最低位次1\" AS VARCHAR), ',', ''), '\\d+(?:\\.\\d+)?') AS DOUBLE) AS major_min_rank,\n  TRY_CAST(regexp_extract(REPLACE(CAST(\"计划人数\" AS VARCHAR), ',', ''), '\\d+(?:\\.\\d+)?') AS DOUBLE) AS plan_count\nFROM \"admissions\"\nWHERE TRY_CAST(regexp_extract(REPLACE(CAST(\"年份\" AS VARCHAR), ',', ''), '\\d+(?:\\.\\d+)?') AS DOUBLE) = ? AND CAST(\"所在省\" AS VARCHAR) IN (?) AND (STRPOS(CAST(\"专业名称\" AS VARCHAR), ?) > 0 OR STRPOS(CAST(\"专业名称\" AS VARCHAR), ?) > 0) AND TRY_CAST(regexp_extract(REPLACE(CAST(\"专业组最低分1\" AS VARCHAR), ',', ''), '\\d+(?:\\.\\d+)?') AS DOUBLE) BETWEEN ? AND ?\nORDER BY ABS(? - TRY_CAST(regexp_extract(REPLACE(CAST(\"专业组最低分1\" AS VARCHAR), ',', ''), '\\d+(?:\\.\\d+)?') AS DOUBLE)) ASC NULLS LAST, group_min_score DESC NULLS LAST\nLIMIT ?",
-          "params": [
-            2024,
-            "广东",
-            "计算机",
-            "人工智能",
-            600,
-            660,
-            630,
-            30
-          ],
-          "input_row_count": 6,
-          "filtered_row_count": 3,
-          "group_by": [],
-          "metric": "score_margin",
-          "sort": [
-            {
-              "field": "score_margin",
-              "direction": "ASC"
-            }
-          ],
-          "margin_policy": {
-            "score_margin": {
-              "reach_max_abs": 30,
-              "match_max": 20,
-              "safety_min": 30
-            },
-            "rank_margin": {
-              "reach_max_abs": 8000,
-              "match_max": 15000,
-              "safety_min": 30000
-            }
-          },
-          "year_weighting": {
-            "mode": "latest_available_year",
-            "selected_year_weight": 1.0,
-            "historical_decay": 0.75,
-            "notes": "当前 admissions recommendation 只执行 latest_available_year；多年度趋势接入前只在 EvidencePack 记录策略，不跨年加权执行。",
-            "selected_year": 2024,
-            "executed_cross_year_weighting": false
-          },
-          "major_match": {
-            "mode": "exact_major_keywords",
-            "terms": [
-              "计算机",
-              "人工智能"
-            ]
-          },
-          "bucket_counts": {
-            "reach": 1,
-            "match": 2,
-            "safety": 0
-          },
-          "top_k": 30,
-          "hard_rule_ids": [
-            "planned_year",
-            "planned_major_keywords",
-            "planned_school_province"
-          ],
-          "skipped_soft_rule_ids": [],
+          "sql": "",
+          "params": [],
+          "input_row_count": 0,
+          "filtered_row_count": 0,
           "nested_result_count": 0,
+          "group_by": [],
+          "metric": null,
+          "sort": [],
+          "top_k": 0,
+          "hard_rule_ids": [],
+          "skipped_soft_rule_ids": [],
           "warnings": [
             {
-              "code": "default_year_used",
-              "severity": "warning",
-              "message": "未指定年份，默认使用 latest_available_year=2024。",
-              "year": 2024
-            },
-            {
               "code": "score_without_rank",
-              "severity": "warning",
-              "message": "只提供分数没有位次；系统只按历史最低分 margin 分组，不能判断录取概率。"
+              "severity": "error",
+              "message": "只提供分数没有位次；请补充广东省排位，系统不会仅凭分数执行推荐。"
             }
           ]
         },
@@ -1580,17 +842,8 @@
         "rejected_confirmations": [],
         "policy_references": []
       },
-      "sql": "SELECT\n  \"年份\" AS year,\n  \"院校名称\" AS university_name,\n  \"院校专业组代码\" AS group_code,\n  \"专业组名称\" AS group_title,\n  \"专业代码\" AS major_code,\n  \"专业名称\" AS major_name,\n  \"专业全称\" AS full_major_name,\n  \"所在省\" AS school_province,\n  \"城市\" AS city,\n  \"学费\" AS tuition,\n  TRY_CAST(regexp_extract(REPLACE(CAST(\"专业组最低分1\" AS VARCHAR), ',', ''), '\\d+(?:\\.\\d+)?') AS DOUBLE) AS group_min_score,\n  TRY_CAST(regexp_extract(REPLACE(CAST(\"专业组最低位次1\" AS VARCHAR), ',', ''), '\\d+(?:\\.\\d+)?') AS DOUBLE) AS group_min_rank,\n  TRY_CAST(regexp_extract(REPLACE(CAST(\"最低分1\" AS VARCHAR), ',', ''), '\\d+(?:\\.\\d+)?') AS DOUBLE) AS major_min_score,\n  TRY_CAST(regexp_extract(REPLACE(CAST(\"最低位次1\" AS VARCHAR), ',', ''), '\\d+(?:\\.\\d+)?') AS DOUBLE) AS major_min_rank,\n  TRY_CAST(regexp_extract(REPLACE(CAST(\"计划人数\" AS VARCHAR), ',', ''), '\\d+(?:\\.\\d+)?') AS DOUBLE) AS plan_count\nFROM \"admissions\"\nWHERE TRY_CAST(regexp_extract(REPLACE(CAST(\"年份\" AS VARCHAR), ',', ''), '\\d+(?:\\.\\d+)?') AS DOUBLE) = ? AND CAST(\"所在省\" AS VARCHAR) IN (?) AND (STRPOS(CAST(\"专业名称\" AS VARCHAR), ?) > 0 OR STRPOS(CAST(\"专业名称\" AS VARCHAR), ?) > 0) AND TRY_CAST(regexp_extract(REPLACE(CAST(\"专业组最低分1\" AS VARCHAR), ',', ''), '\\d+(?:\\.\\d+)?') AS DOUBLE) BETWEEN ? AND ?\nORDER BY ABS(? - TRY_CAST(regexp_extract(REPLACE(CAST(\"专业组最低分1\" AS VARCHAR), ',', ''), '\\d+(?:\\.\\d+)?') AS DOUBLE)) ASC NULLS LAST, group_min_score DESC NULLS LAST\nLIMIT ?",
-      "params": [
-        2024,
-        "广东",
-        "计算机",
-        "人工智能",
-        600,
-        660,
-        630,
-        30
-      ],
+      "sql": "",
+      "params": [],
       "failures": []
     }
   ],

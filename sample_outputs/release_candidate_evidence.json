@@ -85,10 +85,9 @@
           },
           {
             "query_type": "recommendation",
-            "status": "ok",
-            "result_count": 3,
+            "status": "needs_confirmation",
+            "result_count": 0,
             "warnings": [
-              "default_year_used",
               "score_without_rank"
             ]
           }

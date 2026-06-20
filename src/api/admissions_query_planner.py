@@ -9,6 +9,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
+import cn2an
 import duckdb
 
 from src.domains import DomainConfig
@@ -19,6 +20,9 @@ QUERY_TYPE_RECOMMENDATION = "recommendation"
 DEFAULT_LIMIT = 30
 SECTION_LIMIT = 5
 NUMBER_PATTERN = r"\d+(?:\.\d+)?"
+QUANTITY_PATTERN = (
+    r"\d+(?:\.\d+)?\s*(?:万|w|W)?|[零〇一二两三四五六七八九十百千万点]+"
+)
 
 
 @dataclass(frozen=True)
@@ -259,6 +263,17 @@ class AdmissionsQueryPlanner:
         user_request: str,
     ) -> AdmissionsQueryResult:
         policy = self.config.get(QUERY_TYPE_RECOMMENDATION) or {}
+        score = _score_from_inputs(config, user_request)
+        rank = _rank_from_inputs(config, user_request)
+        if score and not rank:
+            return self._score_without_rank_result(
+                self._score_without_rank_inputs(
+                    config=config,
+                    user_request=user_request,
+                    policy=policy,
+                    score=score,
+                )
+            )
         readiness = self._query_readiness(QUERY_TYPE_RECOMMENDATION, policy)
         if readiness is not None:
             return readiness
@@ -384,6 +399,39 @@ class AdmissionsQueryPlanner:
             no_schema_field_preferences=inputs.no_schema_preferences,
             extracted_preferences=_recommendation_extracted_preferences(inputs),
             policy=policy.get("margin_policy") or {},
+        )
+
+    def _score_without_rank_inputs(
+        self,
+        *,
+        config: Any,
+        user_request: str,
+        policy: dict[str, Any],
+        score: int,
+    ) -> _RecommendationInputs:
+        major_terms, candidates, major_match_mode = self._major_terms(
+            config,
+            user_request,
+        )
+        school_provinces = self._school_provinces(config, user_request)
+        no_schema, _ = self._schema_sensitive_avoidance_rules(user_request, policy)
+        warning = _warning(
+            "score_without_rank",
+            "只提供分数没有位次；请补充广东省排位，系统不会仅凭分数执行推荐。",
+            severity="error",
+        )
+        return _RecommendationInputs(
+            year=int(self.config.get("latest_available_year") or 0),
+            requested_year=None,
+            score=score,
+            rank=None,
+            major_terms=major_terms,
+            major_match_mode=major_match_mode,
+            school_provinces=school_provinces,
+            no_schema_preferences=no_schema,
+            warnings=[warning],
+            executed_rules=[],
+            candidates_to_confirm=candidates,
         )
 
     def _score_without_rank_result(
@@ -1133,12 +1181,15 @@ def _recommendation_extracted_preferences(
         }
     ]
     if inputs.score:
+        status = "等待补充位次，未用于执行"
+        if inputs.rank:
+            status = "已记录，rank_margin 优先"
         items.append(
             {
                 "id": "pref_score",
                 "slot": "分数",
                 "value": inputs.score,
-                "status": "仅用于 score_margin",
+                "status": status,
             }
         )
     if inputs.rank:
@@ -1239,11 +1290,36 @@ def _score_from_inputs(config: Any, text: str) -> int | None:
 
 
 def _rank_from_inputs(config: Any, text: str) -> int | None:
-    hard_rank = _parse_positive_int(config.hard_filters.get("user_rank"))
+    hard_rank = _parse_quantity(config.hard_filters.get("user_rank"))
     if hard_rank:
         return hard_rank
-    match = re.search(r"(?:排位|位次|排名|省排|省排名)\s*(\d+)", text)
-    return _parse_positive_int(match.group(1)) if match else None
+    match = re.search(
+        rf"(?:排位|位次|排名|省排|省排名|全省)\s*"
+        rf"(?:约|大概|大约|差不多)?\s*({QUANTITY_PATTERN})\s*"
+        rf"(?:名|左右)?",
+        text,
+    )
+    return _parse_quantity(match.group(1)) if match else None
+
+
+def _parse_quantity(value: Any) -> int | None:
+    if value in (None, ""):
+        return None
+    text = (
+        str(value).strip()
+        .replace(",", "")
+        .replace("，", "")
+        .replace("W", "万")
+        .replace("w", "万")
+    )
+    text = re.sub(r"(?:名|左右|的)$", "", text)
+    if re.fullmatch(r"\d+(?:\.\d+)?", text):
+        return int(float(text))
+    try:
+        parsed = cn2an.cn2an(text, "smart")
+    except (ValueError, KeyError):
+        return None
+    return int(parsed)
 
 
 def _parse_year(text: str) -> int | None:

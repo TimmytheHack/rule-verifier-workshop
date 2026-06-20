@@ -7,6 +7,7 @@ from pathlib import Path
 from tempfile import TemporaryDirectory
 from unittest.mock import patch
 
+from src.api.admissions_query_planner import AdmissionsQueryPlanner
 from src.api.workbench import WorkbenchConfig, run_workbench
 from tests.warehouse_test_utils import (
     _test_warehouse_paths,
@@ -100,11 +101,34 @@ class AdmissionsQueryTypesTest(unittest.TestCase):
             "safety": {"label": "保", "items": []},
         })
         self.assertIn("score_without_rank", _warning_codes(result))
+        self.assertNotIn("needs_confirmation", _warning_codes(result))
         execution = result["evidence_pack"]["execution_summary"]
         self.assertIsNone(execution["executor"])
         self.assertEqual(execution["sql"], "")
         self.assertEqual(execution["params"], [])
         self.assertNotIn("录取概率", result["answer"])
+        score_preferences = [
+            item
+            for item in result["evidence_pack"]["extracted_preferences"]
+            if item["id"] == "pref_score"
+        ]
+        self.assertEqual(score_preferences[0]["status"], "等待补充位次，未用于执行")
+
+    def test_score_only_recommendation_returns_before_planner_readiness_sql(self) -> None:
+        with patch.object(
+            AdmissionsQueryPlanner,
+            "_query_readiness",
+            side_effect=AssertionError("score-only should not check table readiness"),
+        ):
+            with patch.object(
+                AdmissionsQueryPlanner,
+                "_available_years",
+                side_effect=AssertionError("score-only should not resolve years"),
+            ):
+                result = _run(SCORE_ONLY_RECOMMENDATION_QUERY)
+
+        self.assertEqual(result["status"], "needs_confirmation")
+        self.assertEqual(result["evidence_pack"]["execution_summary"]["sql"], "")
 
     def test_rank_only_recommendation_query_is_detected(self) -> None:
         result = _run(RANK_ONLY_RECOMMENDATION_QUERY)
@@ -116,6 +140,23 @@ class AdmissionsQueryTypesTest(unittest.TestCase):
         self.assertEqual(execution["metric"], "rank_margin")
         self.assertEqual(execution["sort"], [{"field": "rank_margin", "direction": "ASC"}])
         self.assertNotIn("score_without_rank", _warning_codes(result))
+
+    def test_decimal_rank_quantities_are_parsed_for_recommendations(self) -> None:
+        examples = [
+            "我今年位次3.2万，想读人工智能、计算机，想留在广东省，请推荐",
+            "我今年排名3.2万，想读人工智能、计算机，想留在广东省，请推荐",
+            "我今年省排3.2w，想读人工智能、计算机，想留在广东省，请推荐",
+        ]
+        for query in examples:
+            with self.subTest(query=query):
+                result = _run(query)
+
+                self.assertEqual(result["query_type"], "recommendation")
+                self.assertEqual(result["status"], "ok")
+                execution = result["evidence_pack"]["execution_summary"]
+                self.assertEqual(execution["metric"], "rank_margin")
+                self.assertIn(32000, execution["params"])
+                self.assertNotIn(3, execution["params"])
 
     def test_recommendation_evidence_records_calibration_policy(self) -> None:
         result = _run(RECOMMENDATION_QUERY)
@@ -141,6 +182,7 @@ class AdmissionsQueryTypesTest(unittest.TestCase):
         result = _run(SCORE_ONLY_RECOMMENDATION_QUERY)
 
         self.assertIn("score_without_rank", _warning_codes(result))
+        self.assertNotIn("needs_confirmation", _warning_codes(result))
         self.assertEqual(result["status"], "needs_confirmation")
         self.assertIsNone(result["evidence_pack"]["execution_summary"]["metric"])
         self.assertEqual(result["evidence_pack"]["execution_summary"]["sql"], "")

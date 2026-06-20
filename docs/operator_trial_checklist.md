@@ -34,7 +34,7 @@ outputs/operator_trial/<run_id>/report.json
 | approve domain | 只批准已审查 admissions template | 不把 generator seed ops 直接变为 executable hard filters。 |
 | build warehouse | DuckDB、schema/value index、source fingerprint | `warehouse_fingerprint` 与 source 一致，状态 queryable。 |
 | group detail query | 深圳大学 2025 专业组明细 | `query_type=group_detail_report`，EvidencePack 有 SQL、params、metric。 |
-| recommendation query | 630 分、AI/计算机、广东、不去国外 | `query_type=recommendation`；只有分数无位次时必须有 warning。 |
+| recommendation query | 630 分、AI/计算机、广东、不去国外 | `query_type=recommendation`；只有分数无位次时必须为 `status=needs_confirmation`、`result_count=0`、SQL 为空，并带 `score_without_rank` warning。 |
 | evidence | EvidencePack 和 warnings | 不暴露 stack trace、secret、环境变量或危险绝对路径。 |
 
 ## 必看字段

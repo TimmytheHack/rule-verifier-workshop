@@ -71,7 +71,7 @@ required/missing/risky fields、`items`、`top_results`、`result_sections`、`E
 `dataset_id` 作为 admissions 数据源调用同一个 `/workbench/query`；这只是后端数据源选择，
 不改变规则抽取、schema grounding、RuleVerifier 或 EvidencePack 边界。operator UI 现在会把
 `items` 与 `result_sections` 放在主展示层，把 `top_results` 保留为兼容 JSON；
-`needs_confirmation` 只允许选择上一轮系统返回的 `candidate_id` 重跑；`blocked`、
+`needs_confirmation` 带 `candidate_id` 时只允许选择上一轮系统返回的 `candidate_id` 重跑；缺少位次等必要信息时必须补充输入；`blocked`、
 `no_results`、warnings 和前端操作审计记录单独展示。
 
 `scripts/run_real_dataset_pilot.py` 是真实招生 Excel 上线前的验收脚本。它把上传、profile、
@@ -493,7 +493,7 @@ Workbench API 返回固定的 `WorkbenchResponse` contract：
   和 `debug_trace` 等字段。
 - `domain_pack_status` 至少支持 `draft`、`needs_review`、`approved`、`blocked`；
   `draft` / `needs_review` 默认返回 `blocked`，不执行 SQL。
-- `needs_confirmation` 表示存在未确认的 `partial_match` 偏好，这些偏好不能声称已执行；当前结果只能作为已执行规则下的 provisional results。
+- `needs_confirmation` 表示存在未确认的 `partial_match` 偏好，或缺少必须由用户补充的关键信息（例如只有分数没有位次）。这些偏好或缺失信息不能声称已执行；缺少关键信息时不能返回 provisional results。
 - `blocked` 用于 fingerprint guard、未 approved 的 domain pack、伪造/过期/不属于当前 query 的 `candidate_id` 等安全阻断；此状态下 `execution.sql` 为空，不执行 DuckDB SQL。
 - `no_results` 表示 SQL 正常执行但 `filtered_row_count = 0`；答案不得编造推荐。
 - 前端主列表优先读取跨领域 `items`。`top_results` 只作为 domain-specific 兼容层，

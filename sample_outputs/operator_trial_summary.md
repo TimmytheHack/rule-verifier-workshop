@@ -19,7 +19,7 @@
 | schema_profile | `needs_review` | 已记录字段类型、行列规模、warning 和 schema profile 摘要。 |
 | review_approval | `pass` | required admissions fields 无缺失，risky fields 已进入人工审查路径。 |
 | warehouse | `pass` | DuckDB warehouse 构建完成，source fingerprint 与 warehouse fingerprint 一致。 |
-| target_queries | `pass` | `group_detail_report` 返回 1 条专业组明细，`recommendation` 返回 3 条分组结果。 |
+| target_queries | `pass` | `group_detail_report` 返回 1 条专业组明细，score-only `recommendation` 返回 `needs_confirmation` 且不执行 SQL。 |
 | trial_closeout | `pass` | failures 为空，常见失败处理已写入报告。 |
 
 ## 目标查询
@@ -27,7 +27,7 @@
 | query_type | status | result_count | 关键证据 |
 |---|---|---:|---|
 | `group_detail_report` | `ok` | 1 | 返回深圳大学专业组及组内专业最低分/位次明细。 |
-| `recommendation` | `ok` | 3 | 保留 `default_year_used` 和 `score_without_rank` warning，不声称录取概率。 |
+| `recommendation` | `needs_confirmation` | 0 | 保留 `score_without_rank` warning，SQL 为空，要求补充广东省排位/位次。 |
 
 ## 人工结论
 
