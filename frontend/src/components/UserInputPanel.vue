@@ -113,11 +113,12 @@ watch(
 
 function submitRun() {
   const rankWindow = selectedRankWindow();
+  const sortMode = selectedSortMode();
   if (!rankWindow) {
     formError.value = '请先选择排位范围：冲一冲、稳一点或保底。';
     return;
   }
-  if (!soft.sort_mode) {
+  if (!sortMode) {
     formError.value = '请先选择排序方式。';
     return;
   }
@@ -137,7 +138,7 @@ function submitRun() {
     rank_window_label: rankWindow?.label || null,
     rank_window_lower_percent: rankWindow?.lower ?? null,
     rank_window_upper_percent: rankWindow?.upper ?? null,
-    sort_mode: soft.sort_mode || null,
+    sort_mode: sortMode.value,
     tuition_cap_yuan: soft.tuition_cap_yuan || null,
   };
   emit('run', {
@@ -221,6 +222,11 @@ function selectedRankWindow() {
     lower: option.lower,
     upper: option.upper,
   };
+}
+
+function selectedSortMode() {
+  if (!soft.sort_mode) return null;
+  return (props.sortModeOptions || []).find((item) => item.value === soft.sort_mode) || null;
 }
 
 function selectedRankWindowDescription() {

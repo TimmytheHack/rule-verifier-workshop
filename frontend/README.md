@@ -49,7 +49,7 @@ npm run build
 make serve
 ```
 
-API 模式只暴露受控选项：规则提取方式、证据回答方式和 LLM 模型。选择 LLM 辅助解析软偏好或 LLM 证据回答时，后端会返回 token 用量并在页面展示。
+API 模式只暴露受控选项：排位范围、排序方式、规则提取方式、证据回答方式和 LLM 模型。选择 LLM 辅助解析软偏好或 LLM 证据回答时，后端会返回 token 用量并在页面展示。
 Vite 会把 `/api`、`/datasets` 和 `/workbench` 代理到本地后端。开发模式默认发送
 `operator-token`，配合 `make serve` 可直接完成查询、上传、审核和建仓。生产构建不会内置
 默认 token；如需覆盖本地 token，可在浏览器 `localStorage.actor_token` 写入服务端配置的 token。
