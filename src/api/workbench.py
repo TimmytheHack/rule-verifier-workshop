@@ -456,6 +456,7 @@ def _run_workbench(config: WorkbenchConfig) -> dict[str, Any]:
     )
     decision_option_suggestions = _decision_option_suggestions_for_payload(
         config,
+        domain_config,
         slots,
     )
     base_no_schema_preferences = confirmation_state.get(
@@ -635,6 +636,7 @@ def _planned_query_payload(
     )
     decision_option_suggestions = _decision_option_suggestions_for_payload(
         config,
+        domain_config,
         guidance_slots,
     )
     planned_no_schema_preferences = planned_result.no_schema_field_preferences
@@ -884,8 +886,17 @@ def _decision_guidance_for_payload(
 
 def _decision_option_suggestions_for_payload(
     config: WorkbenchConfig,
+    domain_config: DomainConfig,
     slots: dict[str, Any],
 ) -> dict[str, Any]:
+    if domain_config.domain_id != ADMISSIONS_DOMAIN.domain_id:
+        return {
+            "status": "reference_only",
+            "execution_effect": "does_not_change_sql_or_results",
+            "executable": False,
+            "source": "fixed_policy",
+            "suggestions": {},
+        }
     return decision_option_suggestions_for_query(
         _compose_user_request(config),
         slots,

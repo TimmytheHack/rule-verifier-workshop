@@ -139,6 +139,15 @@ class AdmissionsQueryTypesTest(unittest.TestCase):
         execution = result["evidence_pack"]["execution_summary"]
         self.assertEqual(execution["metric"], "rank_margin")
         self.assertEqual(execution["sort"], [{"field": "rank_distance", "direction": "ASC"}])
+        suggestions = result["evidence_pack"]["decision_option_suggestions"]
+        self.assertEqual(suggestions["status"], "reference_only")
+        self.assertFalse(suggestions["executable"])
+        self.assertEqual(
+            suggestions["execution_effect"],
+            "does_not_change_sql_or_results",
+        )
+        self.assertIn("rank_window", suggestions["suggestions"])
+        self.assertIn("sort_mode", suggestions["suggestions"])
         self.assertNotIn("score_without_rank", _warning_codes(result))
 
     def test_recommendation_sort_mode_is_recorded_and_applied(self) -> None:

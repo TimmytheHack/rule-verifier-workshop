@@ -291,7 +291,7 @@ class WorkbenchApiContractTest(unittest.TestCase):
         result = run_workbench_with_domain_warehouse(
             WorkbenchConfig(
                 domain_name="housing",
-                user_input="Austin, at least 2 bedrooms, under 1900.",
+                user_input="Austin, at least 2 bedrooms, under 1900, 稳一点.",
                 hard_filters={
                     "city": ["Austin"],
                     "bedrooms_min": 2,
@@ -299,7 +299,7 @@ class WorkbenchApiContractTest(unittest.TestCase):
                     "property_types": ["apartment", "townhouse"],
                 },
                 soft_preferences={
-                    "prompt": "Austin, at least 2 bedrooms, under 1900."
+                    "prompt": "Austin, at least 2 bedrooms, under 1900, 稳一点."
                 },
                 extractor="regex",
             )
@@ -313,6 +313,15 @@ class WorkbenchApiContractTest(unittest.TestCase):
         self.assertEqual(result["items"][0]["title"], "14")
         self.assertIn("rent_usd", result["top_results"][0])
         self.assertNotIn("university_name", result["top_results"][0])
+        suggestions = result["evidence_pack"]["decision_option_suggestions"]
+        self.assertEqual(suggestions["status"], "reference_only")
+        self.assertEqual(
+            suggestions["execution_effect"],
+            "does_not_change_sql_or_results",
+        )
+        self.assertFalse(suggestions["executable"])
+        self.assertEqual(suggestions["source"], "fixed_policy")
+        self.assertEqual(suggestions["suggestions"], {})
 
     def test_products_returns_generic_items_and_domain_top_results(self) -> None:
         result = run_workbench_with_domain_warehouse(
