@@ -39,6 +39,16 @@ class ApiWorkbenchTest(unittest.TestCase):
         self.assertEqual(execution["top_k"], 5)
         self.assertTrue(execution["sort_key"])
 
+    def test_workbench_rank_desc_sort_mode_uses_controlled_override(self) -> None:
+        result = run_workbench_with_test_warehouse(
+            WorkbenchConfig(soft_preferences={"sort_mode": "rank_desc"})
+        )
+
+        assert_workbench_contract(self, result)
+        execution = result["execution"]
+        self.assertEqual(execution["executor"], "duckdb")
+        self.assertTrue(execution["sort_key"][0].endswith("DESC NULLS LAST"))
+
 
 if __name__ == "__main__":
     unittest.main()

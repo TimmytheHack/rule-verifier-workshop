@@ -70,6 +70,7 @@ class DuckDBExecutor:
         executable_rules: list[dict[str, Any]],
         user_rank: int | None = None,
         top_k: int = 5,
+        sort_policy_override: list[dict[str, Any]] | None = None,
     ) -> ExecutionResult:
         hard_rules, skipped_soft_rules = hard_filter_rules(executable_rules)
         with duckdb.connect(str(self.database_path), read_only=True) as connection:
@@ -79,6 +80,7 @@ class DuckDBExecutor:
                 columns=columns,
                 hard_rules=hard_rules,
                 domain_config=self.domain_config,
+                sort_policy_override=sort_policy_override,
             )
             input_row_count = _input_row_count(connection, self.table_name)
             filtered_row_count = int(
@@ -108,7 +110,11 @@ class DuckDBExecutor:
                 params=list(compiled.params),
                 input_row_count=input_row_count,
                 filtered_row_count=filtered_row_count,
-                sort_key=_sort_key_labels(self.domain_config, columns),
+                sort_key=_sort_key_labels(
+                    self.domain_config,
+                    columns,
+                    sort_policy_override=sort_policy_override,
+                ),
                 top_k=top_k,
                 hard_rule_ids=[str(rule.get("rule_id")) for rule in hard_rules],
                 skipped_soft_rule_ids=[
@@ -152,6 +158,7 @@ def _compile_select_sql(
     columns: set[str],
     hard_rules: list[dict[str, Any]],
     domain_config: DomainConfig,
+    sort_policy_override: list[dict[str, Any]] | None = None,
 ) -> _CompiledSQL:
     helper_fields = _numeric_helper_fields(domain_config, columns)
     required_helpers = []
@@ -182,7 +189,7 @@ def _compile_select_sql(
         for helper_name in required_helpers
     ]
     projectable_sql = "\n".join(projectable_conditions)
-    order_clause = _order_clause(domain_config, columns)
+    order_clause = _order_clause(domain_config, columns, sort_policy_override)
     cte = f"""
 WITH source AS (
   SELECT row_number() OVER () AS "__source_row_number", *
@@ -485,26 +492,55 @@ def _helper_name_for_field(
     return None
 
 
-def _order_clause(domain_config: DomainConfig, columns: set[str]) -> str:
+def _sort_policy(
+    domain_config: DomainConfig,
+    sort_policy_override: list[dict[str, Any]] | None,
+) -> list[dict[str, Any]]:
+    return list(sort_policy_override or domain_config.execution.get("sort_policy") or [])
+
+
+def _order_clause(
+    domain_config: DomainConfig,
+    columns: set[str],
+    sort_policy_override: list[dict[str, Any]] | None = None,
+) -> str:
     parts = []
-    for item in domain_config.execution.get("sort_policy") or []:
+    helper_names = {
+        str(item["name"])
+        for item in domain_config.execution.get("numeric_helper_fields") or []
+    }
+    for item in _sort_policy(domain_config, sort_policy_override):
         field_id = item.get("label_field_id")
         if field_id:
             source_column = domain_config.source_column(field_id)
             if item.get("optional") and source_column not in columns:
                 continue
         helper = str(item["helper"])
+        if helper not in helper_names:
+            raise ValueError(f"DuckDBExecutor cannot sort by unknown helper: {helper}")
         direction = str(item.get("direction") or "ASC").upper()
+        if direction not in {"ASC", "DESC"}:
+            raise ValueError(f"DuckDBExecutor cannot sort direction: {direction}")
         nulls = str(item.get("nulls") or "LAST").upper()
+        if nulls not in {"FIRST", "LAST"}:
+            raise ValueError(f"DuckDBExecutor cannot sort nulls: {nulls}")
         parts.append(f"  {_quote_identifier(helper)} {direction} NULLS {nulls}")
     if not parts:
         return ""
     return "ORDER BY\n" + ",\n".join(parts)
 
 
-def _sort_key_labels(domain_config: DomainConfig, columns: set[str]) -> list[str]:
+def _sort_key_labels(
+    domain_config: DomainConfig,
+    columns: set[str],
+    sort_policy_override: list[dict[str, Any]] | None = None,
+) -> list[str]:
     labels = []
-    for item in domain_config.execution.get("sort_policy") or []:
+    helper_names = {
+        str(item["name"])
+        for item in domain_config.execution.get("numeric_helper_fields") or []
+    }
+    for item in _sort_policy(domain_config, sort_policy_override):
         field_id = item.get("label_field_id")
         if field_id:
             source_column = domain_config.source_column(field_id)
@@ -513,8 +549,15 @@ def _sort_key_labels(domain_config: DomainConfig, columns: set[str]) -> list[str
             label = source_column
         else:
             label = str(item.get("helper"))
+        helper = str(item["helper"])
+        if helper not in helper_names:
+            raise ValueError(f"DuckDBExecutor cannot sort by unknown helper: {helper}")
         direction = str(item.get("direction") or "ASC").upper()
+        if direction not in {"ASC", "DESC"}:
+            raise ValueError(f"DuckDBExecutor cannot sort direction: {direction}")
         nulls = str(item.get("nulls") or "LAST").upper()
+        if nulls not in {"FIRST", "LAST"}:
+            raise ValueError(f"DuckDBExecutor cannot sort nulls: {nulls}")
         labels.append(f"{label} {direction} NULLS {nulls}")
     return labels
 

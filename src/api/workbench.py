@@ -76,6 +76,82 @@ MODEL_OPTIONS = {
     "deepseek-v4-flash": "LLM 快速模型",
     "deepseek-v4-pro": "LLM 高质量模型",
 }
+
+SORT_MODE_OPTIONS = {
+    "rank_asc": "按历史位次从高到低看（更冲）",
+    "rank_desc": "按历史位次从低到高看（更稳）",
+    "school_rank_asc": "同等条件下优先院校排名",
+}
+
+ADMISSIONS_SORT_POLICIES = {
+    "rank_asc": [
+        {
+            "helper": "__group_rank_num",
+            "label_field_id": "group_min_rank_2024",
+            "direction": "ASC",
+            "nulls": "LAST",
+        },
+        {
+            "helper": "__school_rank_num",
+            "label_field_id": "school_rank",
+            "direction": "ASC",
+            "nulls": "LAST",
+            "optional": True,
+        },
+        {
+            "helper": "__id_num",
+            "label_field_id": "row_id",
+            "direction": "ASC",
+            "nulls": "LAST",
+            "optional": True,
+        },
+    ],
+    "rank_desc": [
+        {
+            "helper": "__group_rank_num",
+            "label_field_id": "group_min_rank_2024",
+            "direction": "DESC",
+            "nulls": "LAST",
+        },
+        {
+            "helper": "__school_rank_num",
+            "label_field_id": "school_rank",
+            "direction": "ASC",
+            "nulls": "LAST",
+            "optional": True,
+        },
+        {
+            "helper": "__id_num",
+            "label_field_id": "row_id",
+            "direction": "ASC",
+            "nulls": "LAST",
+            "optional": True,
+        },
+    ],
+    "school_rank_asc": [
+        {
+            "helper": "__school_rank_num",
+            "label_field_id": "school_rank",
+            "direction": "ASC",
+            "nulls": "LAST",
+            "optional": True,
+        },
+        {
+            "helper": "__group_rank_num",
+            "label_field_id": "group_min_rank_2024",
+            "direction": "ASC",
+            "nulls": "LAST",
+        },
+        {
+            "helper": "__id_num",
+            "label_field_id": "row_id",
+            "direction": "ASC",
+            "nulls": "LAST",
+            "optional": True,
+        },
+    ],
+}
+
 WORKBENCH_STATUS_VALUES = {
     "ok",
     "needs_confirmation",
@@ -330,6 +406,7 @@ def _run_workbench(config: WorkbenchConfig) -> dict[str, Any]:
         user_rank=slots.get("user_context", {}).get("user_rank"),
         top_k=EVIDENCE_TOP_K,
         domain_config=domain_config,
+        config=config,
     )
     confirmation_state = _finalize_confirmation_execution(
         confirmation_state,
@@ -1483,6 +1560,7 @@ def _execute_verified_hard_rules(
     user_rank: int | None,
     top_k: int,
     domain_config: DomainConfig,
+    config: WorkbenchConfig,
 ) -> ExecutionResult:
     database_path = _warehouse_database_path(domain_config)
     if not database_path.exists():
@@ -1495,7 +1573,17 @@ def _execute_verified_hard_rules(
         executable_rules,
         user_rank=user_rank,
         top_k=top_k,
+        sort_policy_override=_admissions_sort_policy(config),
     )
+
+
+def _admissions_sort_policy(config: WorkbenchConfig) -> list[dict[str, Any]] | None:
+    if config.domain_name != ADMISSIONS_DOMAIN.domain_id or config.domain_path:
+        return None
+    sort_mode = _clean_text(config.soft_preferences.get("sort_mode"))
+    if sort_mode in SORT_MODE_OPTIONS and sort_mode in ADMISSIONS_SORT_POLICIES:
+        return ADMISSIONS_SORT_POLICIES[sort_mode]
+    return None
 
 
 def _load_schema_registry(

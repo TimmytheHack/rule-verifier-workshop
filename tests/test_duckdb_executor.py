@@ -255,6 +255,53 @@ class DuckDBExecutorTest(unittest.TestCase):
         self.assertEqual(result.audit.params, ["广东", "物理", 28800.0, 35200.0])
         self.assertIn("e_safety_margin", result.audit.hard_rule_ids)
 
+    def test_sort_override_can_show_safer_rank_first(self) -> None:
+        with TemporaryDirectory() as directory:
+            database_path = Path(directory) / "sample.duckdb"
+            _write_database(database_path, _sample_dataframe())
+
+            result = DuckDBExecutor(database_path).execute(
+                [
+                    {
+                        "rule_id": "e_source_province",
+                        "field": "生源地",
+                        "operator": "eq",
+                        "value": "广东",
+                    },
+                    {
+                        "rule_id": "e_subject_type",
+                        "field": "科类",
+                        "operator": "eq",
+                        "value": "物理",
+                    },
+                    {
+                        "rule_id": "e_safety_margin",
+                        "field": "专业组最低位次1",
+                        "operator": "<=",
+                        "value": 48000,
+                    },
+                ],
+                user_rank=32000,
+                sort_policy_override=[
+                    {
+                        "helper": "__group_rank_num",
+                        "label_field_id": "group_min_rank_2024",
+                        "direction": "DESC",
+                        "nulls": "LAST",
+                    },
+                    {
+                        "helper": "__id_num",
+                        "label_field_id": "row_id",
+                        "direction": "ASC",
+                        "nulls": "LAST",
+                        "optional": True,
+                    },
+                ],
+            )
+
+        self.assertTrue(result.audit.sort_key[0].endswith("DESC NULLS LAST"))
+        self.assertEqual(result.audit.skipped_soft_rule_ids, [])
+
     def test_untrusted_or_disabled_rules_do_not_enter_hard_filter(self) -> None:
         with TemporaryDirectory() as directory:
             database_path = Path(directory) / "sample.duckdb"
