@@ -74,6 +74,24 @@
       "status": "missing_schema",
       "reason": "字段画像中存在候选办学性质列，但该字段尚未进入当前可执行字段定义。"
     },
+    "preferences.employment_preference_raw": {
+      "field_id": "employment_outlook",
+      "attribute_class": "external_info",
+      "status": "missing_schema",
+      "reason": "当前数据中没有已审查的就业结果字段，不能把“好就业”作为筛选条件。"
+    },
+    "preferences.family_resource_raw": {
+      "field_id": null,
+      "attribute_class": "context_only",
+      "status": "context_only",
+      "reason": "家庭资源只用于后续信息需求和解释，不是招生表字段，不能作为筛选条件。"
+    },
+    "preferences.career_goal_raw": {
+      "field_id": null,
+      "attribute_class": "context_only",
+      "status": "context_only",
+      "reason": "就业目标只用于解释和追问，不能直接作为招生表筛选条件。"
+    },
     "preferences.recommendation_request_raw": {
       "field_id": "group_min_rank_2024",
       "attribute_class": "candidate",
@@ -101,6 +119,17 @@
     "好学校": {"field_id": "school_reputation", "status": "missing_schema", "reason": "当前数据中没有已审查的学校质量字段。"},
     "就业前景好": {"field_id": "employment_outlook", "status": "missing_schema", "reason": "当前数据中没有就业结果字段。"},
     "好就业": {"field_id": "employment_outlook", "status": "missing_schema", "reason": "当前数据中没有就业结果字段。"},
+    "好找工作": {"field_id": "employment_outlook", "status": "missing_schema", "reason": "当前数据中没有就业结果字段。"},
+    "就业更好": {"field_id": "employment_outlook", "status": "missing_schema", "reason": "当前数据中没有就业结果字段。"},
+    "将来好就业": {"field_id": "employment_outlook", "status": "missing_schema", "reason": "当前数据中没有就业结果字段。"},
+    "稳定就业": {"field_id": null, "status": "context_only", "reason": "稳定就业是目标偏好，需要转成明确信息需求或经审查字段后才能执行。"},
+    "体制内": {"field_id": null, "status": "context_only", "reason": "体制内是就业目标，不是当前招生表字段。"},
+    "考公": {"field_id": null, "status": "context_only", "reason": "考公是就业目标，不是当前招生表字段。"},
+    "考编": {"field_id": null, "status": "context_only", "reason": "考编是就业目标，不是当前招生表字段。"},
+    "高薪": {"field_id": "employment_outlook", "status": "missing_schema", "reason": "当前数据中没有薪资或就业结果字段。"},
+    "本地就业": {"field_id": null, "status": "context_only", "reason": "本地就业需要明确城市或家庭所在地，不能直接执行。"},
+    "升学深造": {"field_id": null, "status": "context_only", "reason": "升学深造是目标偏好，当前不作为招生表筛选字段。"},
+    "读研": {"field_id": null, "status": "context_only", "reason": "读研是目标偏好，当前不作为招生表筛选字段。"},
     "离家近一点": {"field_id": "distance_from_home", "status": "missing_schema", "reason": "当前数据中没有家庭位置或距离字段。"},
     "离家近": {"field_id": "distance_from_home", "status": "missing_schema", "reason": "当前数据中没有家庭位置或距离字段。"},
     "偏远": {"field_id": "city_remoteness", "status": "missing_schema", "reason": "当前数据中没有已审查的偏远程度字段。"},

@@ -54,6 +54,15 @@ class RegexExtractor:
             text,
             self.aliases["cooperation_terms"],
         )
+        family_resource_raw = self._family_resource_raw(text)
+        employment_preference_raw = self._first_present(
+            text,
+            self.aliases["employment_terms"],
+        )
+        career_goal_raw = self._first_present(
+            text,
+            self.aliases["career_goal_terms"],
+        )
         other_vague_preferences = [
             term
             for term in self.aliases["other_vague_terms"]
@@ -93,6 +102,9 @@ class RegexExtractor:
                     text,
                     self.aliases["ownership_terms"],
                 ),
+                "employment_preference_raw": employment_preference_raw,
+                "family_resource_raw": family_resource_raw,
+                "career_goal_raw": career_goal_raw,
                 "recommendation_request_raw": self._first_present(
                     text,
                     self.aliases["recommendation_terms"],
@@ -103,6 +115,9 @@ class RegexExtractor:
                 text=text,
                 major_expansion_raw=major_expansion_raw,
                 cooperation_preference_raw=cooperation_preference_raw,
+                employment_preference_raw=employment_preference_raw,
+                family_resource_raw=family_resource_raw,
+                career_goal_raw=career_goal_raw,
                 other_vague_preferences=other_vague_preferences,
             ),
             "raw_phrases": self._raw_phrases(text),
@@ -176,6 +191,12 @@ class RegexExtractor:
             return ["广东"]
         return []
 
+    def _family_resource_raw(self, text: str) -> str | None:
+        no_resource = self._first_present(text, self.aliases["no_family_resource_terms"])
+        if no_resource:
+            return no_resource
+        return self._first_present(text, self.aliases["family_resource_terms"])
+
     def _reselected_subjects(self, text: str) -> list[str]:
         normalized = text.replace("思想政治", "政治").replace("生物学", "生物")
         subjects = []
@@ -193,6 +214,9 @@ class RegexExtractor:
         text: str,
         major_expansion_raw: str | None,
         cooperation_preference_raw: str | None,
+        employment_preference_raw: str | None,
+        family_resource_raw: str | None,
+        career_goal_raw: str | None,
         other_vague_preferences: list[str],
     ) -> dict[str, Any]:
         sources: dict[str, Any] = {}
@@ -210,6 +234,12 @@ class RegexExtractor:
             sources["preferences.major_expansion_raw"] = major_expansion_raw
         if cooperation_preference_raw:
             sources["preferences.cooperation_preference_raw"] = cooperation_preference_raw
+        if employment_preference_raw:
+            sources["preferences.employment_preference_raw"] = employment_preference_raw
+        if family_resource_raw:
+            sources["preferences.family_resource_raw"] = family_resource_raw
+        if career_goal_raw:
+            sources["preferences.career_goal_raw"] = career_goal_raw
         if other_vague_preferences:
             sources["preferences.other_vague_preferences"] = other_vague_preferences
         return sources

@@ -70,6 +70,9 @@ SLOT_ADAPTER_SCHEMA: dict[str, Any] = {
                 "cooperation_preference_raw": {"type": ["string", "null"]},
                 "overseas_preference_raw": {"type": ["string", "null"]},
                 "school_ownership_preference_raw": {"type": ["string", "null"]},
+                "employment_preference_raw": {"type": ["string", "null"]},
+                "family_resource_raw": {"type": ["string", "null"]},
+                "career_goal_raw": {"type": ["string", "null"]},
                 "recommendation_request_raw": {"type": ["string", "null"]},
                 "other_vague_preferences": {
                     "type": "array",
@@ -234,6 +237,13 @@ def _preferences(value: Any) -> dict[str, Any]:
         "school_ownership_preference_raw": _optional_text(
             source.get("school_ownership_preference_raw")
         ),
+        "employment_preference_raw": _optional_text(
+            source.get("employment_preference_raw")
+        ),
+        "family_resource_raw": _optional_text(
+            source.get("family_resource_raw")
+        ),
+        "career_goal_raw": _optional_text(source.get("career_goal_raw")),
         "recommendation_request_raw": _optional_text(
             source.get("recommendation_request_raw")
         ),

@@ -177,6 +177,9 @@ class DeepSeekExtractor:
                 '"major_expansion_raw": string|null, "cooperation_preference_raw": string|null, '
                 '"overseas_preference_raw": string|null, '
                 '"school_ownership_preference_raw": string|null, '
+                '"employment_preference_raw": string|null, '
+                '"family_resource_raw": string|null, '
+                '"career_goal_raw": string|null, '
                 '"recommendation_request_raw": string|null, "other_vague_preferences": [string]}, '
                 '"proposed_rules": [{"rule_id": string|null, "source_text": string|null, '
                 '"category": "deterministic"|"candidate"|"explain_only", '
@@ -344,6 +347,37 @@ def normalize_slots(slots: dict[str, Any], original_text: str) -> dict[str, Any]
             if term in original_text:
                 preferences["school_ownership_preference_raw"] = term
                 break
+
+    employment = preferences.get("employment_preference_raw")
+    if employment:
+        preferences["employment_preference_raw"] = str(employment)
+    elif any(term in original_text for term in ["就业前景好", "好就业", "好找工作", "就业更好", "将来好就业"]):
+        preferences["employment_preference_raw"] = "好就业"
+    else:
+        preferences["employment_preference_raw"] = None
+
+    family_resource = preferences.get("family_resource_raw")
+    if family_resource:
+        preferences["family_resource_raw"] = str(family_resource)
+    elif any(term in original_text for term in ["家里没有资源", "家里没资源", "没有资源", "没资源", "家里帮不上"]):
+        preferences["family_resource_raw"] = "家里没有资源"
+    elif any(term in original_text for term in ["家里有资源", "家里资源", "父母资源", "亲戚资源", "行业资源"]):
+        preferences["family_resource_raw"] = "家里有资源"
+    else:
+        preferences["family_resource_raw"] = None
+
+    career_goal = preferences.get("career_goal_raw")
+    if career_goal:
+        preferences["career_goal_raw"] = str(career_goal)
+    else:
+        preferences["career_goal_raw"] = next(
+            (
+                term
+                for term in ["稳定就业", "体制内", "考公", "考编", "高薪", "本地就业", "升学深造", "读研"]
+                if term in original_text
+            ),
+            None,
+        )
 
     recommendation = preferences.get("recommendation_request_raw")
     if recommendation:

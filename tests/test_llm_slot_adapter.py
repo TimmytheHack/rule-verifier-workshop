@@ -37,6 +37,9 @@ class LlmSlotAdapterTest(unittest.TestCase):
                         "major_exact_terms": ["环境工程"],
                         "preferred_cities": ["广州"],
                         "preferred_school_provinces": [],
+                        "employment_preference_raw": "好就业",
+                        "family_resource_raw": "家里没有资源",
+                        "career_goal_raw": "稳定就业",
                     },
                     "proposed_rules": [
                         {
@@ -59,6 +62,9 @@ class LlmSlotAdapterTest(unittest.TestCase):
         self.assertEqual(slots["proposed_rules"], [])
         self.assertEqual(slots["user_context"]["user_rank"], 12345)
         self.assertEqual(slots["preferences"]["major_exact_terms"], ["环境工程"])
+        self.assertEqual(slots["preferences"]["employment_preference_raw"], "好就业")
+        self.assertEqual(slots["preferences"]["family_resource_raw"], "家里没有资源")
+        self.assertEqual(slots["preferences"]["career_goal_raw"], "稳定就业")
         self.assertEqual(slots["unmapped_preferences"][0]["source_text"], "宿舍好")
         self.assertTrue(slots["llm_slot_adapter"]["validated"])
 
