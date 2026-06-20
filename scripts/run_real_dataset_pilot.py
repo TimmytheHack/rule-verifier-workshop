@@ -52,11 +52,9 @@ REPORT_PATH_KEYS = {
 def main(argv: list[str] | None = None) -> int:
     args = _arg_parser().parse_args(argv)
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
-    source_path = (
-        _fixture_path()
-        if args.fixture or not args.source_path
-        else Path(args.source_path)
-    )
+    if not args.fixture and not args.source_path:
+        raise SystemExit("source_path is required unless --fixture is used.")
+    source_path = _fixture_path() if args.fixture else Path(args.source_path)
     report = run_pilot(
         source_path=source_path,
         sheet_name=args.sheet_name,

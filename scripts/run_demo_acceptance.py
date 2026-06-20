@@ -198,7 +198,7 @@ CASES = [
         "admissions_17_recommendation_policy",
         "admissions",
         "我今年高考分数 630，想读人工智能、计算机，不想去国外，想留在广东省",
-        "ok",
+        "needs_confirmation",
     ),
     DemoCase(
         "housing_01",
@@ -526,7 +526,7 @@ def run_uploaded_dataset_acceptance() -> list[dict[str, Any]]:
                 "uploaded_dataset_02_recommendation_csv",
                 "admissions",
                 "我今年高考分数 630，想读人工智能、计算机，不想去国外，想留在广东省",
-                "ok",
+                "needs_confirmation",
                 acceptance_group="uploaded_dataset_acceptance",
             ),
             sources["csv"],
@@ -759,16 +759,34 @@ def _contract_failures(
             break
 
     status = response.get("status")
-    if status in EXECUTED_STATUSES and not sql:
+    warning_codes = {
+        item.get("code")
+        for item in response.get("warnings") or []
+        if isinstance(item, dict)
+    }
+    is_missing_rank_confirmation = (
+        status == "needs_confirmation" and "score_without_rank" in warning_codes
+    )
+    if status in EXECUTED_STATUSES and not sql and not is_missing_rank_confirmation:
         failures.append("executed status has empty SQL")
     if status in EXECUTED_STATUSES and not isinstance(params, list):
         failures.append("SQL params is not a list")
     if status == "ok" and not response.get("items"):
         failures.append("ok response has no items")
     if status == "needs_confirmation":
-        warnings = response.get("warnings") or []
-        has_warning = any(item.get("code") == "needs_confirmation" for item in warnings)
-        if not has_warning and not response.get("candidates_to_confirm"):
+        has_warning = bool(
+            warning_codes & {"needs_confirmation", "score_without_rank"}
+        )
+        evidence = response.get("evidence_pack") or {}
+        has_evidence_confirmation = any(
+            item.get("action") == "needs_confirmation"
+            for item in evidence.get("attribute_explanations") or []
+        )
+        if (
+            not has_warning
+            and not response.get("candidates_to_confirm")
+            and not has_evidence_confirmation
+        ):
             failures.append("needs_confirmation has no warning or candidates")
     if status == "no_results":
         if response.get("result_count") != 0:
