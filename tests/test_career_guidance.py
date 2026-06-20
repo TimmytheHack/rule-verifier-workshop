@@ -1,6 +1,9 @@
 from __future__ import annotations
 
+import json
+import tempfile
 import unittest
+from pathlib import Path
 
 from src.domains import DomainConfig
 from src.extractors.deepseek_extractor import normalize_slots
@@ -276,6 +279,103 @@ class CareerGuidancePolicyTest(unittest.TestCase):
         self.assertIn("q_family_resource_industry", question_ids)
         self.assertIn("q_family_resource_city", question_ids)
         self.assertFalse(guidance["executable"])
+
+    def test_no_resource_negated_employment_does_not_match_guidance(self) -> None:
+        query = "家里没资源，但不要求好就业，只想离家近。"
+        slots = RegexExtractor().extract(query)
+
+        guidance = career_guidance_for_query(query, slots, ADMISSIONS_DOMAIN)
+
+        self.assertIsNone(slots["preferences"]["employment_preference_raw"])
+        self.assertEqual(guidance["matched_rules"], [])
+        self.assertEqual(guidance["information_requests"], [])
+        self.assertEqual(guidance["no_schema_field_preferences"], [])
+
+    def test_family_resource_negated_employment_does_not_match_guidance(self) -> None:
+        query = (
+            "家里在医疗系统有资源，但不要求好就业，只想离家近。"
+        )
+        slots = RegexExtractor().extract(query)
+
+        guidance = career_guidance_for_query(query, slots, ADMISSIONS_DOMAIN)
+
+        self.assertIsNone(slots["preferences"]["employment_preference_raw"])
+        self.assertEqual(guidance["matched_rules"], [])
+        self.assertEqual(guidance["information_requests"], [])
+        self.assertEqual(guidance["no_schema_field_preferences"], [])
+
+    def test_unapproved_policy_status_returns_empty_guidance(self) -> None:
+        query = "家里没资源，想选好就业的。"
+        slots = RegexExtractor().extract(query)
+
+        for index, status in enumerate([None, "draft", "needs_review", "blocked"]):
+            with self.subTest(status=status):
+                with tempfile.TemporaryDirectory() as temp_dir:
+                    root = Path(temp_dir)
+                    policy_path = root / f"career_policy_{index}.json"
+                    policy = {
+                        "execution_effect": "does_not_change_sql_or_results",
+                        "rules": [
+                            {
+                                "rule_id": "unapproved_rule",
+                                "label": "未审核规则",
+                                "trigger_slots": {
+                                    "preferences.family_resource_raw": [
+                                        "家里没资源"
+                                    ]
+                                },
+                                "trigger_terms": ["好就业"],
+                                "information_requests": [
+                                    {
+                                        "question_id": "q_unapproved",
+                                        "label": "未审核问题",
+                                        "question": "未审核问题",
+                                        "fixed_options": [],
+                                        "reason": "未审核 policy 不应生效。",
+                                    }
+                                ],
+                                "no_schema_field_preferences": [],
+                            }
+                        ],
+                    }
+                    if status is not None:
+                        policy["status"] = status
+                    policy_path.write_text(
+                        json.dumps(policy, ensure_ascii=False),
+                        encoding="utf-8",
+                    )
+                    domain = DomainConfig(
+                        domain_id="admissions",
+                        root=root,
+                        payload={
+                            "paths": {
+                                "career_decision_policy": policy_path.name,
+                            }
+                        },
+                    )
+
+                    guidance = career_guidance_for_query(query, slots, domain)
+
+                    self.assertEqual(guidance["matched_rules"], [])
+                    self.assertEqual(guidance["information_requests"], [])
+                    self.assertEqual(guidance["no_schema_field_preferences"], [])
+
+    def test_empty_guidance_returns_fresh_lists(self) -> None:
+        domain = DomainConfig(
+            domain_id="admissions",
+            root=Path("."),
+            payload={"paths": {}},
+        )
+        first = career_guidance_for_query("", None, domain)
+
+        first["matched_rules"].append({"rule_id": "mutated"})
+        first["information_requests"].append({"question_id": "mutated"})
+        first["no_schema_field_preferences"].append({"field_id": "mutated"})
+        second = career_guidance_for_query("", None, domain)
+
+        self.assertEqual(second["matched_rules"], [])
+        self.assertEqual(second["information_requests"], [])
+        self.assertEqual(second["no_schema_field_preferences"], [])
 
 
 if __name__ == "__main__":

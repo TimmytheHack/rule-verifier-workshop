@@ -10,16 +10,6 @@ from typing import Any
 from src.domains import DomainConfig
 
 
-EMPTY_GUIDANCE = {
-    "status": "reference_only",
-    "execution_effect": "does_not_change_sql_or_results",
-    "executable": False,
-    "matched_rules": [],
-    "information_requests": [],
-    "no_schema_field_preferences": [],
-}
-
-
 def career_guidance_for_query(
     user_request: str,
     slots: dict[str, Any] | None,
@@ -30,8 +20,10 @@ def career_guidance_for_query(
     domain_config = domain_config or DomainConfig.load()
     policy_path = domain_config.career_decision_policy_path
     if policy_path is None or not policy_path.exists():
-        return dict(EMPTY_GUIDANCE)
+        return _empty_guidance()
     policy = _load_policy(str(policy_path))
+    if policy.get("status") != "approved":
+        return _empty_guidance()
     matched_rules = []
     information_requests = []
     no_schema_preferences = []
@@ -78,18 +70,64 @@ def _load_policy(path: str) -> dict[str, Any]:
     return json.loads(Path(path).read_text(encoding="utf-8"))
 
 
+def _empty_guidance() -> dict[str, Any]:
+    return {
+        "status": "reference_only",
+        "execution_effect": "does_not_change_sql_or_results",
+        "executable": False,
+        "matched_rules": [],
+        "information_requests": [],
+        "no_schema_field_preferences": [],
+    }
+
+
 def _rule_matches(
     rule: dict[str, Any],
     user_request: str,
     slots: dict[str, Any],
 ) -> bool:
     trigger_terms = [str(term) for term in rule.get("trigger_terms") or []]
-    term_matched = not trigger_terms or any(
-        term in user_request
-        for term in trigger_terms
-    )
+    term_matched = _trigger_terms_match(trigger_terms, user_request)
     slot_matched = _slot_trigger_matches(rule.get("trigger_slots") or {}, slots)
     return term_matched and slot_matched
+
+
+def _trigger_terms_match(trigger_terms: list[str], user_request: str) -> bool:
+    if not trigger_terms:
+        return True
+    return any(_positive_term_present(user_request, term) for term in trigger_terms)
+
+
+def _positive_term_present(text: str, term: str) -> bool:
+    start = 0
+    while True:
+        index = text.find(term, start)
+        if index < 0:
+            return False
+        if not _term_is_negated(text, index):
+            return True
+        start = index + len(term)
+
+
+def _term_is_negated(text: str, term_index: int) -> bool:
+    clause_start = (
+        max(text.rfind(punctuation, 0, term_index) for punctuation in "，。,.；;")
+        + 1
+    )
+    prefix = text[clause_start:term_index]
+    return any(
+        marker in prefix[-12:]
+        for marker in [
+            "不要求",
+            "不需要",
+            "不用考虑",
+            "不想",
+            "不考虑",
+            "不要",
+            "不看重",
+            "无需",
+        ]
+    )
 
 
 def _slot_trigger_matches(
