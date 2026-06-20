@@ -141,6 +141,30 @@ class AdmissionsQueryTypesTest(unittest.TestCase):
         self.assertEqual(execution["sort"], [{"field": "rank_margin", "direction": "ASC"}])
         self.assertNotIn("score_without_rank", _warning_codes(result))
 
+    def test_recommendation_sort_mode_is_recorded_and_applied(self) -> None:
+        result = run_workbench_with_test_warehouse(
+            WorkbenchConfig(
+                user_input=RANK_ONLY_RECOMMENDATION_QUERY,
+                soft_preferences={
+                    "prompt": RANK_ONLY_RECOMMENDATION_QUERY,
+                    "sort_mode": "rank_desc",
+                },
+                extractor="regex",
+            )
+        )
+
+        self.assertEqual(result["query_type"], "recommendation")
+        execution = result["evidence_pack"]["execution_summary"]
+        self.assertEqual(
+            execution["sort"],
+            [{"field": "rank_margin", "direction": "DESC"}],
+        )
+        self.assertIn("ORDER BY", execution["sql"])
+        self.assertIn(
+            "DESC NULLS LAST, group_min_score DESC NULLS LAST",
+            execution["sql"],
+        )
+
     def test_rank_ending_in_four_digits_is_not_parsed_as_year(self) -> None:
         result = _run(
             "我今年位次 32000，想读人工智能、计算机，想留在广东省，请推荐"

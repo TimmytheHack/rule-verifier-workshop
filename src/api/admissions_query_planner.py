@@ -57,6 +57,7 @@ class _RecommendationInputs:
     warnings: list[dict[str, Any]]
     executed_rules: list[dict[str, Any]]
     candidates_to_confirm: list[dict[str, Any]]
+    sort_mode: str | None = None
 
 
 class AdmissionsQueryPlanner:
@@ -354,6 +355,7 @@ class AdmissionsQueryPlanner:
             for row in section["items"]
         ]
         metric = "rank_margin" if inputs.rank else "score_margin"
+        sort_spec = _recommendation_sort(inputs, metric)
         bucket_counts = {
             key: len(section.get("items") or [])
             for key, section in section_payload.items()
@@ -367,7 +369,7 @@ class AdmissionsQueryPlanner:
             "filtered_row_count": len(rows),
             "group_by": [],
             "metric": metric,
-            "sort": [{"field": metric, "direction": "ASC"}],
+            "sort": [sort_spec],
             "margin_policy": policy.get("margin_policy") or {},
             "year_weighting": _year_weighting_summary(policy, inputs.year),
             "major_match": {
@@ -442,6 +444,7 @@ class AdmissionsQueryPlanner:
             warnings=[warning],
             executed_rules=[],
             candidates_to_confirm=candidates,
+            sort_mode=_clean_text(config.soft_preferences.get("sort_mode")),
         )
 
     def _rank_required_result(
@@ -597,6 +600,7 @@ class AdmissionsQueryPlanner:
             warnings=warnings,
             executed_rules=rules,
             candidates_to_confirm=candidates,
+            sort_mode=_clean_text(config.soft_preferences.get("sort_mode")),
         )
 
     def _major_terms(
@@ -954,7 +958,13 @@ ORDER BY group_code ASC, min_score DESC NULLS LAST, major_code ASC
             )
             params.extend(values)
         margin = policy.get("margin_policy") or {}
+        sort_spec = _recommendation_sort(
+            inputs,
+            "rank_margin" if inputs.rank else "score_margin",
+        )
         order_metric = ""
+        order_direction = "ASC"
+        order_params: list[Any] = []
         if inputs.rank:
             rank_expr = _numeric_expr(kwargs["group_rank_col"])
             rank_window = margin.get("rank_margin") or {}
@@ -962,8 +972,25 @@ ORDER BY group_code ASC, min_score DESC NULLS LAST, major_code ASC
             upper = inputs.rank + int(rank_window.get("safety_min") or 30000)
             conditions.append(f"{rank_expr} BETWEEN ? AND ?")
             params.extend([lower, upper])
-            order_metric = f"ABS({rank_expr} - ?)"
-            order_params = [inputs.rank]
+            if sort_spec == {"field": "rank_margin", "direction": "DESC"}:
+                order_metric = f"({rank_expr} - ?)"
+                order_direction = "DESC"
+                order_params = [inputs.rank]
+            elif sort_spec == {"field": "rank_margin", "direction": "ASC"}:
+                order_metric = f"ABS({rank_expr} - ?)"
+                order_direction = "ASC"
+                order_params = [inputs.rank]
+            else:
+                school_rank_col = self.domain_config.source_column_or_none("school_rank")
+                if (
+                    sort_spec == {"field": "school_rank", "direction": "ASC"}
+                    and school_rank_col
+                    and school_rank_col in self._table_columns()
+                ):
+                    order_metric = _numeric_expr(school_rank_col)
+                else:
+                    order_metric = _numeric_expr(kwargs["group_rank_col"])
+                order_direction = "ASC"
         elif inputs.score:
             score_expr = _numeric_expr(kwargs["group_score_col"])
             score_window = margin.get("score_margin") or {}
@@ -972,9 +999,11 @@ ORDER BY group_code ASC, min_score DESC NULLS LAST, major_code ASC
             conditions.append(f"{score_expr} BETWEEN ? AND ?")
             params.extend([lower, upper])
             order_metric = f"ABS(? - {score_expr})"
+            order_direction = "ASC"
             order_params = [inputs.score]
         else:
             order_metric = _numeric_expr(kwargs["group_rank_col"])
+            order_direction = "ASC"
             order_params = []
         where_sql = " AND ".join(conditions)
         sql = f"""
@@ -996,7 +1025,7 @@ SELECT
   {_numeric_expr(kwargs["plan_count_col"])} AS plan_count
 FROM {table}
 WHERE {where_sql}
-ORDER BY {order_metric} ASC NULLS LAST, group_min_score DESC NULLS LAST
+ORDER BY {order_metric} {order_direction} NULLS LAST, group_min_score DESC NULLS LAST
 LIMIT ?
 """.strip()
         final_params = params + order_params + [int(policy.get("limit") or DEFAULT_LIMIT)]
@@ -1008,6 +1037,19 @@ LIMIT ?
 
     def _source(self, field_id: str) -> str:
         return self.domain_config.source_column(field_id)
+
+
+def _recommendation_sort(
+    inputs: _RecommendationInputs,
+    default_metric: str,
+) -> dict[str, str]:
+    if inputs.sort_mode == "rank_desc" and inputs.rank:
+        return {"field": "rank_margin", "direction": "DESC"}
+    if inputs.sort_mode == "rank_asc" and inputs.rank:
+        return {"field": "rank_margin", "direction": "ASC"}
+    if inputs.sort_mode == "school_rank_asc":
+        return {"field": "school_rank", "direction": "ASC"}
+    return {"field": default_metric, "direction": "ASC"}
 
 
 def _load_json(path: Path) -> dict[str, Any]:
