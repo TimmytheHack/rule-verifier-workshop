@@ -384,6 +384,39 @@ DuckDB hard filter，并记录在 `executed_filters`、
 
 如果用户同时表达“家里有资源”和明确就业目标，例如“家里在医疗系统有资源，希望稳定就业”，系统只能追问资源行业和资源城市；除非原文另有“好就业/就业前景好”等就业结果表达，否则不得额外生成 `employment_outlook` no-schema 记录。
 
+## EvidencePack decision_option_suggestions
+
+`EvidencePack.decision_option_suggestions` 只在 `admissions` domain 中建议前端受控选项。
+它固定为 reference-only 证据，不参与 SQL、RuleVerifier、planner、executor 或前端提交逻辑。
+非 admissions domain 必须返回同一 envelope，但 `suggestions` 为空对象。
+
+固定结构：
+
+```json
+{
+  "status": "reference_only",
+  "execution_effect": "does_not_change_sql_or_results",
+  "executable": false,
+  "source": "fixed_policy",
+  "suggestions": {
+    "rank_window": {
+      "suggested_value": "steady",
+      "label": "稳一点",
+      "reason": "用户表达了稳妥偏好，但必须由前端控件确认后才执行。"
+    },
+    "sort_mode": {
+      "suggested_value": "rank_desc",
+      "label": "按历史位次从低到高看（更稳）",
+      "reason": "排序必须由用户确认。"
+    }
+  }
+}
+```
+
+`suggestions` 只能包含后端白名单中的 `rank_window` 和 `sort_mode` 候选值。即使未来由
+LLM 生成建议，实际执行仍必须来自前端控件提交的 `rank_window_*` 和 `sort_mode`
+结构化字段。
+
 ## 示例：admissions ok
 
 ```json
