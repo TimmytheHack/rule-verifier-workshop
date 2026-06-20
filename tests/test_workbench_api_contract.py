@@ -144,6 +144,10 @@ class WorkbenchApiContractTest(unittest.TestCase):
         )
         self.assertEqual(confirmations["safety_margin"]["operator"], "<=")
         self.assertEqual(confirmations["safety_margin"]["value"], 48000)
+        self.assertNotIn(
+            "本次没有确认位次窗口规则",
+            "\n".join(result["natural_language_report"]["warnings"]),
+        )
         self.assertGreater(result["result_count"], 0)
         self.assertTrue(result["top_results"])
         for item in result["top_results"]:

@@ -3562,9 +3562,12 @@ def _report_warnings(
         str(domain_config.execution.get("rank_field_id") or "")
     )
     has_safety_rule = any(
-        rank_field
-        and rule.get("field") == rank_field
-        and rule.get("operator") in {">=", "between"}
+        rule.get("rule_id") == "e_safety_margin"
+        or (
+            rank_field
+            and rule.get("field") == rank_field
+            and rule.get("operator") in {"<=", ">=", "between"}
+        )
         for rule in evidence.get("executed_rules", [])
     )
     if rank_field and not has_safety_rule:
