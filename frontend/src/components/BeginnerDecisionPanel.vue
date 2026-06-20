@@ -28,6 +28,9 @@ const unusedItems = computed(() => [
   ...listOrEmpty(props.runData.not_executed_preferences),
   ...listOrEmpty(props.runData.no_schema_field_preferences),
 ]);
+const informationRequests = computed(() => listOrEmpty(
+  props.runData.evidence_pack?.decision_guidance?.information_requests,
+));
 
 function listOrEmpty(items) {
   return Array.isArray(items) ? items : [];
@@ -95,6 +98,26 @@ function itemReason(item, fallback) {
         >
           暂无待确认项
         </p>
+      </div>
+    </section>
+
+    <section
+      v-if="informationRequests.length"
+      class="beginner-section warn"
+    >
+      <div class="beginner-section-title">
+        <el-icon><WarningFilled /></el-icon>
+        <h3>还需补充信息</h3>
+      </div>
+      <div class="beginner-list">
+        <article
+          v-for="request in informationRequests"
+          :key="request.question_id"
+          class="beginner-row"
+        >
+          <strong>{{ request.label || request.question_id }}</strong>
+          <p>{{ request.question }}</p>
+        </article>
       </div>
     </section>
 

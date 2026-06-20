@@ -1789,7 +1789,15 @@
     "executed_after_confirmation": [],
     "unconfirmed_candidates": [],
     "no_schema_field_preferences": [],
-    "rejected_confirmations": []
+    "rejected_confirmations": [],
+    "decision_guidance": {
+      "status": "reference_only",
+      "execution_effect": "does_not_change_sql_or_results",
+      "executable": false,
+      "matched_rules": [],
+      "information_requests": [],
+      "no_schema_field_preferences": []
+    }
   },
   "natural_language_report": {
     "title": "规则验证结果（非最终志愿建议）",

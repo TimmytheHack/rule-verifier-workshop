@@ -54,3 +54,5 @@ Vite 会把 `/api`、`/datasets` 和 `/workbench` 代理到本地后端。开发
 默认 token；如需覆盖本地 token，可在浏览器 `localStorage.actor_token` 写入服务端配置的 token。
 
 主查询页面面向非技术用户：默认只需要填写生源地、科类、省排位、意向专业、城市和排位范围，然后点击“查看可筛结果”。右侧会用中文说明哪些条件已参与筛选、哪些还需要确认、哪些没有参与筛选。页面不会展示服务端 traceback，也不会在前端补造推荐规则。
+
+当 EvidencePack.decision_guidance 包含家庭资源或就业目标信息时，前端只展示后端返回的补充问题和“不参与筛选”说明；前端不根据这些信息生成 hard filter。
