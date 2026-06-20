@@ -39,35 +39,35 @@ const rankWindowOptions = [
     value: '',
     lower: null,
     upper: null,
-    description: '不按排位范围筛。',
+    description: '不按排位窗口筛。',
   },
   {
     label: '冲一冲',
     value: 'reach',
     lower: 20,
     upper: 0,
-    description: '看比我排得更前 20% 以内的结果。',
+    description: '按后 0% 上界执行；前 20% 只作档位提示。',
   },
   {
     label: '稳一点',
     value: 'steady',
     lower: 5,
     upper: 15,
-    description: '看我附近，到稍微靠后的结果。',
+    description: '按后 15% 上界执行；前 5% 只作档位提示。',
   },
   {
     label: '保底',
     value: 'safe',
     lower: 0,
     upper: 50,
-    description: '只看比我排得更后 50% 以内的结果。',
+    description: '按后 50% 上界执行，不设前向下界。',
   },
   {
     label: '自定义',
     value: 'custom',
     lower: 10,
     upper: 10,
-    description: '自己设置前后范围。',
+    description: '自己设置后向上界；前向比例只作提示。',
   },
 ];
 const quickExamples = [
@@ -108,8 +108,8 @@ function emptySoftPreferences() {
     prompt: '想学计算机，最好在广州深圳，学校稳一点，不想去太贵的中外合作。',
     safety_margin_percent: '',
     rank_window_preset: '',
-    rank_window_lower_percent: 10,
-    rank_window_upper_percent: 10,
+    rank_window_lower_percent: null,
+    rank_window_upper_percent: null,
     rank_window_label: '',
     tuition_cap_yuan: '',
   };
@@ -140,9 +140,10 @@ function submitRun() {
     preferred_cities: [...(hard.preferred_cities || [])],
     tuition_cap_yuan: hard.tuition_cap_yuan || null,
   };
+  const legacySafetyMargin = rankWindow ? null : legacySafetyMarginPercent();
   const softPayload = {
     prompt: (soft.prompt || '').trim(),
-    safety_margin_percent: rankWindow && rankWindow.lower === rankWindow.upper ? rankWindow.lower : null,
+    safety_margin_percent: legacySafetyMargin,
     rank_window_label: rankWindow?.label || null,
     rank_window_lower_percent: rankWindow?.lower ?? null,
     rank_window_upper_percent: rankWindow?.upper ?? null,
@@ -191,14 +192,13 @@ function trimSentence(value) {
 }
 
 function normalizeRankWindowState() {
-  if (soft.rank_window_lower_percent !== null && soft.rank_window_upper_percent !== null) {
-    return;
-  }
-  if (soft.safety_margin_percent !== null && soft.safety_margin_percent !== '') {
-    const percent = Number(soft.safety_margin_percent);
+  if (
+    soft.rank_window_label
+    && soft.rank_window_lower_percent !== null
+    && soft.rank_window_upper_percent !== null
+    && !soft.rank_window_preset
+  ) {
     soft.rank_window_preset = 'custom';
-    soft.rank_window_lower_percent = percent;
-    soft.rank_window_upper_percent = percent;
   }
 }
 
@@ -239,23 +239,26 @@ function clampPercent(value) {
   return Math.min(100, Math.max(0, Math.round(number)));
 }
 
+function legacySafetyMarginPercent() {
+  if (
+    soft.safety_margin_percent === null
+    || soft.safety_margin_percent === undefined
+    || soft.safety_margin_percent === ''
+  ) {
+    return null;
+  }
+  return clampPercent(soft.safety_margin_percent);
+}
+
 function selectedRankWindowDescription() {
   const window = selectedRankWindow();
-  if (!window) return '不按排位范围筛。';
-  if (window.lower === 0 && window.upper === 0) {
-    return '只看历史位次和你基本相同的结果。';
-  }
-  if (window.lower > 0 && window.upper === 0) {
-    return `看比我排得更前 ${window.lower}% 以内的结果。`;
-  }
-  if (window.lower === 0 && window.upper > 0) {
-    return `看比我排得更后 ${window.upper}% 以内的结果。`;
-  }
-  return `看比我排得更前 ${window.lower}% 到更后 ${window.upper}% 的结果。`;
+  if (!window) return '不按排位窗口筛。';
+  const lowerContext = window.lower > 0 ? `前 ${window.lower}% 只作档位提示，` : '';
+  return `${lowerContext}只按后 ${window.upper}% 以内设置上界，不设前向下界。`;
 }
 
 function rankWindowText(payload) {
-  return `${payload.rank_window_label}（前 ${payload.rank_window_lower_percent}% / 后 ${payload.rank_window_upper_percent}%）`;
+  return `${payload.rank_window_label}（后 ${payload.rank_window_upper_percent}% 以内）`;
 }
 </script>
 
@@ -406,7 +409,7 @@ function rankWindowText(payload) {
           class="custom-window-row"
         >
           <label class="control-block">
-            <span class="control-label">看更前多少%</span>
+            <span class="control-label">档位提示：前多少%</span>
             <el-input-number
               v-model="soft.rank_window_lower_percent"
               class="full-control"
@@ -417,7 +420,7 @@ function rankWindowText(payload) {
             />
           </label>
           <label class="control-block">
-            <span class="control-label">看更后多少%</span>
+            <span class="control-label">执行上界：后多少%</span>
             <el-input-number
               v-model="soft.rank_window_upper_percent"
               class="full-control"
