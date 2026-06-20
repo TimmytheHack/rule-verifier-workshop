@@ -2853,9 +2853,13 @@ def _optional_int(value: Any) -> int | None:
 def _optional_percent(value: Any) -> int | None:
     if value in (None, ""):
         return None
-    try:
-        parsed = int(value)
-    except (TypeError, ValueError):
+    if isinstance(value, bool):
+        return None
+    if isinstance(value, int):
+        parsed = value
+    elif isinstance(value, str) and value.strip().isdigit():
+        parsed = int(value.strip())
+    else:
         return None
     return parsed if 0 <= parsed <= 100 else None
 

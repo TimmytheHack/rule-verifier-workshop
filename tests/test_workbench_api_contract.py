@@ -210,6 +210,30 @@ class WorkbenchApiContractTest(unittest.TestCase):
         self.assertEqual(result["status"], "error")
         self.assertIn("排位范围", result["warnings"][0]["message"])
 
+    def test_fractional_rank_window_percentages_are_rejected(self) -> None:
+        result = run_workbench_with_test_warehouse(
+            WorkbenchConfig(
+                user_input="广东物理，排位1000，想学计算机。",
+                hard_filters={
+                    "source_province": "广东",
+                    "subject_type": "物理",
+                    "user_rank": 1000,
+                    "major_keyword": "计算机",
+                },
+                soft_preferences={
+                    "prompt": "",
+                    "rank_window_label": "稳一点",
+                    "rank_window_lower_percent": 0,
+                    "rank_window_upper_percent": 15.9,
+                },
+                extractor="regex",
+            )
+        )
+
+        assert_workbench_contract(self, result)
+        self.assertEqual(result["status"], "error")
+        self.assertIn("排位范围", result["warnings"][0]["message"])
+
     def test_needs_confirmation_keeps_partial_out_of_executed_filters(self) -> None:
         result = _run(JIKE_PROMPT)
 
