@@ -180,7 +180,7 @@ evidence.get
 
 `dataset.upload`、`dataset.generate_domain_pack`、`approve-*`、`build-warehouse`、`quality.run` 和 `pilot.run` 都是写入或管理类工具，需要服务端 token 权限。服务端只信任 `AUTH_TOKENS_JSON` 里的 token 映射，不信任浏览器或请求体传来的 `permission_scopes`。
 
-本地 `make serve` 会自动注入开发 token；生产部署必须配置真实鉴权。
+本地 Vite 开发模式会默认发送 `operator-token`，只用于配合 `make serve` 的本机演示。生产部署不得接受示例 token，必须通过服务端 `AUTH_TOKENS_JSON` 配置真实 token，并在网关或运维系统中控制 operator token 的分发。
 
 ## 常用命令
 

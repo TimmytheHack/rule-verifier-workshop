@@ -62,6 +62,8 @@ token 到 actor 和权限的映射只来自服务端环境变量 `AUTH_TOKENS_JS
 
 HTTP 请求体里的 `actor_context.permission_scopes`、`actor_context.audit_path`、`X-Permission-Scopes` 和 `X-Actor-Id` 不再授予权限。它们只能作为旧客户端兼容字段存在，不能影响服务端授权。
 
+本地 Vite 开发模式会默认发送 `operator-token`，只用于配合 `make serve` 的本机演示。生产部署不得接受示例 token，必须通过服务端 `AUTH_TOKENS_JSON` 配置真实 token，并在网关或运维系统中控制 operator token 的分发。
+
 ## 上传与入仓
 
 - `/datasets/upload` 使用 HTTP body 上传 CSV/Excel。

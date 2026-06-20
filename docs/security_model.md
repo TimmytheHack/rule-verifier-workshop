@@ -18,6 +18,8 @@ HTTP 服务端只信任 `AUTH_TOKENS_JSON` 中配置的 token 映射。每个 to
 
 浏览器或 LLM 传来的 `permission_scopes` 不授予权限。进程内测试和维护脚本可以直接调用 `ToolRegistry` 并传入受信任 `actor_context`，但 HTTP 层不会接受这些字段作为授权依据。
 
+本地 Vite 开发模式会默认发送 `operator-token`，只用于配合 `make serve` 的本机演示。生产部署不得接受示例 token，必须通过服务端 `AUTH_TOKENS_JSON` 配置真实 token，并在网关或运维系统中控制 operator token 的分发。
+
 ## LLM-safe Tools
 
 默认暴露给 LLM/agent 的工具只有：
