@@ -9,6 +9,11 @@
 `WorkbenchResponse` / DatasetResponse / QualityGate report 契约，不能另造一套可绕过 verifier
 的输入或输出结构。
 
+## `/api/workbench/options`
+
+`GET /api/workbench/options` 必须返回 `rank_windows` 和 `sort_modes`。
+前端只能提交这些 `value` 对应的受控字段；LLM 建议不得绕过这些白名单。
+
 ## status 枚举
 
 | status | 含义 |

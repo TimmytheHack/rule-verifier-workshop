@@ -77,6 +77,30 @@ MODEL_OPTIONS = {
     "deepseek-v4-pro": "LLM 高质量模型",
 }
 
+RANK_WINDOW_OPTIONS = [
+    {
+        "value": "reach",
+        "label": "冲一冲",
+        "rank_window_lower_percent": 0,
+        "rank_window_upper_percent": 0,
+        "description": "只限制历史位次不低于我的排位，不设置更靠前下界。",
+    },
+    {
+        "value": "steady",
+        "label": "稳一点",
+        "rank_window_lower_percent": 0,
+        "rank_window_upper_percent": 15,
+        "description": "看历史位次不低于我、且最多比我靠后 15% 的结果。",
+    },
+    {
+        "value": "safe",
+        "label": "保底",
+        "rank_window_lower_percent": 0,
+        "rank_window_upper_percent": 50,
+        "description": "看历史位次不低于我、且最多比我靠后 50% 的结果。",
+    },
+]
+
 SORT_MODE_OPTIONS = {
     "rank_asc": "按历史位次从高到低看（更冲）",
     "rank_desc": "按历史位次从低到高看（更稳）",
@@ -272,6 +296,8 @@ def available_options() -> dict[str, Any]:
         "extractors": _options(EXTRACTOR_OPTIONS),
         "generators": _options(GENERATOR_OPTIONS),
         "models": _options(MODEL_OPTIONS),
+        "rank_windows": RANK_WINDOW_OPTIONS,
+        "sort_modes": _options(SORT_MODE_OPTIONS),
     }
 
 

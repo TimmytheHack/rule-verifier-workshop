@@ -332,6 +332,22 @@ class WorkbenchApiContractTest(unittest.TestCase):
             [warning["code"] for warning in result["warnings"]],
         )
 
+    def test_available_options_include_rank_windows_and_sort_modes(self) -> None:
+        from src.api.workbench import available_options
+
+        options = available_options()
+
+        self.assertIn("rank_windows", options)
+        self.assertIn("sort_modes", options)
+        self.assertEqual(
+            [item["value"] for item in options["rank_windows"]],
+            ["reach", "steady", "safe"],
+        )
+        self.assertEqual(
+            [item["value"] for item in options["sort_modes"]],
+            ["rank_asc", "rank_desc", "school_rank_asc"],
+        )
+
 
 if __name__ == "__main__":
     unittest.main()
