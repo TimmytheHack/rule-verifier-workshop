@@ -1,12 +1,70 @@
 from __future__ import annotations
 
+import json
+import os
 import unittest
+from unittest.mock import patch
 
+from fastapi.testclient import TestClient
+from src.api.server import app
 from src.api.workbench import WorkbenchConfig
 from tests.warehouse_test_utils import run_workbench_with_test_warehouse
 
 
 class SecurityReviewRegressionTest(unittest.TestCase):
+    def test_http_body_actor_context_cannot_grant_admin_scope(self) -> None:
+        client = TestClient(app)
+        response = client.post(
+            "/tools/dataset.approve_field/invoke",
+            json={
+                "payload": {"dataset_id": "ds_any", "field_id": "city"},
+                "actor_context": {
+                    "actor_id": "browser_supplied",
+                    "permission_scopes": ["review_admin"],
+                },
+            },
+        )
+
+        self.assertEqual(response.status_code, 403)
+        payload = response.json()
+        self.assertEqual(payload["detail"]["code"], "permission_denied")
+        self.assertNotIn("Traceback", json.dumps(payload, ensure_ascii=False))
+
+    def test_http_token_map_is_only_server_side_authority(self) -> None:
+        client = TestClient(app)
+        token_map = {
+            "agent-token": {
+                "actor_id": "agent",
+                "permission_scopes": ["read_only", "query", "confirm"],
+            }
+        }
+        with patch.dict(os.environ, {"AUTH_TOKENS_JSON": json.dumps(token_map)}, clear=False):
+            response = client.post(
+                "/tools/dataset.approve_field/invoke",
+                headers={"X-Actor-Token": "agent-token"},
+                json={
+                    "payload": {"dataset_id": "ds_any", "field_id": "city"},
+                    "actor_context": {"permission_scopes": ["review_admin"]},
+                },
+            )
+
+        self.assertEqual(response.status_code, 403)
+        self.assertEqual(response.json()["detail"]["code"], "permission_denied")
+
+    def test_tool_audit_path_rejects_location_outside_output_root(self) -> None:
+        from src.api.tool_registry import ToolRegistryError, _audit_path
+
+        with patch.dict(
+            os.environ,
+            {
+                "OUTPUT_ROOT": "outputs",
+                "TOOL_AUDIT_LOG_PATH": "/tmp/szu-audit-outside.jsonl",
+            },
+            clear=False,
+        ):
+            with self.assertRaises(ToolRegistryError):
+                _audit_path({})
+
     @unittest.expectedFailure
     def test_score_only_query_is_blocked_from_recommendation_execution(self) -> None:
         result = run_workbench_with_test_warehouse(
