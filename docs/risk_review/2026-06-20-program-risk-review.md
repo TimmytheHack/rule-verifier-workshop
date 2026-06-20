@@ -27,6 +27,8 @@ git diff --check
 rg -n "(/Users/|outputs/|广东省|duckdb|localhost|127\\.0\\.0\\.1|deepseek|api[_-]?key|token|password|subprocess|shell=True|eval\\(|exec\\(|raw_sql|sql|hard_filters|confirmed_candidates|candidate_id|allow_origins|DATA_ROOT|OUTPUT_ROOT)" src frontend docs tests scripts schemas domains README.md RELEASE_CHECKLIST.md CHANGELOG.md docker-compose.yml Dockerfile Makefile
 ```
 
+备注：该命令会扫描 `docs`，因此本报告内命令文本导致的 `docs/risk_review` 自匹配属于预期误报，分诊时忽略。
+
 ## 发现列表
 
 | id | severity | lane | 文件 | 证据 | 风险 | 建议 | 状态 |
