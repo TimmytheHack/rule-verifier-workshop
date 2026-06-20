@@ -317,12 +317,11 @@ DuckDB hard filter，并记录在 `executed_filters`、
 `EvidencePack.execution_summary.hard_rule_ids` 中。通过显式 `candidate_id` 确认的规则
 还必须出现在顶层 `confirmed_rules`。
 
-位次窗口的百分比必须是 `0-100` 的整数。`rank_window_lower_percent` 表示允许筛选比
-用户排位更靠前多少，`rank_window_upper_percent` 表示允许筛选比用户排位更靠后多少。
-例如用户排位 `32000`，`rank_window_lower_percent=0` 且
-`rank_window_upper_percent=50` 会生成 `32000-48000` 的 hard filter。旧字段
-`safety_margin_percent=10` 等价于 `rank_window_lower_percent=10` 且
-`rank_window_upper_percent=10`。
+位次窗口的百分比必须是 `0-100` 的整数。前端显式提交的
+`rank_window_lower_percent` / `rank_window_upper_percent` 只使用上界执行：用户排位
+`1000` 且 `rank_window_upper_percent=15` 会生成 `专业组最低位次1 <= 1150`。
+`rank_window_lower_percent` 只保留为 UI 分区标签，不进入 hard filter。旧兼容字段
+`safety_margin_percent` 仍表示对称窗口。
 
 未确认的 `partial_match`、`no_schema_field`、reference-only 资料，以及
 `verification_origin=verified_proposed_rule` 的 LLM proposal 不能进入 SQL。LLM 可以在

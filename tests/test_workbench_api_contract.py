@@ -128,7 +128,7 @@ class WorkbenchApiContractTest(unittest.TestCase):
         assert_workbench_contract(self, result)
         self.assertIn("e_safety_margin", result["execution"]["hard_rule_ids"])
         self.assertIn("e_tuition_cap_explicit", result["execution"]["hard_rule_ids"])
-        self.assertIn(32000.0, result["execution"]["params"])
+        self.assertNotIn(32000.0, result["execution"]["params"])
         self.assertIn(48000.0, result["execution"]["params"])
         confirmations = {
             item["confirmation_id"]: item
@@ -140,12 +140,13 @@ class WorkbenchApiContractTest(unittest.TestCase):
         )
         self.assertEqual(
             confirmations["safety_margin"]["selected_label"],
-            "保底（前 0% / 后 50%）",
+            "保底（后 50% 以内）",
         )
+        self.assertEqual(confirmations["safety_margin"]["operator"], "<=")
+        self.assertEqual(confirmations["safety_margin"]["value"], 48000)
         self.assertGreater(result["result_count"], 0)
         self.assertTrue(result["top_results"])
         for item in result["top_results"]:
-            self.assertGreaterEqual(item["group_min_rank"], 32000)
             self.assertLessEqual(item["group_min_rank"], 48000)
 
     def test_needs_confirmation_keeps_partial_out_of_executed_filters(self) -> None:

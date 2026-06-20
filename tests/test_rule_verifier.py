@@ -651,10 +651,38 @@ class RuleVerifierTest(unittest.TestCase):
 
         self.assertEqual(
             slots["preferences"]["risk_preference_raw"],
-            "已选择保底（前 0% / 后 50%）",
+            "已选择保底（后 50% 以内）",
         )
-        self.assertEqual(final_by_id["e_safety_margin"]["operator"], "between")
-        self.assertEqual(final_by_id["e_safety_margin"]["value"], [32000, 48000])
+        self.assertEqual(final_by_id["e_safety_margin"]["operator"], "<=")
+        self.assertEqual(final_by_id["e_safety_margin"]["value"], 48000)
+
+    def test_high_rank_window_does_not_apply_lower_bound(self) -> None:
+        config = WorkbenchConfig(
+            user_input="广东物理，排位1000。",
+            hard_filters={
+                "source_province": "广东",
+                "subject_type": "物理",
+                "user_rank": 1000,
+            },
+            soft_preferences={
+                "prompt": "",
+                "rank_window_label": "稳一点",
+                "rank_window_lower_percent": 5,
+                "rank_window_upper_percent": 15,
+            },
+        )
+        slots = _slots_from_inputs(RegexExtractor().extract(""), config)
+        classified = RuleClassifier(TAXONOMY_PATH, self.verifier).classify(slots)
+        classified = _apply_soft_confirmations(classified, config, slots)
+        final_rules = RulePromoter(
+            TAXONOMY_PATH,
+            simulated_confirmation_enabled=True,
+        ).final_executable_rules(classified)
+        final_by_id = {rule["rule_id"]: rule for rule in final_rules}
+
+        self.assertEqual(final_by_id["e_safety_margin"]["operator"], "<=")
+        self.assertEqual(final_by_id["e_safety_margin"]["value"], 1150)
+        self.assertNotEqual(final_by_id["e_safety_margin"].get("value"), [950, 1150])
 
     def test_empty_soft_prompt_does_not_fall_back_to_default_demo_input(self) -> None:
         config = WorkbenchConfig(

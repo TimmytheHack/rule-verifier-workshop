@@ -119,6 +119,7 @@ class RankWindowSelection:
     label: str
     lower_percent: int
     upper_percent: int
+    upper_only: bool = True
 
 
 @dataclass(frozen=True)
@@ -1817,19 +1818,31 @@ def _apply_soft_confirmations(
             int(user_rank * (1 - rank_window.lower_percent / 100)),
         )
         upper_bound = int(user_rank * (1 + rank_window.upper_percent / 100))
-        simulated["safety_margin"] = {
-            "selected_option": (
-                f"-{rank_window.lower_percent}%/+{rank_window.upper_percent}%"
-            ),
-            "label": _rank_window_boundary_text(rank_window),
-            "field": rank_field,
-            "operator": "between",
-            "value": [lower_bound, upper_bound],
-            "source_expression": (
-                f"{user_rank} * {1 - rank_window.lower_percent / 100:.2f} 到 "
-                f"{user_rank} * {1 + rank_window.upper_percent / 100:.2f}"
-            ),
-        }
+        if rank_window.upper_only:
+            simulated["safety_margin"] = {
+                "selected_option": f"+{rank_window.upper_percent}%",
+                "label": _rank_window_boundary_text(rank_window),
+                "field": rank_field,
+                "operator": "<=",
+                "value": upper_bound,
+                "source_expression": (
+                    f"{user_rank} * {1 + rank_window.upper_percent / 100:.2f}"
+                ),
+            }
+        else:
+            simulated["safety_margin"] = {
+                "selected_option": (
+                    f"-{rank_window.lower_percent}%/+{rank_window.upper_percent}%"
+                ),
+                "label": _rank_window_boundary_text(rank_window),
+                "field": rank_field,
+                "operator": "between",
+                "value": [lower_bound, upper_bound],
+                "source_expression": (
+                    f"{user_rank} * {1 - rank_window.lower_percent / 100:.2f} 到 "
+                    f"{user_rank} * {1 + rank_window.upper_percent / 100:.2f}"
+                ),
+            }
 
     tuition_cap = _optional_int(soft.get("tuition_cap_yuan"))
     tuition_field = domain_config.source_column_or_none("tuition_yuan_per_year")
@@ -2505,6 +2518,7 @@ def _boundary_context(soft_preferences: dict[str, Any]) -> dict[str, Any]:
         "safety_margin_percent": (
             rank_window.lower_percent
             if rank_window
+            and not rank_window.upper_only
             and rank_window.lower_percent == rank_window.upper_percent
             else None
         ),
@@ -2526,6 +2540,7 @@ def _display_soft_preferences(soft_preferences: dict[str, Any]) -> dict[str, Any
         "safety_margin_percent": (
             rank_window.lower_percent
             if rank_window
+            and not rank_window.upper_only
             and rank_window.lower_percent == rank_window.upper_percent
             else None
         ),
@@ -2565,6 +2580,7 @@ def _rank_window_selection(
             label=_rank_window_label(soft_preferences, lower, upper),
             lower_percent=lower,
             upper_percent=upper,
+            upper_only=True,
         )
 
     safety_percent = _optional_percent(soft_preferences.get("safety_margin_percent"))
@@ -2574,6 +2590,7 @@ def _rank_window_selection(
         label=_rank_window_label(soft_preferences, safety_percent, safety_percent),
         lower_percent=safety_percent,
         upper_percent=safety_percent,
+        upper_only=False,
     )
 
 
@@ -2594,6 +2611,8 @@ def _rank_window_label(
 
 
 def _rank_window_boundary_text(rank_window: RankWindowSelection) -> str:
+    if rank_window.upper_only:
+        return f"{rank_window.label}（后 {rank_window.upper_percent}% 以内）"
     return (
         f"{rank_window.label}（前 {rank_window.lower_percent}% / "
         f"后 {rank_window.upper_percent}%）"
