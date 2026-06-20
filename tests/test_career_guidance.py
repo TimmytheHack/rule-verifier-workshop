@@ -97,6 +97,47 @@ class CareerGuidanceExtractionTest(unittest.TestCase):
         self.assertNotIn("好就业", slots["preferences"]["other_vague_preferences"])
         self.assertNotIn("preferences.other_vague_preferences", slots["raw_sources"])
 
+    def test_regex_does_not_extract_post_term_negated_employment(self) -> None:
+        cases = [
+            "家里没资源，好就业不重要，只想离家近。",
+            "家里没资源，好就业不看重，只想离家近。",
+            "家里没资源，好就业不是重点，只想离家近。",
+            "家里没资源，好就业无所谓，只想离家近。",
+            "家里没资源，好就业不优先，只想离家近。",
+        ]
+        for text in cases:
+            with self.subTest(text=text):
+                slots = RegexExtractor().extract(text)
+
+                self.assertIsNone(slots["preferences"]["employment_preference_raw"])
+                self.assertNotIn(
+                    "preferences.employment_preference_raw",
+                    slots["raw_sources"],
+                )
+                self.assertNotIn(
+                    "好就业",
+                    slots["preferences"]["other_vague_preferences"],
+                )
+
+    def test_regex_does_not_extract_post_term_negated_career_goal(self) -> None:
+        cases = [
+            ("家里没资源，想稳定就业不重要，只想离家近。", "稳定就业"),
+            ("家里没资源，想考公不是重点，只想离家近。", "考公"),
+        ]
+        for text, term in cases:
+            with self.subTest(text=text):
+                slots = RegexExtractor().extract(text)
+
+                self.assertIsNone(slots["preferences"]["career_goal_raw"])
+                self.assertNotIn(
+                    "preferences.career_goal_raw",
+                    slots["raw_sources"],
+                )
+                self.assertNotIn(
+                    term,
+                    slots["preferences"]["other_vague_preferences"],
+                )
+
     def test_regex_ignores_unused_salary_goal_and_keeps_later_goal(self) -> None:
         slots = RegexExtractor().extract("不用考虑高薪，想稳定就业。")
 
@@ -167,6 +208,38 @@ class CareerGuidanceExtractionTest(unittest.TestCase):
         )
 
         self.assertIsNone(slots["preferences"]["employment_preference_raw"])
+
+    def test_deepseek_normalize_filters_post_term_negated_employment(self) -> None:
+        slots = normalize_slots(
+            {
+                "user_context": {},
+                "preferences": {
+                    "employment_preference_raw": "好就业",
+                    "other_vague_preferences": ["好就业"],
+                },
+                "proposed_rules": [],
+            },
+            "家里没资源，好就业不重要，只想离家近。",
+        )
+
+        self.assertIsNone(slots["preferences"]["employment_preference_raw"])
+        self.assertNotIn("好就业", slots["preferences"]["other_vague_preferences"])
+
+    def test_deepseek_normalize_filters_post_term_negated_career_goal(self) -> None:
+        slots = normalize_slots(
+            {
+                "user_context": {},
+                "preferences": {
+                    "career_goal_raw": "稳定就业",
+                    "other_vague_preferences": ["稳定就业"],
+                },
+                "proposed_rules": [],
+            },
+            "家里没资源，想稳定就业不重要，只想离家近。",
+        )
+
+        self.assertIsNone(slots["preferences"]["career_goal_raw"])
+        self.assertNotIn("稳定就业", slots["preferences"]["other_vague_preferences"])
 
     def test_deepseek_filters_negated_other_vague_preferences(self) -> None:
         slots = normalize_slots(
@@ -282,6 +355,17 @@ class CareerGuidancePolicyTest(unittest.TestCase):
 
     def test_no_resource_negated_employment_does_not_match_guidance(self) -> None:
         query = "家里没资源，但不要求好就业，只想离家近。"
+        slots = RegexExtractor().extract(query)
+
+        guidance = career_guidance_for_query(query, slots, ADMISSIONS_DOMAIN)
+
+        self.assertIsNone(slots["preferences"]["employment_preference_raw"])
+        self.assertEqual(guidance["matched_rules"], [])
+        self.assertEqual(guidance["information_requests"], [])
+        self.assertEqual(guidance["no_schema_field_preferences"], [])
+
+    def test_post_term_negated_employment_does_not_match_guidance(self) -> None:
+        query = "家里没资源，好就业不重要，只想离家近。"
         slots = RegexExtractor().extract(query)
 
         guidance = career_guidance_for_query(query, slots, ADMISSIONS_DOMAIN)

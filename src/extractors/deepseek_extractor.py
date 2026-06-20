@@ -506,7 +506,10 @@ def _career_goal_raw(
         match = pattern.search(search_text)
         if match:
             term_index = search_text.find(term, match.start(), match.end())
-            if term_index >= 0 and _term_is_negated(search_text, term_index):
+            if (
+                term_index >= 0
+                and _term_is_negated(search_text, term_index, len(term))
+            ):
                 continue
             matches.append((match.start(), term))
     if not matches:
@@ -514,24 +517,44 @@ def _career_goal_raw(
     return min(matches)[1]
 
 
-def _term_is_negated(text: str, term_index: int) -> bool:
+def _term_is_negated(
+    text: str,
+    term_index: int,
+    term_length: int = 0,
+) -> bool:
     clause_start = (
         max(text.rfind(punctuation, 0, term_index) for punctuation in "，。,.；;")
         + 1
     )
+    suffix_start = term_index + term_length
+    clause_ends = [
+        text.find(punctuation, suffix_start)
+        for punctuation in "，。,.；;"
+        if text.find(punctuation, suffix_start) >= 0
+    ]
+    clause_end = min(clause_ends) if clause_ends else len(text)
     prefix = text[clause_start:term_index]
-    return any(
-        marker in prefix[-12:]
-        for marker in [
-            "不要求",
-            "不需要",
-            "不用考虑",
-            "不想",
-            "不考虑",
-            "不要",
-            "不看重",
-            "无需",
-        ]
+    suffix = text[suffix_start:clause_end]
+    prefix_markers = [
+        "不要求",
+        "不需要",
+        "不用考虑",
+        "不想",
+        "不考虑",
+        "不要",
+        "不看重",
+        "无需",
+    ]
+    suffix_markers = [
+        "不重要",
+        "不看重",
+        "不是重点",
+        "无所谓",
+        "不优先",
+    ]
+    return any(marker in prefix[-12:] for marker in prefix_markers) or any(
+        marker in suffix[:10]
+        for marker in suffix_markers
     )
 
 
@@ -577,7 +600,7 @@ def _positive_term_index(
         index = text.find(term, start)
         if index < 0:
             return None
-        if not _term_is_negated(text, index) and not _term_is_in_phrase(
+        if not _term_is_negated(text, index, len(term)) and not _term_is_in_phrase(
             text,
             index,
             blocked_phrase,
