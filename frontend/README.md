@@ -60,3 +60,5 @@ Vite 会把 `/api`、`/datasets` 和 `/workbench` 代理到本地后端。开发
 
 排位范围和排序方式必须由用户在前端控件中选择。前端只提交后端白名单中的
 `rank_window_*` 和 `sort_mode` 值；自由文本和 LLM 只能提示选择，不生成 hard filter。
+
+“建议先确认”只展示后端 EvidencePack 中的 reference-only 选项建议，不自动改写表单，也不触发查询。

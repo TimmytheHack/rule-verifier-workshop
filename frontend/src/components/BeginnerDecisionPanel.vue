@@ -31,6 +31,9 @@ const unusedItems = computed(() => [
 const informationRequests = computed(() => listOrEmpty(
   props.runData.evidence_pack?.decision_guidance?.information_requests,
 ));
+const optionSuggestions = computed(() => (
+  props.runData.evidence_pack?.decision_option_suggestions?.suggestions || {}
+));
 
 function listOrEmpty(items) {
   return Array.isArray(items) ? items : [];
@@ -98,6 +101,26 @@ function itemReason(item, fallback) {
         >
           暂无待确认项
         </p>
+      </div>
+    </section>
+
+    <section
+      v-if="Object.keys(optionSuggestions).length"
+      class="beginner-section warn"
+    >
+      <div class="beginner-section-title">
+        <el-icon><WarningFilled /></el-icon>
+        <h3>建议先确认</h3>
+      </div>
+      <div class="beginner-list">
+        <article
+          v-for="(suggestion, key) in optionSuggestions"
+          :key="key"
+          class="beginner-row"
+        >
+          <strong>{{ suggestion.label || suggestion.suggested_value }}</strong>
+          <p>{{ suggestion.reason }}</p>
+        </article>
       </div>
     </section>
 
