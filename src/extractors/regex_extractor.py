@@ -59,10 +59,7 @@ class RegexExtractor:
             text,
             self.aliases["employment_terms"],
         )
-        career_goal_raw = self._first_present(
-            text,
-            self.aliases["career_goal_terms"],
-        )
+        career_goal_raw = self._career_goal_raw(text, family_resource_raw)
         other_vague_preferences = [
             term
             for term in self.aliases["other_vague_terms"]
@@ -196,6 +193,28 @@ class RegexExtractor:
         if no_resource:
             return no_resource
         return self._first_present(text, self.aliases["family_resource_terms"])
+
+    def _career_goal_raw(
+        self,
+        text: str,
+        family_resource_raw: str | None,
+    ) -> str | None:
+        search_text = text
+        if family_resource_raw:
+            search_text = search_text.replace(family_resource_raw, "", 1)
+
+        matches = []
+        intent_pattern = r"(?:想|希望|打算|考虑|计划|准备|目标(?:是)?|以后|将来)"
+        for term in self.aliases["career_goal_terms"]:
+            pattern = re.compile(
+                rf"{intent_pattern}[^，。,.；;]{{0,8}}{re.escape(term)}"
+            )
+            match = pattern.search(search_text)
+            if match:
+                matches.append((match.start(), term))
+        if not matches:
+            return None
+        return min(matches)[1]
 
     def _reselected_subjects(self, text: str) -> list[str]:
         normalized = text.replace("思想政治", "政治").replace("生物学", "生物")

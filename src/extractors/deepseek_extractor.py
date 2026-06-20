@@ -13,16 +13,21 @@ from __future__ import annotations
 
 import json
 import os
+import re
 import time
 import urllib.error
 import urllib.request
 from dataclasses import dataclass
+from functools import lru_cache
 from pathlib import Path
 from typing import Any
+
+from src.domains import DomainConfig
 
 
 DEEPSEEK_API_URL = "https://api.deepseek.com/chat/completions"
 DEFAULT_MODEL = "deepseek-chat"
+DEFAULT_ALIAS_PATH = DomainConfig.load("admissions").value_aliases_path
 SUPPORTED_MODELS = {
     "deepseek-v4-flash",
     "deepseek-v4-pro",
@@ -359,24 +364,25 @@ def normalize_slots(slots: dict[str, Any], original_text: str) -> dict[str, Any]
     family_resource = preferences.get("family_resource_raw")
     if family_resource:
         preferences["family_resource_raw"] = str(family_resource)
-    elif any(term in original_text for term in ["家里没有资源", "家里没资源", "没有资源", "没资源", "家里帮不上"]):
-        preferences["family_resource_raw"] = "家里没有资源"
-    elif any(term in original_text for term in ["家里有资源", "家里资源", "父母资源", "亲戚资源", "行业资源"]):
-        preferences["family_resource_raw"] = "家里有资源"
     else:
-        preferences["family_resource_raw"] = None
+        aliases = _admissions_aliases()
+        preferences["family_resource_raw"] = _first_present(
+            original_text,
+            aliases["no_family_resource_terms"],
+        ) or _first_present(
+            original_text,
+            aliases["family_resource_terms"],
+        )
 
     career_goal = preferences.get("career_goal_raw")
     if career_goal:
         preferences["career_goal_raw"] = str(career_goal)
     else:
-        preferences["career_goal_raw"] = next(
-            (
-                term
-                for term in ["稳定就业", "体制内", "考公", "考编", "高薪", "本地就业", "升学深造", "读研"]
-                if term in original_text
-            ),
-            None,
+        aliases = _admissions_aliases()
+        preferences["career_goal_raw"] = _career_goal_raw(
+            original_text,
+            preferences.get("family_resource_raw"),
+            aliases["career_goal_terms"],
         )
 
     recommendation = preferences.get("recommendation_request_raw")
@@ -445,6 +451,41 @@ def _optional_text(value: Any) -> str | None:
         return None
     text = str(value).strip()
     return text or None
+
+
+@lru_cache(maxsize=1)
+def _admissions_aliases() -> dict[str, Any]:
+    return json.loads(Path(DEFAULT_ALIAS_PATH).read_text(encoding="utf-8"))
+
+
+def _first_present(text: str, candidates: list[str]) -> str | None:
+    for candidate in candidates:
+        if candidate in text:
+            return candidate
+    return None
+
+
+def _career_goal_raw(
+    text: str,
+    family_resource_raw: Any,
+    career_goal_terms: list[str],
+) -> str | None:
+    search_text = text
+    if family_resource_raw:
+        search_text = search_text.replace(str(family_resource_raw), "", 1)
+
+    matches = []
+    intent_pattern = r"(?:想|希望|打算|考虑|计划|准备|目标(?:是)?|以后|将来)"
+    for term in career_goal_terms:
+        pattern = re.compile(
+            rf"{intent_pattern}[^，。,.；;]{{0,8}}{re.escape(term)}"
+        )
+        match = pattern.search(search_text)
+        if match:
+            matches.append((match.start(), term))
+    if not matches:
+        return None
+    return min(matches)[1]
 
 
 def has_deepseek_api_key() -> bool:

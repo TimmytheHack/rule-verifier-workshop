@@ -3,6 +3,7 @@ from __future__ import annotations
 import unittest
 
 from src.domains import DomainConfig
+from src.extractors.deepseek_extractor import normalize_slots
 from src.extractors.regex_extractor import RegexExtractor
 from src.schema.attribute_grounder import AttributeGrounder
 from src.schema.schema_registry import SchemaRegistry
@@ -49,6 +50,45 @@ class CareerGuidanceExtractionTest(unittest.TestCase):
             slots["raw_sources"]["preferences.career_goal_raw"],
             "稳定就业",
         )
+
+    def test_family_resource_phrase_does_not_become_career_goal(self) -> None:
+        slots = RegexExtractor().extract("家里在体制内有资源，想学法学。")
+
+        self.assertEqual(
+            slots["preferences"]["family_resource_raw"],
+            "家里在体制内有资源",
+        )
+        self.assertIsNone(slots["preferences"]["career_goal_raw"])
+        self.assertNotIn("preferences.career_goal_raw", slots["raw_sources"])
+
+    def test_explicit_career_goal_after_family_resource_is_extracted(self) -> None:
+        slots = RegexExtractor().extract("家里在体制内有资源，想考公。")
+
+        self.assertEqual(
+            slots["preferences"]["family_resource_raw"],
+            "家里在体制内有资源",
+        )
+        self.assertEqual(slots["preferences"]["career_goal_raw"], "考公")
+        self.assertEqual(
+            slots["raw_sources"]["preferences.career_goal_raw"],
+            "考公",
+        )
+
+    def test_deepseek_normalize_falls_back_to_long_family_resource_alias(self) -> None:
+        slots = normalize_slots(
+            {
+                "user_context": {},
+                "preferences": {},
+                "proposed_rules": [],
+            },
+            "家里在体制内有资源，想学法学。",
+        )
+
+        self.assertEqual(
+            slots["preferences"]["family_resource_raw"],
+            "家里在体制内有资源",
+        )
+        self.assertIsNone(slots["preferences"]["career_goal_raw"])
 
     def test_family_resource_is_context_and_employment_is_no_schema(self) -> None:
         slots = RegexExtractor().extract(
