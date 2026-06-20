@@ -354,6 +354,17 @@ class WorkbenchApiContractTest(unittest.TestCase):
             [(0, 0), (0, 15), (0, 50)],
         )
         self.assertEqual(
+            [item["description"] for item in options["rank_windows"]],
+            [
+                "只执行后 0% 上界，不设置前向下界。",
+                "只执行后 15% 上界，不设置前向下界。",
+                "只执行后 50% 上界，不设置前向下界。",
+            ],
+        )
+        for item in options["rank_windows"]:
+            self.assertNotIn("不低于我", item["description"])
+            self.assertIn("不设置前向下界", item["description"])
+        self.assertEqual(
             [item["value"] for item in options["sort_modes"]],
             ["rank_asc", "rank_desc", "school_rank_asc"],
         )

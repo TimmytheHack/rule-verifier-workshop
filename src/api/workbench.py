@@ -83,21 +83,21 @@ RANK_WINDOW_OPTIONS = [
         "label": "冲一冲",
         "rank_window_lower_percent": 0,
         "rank_window_upper_percent": 0,
-        "description": "只限制历史位次不低于我的排位，不设置更靠前下界。",
+        "description": "只执行后 0% 上界，不设置前向下界。",
     },
     {
         "value": "steady",
         "label": "稳一点",
         "rank_window_lower_percent": 0,
         "rank_window_upper_percent": 15,
-        "description": "看历史位次不低于我、且最多比我靠后 15% 的结果。",
+        "description": "只执行后 15% 上界，不设置前向下界。",
     },
     {
         "value": "safe",
         "label": "保底",
         "rank_window_lower_percent": 0,
         "rank_window_upper_percent": 50,
-        "description": "看历史位次不低于我、且最多比我靠后 50% 的结果。",
+        "description": "只执行后 50% 上界，不设置前向下界。",
     },
 ]
 
