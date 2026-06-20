@@ -2,10 +2,11 @@
 
 这是当前 Preference-to-Rule Verification 项目的前端工作台。页面可使用演示数据，也可调用后端 API。前端不新增推荐逻辑，也不推断新规则。
 
-工作台输入拆成三部分：
+工作台输入拆成四部分：
 
 - 考生基础信息：生源地、科类、再选科目（化学/生物/政治/地理四选二）、省排位。这些是结构化事实，进入后端后仍需经过规则验证。
-- 排位范围：用户可以选择“先不选”“冲一冲”“稳一点”“保底”或“自定义”。显式 `rank_window_lower_percent` / `rank_window_upper_percent` 仍由前端受控提交，不由 LLM 猜测；后端只把 `rank_window_upper_percent` 对应的“后”边界作为 hard filter 上界执行，`rank_window_lower_percent` 仅作为 UI 档位提示，不是下界筛选条件。
+- 排位范围：用户必须选择“冲一冲”“稳一点”或“保底”。显式 `rank_window_lower_percent` / `rank_window_upper_percent` 只来自后端白名单，不由 LLM 猜测；后端只把 `rank_window_upper_percent` 对应的“后”边界作为 hard filter 上界执行，`rank_window_lower_percent` 仅作为 UI 档位提示，不是下界筛选条件。
+- 排序方式：用户必须选择后端白名单中的 `sort_mode`；前端不从自由文本或 LLM 输出推导排序策略。
 - 偏好描述：专业、城市、费用、中外合作、学校性质等偏好可以写入文本，由规则解析或 LLM 辅助解析。前端不把自由文本直接变成 hard filter。
 
 因此，补充偏好里的“学校稳一点”只会作为待确认或未执行偏好展示；只有用户在排位范围控件里明确选择窗口，后端才会按这个窗口筛选历史最低位次。
@@ -53,6 +54,9 @@ Vite 会把 `/api`、`/datasets` 和 `/workbench` 代理到本地后端。开发
 `operator-token`，配合 `make serve` 可直接完成查询、上传、审核和建仓。生产构建不会内置
 默认 token；如需覆盖本地 token，可在浏览器 `localStorage.actor_token` 写入服务端配置的 token。
 
-主查询页面面向非技术用户：默认只需要填写生源地、科类、省排位、意向专业、城市和排位范围，然后点击“查看可筛结果”。右侧会用中文说明哪些条件已参与筛选、哪些还需要确认、哪些没有参与筛选。页面不会展示服务端 traceback，也不会在前端补造推荐规则。
+主查询页面面向非技术用户：默认只需要填写生源地、科类、省排位、意向专业、城市、排位范围和排序方式，然后点击“查看可筛结果”。右侧会用中文说明哪些条件已参与筛选、哪些还需要确认、哪些没有参与筛选。页面不会展示服务端 traceback，也不会在前端补造推荐规则。
 
 当 EvidencePack.decision_guidance 包含家庭资源或就业目标信息时，前端只展示后端返回的补充问题和“不参与筛选”说明；前端不根据这些信息生成 hard filter。
+
+排位范围和排序方式必须由用户在前端控件中选择。前端只提交后端白名单中的
+`rank_window_*` 和 `sort_mode` 值；自由文本和 LLM 只能提示选择，不生成 hard filter。

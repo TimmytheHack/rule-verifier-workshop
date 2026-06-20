@@ -1,5 +1,5 @@
 <script setup>
-import { reactive, watch } from 'vue';
+import { reactive, ref, watch } from 'vue';
 import { MagicStick, Search } from '@element-plus/icons-vue';
 
 const props = defineProps({
@@ -19,6 +19,14 @@ const props = defineProps({
     type: Boolean,
     default: false,
   },
+  rankWindowOptions: {
+    type: Array,
+    default: () => [],
+  },
+  sortModeOptions: {
+    type: Array,
+    default: () => [],
+  },
 });
 
 const emit = defineEmits(['run']);
@@ -32,43 +40,6 @@ const tuitionOptions = [
   { label: '10000 元/年', value: 10000 },
   { label: '20000 元/年', value: 20000 },
   { label: '40000 元/年', value: 40000 },
-];
-const rankWindowOptions = [
-  {
-    label: '先不选',
-    value: '',
-    lower: null,
-    upper: null,
-    description: '不按排位窗口筛。',
-  },
-  {
-    label: '冲一冲',
-    value: 'reach',
-    lower: 20,
-    upper: 0,
-    description: '按后 0% 上界执行；前 20% 只作档位提示。',
-  },
-  {
-    label: '稳一点',
-    value: 'steady',
-    lower: 5,
-    upper: 15,
-    description: '按后 15% 上界执行；前 5% 只作档位提示。',
-  },
-  {
-    label: '保底',
-    value: 'safe',
-    lower: 0,
-    upper: 50,
-    description: '按后 50% 上界执行，不设前向下界。',
-  },
-  {
-    label: '自定义',
-    value: 'custom',
-    lower: 10,
-    upper: 10,
-    description: '自己设置后向上界；前向比例只作提示。',
-  },
 ];
 const quickExamples = [
   {
@@ -90,6 +61,7 @@ const quickExamples = [
 
 const hard = reactive(emptyHardFilters());
 const soft = reactive(emptySoftPreferences());
+const formError = ref('');
 
 function emptyHardFilters() {
   return {
@@ -111,6 +83,7 @@ function emptySoftPreferences() {
     rank_window_lower_percent: null,
     rank_window_upper_percent: null,
     rank_window_label: '',
+    sort_mode: '',
     tuition_cap_yuan: '',
   };
 }
@@ -129,8 +102,26 @@ watch(
   { deep: true, immediate: true },
 );
 
+watch(
+  () => [soft.rank_window_preset, soft.sort_mode],
+  () => {
+    if (formError.value) {
+      formError.value = '';
+    }
+  },
+);
+
 function submitRun() {
   const rankWindow = selectedRankWindow();
+  if (!rankWindow) {
+    formError.value = '请先选择排位范围：冲一冲、稳一点或保底。';
+    return;
+  }
+  if (!soft.sort_mode) {
+    formError.value = '请先选择排序方式。';
+    return;
+  }
+  formError.value = '';
   const hardPayload = {
     source_province: hard.source_province || null,
     subject_type: hard.subject_type || null,
@@ -140,13 +131,13 @@ function submitRun() {
     preferred_cities: [...(hard.preferred_cities || [])],
     tuition_cap_yuan: hard.tuition_cap_yuan || null,
   };
-  const legacySafetyMargin = rankWindow ? null : legacySafetyMarginPercent();
   const softPayload = {
     prompt: (soft.prompt || '').trim(),
-    safety_margin_percent: legacySafetyMargin,
+    safety_margin_percent: null,
     rank_window_label: rankWindow?.label || null,
     rank_window_lower_percent: rankWindow?.lower ?? null,
     rank_window_upper_percent: rankWindow?.upper ?? null,
+    sort_mode: soft.sort_mode || null,
     tuition_cap_yuan: soft.tuition_cap_yuan || null,
   };
   emit('run', {
@@ -192,69 +183,51 @@ function trimSentence(value) {
 }
 
 function normalizeRankWindowState() {
-  if (
-    soft.rank_window_label
-    && soft.rank_window_lower_percent !== null
-    && soft.rank_window_upper_percent !== null
-    && !soft.rank_window_preset
-  ) {
-    soft.rank_window_preset = 'custom';
+  if (soft.rank_window_preset && !selectedRankWindow()) {
+    soft.rank_window_preset = '';
+    soft.rank_window_label = '';
   }
 }
 
+function normalizedRankWindowOptions() {
+  return (props.rankWindowOptions || []).map((item) => ({
+    label: item.label,
+    value: item.value,
+    lower: Number(item.rank_window_lower_percent || 0),
+    upper: Number(item.rank_window_upper_percent || 0),
+    description: item.description || '',
+  }));
+}
+
 function applyRankWindowPreset(value) {
-  const option = rankWindowOptions.find((item) => item.value === value);
-  if (!option || option.value === '') {
+  const option = normalizedRankWindowOptions().find((item) => item.value === value);
+  if (!option) {
     soft.rank_window_preset = '';
     soft.rank_window_label = '';
     return;
   }
   soft.rank_window_preset = option.value;
   soft.rank_window_label = option.label;
-  if (option.value !== 'custom') {
-    soft.rank_window_lower_percent = option.lower;
-    soft.rank_window_upper_percent = option.upper;
-  } else {
-    soft.rank_window_lower_percent = soft.rank_window_lower_percent ?? option.lower;
-    soft.rank_window_upper_percent = soft.rank_window_upper_percent ?? option.upper;
-  }
+  soft.rank_window_lower_percent = option.lower;
+  soft.rank_window_upper_percent = option.upper;
 }
 
 function selectedRankWindow() {
   if (!soft.rank_window_preset) return null;
-  const option = rankWindowOptions.find((item) => item.value === soft.rank_window_preset);
-  if (!option || option.value === '') return null;
-  const lower = clampPercent(soft.rank_window_lower_percent);
-  const upper = clampPercent(soft.rank_window_upper_percent);
+  const option = normalizedRankWindowOptions().find((item) => item.value === soft.rank_window_preset);
+  if (!option) return null;
   return {
-    label: option.value === 'custom' ? '自定义' : option.label,
-    lower,
-    upper,
+    label: option.label,
+    lower: option.lower,
+    upper: option.upper,
   };
-}
-
-function clampPercent(value) {
-  const number = Number(value);
-  if (Number.isNaN(number)) return 0;
-  return Math.min(100, Math.max(0, Math.round(number)));
-}
-
-function legacySafetyMarginPercent() {
-  if (
-    soft.safety_margin_percent === null
-    || soft.safety_margin_percent === undefined
-    || soft.safety_margin_percent === ''
-  ) {
-    return null;
-  }
-  return clampPercent(soft.safety_margin_percent);
 }
 
 function selectedRankWindowDescription() {
   const window = selectedRankWindow();
-  if (!window) return '不按排位窗口筛。';
-  const lowerContext = window.lower > 0 ? `前 ${window.lower}% 只作档位提示，` : '';
-  return `${lowerContext}只按后 ${window.upper}% 以内设置上界，不设前向下界。`;
+  if (!window) return '请选择后端白名单中的排位范围；只执行后向上界。';
+  const option = normalizedRankWindowOptions().find((item) => item.value === soft.rank_window_preset);
+  return option?.description || `只按后 ${window.upper}% 以内设置上界，不设前向下界。`;
 }
 
 function rankWindowText(payload) {
@@ -351,6 +324,13 @@ function rankWindowText(payload) {
           {{ example.label }}
         </el-button>
       </div>
+      <el-alert
+        v-if="formError"
+        class="inline-alert"
+        type="warning"
+        :closable="false"
+        :title="formError"
+      />
       <div class="soft-form-grid">
         <label class="control-block">
           <span class="control-label">想学专业</span>
@@ -386,11 +366,11 @@ function rankWindowText(payload) {
           <el-select
             v-model="soft.rank_window_preset"
             class="full-control"
-            placeholder="先不选"
+            placeholder="请选择排位范围"
             @change="applyRankWindowPreset"
           >
             <el-option
-              v-for="option in rankWindowOptions"
+              v-for="option in normalizedRankWindowOptions()"
               :key="String(option.value)"
               :label="option.label"
               :value="option.value"
@@ -404,32 +384,20 @@ function rankWindowText(payload) {
           <span class="inline-help">{{ selectedRankWindowDescription() }}</span>
         </label>
 
-        <div
-          v-if="soft.rank_window_preset === 'custom'"
-          class="custom-window-row"
-        >
-          <label class="control-block">
-            <span class="control-label">档位提示：前多少%</span>
-            <el-input-number
-              v-model="soft.rank_window_lower_percent"
-              class="full-control"
-              :min="0"
-              :max="100"
-              :step="1"
-              controls-position="right"
+        <div class="control-block">
+          <span class="control-label">排序方式</span>
+          <el-select
+            v-model="soft.sort_mode"
+            class="full-control"
+            placeholder="请选择排序方式"
+          >
+            <el-option
+              v-for="option in sortModeOptions"
+              :key="option.value"
+              :label="option.label"
+              :value="option.value"
             />
-          </label>
-          <label class="control-block">
-            <span class="control-label">执行上界：后多少%</span>
-            <el-input-number
-              v-model="soft.rank_window_upper_percent"
-              class="full-control"
-              :min="0"
-              :max="100"
-              :step="1"
-              controls-position="right"
-            />
-          </label>
+          </el-select>
         </div>
 
         <label class="control-block">

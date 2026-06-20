@@ -32,8 +32,21 @@ const defaultSoftPreferences = {
   rank_window_label: null,
   rank_window_lower_percent: null,
   rank_window_upper_percent: null,
+  sort_mode: null,
   tuition_cap_yuan: null,
 };
+const workbenchOptions = ref({
+  rank_windows: [
+    { value: 'reach', label: '冲一冲', rank_window_lower_percent: 0, rank_window_upper_percent: 0 },
+    { value: 'steady', label: '稳一点', rank_window_lower_percent: 0, rank_window_upper_percent: 15 },
+    { value: 'safe', label: '保底', rank_window_lower_percent: 0, rank_window_upper_percent: 50 },
+  ],
+  sort_modes: [
+    { value: 'rank_asc', label: '按历史位次从高到低看（更冲）' },
+    { value: 'rank_desc', label: '按历史位次从低到高看（更稳）' },
+    { value: 'school_rank_asc', label: '同等条件下优先院校排名' },
+  ],
+});
 const BUILTIN_DATA_SOURCE = {
   id: 'builtin_admissions',
   type: 'builtin',
@@ -111,6 +124,7 @@ const quickStats = computed(() => {
 
 watch(uploadedDataSources, persistUploadedDataSources, { deep: true });
 watch(selectedDataSourceId, persistSelectedDataSourceId);
+watch(mode, fetchWorkbenchOptions, { immediate: true });
 
 function runDemo(runRequest, selectedOptions = {}) {
   runData.value = {
@@ -219,6 +233,23 @@ function authHeaders() {
   return token ? { 'X-Actor-Token': token } : {};
 }
 
+async function fetchWorkbenchOptions() {
+  if (mode.value !== 'api') return;
+  try {
+    const response = await fetch('/api/workbench/options', {
+      headers: authHeaders(),
+    });
+    if (!response.ok) return;
+    const payload = await response.json();
+    workbenchOptions.value = {
+      ...workbenchOptions.value,
+      ...payload,
+    };
+  } catch {
+    // 本地开发时允许使用内置白名单。
+  }
+}
+
 function loadUploadedDataSources() {
   try {
     const raw = localStorageSafe()?.getItem(DATA_SOURCES_STORAGE_KEY);
@@ -314,6 +345,8 @@ function statusLabel(status) {
               :default-soft-preferences="defaultSoftPreferences"
               :mode="mode"
               :loading="loading"
+              :rank-window-options="workbenchOptions.rank_windows"
+              :sort-mode-options="workbenchOptions.sort_modes"
               @run="runWorkbench"
             />
             <section class="data-source-panel" aria-label="查询数据源">
