@@ -300,7 +300,61 @@ class DuckDBExecutorTest(unittest.TestCase):
             )
 
         self.assertTrue(result.audit.sort_key[0].endswith("DESC NULLS LAST"))
+        self.assertEqual([row["ID"] for row in result.rows], [2, 1])
+        self.assertIn("ORDER BY", result.audit.sql)
+        self.assertIn('"__group_rank_num" DESC NULLS LAST', result.audit.sql)
         self.assertEqual(result.audit.skipped_soft_rule_ids, [])
+
+    def test_sort_override_rejects_unknown_helper(self) -> None:
+        with TemporaryDirectory() as directory:
+            database_path = Path(directory) / "sample.duckdb"
+            _write_database(database_path, _sample_dataframe())
+
+            with self.assertRaisesRegex(ValueError, "unknown helper"):
+                DuckDBExecutor(database_path).execute(
+                    [],
+                    sort_policy_override=[
+                        {
+                            "helper": "__not_allowed",
+                            "direction": "ASC",
+                            "nulls": "LAST",
+                        }
+                    ],
+                )
+
+    def test_sort_override_rejects_invalid_direction(self) -> None:
+        with TemporaryDirectory() as directory:
+            database_path = Path(directory) / "sample.duckdb"
+            _write_database(database_path, _sample_dataframe())
+
+            with self.assertRaisesRegex(ValueError, "sort direction"):
+                DuckDBExecutor(database_path).execute(
+                    [],
+                    sort_policy_override=[
+                        {
+                            "helper": "__group_rank_num",
+                            "direction": "SIDEWAYS",
+                            "nulls": "LAST",
+                        }
+                    ],
+                )
+
+    def test_sort_override_rejects_invalid_nulls(self) -> None:
+        with TemporaryDirectory() as directory:
+            database_path = Path(directory) / "sample.duckdb"
+            _write_database(database_path, _sample_dataframe())
+
+            with self.assertRaisesRegex(ValueError, "sort nulls"):
+                DuckDBExecutor(database_path).execute(
+                    [],
+                    sort_policy_override=[
+                        {
+                            "helper": "__group_rank_num",
+                            "direction": "ASC",
+                            "nulls": "MIDDLE",
+                        }
+                    ],
+                )
 
     def test_untrusted_or_disabled_rules_do_not_enter_hard_filter(self) -> None:
         with TemporaryDirectory() as directory:

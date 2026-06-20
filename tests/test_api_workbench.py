@@ -48,6 +48,19 @@ class ApiWorkbenchTest(unittest.TestCase):
         execution = result["execution"]
         self.assertEqual(execution["executor"], "duckdb")
         self.assertTrue(execution["sort_key"][0].endswith("DESC NULLS LAST"))
+        self.assertIn("ORDER BY", execution["sql"])
+        self.assertIn('"__group_rank_num" DESC NULLS LAST', execution["sql"])
+        top_results = result["top_results"]
+        self.assertGreaterEqual(len(top_results), 2)
+        first_rank = top_results[0].get("rank_2024") or top_results[0].get(
+            "group_min_rank"
+        )
+        second_rank = top_results[1].get("rank_2024") or top_results[1].get(
+            "group_min_rank"
+        )
+        self.assertIsNotNone(first_rank)
+        self.assertIsNotNone(second_rank)
+        self.assertGreaterEqual(first_rank, second_rank)
 
 
 if __name__ == "__main__":
