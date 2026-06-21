@@ -19,6 +19,10 @@ const props = defineProps({
     type: Boolean,
     default: false,
   },
+  showPanelActions: {
+    type: Boolean,
+    default: true,
+  },
   rankWindowOptions: {
     type: Array,
     default: () => [],
@@ -440,7 +444,7 @@ defineExpose({ submitRun });
       </div>
     </section>
 
-    <div class="panel-actions">
+    <div v-if="showPanelActions" class="panel-actions">
       <el-button
         type="primary"
         size="large"

@@ -3,7 +3,6 @@ import { computed, ref, watch } from 'vue';
 
 import UserInputPanel from './components/UserInputPanel.vue';
 import WorkbenchRunBar from './components/WorkbenchRunBar.vue';
-import WorkbenchModePanel from './components/WorkbenchModePanel.vue';
 import DatasetIngestionPanel from './components/DatasetIngestionPanel.vue';
 import ExtractedPreferences from './components/ExtractedPreferences.vue';
 import VerificationAudit from './components/VerificationAudit.vue';
@@ -110,9 +109,6 @@ const dataSourceOptions = computed(() => [
 const selectedDataSource = computed(() => (
   dataSourceOptions.value.find((source) => source.id === selectedDataSourceId.value)
   || BUILTIN_DATA_SOURCE
-));
-const dataSourceTitle = computed(() => (
-  mode.value === 'demo' ? '演示数据' : selectedDataSource.value.label
 ));
 const dataSourceDescription = computed(() => {
   return describeDataSourceState({
@@ -549,51 +545,11 @@ function statusLabel(status) {
               :default-soft-preferences="defaultSoftPreferences"
               :mode="mode"
               :loading="loading"
+              :show-panel-actions="false"
               :rank-window-options="workbenchOptions.rank_windows"
               :sort-mode-options="workbenchOptions.sort_modes"
               @run="runWorkbench"
             />
-            <section class="data-source-panel" aria-label="查询数据源">
-              <div class="data-source-copy">
-                <span class="control-label">数据源</span>
-                <strong>{{ dataSourceTitle }}</strong>
-                <p>{{ dataSourceDescription }}</p>
-              </div>
-              <div class="data-source-actions">
-                <el-select
-                  v-model="selectedDataSourceId"
-                  class="data-source-select"
-                  size="small"
-                  @change="handleDataSourceChange"
-                >
-                  <el-option
-                    v-for="source in dataSourceOptions"
-                    :key="source.id"
-                    :label="source.label"
-                    :value="source.id"
-                  />
-                </el-select>
-                <el-tag :type="dataSourceTag.type" effect="plain">
-                  {{ dataSourceTag.label }}
-                </el-tag>
-                <el-button size="small" @click="goToUpload">
-                  上传
-                </el-button>
-              </div>
-            </section>
-            <el-collapse class="advanced-collapse">
-              <el-collapse-item title="高级选项" name="advanced">
-                <WorkbenchModePanel
-                  v-model:mode="mode"
-                  v-model:extractor="extractor"
-                  v-model:generator="generator"
-                  v-model:model="model"
-                  :extractor-options="workbenchOptions.extractors"
-                  :generator-options="workbenchOptions.generators"
-                  :model-options="workbenchOptions.models"
-                />
-              </el-collapse-item>
-            </el-collapse>
             <el-alert
               v-if="shouldShowOptionsLoadError(mode, optionsLoadError)"
               class="inline-alert"
