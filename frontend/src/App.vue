@@ -28,6 +28,7 @@ import {
   normalizeWorkbenchOptions,
 } from './utils/workbenchOptions';
 import {
+  canRerunConfirmedRequest,
   defaultWorkbenchMode,
   describeDataSourceState,
 } from './utils/workbenchPresentation';
@@ -78,11 +79,11 @@ const runData = ref(createEmptyWorkbenchState({
   },
 }));
 const lastRunRequest = ref(null);
-const lastRequestBody = ref(null);
+const lastRequestContext = ref(null);
 const activeResult = ref(null);
 const traceVisible = ref(false);
 const activeWorkspace = ref('query');
-const mode = ref(defaultWorkbenchMode(initialDataSourceId));
+const mode = ref(defaultWorkbenchMode());
 const extractor = ref('hybrid');
 const generator = ref('template_evidence');
 const model = ref('deepseek-v4-flash');
@@ -131,9 +132,10 @@ const quickStats = computed(() => {
 
 watch(uploadedDataSources, persistUploadedDataSources, { deep: true });
 watch(selectedDataSourceId, persistSelectedDataSourceId);
-watch(mode, fetchWorkbenchOptions, { immediate: true });
+watch(mode, handleModeChange, { immediate: true });
 
 function runDemo(runRequest = lastRunRequest.value, selectedOptions = {}) {
+  clearLastRequestContext();
   runData.value = mergeDemoRun(demoRun, {
     runRequest,
     selectedOptions: {
@@ -165,7 +167,6 @@ async function runWorkbench(runRequest) {
     generator: generator.value,
     model: model.value,
   });
-  lastRequestBody.value = requestBody;
   try {
     const response = await fetch('/workbench/query', {
       method: 'POST',
@@ -179,6 +180,11 @@ async function runWorkbench(runRequest) {
     if (!response.ok) {
       throw new Error(formatApiError(apiPayload, '后端运行失败'));
     }
+    lastRequestContext.value = {
+      requestBody,
+      dataSourceId: selectedDataSourceId.value,
+      mode: mode.value,
+    };
     runData.value = {
       ...apiPayload,
       selected_options: {
@@ -200,14 +206,18 @@ async function runWorkbench(runRequest) {
 }
 
 async function rerunWithConfirmedCandidates(candidateIds) {
-  if (!lastRequestBody.value || !candidateIds.length) {
+  if (!canRerunConfirmedRequest({
+    context: lastRequestContext.value,
+    candidateIds,
+    currentMode: mode.value,
+    selectedDataSourceId: selectedDataSourceId.value,
+  })) {
     return;
   }
   loading.value = true;
   apiError.value = '';
   lastRunFailed.value = false;
-  const requestBody = buildConfirmedWorkbenchRequest(lastRequestBody.value, candidateIds);
-  lastRequestBody.value = requestBody;
+  const requestBody = buildConfirmedWorkbenchRequest(lastRequestContext.value.requestBody, candidateIds);
   try {
     const response = await fetch('/workbench/query', {
       method: 'POST',
@@ -221,6 +231,11 @@ async function rerunWithConfirmedCandidates(candidateIds) {
     if (!response.ok) {
       throw new Error(formatApiError(apiPayload, '确认后查询失败'));
     }
+    lastRequestContext.value = {
+      requestBody,
+      dataSourceId: selectedDataSourceId.value,
+      mode: mode.value,
+    };
     runData.value = {
       ...apiPayload,
       selected_options: {
@@ -251,6 +266,7 @@ function openTrace(result) {
 }
 
 function handleDataSourceChange() {
+  clearLastRequestContext();
   mode.value = 'api';
   apiError.value = '';
   lastRunFailed.value = false;
@@ -269,6 +285,7 @@ function activateUploadedSource(payload) {
     source,
     ...uploadedDataSources.value.filter((item) => item.id !== source.id),
   ].slice(0, 5);
+  clearLastRequestContext();
   selectedDataSourceId.value = source.id;
   mode.value = 'api';
   activeWorkspace.value = 'query';
@@ -282,7 +299,10 @@ function authHeaders() {
 }
 
 async function fetchWorkbenchOptions() {
-  if (mode.value !== 'api') return;
+  if (mode.value !== 'api') {
+    optionsLoadError.value = '';
+    return;
+  }
   try {
     const response = await fetch('/api/workbench/options', {
       headers: authHeaders(),
@@ -299,6 +319,18 @@ async function fetchWorkbenchOptions() {
     optionsLoadError.value = error instanceof Error ? error.message : '后端选项加载失败';
     ensureSelectedRuntimeOptions();
   }
+}
+
+function handleModeChange(value) {
+  if (value === 'demo') {
+    clearLastRequestContext();
+    optionsLoadError.value = '';
+  }
+  fetchWorkbenchOptions();
+}
+
+function clearLastRequestContext() {
+  lastRequestContext.value = null;
 }
 
 function ensureSelectedRuntimeOptions() {

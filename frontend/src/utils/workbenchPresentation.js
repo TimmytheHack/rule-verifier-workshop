@@ -2,6 +2,22 @@ export function defaultWorkbenchMode() {
   return 'api';
 }
 
+export function canRerunConfirmedRequest({
+  context,
+  candidateIds,
+  currentMode,
+  selectedDataSourceId,
+}) {
+  return Boolean(
+    context?.requestBody
+    && Array.isArray(candidateIds)
+    && candidateIds.length
+    && currentMode === 'api'
+    && context.mode === 'api'
+    && context.dataSourceId === selectedDataSourceId,
+  );
+}
+
 export function describeDataSourceState({ mode, selectedDataSource, runData }) {
   if (mode !== 'demo') {
     return selectedDataSource?.description || '';

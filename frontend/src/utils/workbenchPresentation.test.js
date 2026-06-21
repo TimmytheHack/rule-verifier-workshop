@@ -2,14 +2,13 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 
 import {
+  canRerunConfirmedRequest,
   defaultWorkbenchMode,
   describeDataSourceState,
 } from './workbenchPresentation.js';
 
-test('defaultWorkbenchMode starts api-first for builtin sources', () => {
-  assert.equal(defaultWorkbenchMode('builtin_admissions'), 'api');
-  assert.equal(defaultWorkbenchMode('uploaded:dataset_1'), 'api');
-  assert.equal(defaultWorkbenchMode(null), 'api');
+test('defaultWorkbenchMode starts api-first', () => {
+  assert.equal(defaultWorkbenchMode(), 'api');
 });
 
 test('describeDataSourceState distinguishes empty demo mode from explicit demo results', () => {
@@ -54,4 +53,74 @@ test('describeDataSourceState keeps api source description', () => {
   });
 
   assert.equal(description, '使用上传表格查询。');
+});
+
+test('canRerunConfirmedRequest accepts matching api request context', () => {
+  assert.equal(
+    canRerunConfirmedRequest({
+      context: {
+        requestBody: { user_input: '广东物理，排位 32000。' },
+        dataSourceId: 'uploaded:dataset_1',
+        mode: 'api',
+      },
+      candidateIds: ['c_city'],
+      currentMode: 'api',
+      selectedDataSourceId: 'uploaded:dataset_1',
+    }),
+    true,
+  );
+});
+
+test('canRerunConfirmedRequest rejects stale or non-api confirmation context', () => {
+  const context = {
+    requestBody: { user_input: '广东物理，排位 32000。' },
+    dataSourceId: 'uploaded:dataset_1',
+    mode: 'api',
+  };
+
+  assert.equal(
+    canRerunConfirmedRequest({
+      context: null,
+      candidateIds: ['c_city'],
+      currentMode: 'api',
+      selectedDataSourceId: 'uploaded:dataset_1',
+    }),
+    false,
+  );
+  assert.equal(
+    canRerunConfirmedRequest({
+      context,
+      candidateIds: [],
+      currentMode: 'api',
+      selectedDataSourceId: 'uploaded:dataset_1',
+    }),
+    false,
+  );
+  assert.equal(
+    canRerunConfirmedRequest({
+      context,
+      candidateIds: ['c_city'],
+      currentMode: 'demo',
+      selectedDataSourceId: 'uploaded:dataset_1',
+    }),
+    false,
+  );
+  assert.equal(
+    canRerunConfirmedRequest({
+      context,
+      candidateIds: ['c_city'],
+      currentMode: 'api',
+      selectedDataSourceId: 'uploaded:dataset_2',
+    }),
+    false,
+  );
+  assert.equal(
+    canRerunConfirmedRequest({
+      context: { ...context, mode: 'demo' },
+      candidateIds: ['c_city'],
+      currentMode: 'api',
+      selectedDataSourceId: 'uploaded:dataset_1',
+    }),
+    false,
+  );
 });
