@@ -9,6 +9,7 @@ import {
 } from './workbenchState.js';
 import {
   FALLBACK_WORKBENCH_OPTIONS,
+  firstOptionValue,
   normalizeWorkbenchOptions,
 } from './workbenchOptions.js';
 import {
@@ -78,6 +79,15 @@ test('normalizeWorkbenchOptions uses complete fallback when API payload is empty
   assert.equal(options.source, 'fallback');
   assert.deepEqual(options.extractors, FALLBACK_WORKBENCH_OPTIONS.extractors);
   assert.equal(options.rank_windows.length, 3);
+});
+
+test('firstOptionValue returns the first value or provided fallback', () => {
+  assert.equal(
+    firstOptionValue([{ value: 'hybrid' }, { value: 'regex' }], 'regex'),
+    'hybrid',
+  );
+  assert.equal(firstOptionValue([], 'template_evidence'), 'template_evidence');
+  assert.equal(firstOptionValue(null, 'deepseek-v4-flash'), 'deepseek-v4-flash');
 });
 
 test('buildWorkbenchRequest includes dataset id only for uploaded sources', () => {
