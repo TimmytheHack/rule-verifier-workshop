@@ -5,6 +5,7 @@ import {
   canRerunConfirmedRequest,
   defaultWorkbenchMode,
   describeDataSourceState,
+  isActiveWorkbenchResponse,
   shouldShowOptionsLoadError,
 } from './workbenchPresentation.js';
 
@@ -60,6 +61,35 @@ test('shouldShowOptionsLoadError only displays warnings in api mode', () => {
   assert.equal(shouldShowOptionsLoadError('api', '后端选项加载失败'), true);
   assert.equal(shouldShowOptionsLoadError('demo', '后端选项加载失败'), false);
   assert.equal(shouldShowOptionsLoadError('api', ''), false);
+});
+
+test('isActiveWorkbenchResponse accepts matching latest request', () => {
+  assert.equal(
+    isActiveWorkbenchResponse({
+      requestId: 2,
+      activeRequestId: 2,
+      requestDataSourceId: 'uploaded:dataset_1',
+      selectedDataSourceId: 'uploaded:dataset_1',
+      requestMode: 'api',
+      currentMode: 'api',
+    }),
+    true,
+  );
+});
+
+test('isActiveWorkbenchResponse rejects stale request identity, source, or mode', () => {
+  const activeRequest = {
+    requestId: 2,
+    activeRequestId: 2,
+    requestDataSourceId: 'uploaded:dataset_1',
+    selectedDataSourceId: 'uploaded:dataset_1',
+    requestMode: 'api',
+    currentMode: 'api',
+  };
+
+  assert.equal(isActiveWorkbenchResponse({ ...activeRequest, activeRequestId: 3 }), false);
+  assert.equal(isActiveWorkbenchResponse({ ...activeRequest, selectedDataSourceId: 'uploaded:dataset_2' }), false);
+  assert.equal(isActiveWorkbenchResponse({ ...activeRequest, currentMode: 'demo' }), false);
 });
 
 test('canRerunConfirmedRequest accepts matching api request context', () => {

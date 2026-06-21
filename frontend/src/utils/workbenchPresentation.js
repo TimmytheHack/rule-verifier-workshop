@@ -22,6 +22,19 @@ export function shouldShowOptionsLoadError(mode, optionsLoadError) {
   return mode === 'api' && Boolean(optionsLoadError);
 }
 
+export function isActiveWorkbenchResponse({
+  requestId,
+  activeRequestId,
+  requestDataSourceId,
+  selectedDataSourceId,
+  requestMode,
+  currentMode,
+}) {
+  return requestId === activeRequestId
+    && requestDataSourceId === selectedDataSourceId
+    && requestMode === currentMode;
+}
+
 export function describeDataSourceState({ mode, selectedDataSource, runData }) {
   if (mode !== 'demo') {
     return selectedDataSource?.description || '';

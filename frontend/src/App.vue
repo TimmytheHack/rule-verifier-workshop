@@ -31,6 +31,7 @@ import {
   canRerunConfirmedRequest,
   defaultWorkbenchMode,
   describeDataSourceState,
+  isActiveWorkbenchResponse,
   shouldShowOptionsLoadError,
 } from './utils/workbenchPresentation';
 import demoRun from './mock/demo_run.json';
@@ -81,6 +82,7 @@ const runData = ref(createEmptyWorkbenchState({
 }));
 const lastRunRequest = ref(null);
 const lastRequestContext = ref(null);
+const activeWorkbenchRequestId = ref(0);
 const activeResult = ref(null);
 const traceVisible = ref(false);
 const activeWorkspace = ref('query');
@@ -160,7 +162,11 @@ async function runWorkbench(runRequest) {
   loading.value = true;
   apiError.value = '';
   lastRunFailed.value = false;
+  const requestId = nextWorkbenchRequestId();
+  const requestDataSourceId = selectedDataSourceId.value;
+  const requestMode = mode.value;
   const source = selectedDataSource.value;
+  lastRequestContext.value = null;
   const requestBody = buildWorkbenchRequest({
     source,
     runRequest,
@@ -181,10 +187,20 @@ async function runWorkbench(runRequest) {
     if (!response.ok) {
       throw new Error(formatApiError(apiPayload, '后端运行失败'));
     }
+    if (!isActiveWorkbenchResponse({
+      requestId,
+      activeRequestId: activeWorkbenchRequestId.value,
+      requestDataSourceId,
+      selectedDataSourceId: selectedDataSourceId.value,
+      requestMode,
+      currentMode: mode.value,
+    })) {
+      return;
+    }
     lastRequestContext.value = {
       requestBody,
-      dataSourceId: selectedDataSourceId.value,
-      mode: mode.value,
+      dataSourceId: requestDataSourceId,
+      mode: requestMode,
     };
     runData.value = {
       ...apiPayload,
@@ -199,10 +215,22 @@ async function runWorkbench(runRequest) {
       },
     };
   } catch (error) {
+    if (!isActiveWorkbenchResponse({
+      requestId,
+      activeRequestId: activeWorkbenchRequestId.value,
+      requestDataSourceId,
+      selectedDataSourceId: selectedDataSourceId.value,
+      requestMode,
+      currentMode: mode.value,
+    })) {
+      return;
+    }
     apiError.value = error instanceof Error ? error.message : formatApiError(error, '后端运行失败');
     lastRunFailed.value = true;
   } finally {
-    loading.value = false;
+    if (requestId === activeWorkbenchRequestId.value) {
+      loading.value = false;
+    }
   }
 }
 
@@ -218,6 +246,10 @@ async function rerunWithConfirmedCandidates(candidateIds) {
   loading.value = true;
   apiError.value = '';
   lastRunFailed.value = false;
+  const requestId = nextWorkbenchRequestId();
+  const requestDataSourceId = selectedDataSourceId.value;
+  const requestMode = mode.value;
+  const source = selectedDataSource.value;
   const requestBody = buildConfirmedWorkbenchRequest(lastRequestContext.value.requestBody, candidateIds);
   try {
     const response = await fetch('/workbench/query', {
@@ -232,16 +264,26 @@ async function rerunWithConfirmedCandidates(candidateIds) {
     if (!response.ok) {
       throw new Error(formatApiError(apiPayload, '确认后查询失败'));
     }
+    if (!isActiveWorkbenchResponse({
+      requestId,
+      activeRequestId: activeWorkbenchRequestId.value,
+      requestDataSourceId,
+      selectedDataSourceId: selectedDataSourceId.value,
+      requestMode,
+      currentMode: mode.value,
+    })) {
+      return;
+    }
     lastRequestContext.value = {
       requestBody,
-      dataSourceId: selectedDataSourceId.value,
-      mode: mode.value,
+      dataSourceId: requestDataSourceId,
+      mode: requestMode,
     };
     runData.value = {
       ...apiPayload,
       selected_options: {
         ...(apiPayload.selected_options || {}),
-        data_source: selectedDataSource.value.label,
+        data_source: source.label,
       },
       frontend_state: {
         source: 'api',
@@ -250,10 +292,22 @@ async function rerunWithConfirmedCandidates(candidateIds) {
       },
     };
   } catch (error) {
+    if (!isActiveWorkbenchResponse({
+      requestId,
+      activeRequestId: activeWorkbenchRequestId.value,
+      requestDataSourceId,
+      selectedDataSourceId: selectedDataSourceId.value,
+      requestMode,
+      currentMode: mode.value,
+    })) {
+      return;
+    }
     apiError.value = error instanceof Error ? error.message : formatApiError(error, '确认后查询失败');
     lastRunFailed.value = true;
   } finally {
-    loading.value = false;
+    if (requestId === activeWorkbenchRequestId.value) {
+      loading.value = false;
+    }
   }
 }
 
@@ -336,6 +390,13 @@ function handleModeChange(value) {
 
 function clearLastRequestContext() {
   lastRequestContext.value = null;
+  activeWorkbenchRequestId.value += 1;
+  loading.value = false;
+}
+
+function nextWorkbenchRequestId() {
+  activeWorkbenchRequestId.value += 1;
+  return activeWorkbenchRequestId.value;
 }
 
 function ensureSelectedRuntimeOptions() {
