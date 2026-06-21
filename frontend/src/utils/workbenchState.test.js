@@ -83,6 +83,7 @@ test('normalizeWorkbenchOptions uses complete fallback when API payload is empty
 test('buildWorkbenchRequest includes dataset id only for uploaded sources', () => {
   const request = buildWorkbenchRequest({
     source: {
+      type: 'uploaded',
       datasetId: 'dataset_1',
       domainName: 'admissions',
       label: '上传：a.xlsx',
@@ -103,6 +104,28 @@ test('buildWorkbenchRequest includes dataset id only for uploaded sources', () =
   assert.deepEqual(request.confirmed_candidates, []);
 });
 
+test('buildWorkbenchRequest omits dataset id for bundled sources', () => {
+  const request = buildWorkbenchRequest({
+    source: {
+      type: 'bundled',
+      datasetId: 'demo_dataset',
+      domainName: 'admissions',
+      label: '内置演示数据',
+    },
+    runRequest: {
+      user_input: '广东物理，排位 32000。',
+      hard_filters: { user_rank: 32000 },
+      soft_preferences: { prompt: '想学计算机' },
+    },
+    extractor: 'hybrid',
+    generator: 'template_evidence',
+    model: 'deepseek-v4-flash',
+  });
+
+  assert.equal('dataset_id' in request, false);
+  assert.equal(request.domain_name, 'admissions');
+});
+
 test('buildConfirmedWorkbenchRequest reuses previous request and appends candidate ids', () => {
   const previous = {
     domain_name: 'admissions',
@@ -119,4 +142,19 @@ test('buildConfirmedWorkbenchRequest reuses previous request and appends candida
   assert.deepEqual(request.confirmed_candidates, ['c_city', 'c_major']);
   assert.equal(request.user_input, previous.user_input);
   assert.notEqual(request, previous);
+});
+
+test('buildConfirmedWorkbenchRequest preserves existing confirmed candidate ids', () => {
+  const previous = {
+    domain_name: 'admissions',
+    user_input: '广东物理，排位 32000。',
+    hard_filters: { user_rank: 32000 },
+    soft_preferences: { prompt: '想学计算机' },
+    confirmed_candidates: ['c_city'],
+  };
+
+  const request = buildConfirmedWorkbenchRequest(previous, ['c_major']);
+
+  assert.deepEqual(request.confirmed_candidates, ['c_city', 'c_major']);
+  assert.notEqual(request.confirmed_candidates, previous.confirmed_candidates);
 });

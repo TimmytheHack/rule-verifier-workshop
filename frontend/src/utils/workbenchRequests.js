@@ -17,7 +17,7 @@ export function buildWorkbenchRequest({
     confirmed_candidates: [...confirmedCandidates],
   };
 
-  if (source?.datasetId) {
+  if (source?.type === 'uploaded' && source?.datasetId) {
     requestBody.dataset_id = source.datasetId;
   }
 
@@ -27,6 +27,9 @@ export function buildWorkbenchRequest({
 export function buildConfirmedWorkbenchRequest(previousRequest, confirmedCandidates) {
   return {
     ...previousRequest,
-    confirmed_candidates: [...confirmedCandidates],
+    confirmed_candidates: [
+      ...(previousRequest.confirmed_candidates || []),
+      ...confirmedCandidates,
+    ],
   };
 }
