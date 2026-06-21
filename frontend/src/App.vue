@@ -29,7 +29,7 @@ import {
   firstOptionValue,
   normalizeWorkbenchOptions,
 } from './utils/workbenchOptions';
-import { hasDisplayableRunData } from './utils/workbenchRunBar';
+import { normalizeRunBarStatus } from './utils/workbenchRunBar';
 import {
   canRerunConfirmedRequest,
   defaultWorkbenchMode,
@@ -136,7 +136,11 @@ const quickStats = computed(() => {
     { label: '未参与', value: data.not_executed_preferences?.length || data.unexecuted_preferences?.length || data.no_schema_field_preferences?.length || 0, tone: 'blocked' },
   ];
 });
-const hasRunData = computed(() => hasDisplayableRunData(runData.value));
+const runBarStatus = computed(() => normalizeRunBarStatus({
+  loading: loading.value,
+  lastRunFailed: lastRunFailed.value,
+  runData: runData.value,
+}));
 
 watch(uploadedDataSources, persistUploadedDataSources, { deep: true });
 watch(selectedDataSourceId, persistSelectedDataSourceId);
@@ -531,7 +535,7 @@ function statusLabel(status) {
             :model-options="workbenchOptions.models"
             :options-source="workbenchOptions.source"
             :options-error="shouldShowOptionsLoadError(mode, optionsLoadError) ? optionsLoadError : ''"
-            :has-run-data="hasRunData"
+            :run-status="runBarStatus"
             :loading="loading"
             @update:selected-data-source-id="handleDataSourceChange"
             @run="submitCurrentForm"

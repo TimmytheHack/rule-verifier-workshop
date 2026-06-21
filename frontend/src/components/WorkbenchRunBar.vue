@@ -65,9 +65,9 @@ const props = defineProps({
     type: String,
     default: '',
   },
-  hasRunData: {
-    type: Boolean,
-    default: false,
+  runStatus: {
+    type: Object,
+    default: () => ({ type: 'info', label: '待查询' }),
   },
 });
 
@@ -84,11 +84,7 @@ const emit = defineEmits([
 
 const modeTag = computed(() => formatModeTag(props.mode));
 const optionsSourceTag = computed(() => formatOptionsSourceTag(props.optionsSource));
-const runStatusTag = computed(() => (
-  props.loading
-    ? { type: 'warning', label: '查询中' }
-    : { type: props.hasRunData ? 'success' : 'info', label: props.hasRunData ? '已有结果' : '待查询' }
-));
+const runStatusTag = computed(() => props.runStatus);
 </script>
 
 <template>

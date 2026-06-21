@@ -5,6 +5,7 @@ import {
   formatModeTag,
   formatOptionsSourceTag,
   hasDisplayableRunData,
+  normalizeRunBarStatus,
 } from './workbenchRunBar.js';
 
 test('formatModeTag labels api and demo modes for the run bar', () => {
@@ -32,4 +33,56 @@ test('hasDisplayableRunData distinguishes initial empty state from completed run
     result_count: 0,
     frontend_state: { source: 'demo', is_explicit_demo: true },
   }), true);
+});
+
+test('normalizeRunBarStatus shows pending for initial empty state', () => {
+  assert.deepEqual(normalizeRunBarStatus({
+    loading: false,
+    lastRunFailed: false,
+    runData: {
+      status: 'idle',
+      result_count: 0,
+      frontend_state: { source: 'empty' },
+    },
+  }), { type: 'info', label: '待查询' });
+});
+
+test('normalizeRunBarStatus shows running while loading', () => {
+  assert.deepEqual(normalizeRunBarStatus({
+    loading: true,
+    lastRunFailed: false,
+    runData: { status: 'ok', result_count: 3 },
+  }), { type: 'warning', label: '查询中' });
+});
+
+test('normalizeRunBarStatus lets failure win over prior successful data', () => {
+  assert.deepEqual(normalizeRunBarStatus({
+    loading: false,
+    lastRunFailed: true,
+    runData: { status: 'ok', result_count: 3 },
+  }), { type: 'danger', label: '查询失败' });
+});
+
+test('normalizeRunBarStatus treats needs_confirmation with zero results as completed', () => {
+  assert.deepEqual(normalizeRunBarStatus({
+    loading: false,
+    lastRunFailed: false,
+    runData: { status: 'needs_confirmation', result_count: 0 },
+  }), { type: 'warning', label: '待确认' });
+});
+
+test('normalizeRunBarStatus treats blocked with zero results as blocked', () => {
+  assert.deepEqual(normalizeRunBarStatus({
+    loading: false,
+    lastRunFailed: false,
+    runData: { status: 'blocked', result_count: 0 },
+  }), { type: 'danger', label: '已阻断' });
+});
+
+test('normalizeRunBarStatus treats no_results as a no-results response', () => {
+  assert.deepEqual(normalizeRunBarStatus({
+    loading: false,
+    lastRunFailed: false,
+    runData: { status: 'no_results', result_count: 0 },
+  }), { type: 'info', label: '无结果' });
 });

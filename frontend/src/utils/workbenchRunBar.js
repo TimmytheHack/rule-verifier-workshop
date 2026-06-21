@@ -25,3 +25,29 @@ export function hasDisplayableRunData(runData) {
     || (runData.result_count || 0),
   );
 }
+
+export function normalizeRunBarStatus({ loading = false, lastRunFailed = false, runData = null } = {}) {
+  if (loading) {
+    return { type: 'warning', label: '查询中' };
+  }
+  if (lastRunFailed) {
+    return { type: 'danger', label: '查询失败' };
+  }
+  if (!runData || runData.frontend_state?.source === 'empty' || runData.status === 'idle') {
+    return { type: 'info', label: '待查询' };
+  }
+
+  const statusLabels = {
+    needs_confirmation: { type: 'warning', label: '待确认' },
+    blocked: { type: 'danger', label: '已阻断' },
+    no_results: { type: 'info', label: '无结果' },
+    ok: { type: 'success', label: '已完成' },
+  };
+  if (statusLabels[runData.status]) {
+    return statusLabels[runData.status];
+  }
+  if (hasDisplayableRunData(runData)) {
+    return { type: 'success', label: '已完成' };
+  }
+  return { type: 'info', label: '待查询' };
+}
