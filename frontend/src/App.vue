@@ -2,6 +2,7 @@
 import { computed, ref, watch } from 'vue';
 
 import UserInputPanel from './components/UserInputPanel.vue';
+import WorkbenchRunBar from './components/WorkbenchRunBar.vue';
 import WorkbenchModePanel from './components/WorkbenchModePanel.vue';
 import DatasetIngestionPanel from './components/DatasetIngestionPanel.vue';
 import ExtractedPreferences from './components/ExtractedPreferences.vue';
@@ -87,6 +88,7 @@ const activeWorkbenchRequestId = ref(0);
 const activeResult = ref(null);
 const traceVisible = ref(false);
 const activeWorkspace = ref('query');
+const inputPanelRef = ref(null);
 const mode = ref(defaultWorkbenchMode());
 const extractor = ref('hybrid');
 const generator = ref('template_evidence');
@@ -133,6 +135,11 @@ const quickStats = computed(() => {
     { label: '未参与', value: data.not_executed_preferences?.length || data.unexecuted_preferences?.length || data.no_schema_field_preferences?.length || 0, tone: 'blocked' },
   ];
 });
+const hasRunData = computed(() => Boolean(
+  (runData.value?.items?.length || 0)
+  || (runData.value?.top_results?.length || 0)
+  || (runData.value?.result_count || 0),
+));
 
 watch(uploadedDataSources, persistUploadedDataSources, { deep: true });
 watch(selectedDataSourceId, persistSelectedDataSourceId);
@@ -321,11 +328,18 @@ function openTrace(result) {
   traceVisible.value = true;
 }
 
-function handleDataSourceChange() {
+function handleDataSourceChange(value) {
+  if (value && dataSourceOptions.value.some((source) => source.id === value)) {
+    selectedDataSourceId.value = value;
+  }
   clearLastRequestContext();
   mode.value = 'api';
   apiError.value = '';
   lastRunFailed.value = false;
+}
+
+function submitCurrentForm() {
+  inputPanelRef.value?.submitRun?.();
 }
 
 function goToUpload() {
@@ -501,8 +515,30 @@ function statusLabel(status) {
     <el-tabs v-model="activeWorkspace" class="workspace-tabs">
       <el-tab-pane label="我要查询" name="query">
         <section class="workspace-panel query-workspace">
+          <WorkbenchRunBar
+            v-model:mode="mode"
+            v-model:extractor="extractor"
+            v-model:generator="generator"
+            v-model:model="model"
+            :selected-data-source-id="selectedDataSourceId"
+            :data-source-options="dataSourceOptions"
+            :data-source-tag="dataSourceTag"
+            :data-source-description="dataSourceDescription"
+            :extractor-options="workbenchOptions.extractors"
+            :generator-options="workbenchOptions.generators"
+            :model-options="workbenchOptions.models"
+            :options-source="workbenchOptions.source"
+            :options-error="shouldShowOptionsLoadError(mode, optionsLoadError) ? optionsLoadError : ''"
+            :has-run-data="hasRunData"
+            :loading="loading"
+            @update:selected-data-source-id="handleDataSourceChange"
+            @run="submitCurrentForm"
+            @demo="runDemo()"
+            @upload="goToUpload"
+          />
           <aside class="control-column">
             <UserInputPanel
+              ref="inputPanelRef"
               :default-hard-filters="defaultHardFilters"
               :default-soft-preferences="defaultSoftPreferences"
               :mode="mode"

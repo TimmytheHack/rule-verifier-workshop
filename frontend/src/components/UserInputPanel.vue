@@ -239,6 +239,8 @@ function selectedRankWindowDescription() {
 function rankWindowText(payload) {
   return `${payload.rank_window_label}（后 ${payload.rank_window_upper_percent}% 以内）`;
 }
+
+defineExpose({ submitRun });
 </script>
 
 <template>

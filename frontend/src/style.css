@@ -136,6 +136,10 @@ input {
   gap: 12px;
 }
 
+.workbench-run-bar {
+  grid-column: 1 / -1;
+}
+
 .control-column,
 .result-column,
 .evidence-column,
