@@ -18,6 +18,27 @@ const props = defineProps({
     type: String,
     required: true,
   },
+  extractorOptions: {
+    type: Array,
+    default: () => [
+      { value: 'regex', label: '规则解析' },
+      { value: 'deepseek', label: '模型辅助' },
+    ],
+  },
+  generatorOptions: {
+    type: Array,
+    default: () => [
+      { value: 'template_evidence', label: '固定模板' },
+      { value: 'deepseek_evidence', label: '模型润色' },
+    ],
+  },
+  modelOptions: {
+    type: Array,
+    default: () => [
+      { value: 'deepseek-v4-flash', label: '快速模型' },
+      { value: 'deepseek-v4-pro', label: '高质量模型' },
+    ],
+  },
 });
 
 const emit = defineEmits([
@@ -27,42 +48,9 @@ const emit = defineEmits([
   'update:model',
 ]);
 
-const demoExtractors = [
-  { value: 'hybrid', label: '规则优先' },
-  { value: 'regex', label: '规则解析' },
-  { value: 'deepseek', label: '模型辅助' },
-  { value: 'template_coverage', label: '字段覆盖' },
-];
-
-const apiExtractors = [
-  { value: 'hybrid', label: '规则优先' },
-  { value: 'regex', label: '规则解析' },
-  { value: 'deepseek', label: '模型辅助' },
-];
-
-const demoGenerators = [
-  { value: 'template_evidence', label: '固定模板' },
-  { value: 'deepseek_evidence', label: '模型润色' },
-  { value: 'template_coverage', label: '覆盖清单' },
-];
-
-const apiGenerators = [
-  { value: 'template_evidence', label: '固定模板' },
-  { value: 'deepseek_evidence', label: '模型润色' },
-];
-
-const models = [
-  { value: 'deepseek-v4-flash', label: '快速模型' },
-  { value: 'deepseek-v4-pro', label: '高质量模型' },
-];
-
-const extractorOptions = computed(() =>
-  props.mode === 'demo' ? demoExtractors : apiExtractors,
-);
-
-const generatorOptions = computed(() =>
-  props.mode === 'demo' ? demoGenerators : apiGenerators,
-);
+const availableExtractorOptions = computed(() => props.extractorOptions);
+const availableGeneratorOptions = computed(() => props.generatorOptions);
+const availableModelOptions = computed(() => props.modelOptions);
 
 const usesDeepSeek = computed(
   () =>
@@ -73,11 +61,11 @@ const usesDeepSeek = computed(
 function updateMode(value) {
   emit('update:mode', value);
   if (value === 'api') {
-    if (!apiExtractors.some((option) => option.value === props.extractor)) {
-      emit('update:extractor', apiExtractors[0].value);
+    if (!props.extractorOptions.some((option) => option.value === props.extractor)) {
+      emit('update:extractor', props.extractorOptions[0]?.value || 'regex');
     }
-    if (!apiGenerators.some((option) => option.value === props.generator)) {
-      emit('update:generator', apiGenerators[0].value);
+    if (!props.generatorOptions.some((option) => option.value === props.generator)) {
+      emit('update:generator', props.generatorOptions[0]?.value || 'template_evidence');
     }
   }
 }
@@ -117,7 +105,7 @@ function updateMode(value) {
           @update:model-value="emit('update:extractor', $event)"
         >
           <el-option
-            v-for="option in extractorOptions"
+            v-for="option in availableExtractorOptions"
             :key="option.value"
             :label="option.label"
             :value="option.value"
@@ -133,7 +121,7 @@ function updateMode(value) {
           @update:model-value="emit('update:generator', $event)"
         >
           <el-option
-            v-for="option in generatorOptions"
+            v-for="option in availableGeneratorOptions"
             :key="option.value"
             :label="option.label"
             :value="option.value"
@@ -150,7 +138,7 @@ function updateMode(value) {
           @update:model-value="emit('update:model', $event)"
         >
           <el-option
-            v-for="option in models"
+            v-for="option in availableModelOptions"
             :key="option.value"
             :label="option.label"
             :value="option.value"

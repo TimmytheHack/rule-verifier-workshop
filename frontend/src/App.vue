@@ -447,9 +447,20 @@ function statusLabel(status) {
                   v-model:extractor="extractor"
                   v-model:generator="generator"
                   v-model:model="model"
+                  :extractor-options="workbenchOptions.extractors"
+                  :generator-options="workbenchOptions.generators"
+                  :model-options="workbenchOptions.models"
                 />
               </el-collapse-item>
             </el-collapse>
+            <el-alert
+              v-if="optionsLoadError"
+              class="inline-alert"
+              type="warning"
+              :closable="false"
+              show-icon
+              :title="optionsLoadError"
+            />
             <el-alert
               v-if="apiError"
               class="inline-alert"
@@ -515,19 +526,19 @@ function statusLabel(status) {
       <el-tab-pane label="筛选依据" name="details">
         <section class="workspace-panel detail-workspace">
           <RuleSummaryCards
-            :deterministic-rules="runData?.deterministic_rules"
-            :candidate-rules="runData?.candidate_rules"
-            :not-executed-preferences="runData?.not_executed_preferences"
-            :executable-rules="runData?.executable_rules"
+            :deterministic-rules="runData?.deterministic_rules || []"
+            :candidate-rules="runData?.candidate_rules || []"
+            :not-executed-preferences="runData?.not_executed_preferences || []"
+            :executable-rules="runData?.executable_rules || []"
           />
           <CandidateConfirmation
-            :candidate-rules="runData?.candidate_rules"
-            :confirmations="runData?.simulated_confirmations"
+            :candidate-rules="runData?.candidate_rules || []"
+            :confirmations="runData?.simulated_confirmations || {}"
           />
-          <ExtractedPreferences :preferences="runData?.extracted_preferences" />
+          <ExtractedPreferences :preferences="runData?.extracted_preferences || []" />
           <VerificationAudit
-            :grounding="runData?.attribute_grounding"
-            :proposed-rules="runData?.proposed_rules"
+            :grounding="runData?.attribute_grounding || {}"
+            :proposed-rules="runData?.proposed_rules || []"
           />
         </section>
       </el-tab-pane>

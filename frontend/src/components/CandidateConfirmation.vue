@@ -4,11 +4,11 @@ import { computed } from 'vue';
 const props = defineProps({
   candidateRules: {
     type: Array,
-    required: true,
+    default: () => [],
   },
   confirmations: {
     type: Object,
-    required: true,
+    default: () => ({}),
   },
 });
 

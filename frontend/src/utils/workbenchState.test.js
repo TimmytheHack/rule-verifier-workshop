@@ -39,6 +39,16 @@ test('empty state keeps quick stat compatible fields empty', () => {
   assert.equal(state.selected_options.extractor, 'hybrid');
 });
 
+test('empty state includes detail-tab compatible defaults', () => {
+  const state = createEmptyWorkbenchState();
+
+  assert.deepEqual(state.simulated_confirmations, {});
+  assert.deepEqual(state.deterministic_rules, []);
+  assert.deepEqual(state.extracted_preferences, []);
+  assert.deepEqual(state.attribute_grounding, {});
+  assert.deepEqual(state.proposed_rules, []);
+});
+
 test('mergeDemoRun marks data as explicit demo only after user action', () => {
   const demo = {
     status: 'ok',
