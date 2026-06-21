@@ -18,6 +18,10 @@ export function canRerunConfirmedRequest({
   );
 }
 
+export function shouldShowOptionsLoadError(mode, optionsLoadError) {
+  return mode === 'api' && Boolean(optionsLoadError);
+}
+
 export function describeDataSourceState({ mode, selectedDataSource, runData }) {
   if (mode !== 'demo') {
     return selectedDataSource?.description || '';

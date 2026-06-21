@@ -5,6 +5,7 @@ import {
   canRerunConfirmedRequest,
   defaultWorkbenchMode,
   describeDataSourceState,
+  shouldShowOptionsLoadError,
 } from './workbenchPresentation.js';
 
 test('defaultWorkbenchMode starts api-first', () => {
@@ -53,6 +54,12 @@ test('describeDataSourceState keeps api source description', () => {
   });
 
   assert.equal(description, '使用上传表格查询。');
+});
+
+test('shouldShowOptionsLoadError only displays warnings in api mode', () => {
+  assert.equal(shouldShowOptionsLoadError('api', '后端选项加载失败'), true);
+  assert.equal(shouldShowOptionsLoadError('demo', '后端选项加载失败'), false);
+  assert.equal(shouldShowOptionsLoadError('api', ''), false);
 });
 
 test('canRerunConfirmedRequest accepts matching api request context', () => {

@@ -31,6 +31,7 @@ import {
   canRerunConfirmedRequest,
   defaultWorkbenchMode,
   describeDataSourceState,
+  shouldShowOptionsLoadError,
 } from './utils/workbenchPresentation';
 import demoRun from './mock/demo_run.json';
 
@@ -315,6 +316,10 @@ async function fetchWorkbenchOptions() {
     optionsLoadError.value = '';
     ensureSelectedRuntimeOptions();
   } catch (error) {
+    if (mode.value !== 'api') {
+      optionsLoadError.value = '';
+      return;
+    }
     workbenchOptions.value = normalizeWorkbenchOptions(null);
     optionsLoadError.value = error instanceof Error ? error.message : '后端选项加载失败';
     ensureSelectedRuntimeOptions();
@@ -486,7 +491,7 @@ function statusLabel(status) {
               </el-collapse-item>
             </el-collapse>
             <el-alert
-              v-if="optionsLoadError"
+              v-if="shouldShowOptionsLoadError(mode, optionsLoadError)"
               class="inline-alert"
               type="warning"
               :closable="false"
