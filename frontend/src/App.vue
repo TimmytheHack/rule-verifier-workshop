@@ -545,86 +545,88 @@ function statusLabel(status) {
             @demo="showDemoRun"
             @upload="goToUpload"
           />
-          <aside class="control-column">
-            <UserInputPanel
-              ref="inputPanelRef"
-              :default-hard-filters="defaultHardFilters"
-              :default-soft-preferences="defaultSoftPreferences"
-              :mode="mode"
-              :loading="loading"
-              :show-panel-actions="false"
-              :rank-window-options="workbenchOptions.rank_windows"
-              :sort-mode-options="workbenchOptions.sort_modes"
-              @run="runWorkbench"
-            />
-            <el-alert
-              v-if="shouldShowOptionsLoadError(mode, optionsLoadError)"
-              class="inline-alert"
-              type="warning"
-              :closable="false"
-              show-icon
-              :title="optionsLoadError"
-            />
-            <el-alert
-              v-if="apiError"
-              class="inline-alert"
-              type="error"
-              :closable="false"
-              show-icon
-              :title="apiError"
-            />
-          </aside>
-
-          <section class="result-column">
-            <template v-if="!lastRunFailed">
-              <div class="quick-stats">
-                <article v-for="item in quickStats" :key="item.label" :class="['quick-stat', `tone-${item.tone}`]">
-                  <span>{{ item.label }}</span>
-                  <strong>{{ item.value }}</strong>
-                </article>
-              </div>
-
-              <CandidateRerunPanel
-                :run-data="runData"
+          <div class="query-main-grid">
+            <aside class="control-column">
+              <UserInputPanel
+                ref="inputPanelRef"
+                :default-hard-filters="defaultHardFilters"
+                :default-soft-preferences="defaultSoftPreferences"
+                :mode="mode"
                 :loading="loading"
-                :can-confirm="canConfirmCandidates"
-                @confirm="rerunWithConfirmedCandidates"
+                :show-panel-actions="false"
+                :rank-window-options="workbenchOptions.rank_windows"
+                :sort-mode-options="workbenchOptions.sort_modes"
+                @run="runWorkbench"
               />
-
-              <ResultTable
-                :results="resultRows"
-                :total="runData?.result_count || 0"
-                @view-trace="openTrace"
+              <el-alert
+                v-if="shouldShowOptionsLoadError(mode, optionsLoadError)"
+                class="inline-alert"
+                type="warning"
+                :closable="false"
+                show-icon
+                :title="optionsLoadError"
               />
-            </template>
-            <el-card v-else class="workbench-card empty-run" shadow="never">
-              <el-empty description="这次没查成功">
-                <p class="beginner-empty">{{ apiError }}</p>
-              </el-empty>
-            </el-card>
-          </section>
+              <el-alert
+                v-if="apiError"
+                class="inline-alert"
+                type="error"
+                :closable="false"
+                show-icon
+                :title="apiError"
+              />
+            </aside>
 
-          <aside class="evidence-column">
-            <template v-if="!lastRunFailed">
-              <BeginnerDecisionPanel :run-data="runData" />
-              <el-collapse class="detail-collapse">
-                <el-collapse-item title="为什么这样筛" name="evidence">
-                  <EvidenceReport :report="runData?.natural_language_report || createEmptyEvidenceReport()" />
-                </el-collapse-item>
-                <el-collapse-item title="检查详情" name="audit">
-                  <EvalSummary :run-data="runData" />
-                  <TokenUsagePanel
-                    :token-usage="runData?.token_usage"
-                    :mode="mode"
-                    :selected-options="runData?.selected_options"
-                  />
-                </el-collapse-item>
-              </el-collapse>
-            </template>
-            <el-card v-else class="workbench-card" shadow="never">
-              <p class="beginner-empty">本次没有生成筛选依据。处理好左侧提示后再查一次。</p>
-            </el-card>
-          </aside>
+            <section class="result-column">
+              <template v-if="!lastRunFailed">
+                <div class="quick-stats">
+                  <article v-for="item in quickStats" :key="item.label" :class="['quick-stat', `tone-${item.tone}`]">
+                    <span>{{ item.label }}</span>
+                    <strong>{{ item.value }}</strong>
+                  </article>
+                </div>
+
+                <CandidateRerunPanel
+                  :run-data="runData"
+                  :loading="loading"
+                  :can-confirm="canConfirmCandidates"
+                  @confirm="rerunWithConfirmedCandidates"
+                />
+
+                <ResultTable
+                  :results="resultRows"
+                  :total="runData?.result_count || 0"
+                  @view-trace="openTrace"
+                />
+              </template>
+              <el-card v-else class="workbench-card empty-run" shadow="never">
+                <el-empty description="这次没查成功">
+                  <p class="beginner-empty">{{ apiError }}</p>
+                </el-empty>
+              </el-card>
+            </section>
+
+            <aside class="evidence-column">
+              <template v-if="!lastRunFailed">
+                <BeginnerDecisionPanel :run-data="runData" />
+                <el-collapse class="detail-collapse">
+                  <el-collapse-item title="为什么这样筛" name="evidence">
+                    <EvidenceReport :report="runData?.natural_language_report || createEmptyEvidenceReport()" />
+                  </el-collapse-item>
+                  <el-collapse-item title="检查详情" name="audit">
+                    <EvalSummary :run-data="runData" />
+                    <TokenUsagePanel
+                      :token-usage="runData?.token_usage"
+                      :mode="mode"
+                      :selected-options="runData?.selected_options"
+                    />
+                  </el-collapse-item>
+                </el-collapse>
+              </template>
+              <el-card v-else class="workbench-card" shadow="never">
+                <p class="beginner-empty">本次没有生成筛选依据。处理好左侧提示后再查一次。</p>
+              </el-card>
+            </aside>
+          </div>
         </section>
       </el-tab-pane>
 

@@ -154,7 +154,9 @@ function matchedCount(row) {
       </div>
     </template>
 
-    <el-empty v-if="!results.length" description="暂无结果" />
+    <el-empty v-if="!results.length" description="暂无查询结果">
+      <p class="beginner-empty">填写左侧信息后点击开始查询；默认不会展示演示院校。</p>
+    </el-empty>
 
     <div v-else class="result-list">
       <article
