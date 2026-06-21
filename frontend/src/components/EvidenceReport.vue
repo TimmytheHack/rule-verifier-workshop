@@ -1,10 +1,19 @@
 <script setup>
-defineProps({
+import { computed } from 'vue';
+
+import { createEmptyEvidenceReport } from '../utils/workbenchState';
+
+const props = defineProps({
   report: {
     type: Object,
-    required: true,
+    default: () => createEmptyEvidenceReport(),
   },
 });
+
+const safeReport = computed(() => ({
+  ...createEmptyEvidenceReport(),
+  ...(props.report || {}),
+}));
 </script>
 
 <template>
@@ -27,15 +36,15 @@ defineProps({
     />
 
     <article class="report-body">
-      <h3>{{ report.title }}</h3>
-      <p class="report-summary">{{ report.summary }}</p>
-      <p class="count-line">{{ report.result_count_text }}</p>
+      <h3>{{ safeReport.title }}</h3>
+      <p class="report-summary">{{ safeReport.summary }}</p>
+      <p class="count-line">{{ safeReport.result_count_text }}</p>
 
       <section>
         <h4>已执行规则</h4>
         <div class="tag-list">
           <el-tag
-            v-for="rule in report.executed_rules"
+            v-for="rule in safeReport.executed_rules"
             :key="rule"
             type="success"
             effect="light"
@@ -48,14 +57,14 @@ defineProps({
       <section>
         <h4>重点结果</h4>
         <ol class="report-list">
-          <li v-for="item in report.top_results" :key="item">{{ item }}</li>
+          <li v-for="item in safeReport.top_results" :key="item">{{ item }}</li>
         </ol>
       </section>
 
-      <section v-if="report.full_text">
+      <section v-if="safeReport.full_text">
         <el-collapse>
           <el-collapse-item title="展开完整证据文本" name="full-report">
-            <pre class="full-report-text">{{ report.full_text }}</pre>
+            <pre class="full-report-text">{{ safeReport.full_text }}</pre>
           </el-collapse-item>
         </el-collapse>
       </section>
@@ -63,7 +72,7 @@ defineProps({
       <section>
         <h4>警告</h4>
         <el-alert
-          v-for="warning in report.warnings"
+          v-for="warning in safeReport.warnings"
           :key="warning"
           class="report-warning"
           type="error"
@@ -73,7 +82,7 @@ defineProps({
         />
       </section>
 
-      <p class="disclaimer">{{ report.disclaimer }}</p>
+      <p class="disclaimer">{{ safeReport.disclaimer }}</p>
     </article>
   </el-card>
 </template>

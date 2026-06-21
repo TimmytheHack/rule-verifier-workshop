@@ -20,6 +20,7 @@ import {
   buildWorkbenchRequest,
 } from './utils/workbenchRequests';
 import {
+  createEmptyEvidenceReport,
   createEmptyWorkbenchState,
   mergeDemoRun,
 } from './utils/workbenchState';
@@ -596,7 +597,7 @@ function statusLabel(status) {
               <BeginnerDecisionPanel :run-data="runData" />
               <el-collapse class="detail-collapse">
                 <el-collapse-item title="为什么这样筛" name="evidence">
-                  <EvidenceReport :report="runData?.natural_language_report" />
+                  <EvidenceReport :report="runData?.natural_language_report || createEmptyEvidenceReport()" />
                 </el-collapse-item>
                 <el-collapse-item title="检查详情" name="audit">
                   <EvalSummary :run-data="runData" />

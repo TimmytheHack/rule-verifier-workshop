@@ -30,7 +30,7 @@ export function createEmptyWorkbenchState(overrides = {}) {
     extracted_preferences: [],
     attribute_grounding: {},
     proposed_rules: [],
-    natural_language_report: null,
+    natural_language_report: createEmptyEvidenceReport(),
     token_usage: null,
     selected_options: {},
     frontend_state: {
@@ -39,6 +39,19 @@ export function createEmptyWorkbenchState(overrides = {}) {
       options_source: 'fallback',
     },
     ...overrides,
+  };
+}
+
+export function createEmptyEvidenceReport() {
+  return {
+    title: '',
+    summary: '',
+    result_count_text: '',
+    executed_rules: [],
+    top_results: [],
+    full_text: '',
+    warnings: [],
+    disclaimer: '',
   };
 }
 

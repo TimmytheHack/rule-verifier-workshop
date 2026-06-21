@@ -49,6 +49,16 @@ test('empty state includes detail-tab compatible defaults', () => {
   assert.deepEqual(state.proposed_rules, []);
 });
 
+test('empty state includes evidence report compatible defaults', () => {
+  const state = createEmptyWorkbenchState();
+
+  assert.equal(state.natural_language_report.title, '');
+  assert.equal(state.natural_language_report.summary, '');
+  assert.deepEqual(state.natural_language_report.executed_rules, []);
+  assert.deepEqual(state.natural_language_report.top_results, []);
+  assert.deepEqual(state.natural_language_report.warnings, []);
+});
+
 test('mergeDemoRun marks data as explicit demo only after user action', () => {
   const demo = {
     status: 'ok',
