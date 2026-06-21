@@ -6,6 +6,7 @@ import {
   createEmptyWorkbenchState,
   isEmptyWorkbenchState,
   mergeDemoRun,
+  splitCandidateConfirmationState,
 } from './workbenchState.js';
 import {
   FALLBACK_WORKBENCH_OPTIONS,
@@ -56,6 +57,25 @@ test('confirmableCandidates keeps only candidates with generated candidate_id va
   assert.deepEqual(
     candidates.map((candidate) => candidate.confirmationId),
     ['c_city'],
+  );
+});
+
+test('splitCandidateConfirmationState keeps id-only candidates warning-only', () => {
+  const split = splitCandidateConfirmationState({
+    candidates_to_confirm: [
+      { candidate_id: 'c_city', label: '广州' },
+      { id: 'legacy_id', preference: '软件工程' },
+      { preference: '没有 id' },
+    ],
+  });
+
+  assert.deepEqual(
+    split.confirmable.map((candidate) => candidate.confirmationId),
+    ['c_city'],
+  );
+  assert.deepEqual(
+    split.blocked.map((candidate) => candidate.preference),
+    ['软件工程', '没有 id'],
   );
 });
 

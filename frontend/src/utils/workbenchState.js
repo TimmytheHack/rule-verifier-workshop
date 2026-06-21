@@ -68,17 +68,32 @@ export function candidateIdentifier(candidate) {
   return candidate?.candidate_id || '';
 }
 
-export function confirmableCandidates(runData) {
-  const candidates = Array.isArray(runData?.candidates_to_confirm) && runData.candidates_to_confirm.length
+function candidateConfirmationList(runData) {
+  return Array.isArray(runData?.candidates_to_confirm) && runData.candidates_to_confirm.length
     ? runData.candidates_to_confirm
     : Array.isArray(runData?.candidate_rules)
       ? runData.candidate_rules
       : [];
+}
 
-  return candidates
-    .map((candidate) => ({
+export function splitCandidateConfirmationState(runData) {
+  const candidates = candidateConfirmationList(runData);
+
+  return candidates.reduce((result, candidate) => {
+    const confirmationId = candidateIdentifier(candidate);
+    const candidateWithState = {
       ...candidate,
-      confirmationId: candidateIdentifier(candidate),
-    }))
-    .filter((candidate) => candidate.confirmationId);
+      confirmationId,
+    };
+    if (confirmationId) {
+      result.confirmable.push(candidateWithState);
+    } else {
+      result.blocked.push(candidateWithState);
+    }
+    return result;
+  }, { confirmable: [], blocked: [] });
+}
+
+export function confirmableCandidates(runData) {
+  return splitCandidateConfirmationState(runData).confirmable;
 }

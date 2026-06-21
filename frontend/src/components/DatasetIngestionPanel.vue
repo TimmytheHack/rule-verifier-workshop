@@ -9,6 +9,10 @@ import {
   Warning,
 } from '@element-plus/icons-vue';
 import { formatApiError } from '../utils/apiError';
+import {
+  candidateIdentifier,
+  splitCandidateConfirmationState,
+} from '../utils/workbenchState';
 
 const file = ref(null);
 const domainName = ref('admissions');
@@ -45,6 +49,11 @@ const requiredFields = computed(() => reviewSummary.value?.required_fields || []
 const missingFields = computed(() => reviewSummary.value?.missing_fields || []);
 const riskyFields = computed(() => reviewSummary.value?.risky_fields || []);
 const candidatesToConfirm = computed(() => queryResult.value?.candidates_to_confirm || []);
+const candidateConfirmationState = computed(() => splitCandidateConfirmationState({
+  candidates_to_confirm: candidatesToConfirm.value,
+}));
+const selectableCandidates = computed(() => candidateConfirmationState.value.confirmable);
+const blockedCandidates = computed(() => candidateConfirmationState.value.blocked);
 const queryItems = computed(() => queryResult.value?.items || []);
 const sectionEntries = computed(() => Object.entries(queryResult.value?.result_sections || {}));
 const queryOverview = computed(() => {
@@ -352,17 +361,13 @@ function statusType(status) {
   return 'warning';
 }
 
-function candidateId(candidate) {
-  return candidate.candidate_id || candidate.id;
-}
-
 function candidateTitle(candidate) {
   return (
     candidate.label
     || candidate.preference
     || candidate.value
     || candidate.normalized_value
-    || candidateId(candidate)
+    || candidateIdentifier(candidate)
   );
 }
 
@@ -664,19 +669,33 @@ function stageLabel(value) {
             确认后再查
           </el-button>
         </div>
-        <el-checkbox-group v-model="selectedCandidateIds" class="candidate-checkboxes">
+        <el-checkbox-group
+          v-if="selectableCandidates.length"
+          v-model="selectedCandidateIds"
+          class="candidate-checkboxes"
+        >
           <label
-            v-for="candidate in candidatesToConfirm"
-            :key="candidateId(candidate)"
+            v-for="candidate in selectableCandidates"
+            :key="candidate.confirmationId"
             class="candidate-confirm-row"
           >
-            <el-checkbox :label="candidateId(candidate)">
+            <el-checkbox :label="candidate.confirmationId">
               确认使用
             </el-checkbox>
             <strong>{{ candidateTitle(candidate) }}</strong>
             <span>{{ candidateSummary(candidate) }}</span>
           </label>
         </el-checkbox-group>
+        <div v-if="blockedCandidates.length" class="warning-list">
+          <el-alert
+            v-for="candidate in blockedCandidates"
+            :key="candidate.preference || candidate.reason || candidate.label"
+            type="warning"
+            :closable="false"
+            show-icon
+            :title="`${candidateTitle(candidate)}：缺少系统生成的 candidate_id，只展示不确认。`"
+          />
+        </div>
       </section>
 
       <section v-if="queryItems.length" class="item-card-grid">
