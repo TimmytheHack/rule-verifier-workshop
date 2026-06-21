@@ -81,6 +81,62 @@ const queryStatusMessage = computed(() => {
   };
   return messages[queryResult.value.status] || '未知状态，请检查证据。';
 });
+const datasetSteps = computed(() => {
+  const hasDataset = Boolean(dataset.value);
+  const hasDatasetId = Boolean(datasetId.value);
+  const hasProfileDraft = Boolean(profile.value || reviewSummary.value);
+  const hasReviewSummary = Boolean(reviewSummary.value);
+  const domainPackStatus = dataset.value?.domain_pack_status || '';
+  const isDomainApproved = domainPackStatus === 'approved';
+  const isQueryable = dataset.value?.status === 'queryable';
+  const queryStatus = queryResult.value?.status || '';
+  const queryStepStatus = queryResult.value
+    ? stepStatusForQuery(queryStatus)
+    : isQueryable ? 'process' : 'wait';
+
+  return [
+    {
+      key: 'upload',
+      title: '上传文件',
+      description: file.value?.name || dataset.value?.source_name || '选择 CSV 或 Excel 文件',
+      status: hasDataset ? 'success' : file.value ? 'process' : 'wait',
+    },
+    {
+      key: 'draft',
+      title: '生成草稿',
+      description: hasDatasetId ? '生成 domain pack 和 schema profile' : '上传后可生成',
+      status: hasProfileDraft ? 'success' : hasDatasetId ? 'process' : 'wait',
+    },
+    {
+      key: 'review',
+      title: '字段审查',
+      description: hasReviewSummary ? `${reviewFields.value.length} 个可审查字段` : '生成草稿后查看',
+      status: hasReviewSummary ? 'success' : hasProfileDraft ? 'process' : 'wait',
+    },
+    {
+      key: 'approve',
+      title: '批准领域',
+      description: domainPackStatus || '审查后批准',
+      status: isDomainApproved ? 'success' : hasReviewSummary ? 'process' : 'wait',
+    },
+    {
+      key: 'warehouse',
+      title: '生成可查询数据',
+      description: isQueryable ? '已可查询' : '批准后建仓',
+      status: isQueryable ? 'success' : isDomainApproved ? 'process' : 'wait',
+    },
+    {
+      key: 'query',
+      title: '试查',
+      description: queryResult.value ? statusLabel(queryResult.value.status) : '建仓后试查',
+      status: queryStepStatus,
+    },
+  ];
+});
+const activeDatasetStep = computed(() => {
+  const nextStepIndex = datasetSteps.value.findIndex((step) => step.status !== 'success');
+  return nextStepIndex === -1 ? datasetSteps.value.length : nextStepIndex;
+});
 
 const STATUS_LABELS = {
   ok: '已完成',
@@ -111,6 +167,14 @@ const STAGE_LABELS = {
   query: '查询',
   confirm_query: '确认后再查',
 };
+
+function stepStatusForQuery(status) {
+  if (status === 'ok') return 'success';
+  if (status === 'needs_confirmation') return 'process';
+  if (status === 'no_results') return 'wait';
+  if (status === 'blocked' || status === 'error') return 'error';
+  return 'process';
+}
 
 const ATTRIBUTE_LABELS = {
   year: '年份',
@@ -429,6 +493,18 @@ function stageLabel(value) {
       title="前端只提交操作，规则是否执行由后端验证。"
     />
 
+    <div class="dataset-steps">
+      <el-steps :active="activeDatasetStep" finish-status="success" align-center>
+        <el-step
+          v-for="step in datasetSteps"
+          :key="step.key"
+          :title="step.title"
+          :description="step.description"
+          :status="step.status"
+        />
+      </el-steps>
+    </div>
+
     <div class="dataset-flow-grid">
       <section class="dataset-panel">
         <h3>上传与生成</h3>
@@ -520,100 +596,104 @@ function stageLabel(value) {
       :title="errorText"
     />
 
-    <section v-if="dataset" class="dataset-json-grid">
-      <article>
-        <h3>工作表与表头</h3>
-        <div class="summary-line">
-          <span>工作表</span>
-          <strong>{{ profile?.sheet_name || dataset?.sheet_name || '-' }}</strong>
-        </div>
-        <div class="summary-line">
-          <span>表头行</span>
-          <strong>{{ profile?.detected_header_row || dataset?.detected_header_row || '-' }}</strong>
-        </div>
-        <div class="sheet-list">
-          <el-tag
-            v-for="sheet in sheetSummaries"
-            :key="sheet.sheet_name"
-            class="field-tag"
-            :type="sheet.selected ? 'success' : 'info'"
-            effect="plain"
-          >
-            {{ sheet.sheet_name }} · {{ sheet.row_count }}x{{ sheet.column_count }}
-          </el-tag>
-        </div>
-        <div class="warning-list">
-          <el-tag
-            v-for="warning in datasetWarnings"
-            :key="warning.code + warning.message"
-            class="field-tag"
-            type="warning"
-            effect="plain"
-          >
-            {{ warning.code }}
-          </el-tag>
-        </div>
-      </article>
-      <article>
-        <h3>必需字段</h3>
-        <div class="field-list">
-          <el-tag
-            v-for="field in requiredFields"
-            :key="field.field_id"
-            class="field-tag"
-            :type="field.present ? 'success' : 'danger'"
-            effect="plain"
-          >
-            {{ field.field_id }}
-          </el-tag>
-        </div>
-        <p v-if="missingFields.length" class="risk-copy">
-          缺失：{{ missingFields.map((field) => field.field_id).join(', ') }}
-        </p>
-      </article>
-      <article>
-        <h3>风险字段</h3>
-        <div class="field-list">
-          <el-tag
-            v-for="field in riskyFields"
-            :key="field.field_id"
-            class="field-tag"
-            type="warning"
-            effect="plain"
-          >
-            {{ field.field_id }} · {{ field.risk_flags.join('/') }}
-          </el-tag>
-        </div>
-      </article>
-      <article>
-        <h3>数据概况</h3>
-        <pre>{{ jsonText(dataset) }}</pre>
-      </article>
-      <article>
-        <h3>表格检查</h3>
-        <pre>{{ jsonText(profile) }}</pre>
-      </article>
-      <article>
-        <h3>审查摘要</h3>
-        <pre>{{ jsonText(reviewSummary) }}</pre>
-      </article>
-      <article>
-        <h3>前端操作审计记录</h3>
-        <div v-if="auditEvents.length" class="audit-event-list">
-          <div v-for="event in auditEvents" :key="event.id" class="audit-event">
-            <div class="audit-event-main">
-              <strong>{{ stageLabel(event.stage) }}</strong>
-              <span>{{ event.created_at }}</span>
+    <el-collapse v-if="dataset" class="dataset-debug-collapse">
+      <el-collapse-item title="调试数据" name="debug">
+        <section class="dataset-json-grid">
+          <article>
+            <h3>工作表与表头</h3>
+            <div class="summary-line">
+              <span>工作表</span>
+              <strong>{{ profile?.sheet_name || dataset?.sheet_name || '-' }}</strong>
             </div>
-            <el-tag :type="event.status === 'pass' ? 'success' : 'danger'" effect="plain">
-              {{ statusLabel(event.status) }}
-            </el-tag>
-            <pre>{{ jsonText(event.details) }}</pre>
-          </div>
-        </div>
-        <el-empty v-else description="尚无前端操作记录" />
-      </article>
-    </section>
+            <div class="summary-line">
+              <span>表头行</span>
+              <strong>{{ profile?.detected_header_row || dataset?.detected_header_row || '-' }}</strong>
+            </div>
+            <div class="sheet-list">
+              <el-tag
+                v-for="sheet in sheetSummaries"
+                :key="sheet.sheet_name"
+                class="field-tag"
+                :type="sheet.selected ? 'success' : 'info'"
+                effect="plain"
+              >
+                {{ sheet.sheet_name }} · {{ sheet.row_count }}x{{ sheet.column_count }}
+              </el-tag>
+            </div>
+            <div class="warning-list">
+              <el-tag
+                v-for="warning in datasetWarnings"
+                :key="warning.code + warning.message"
+                class="field-tag"
+                type="warning"
+                effect="plain"
+              >
+                {{ warning.code }}
+              </el-tag>
+            </div>
+          </article>
+          <article>
+            <h3>必需字段</h3>
+            <div class="field-list">
+              <el-tag
+                v-for="field in requiredFields"
+                :key="field.field_id"
+                class="field-tag"
+                :type="field.present ? 'success' : 'danger'"
+                effect="plain"
+              >
+                {{ field.field_id }}
+              </el-tag>
+            </div>
+            <p v-if="missingFields.length" class="risk-copy">
+              缺失：{{ missingFields.map((field) => field.field_id).join(', ') }}
+            </p>
+          </article>
+          <article>
+            <h3>风险字段</h3>
+            <div class="field-list">
+              <el-tag
+                v-for="field in riskyFields"
+                :key="field.field_id"
+                class="field-tag"
+                type="warning"
+                effect="plain"
+              >
+                {{ field.field_id }} · {{ field.risk_flags.join('/') }}
+              </el-tag>
+            </div>
+          </article>
+          <article>
+            <h3>数据概况</h3>
+            <pre>{{ jsonText(dataset) }}</pre>
+          </article>
+          <article>
+            <h3>表格检查</h3>
+            <pre>{{ jsonText(profile) }}</pre>
+          </article>
+          <article>
+            <h3>审查摘要</h3>
+            <pre>{{ jsonText(reviewSummary) }}</pre>
+          </article>
+          <article>
+            <h3>前端操作审计记录</h3>
+            <div v-if="auditEvents.length" class="audit-event-list">
+              <div v-for="event in auditEvents" :key="event.id" class="audit-event">
+                <div class="audit-event-main">
+                  <strong>{{ stageLabel(event.stage) }}</strong>
+                  <span>{{ event.created_at }}</span>
+                </div>
+                <el-tag :type="event.status === 'pass' ? 'success' : 'danger'" effect="plain">
+                  {{ statusLabel(event.status) }}
+                </el-tag>
+                <pre>{{ jsonText(event.details) }}</pre>
+              </div>
+            </div>
+            <el-empty v-else description="尚无前端操作记录" />
+          </article>
+        </section>
+      </el-collapse-item>
+    </el-collapse>
 
     <el-table v-if="reviewFields.length" class="review-table" :data="reviewFields" border stripe>
       <el-table-column prop="field_id" label="字段" width="170" />

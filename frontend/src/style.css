@@ -265,12 +265,14 @@ input {
 }
 
 .advanced-collapse,
-.detail-collapse {
+.detail-collapse,
+.dataset-debug-collapse {
   border: 0;
 }
 
 .advanced-collapse .el-collapse-item__header,
-.detail-collapse .el-collapse-item__header {
+.detail-collapse .el-collapse-item__header,
+.dataset-debug-collapse .el-collapse-item__header {
   height: 42px;
   padding: 0 12px;
   border: 1px solid #dfe7ec;
@@ -282,13 +284,15 @@ input {
 }
 
 .advanced-collapse .el-collapse-item__wrap,
-.detail-collapse .el-collapse-item__wrap {
+.detail-collapse .el-collapse-item__wrap,
+.dataset-debug-collapse .el-collapse-item__wrap {
   border: 0;
   background: transparent;
 }
 
 .advanced-collapse .el-collapse-item__content,
-.detail-collapse .el-collapse-item__content {
+.detail-collapse .el-collapse-item__content,
+.dataset-debug-collapse .el-collapse-item__content {
   padding: 10px 0 0;
 }
 
@@ -556,6 +560,39 @@ input {
 
 .dataset-card {
   border-color: #d8e4df;
+}
+
+.dataset-steps {
+  margin-top: 14px;
+  padding: 12px;
+  overflow-x: auto;
+  border: 1px solid #dce8e2;
+  border-radius: 8px;
+  background: #fbfefd;
+}
+
+.dataset-steps .el-steps {
+  min-width: 760px;
+}
+
+.dataset-steps .el-step__title {
+  color: #1e333d;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.dataset-steps .el-step__description {
+  color: #607680;
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.dataset-debug-collapse {
+  margin-top: 16px;
+}
+
+.dataset-debug-collapse .dataset-json-grid {
+  margin-top: 0;
 }
 
 .dataset-flow-grid,
