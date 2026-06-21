@@ -12,3 +12,16 @@ export function formatOptionsSourceTag(source) {
   };
   return labels[source] || labels.fallback;
 }
+
+export function hasDisplayableRunData(runData) {
+  if (!runData || runData.frontend_state?.source === 'empty' || runData.status === 'idle') {
+    return false;
+  }
+  return Boolean(
+    runData.frontend_state?.is_explicit_demo
+    || runData.status === 'no_results'
+    || (runData.items?.length || 0)
+    || (runData.top_results?.length || 0)
+    || (runData.result_count || 0),
+  );
+}

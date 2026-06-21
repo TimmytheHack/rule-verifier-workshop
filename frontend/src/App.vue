@@ -29,6 +29,7 @@ import {
   firstOptionValue,
   normalizeWorkbenchOptions,
 } from './utils/workbenchOptions';
+import { hasDisplayableRunData } from './utils/workbenchRunBar';
 import {
   canRerunConfirmedRequest,
   defaultWorkbenchMode,
@@ -135,11 +136,7 @@ const quickStats = computed(() => {
     { label: '未参与', value: data.not_executed_preferences?.length || data.unexecuted_preferences?.length || data.no_schema_field_preferences?.length || 0, tone: 'blocked' },
   ];
 });
-const hasRunData = computed(() => Boolean(
-  (runData.value?.items?.length || 0)
-  || (runData.value?.top_results?.length || 0)
-  || (runData.value?.result_count || 0),
-));
+const hasRunData = computed(() => hasDisplayableRunData(runData.value));
 
 watch(uploadedDataSources, persistUploadedDataSources, { deep: true });
 watch(selectedDataSourceId, persistSelectedDataSourceId);
@@ -158,6 +155,11 @@ function runDemo(runRequest = lastRunRequest.value, selectedOptions = {}) {
   });
   apiError.value = '';
   lastRunFailed.value = false;
+}
+
+function showDemoRun() {
+  mode.value = 'demo';
+  runDemo();
 }
 
 async function runWorkbench(runRequest) {
@@ -533,7 +535,7 @@ function statusLabel(status) {
             :loading="loading"
             @update:selected-data-source-id="handleDataSourceChange"
             @run="submitCurrentForm"
-            @demo="runDemo()"
+            @demo="showDemoRun"
             @upload="goToUpload"
           />
           <aside class="control-column">
