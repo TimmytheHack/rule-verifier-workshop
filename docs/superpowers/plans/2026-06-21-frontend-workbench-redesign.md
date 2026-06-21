@@ -113,7 +113,7 @@ test('mergeDemoRun marks data as explicit demo only after user action', () => {
   assert.equal(merged.selected_options.extractor, 'regex');
 });
 
-test('confirmableCandidates keeps only candidates with generated ids', () => {
+test('confirmableCandidates keeps only candidates with generated candidate_id values', () => {
   const candidates = confirmableCandidates({
     candidates_to_confirm: [
       { candidate_id: 'c_city', label: '广州' },
@@ -124,7 +124,7 @@ test('confirmableCandidates keeps only candidates with generated ids', () => {
 
   assert.deepEqual(
     candidates.map((candidate) => candidate.confirmationId),
-    ['c_city', 'legacy_id'],
+    ['c_city'],
   );
 });
 
@@ -150,9 +150,31 @@ test('normalizeWorkbenchOptions uses complete fallback when API payload is empty
   assert.equal(options.rank_windows.length, 3);
 });
 
+test('normalizeWorkbenchOptions marks missing API option groups as partial fallback', () => {
+  const options = normalizeWorkbenchOptions({
+    extractors: [{ value: 'hybrid', label: '规则优先，LLM 补槽' }],
+    generators: [],
+    models: [{ value: 'deepseek-v4-flash', label: 'LLM 快速模型' }],
+    rank_windows: [{ value: 'steady', label: '稳一点', rank_window_upper_percent: 15 }],
+    sort_modes: [{ value: 'rank_desc', label: '按历史位次从低到高看（更稳）' }],
+  });
+
+  assert.equal(options.source, 'partial_fallback');
+  assert.deepEqual(options.generators, FALLBACK_WORKBENCH_OPTIONS.generators);
+});
+
+test('normalizeWorkbenchOptions isolates fallback options from mutation', () => {
+  const options = normalizeWorkbenchOptions(null);
+
+  options.extractors[0].label = '被修改的标签';
+
+  assert.equal(FALLBACK_WORKBENCH_OPTIONS.extractors[0].label, '规则优先，LLM 补槽');
+});
+
 test('buildWorkbenchRequest includes dataset id only for uploaded sources', () => {
   const request = buildWorkbenchRequest({
     source: {
+      type: 'uploaded',
       datasetId: 'dataset_1',
       domainName: 'admissions',
       label: '上传：a.xlsx',
@@ -274,7 +296,7 @@ export function mergeDemoRun(demoRun, { runRequest = null, selectedOptions = {} 
 }
 
 export function candidateIdentifier(candidate) {
-  return candidate?.candidate_id || candidate?.id || '';
+  return candidate?.candidate_id || '';
 }
 
 export function confirmableCandidates(runData) {
@@ -352,21 +374,38 @@ const OPTION_GROUPS = [
 
 export function normalizeWorkbenchOptions(payload) {
   const source = payload && typeof payload === 'object' ? 'api' : 'fallback';
+  if (source === 'fallback') {
+    return {
+      source,
+      ...cloneFallbackOptions(),
+    };
+  }
+
   const normalized = { source };
   let usedFallback = false;
 
   for (const group of OPTION_GROUPS) {
     const hasApiValues = Array.isArray(payload?.[group]) && payload[group].length;
-    const values = hasApiValues ? payload[group] : FALLBACK_WORKBENCH_OPTIONS[group];
+    const values = hasApiValues ? payload[group] : cloneFallbackGroup(group);
     if (!hasApiValues) {
       usedFallback = true;
     }
-    normalized[group] = values.map(normalizeOption);
+    normalized[group] = hasApiValues ? values.map(normalizeOption) : values;
   }
 
   normalized.source = source === 'api' && usedFallback ? 'partial_fallback' : source;
 
   return normalized;
+}
+
+function cloneFallbackOptions() {
+  return Object.fromEntries(
+    OPTION_GROUPS.map((group) => [group, cloneFallbackGroup(group)]),
+  );
+}
+
+function cloneFallbackGroup(group) {
+  return FALLBACK_WORKBENCH_OPTIONS[group].map((option) => ({ ...option }));
 }
 
 export function normalizeOption(option) {
@@ -407,7 +446,7 @@ export function buildWorkbenchRequest({
     confirmed_candidates: [...confirmedCandidates],
   };
 
-  if (source?.datasetId) {
+  if (source?.type === 'uploaded' && source?.datasetId) {
     requestBody.dataset_id = source.datasetId;
   }
 
@@ -417,7 +456,10 @@ export function buildWorkbenchRequest({
 export function buildConfirmedWorkbenchRequest(previousRequest, confirmedCandidates) {
   return {
     ...previousRequest,
-    confirmed_candidates: [...confirmedCandidates],
+    confirmed_candidates: [
+      ...(previousRequest.confirmed_candidates || []),
+      ...confirmedCandidates,
+    ],
   };
 }
 ```
@@ -1115,7 +1157,7 @@ const blockedCandidates = computed(() => {
   const all = props.runData?.candidates_to_confirm?.length
     ? props.runData.candidates_to_confirm
     : props.runData?.candidate_rules || [];
-  return all.filter((candidate) => !candidate.candidate_id && !candidate.id);
+  return all.filter((candidate) => !candidate.candidate_id);
 });
 
 watch(candidates, () => {

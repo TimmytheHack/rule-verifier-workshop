@@ -65,7 +65,7 @@ export function mergeDemoRun(demoRun, { runRequest = null, selectedOptions = {} 
 }
 
 export function candidateIdentifier(candidate) {
-  return candidate?.candidate_id || candidate?.id || '';
+  return candidate?.candidate_id || '';
 }
 
 export function confirmableCandidates(runData) {

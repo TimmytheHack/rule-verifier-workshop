@@ -44,7 +44,7 @@ test('mergeDemoRun marks data as explicit demo only after user action', () => {
   assert.equal(merged.selected_options.extractor, 'regex');
 });
 
-test('confirmableCandidates keeps only candidates with generated ids', () => {
+test('confirmableCandidates keeps only candidates with generated candidate_id values', () => {
   const candidates = confirmableCandidates({
     candidates_to_confirm: [
       { candidate_id: 'c_city', label: '广州' },
@@ -55,7 +55,7 @@ test('confirmableCandidates keeps only candidates with generated ids', () => {
 
   assert.deepEqual(
     candidates.map((candidate) => candidate.confirmationId),
-    ['c_city', 'legacy_id'],
+    ['c_city'],
   );
 });
 
@@ -79,6 +79,27 @@ test('normalizeWorkbenchOptions uses complete fallback when API payload is empty
   assert.equal(options.source, 'fallback');
   assert.deepEqual(options.extractors, FALLBACK_WORKBENCH_OPTIONS.extractors);
   assert.equal(options.rank_windows.length, 3);
+});
+
+test('normalizeWorkbenchOptions marks missing API option groups as partial fallback', () => {
+  const options = normalizeWorkbenchOptions({
+    extractors: [{ value: 'hybrid', label: '规则优先，LLM 补槽' }],
+    generators: [],
+    models: [{ value: 'deepseek-v4-flash', label: 'LLM 快速模型' }],
+    rank_windows: [{ value: 'steady', label: '稳一点', rank_window_upper_percent: 15 }],
+    sort_modes: [{ value: 'rank_desc', label: '按历史位次从低到高看（更稳）' }],
+  });
+
+  assert.equal(options.source, 'partial_fallback');
+  assert.deepEqual(options.generators, FALLBACK_WORKBENCH_OPTIONS.generators);
+});
+
+test('normalizeWorkbenchOptions isolates fallback options from mutation', () => {
+  const options = normalizeWorkbenchOptions(null);
+
+  options.extractors[0].label = '被修改的标签';
+
+  assert.equal(FALLBACK_WORKBENCH_OPTIONS.extractors[0].label, '规则优先，LLM 补槽');
 });
 
 test('firstOptionValue returns the first value or provided fallback', () => {

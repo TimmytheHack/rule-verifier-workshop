@@ -55,7 +55,7 @@ export function normalizeWorkbenchOptions(payload) {
   if (source === 'fallback') {
     return {
       source,
-      ...FALLBACK_WORKBENCH_OPTIONS,
+      ...cloneFallbackOptions(),
     };
   }
 
@@ -64,16 +64,26 @@ export function normalizeWorkbenchOptions(payload) {
 
   for (const group of OPTION_GROUPS) {
     const hasApiValues = Array.isArray(payload?.[group]) && payload[group].length;
-    const values = hasApiValues ? payload[group] : FALLBACK_WORKBENCH_OPTIONS[group];
+    const values = hasApiValues ? payload[group] : cloneFallbackGroup(group);
     if (!hasApiValues) {
       usedFallback = true;
     }
-    normalized[group] = values.map(normalizeOption);
+    normalized[group] = hasApiValues ? values.map(normalizeOption) : values;
   }
 
   normalized.source = source === 'api' && usedFallback ? 'partial_fallback' : source;
 
   return normalized;
+}
+
+function cloneFallbackOptions() {
+  return Object.fromEntries(
+    OPTION_GROUPS.map((group) => [group, cloneFallbackGroup(group)]),
+  );
+}
+
+function cloneFallbackGroup(group) {
+  return FALLBACK_WORKBENCH_OPTIONS[group].map((option) => ({ ...option }));
 }
 
 export function normalizeOption(option) {
