@@ -3,6 +3,8 @@ __pycache__/
 *.pyc
 .venv/
 .env
+.superpowers/
+.worktrees/
 tmp/
 outputs/eval/deepseek_fuzzy_cache.json
 outputs/eval/fuzzy_quick_*.json
