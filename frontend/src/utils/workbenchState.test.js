@@ -28,6 +28,17 @@ test('createEmptyWorkbenchState does not expose mock results', () => {
   assert.equal(isEmptyWorkbenchState(state), true);
 });
 
+test('empty state keeps quick stat compatible fields empty', () => {
+  const state = createEmptyWorkbenchState({
+    selected_options: { extractor: 'hybrid' },
+  });
+
+  assert.equal(state.executed_filters.length, 0);
+  assert.equal(state.candidates_to_confirm.length, 0);
+  assert.equal(state.no_schema_field_preferences.length, 0);
+  assert.equal(state.selected_options.extractor, 'hybrid');
+});
+
 test('mergeDemoRun marks data as explicit demo only after user action', () => {
   const demo = {
     status: 'ok',

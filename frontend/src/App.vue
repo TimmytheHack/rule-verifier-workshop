@@ -15,6 +15,18 @@ import EvalSummary from './components/EvalSummary.vue';
 import TokenUsagePanel from './components/TokenUsagePanel.vue';
 import BeginnerDecisionPanel from './components/BeginnerDecisionPanel.vue';
 import { formatApiError } from './utils/apiError';
+import {
+  buildConfirmedWorkbenchRequest,
+  buildWorkbenchRequest,
+} from './utils/workbenchRequests';
+import {
+  createEmptyWorkbenchState,
+  mergeDemoRun,
+} from './utils/workbenchState';
+import {
+  firstOptionValue,
+  normalizeWorkbenchOptions,
+} from './utils/workbenchOptions';
 import demoRun from './mock/demo_run.json';
 
 const defaultHardFilters = {
@@ -35,18 +47,8 @@ const defaultSoftPreferences = {
   sort_mode: null,
   tuition_cap_yuan: null,
 };
-const workbenchOptions = ref({
-  rank_windows: [
-    { value: 'reach', label: '冲一冲', rank_window_lower_percent: 0, rank_window_upper_percent: 0 },
-    { value: 'steady', label: '稳一点', rank_window_lower_percent: 0, rank_window_upper_percent: 15 },
-    { value: 'safe', label: '保底', rank_window_lower_percent: 0, rank_window_upper_percent: 50 },
-  ],
-  sort_modes: [
-    { value: 'rank_asc', label: '按历史位次从高到低看（更冲）' },
-    { value: 'rank_desc', label: '按历史位次从低到高看（更稳）' },
-    { value: 'school_rank_asc', label: '同等条件下优先院校排名' },
-  ],
-});
+const workbenchOptions = ref(normalizeWorkbenchOptions(null));
+const optionsLoadError = ref('');
 const BUILTIN_DATA_SOURCE = {
   id: 'builtin_admissions',
   type: 'builtin',
@@ -64,20 +66,20 @@ const EXTRACTOR_ALIASES = {
 const initialUploadedDataSources = loadUploadedDataSources();
 const initialDataSourceId = loadSelectedDataSourceId(initialUploadedDataSources);
 
-const runData = ref({
-  ...demoRun,
-  token_usage: null,
+const runData = ref(createEmptyWorkbenchState({
   selected_options: {
-    extractor: 'regex',
+    extractor: 'hybrid',
     generator: 'template_evidence',
     model: 'deepseek-v4-flash',
   },
-});
+}));
+const lastRunRequest = ref(null);
+const lastRequestBody = ref(null);
 const activeResult = ref(null);
 const traceVisible = ref(false);
 const activeWorkspace = ref('query');
 const mode = ref(initialDataSourceId === BUILTIN_DATA_SOURCE.id ? 'demo' : 'api');
-const extractor = ref('regex');
+const extractor = ref('hybrid');
 const generator = ref('template_evidence');
 const model = ref('deepseek-v4-flash');
 const loading = ref(false);
@@ -126,26 +128,24 @@ watch(uploadedDataSources, persistUploadedDataSources, { deep: true });
 watch(selectedDataSourceId, persistSelectedDataSourceId);
 watch(mode, fetchWorkbenchOptions, { immediate: true });
 
-function runDemo(runRequest, selectedOptions = {}) {
-  runData.value = {
-    ...demoRun,
-    user_input: runRequest.user_input,
-    hard_filters: runRequest.hard_filters,
-    soft_preferences: runRequest.soft_preferences,
-    selected_options: selectedOptions,
-    token_usage: null,
-  };
+function runDemo(runRequest = lastRunRequest.value, selectedOptions = {}) {
+  runData.value = mergeDemoRun(demoRun, {
+    runRequest,
+    selectedOptions: {
+      extractor: extractor.value,
+      generator: generator.value,
+      model: model.value,
+      ...selectedOptions,
+    },
+  });
   apiError.value = '';
   lastRunFailed.value = false;
 }
 
 async function runWorkbench(runRequest) {
+  lastRunRequest.value = runRequest;
   if (mode.value === 'demo') {
-    runDemo(runRequest, {
-      extractor: extractor.value,
-      generator: generator.value,
-      model: model.value,
-    });
+    runDemo(runRequest);
     return;
   }
 
@@ -153,18 +153,14 @@ async function runWorkbench(runRequest) {
   apiError.value = '';
   lastRunFailed.value = false;
   const source = selectedDataSource.value;
-  const requestBody = {
-    domain_name: source.domainName || 'admissions',
-    user_input: runRequest.user_input,
-    hard_filters: runRequest.hard_filters,
-    soft_preferences: runRequest.soft_preferences,
+  const requestBody = buildWorkbenchRequest({
+    source,
+    runRequest,
     extractor: normalizedExtractor(),
     generator: generator.value,
     model: model.value,
-  };
-  if (source.datasetId) {
-    requestBody.dataset_id = source.datasetId;
-  }
+  });
+  lastRequestBody.value = requestBody;
   try {
     const response = await fetch('/workbench/query', {
       method: 'POST',
@@ -184,9 +180,56 @@ async function runWorkbench(runRequest) {
         ...(apiPayload.selected_options || {}),
         data_source: source.label,
       },
+      frontend_state: {
+        source: 'api',
+        is_explicit_demo: false,
+        options_source: workbenchOptions.value.source,
+      },
     };
   } catch (error) {
     apiError.value = error instanceof Error ? error.message : formatApiError(error, '后端运行失败');
+    lastRunFailed.value = true;
+  } finally {
+    loading.value = false;
+  }
+}
+
+async function rerunWithConfirmedCandidates(candidateIds) {
+  if (!lastRequestBody.value || !candidateIds.length) {
+    return;
+  }
+  loading.value = true;
+  apiError.value = '';
+  lastRunFailed.value = false;
+  const requestBody = buildConfirmedWorkbenchRequest(lastRequestBody.value, candidateIds);
+  lastRequestBody.value = requestBody;
+  try {
+    const response = await fetch('/workbench/query', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...authHeaders(),
+      },
+      body: JSON.stringify(requestBody),
+    });
+    const apiPayload = await response.json();
+    if (!response.ok) {
+      throw new Error(formatApiError(apiPayload, '确认后查询失败'));
+    }
+    runData.value = {
+      ...apiPayload,
+      selected_options: {
+        ...(apiPayload.selected_options || {}),
+        data_source: selectedDataSource.value.label,
+      },
+      frontend_state: {
+        source: 'api',
+        is_explicit_demo: false,
+        options_source: workbenchOptions.value.source,
+      },
+    };
+  } catch (error) {
+    apiError.value = error instanceof Error ? error.message : formatApiError(error, '确认后查询失败');
     lastRunFailed.value = true;
   } finally {
     loading.value = false;
@@ -239,14 +282,29 @@ async function fetchWorkbenchOptions() {
     const response = await fetch('/api/workbench/options', {
       headers: authHeaders(),
     });
-    if (!response.ok) return;
+    if (!response.ok) {
+      throw new Error('后端选项加载失败');
+    }
     const payload = await response.json();
-    workbenchOptions.value = {
-      ...workbenchOptions.value,
-      ...payload,
-    };
-  } catch {
-    // 本地开发时允许使用内置白名单。
+    workbenchOptions.value = normalizeWorkbenchOptions(payload);
+    optionsLoadError.value = '';
+    ensureSelectedRuntimeOptions();
+  } catch (error) {
+    workbenchOptions.value = normalizeWorkbenchOptions(null);
+    optionsLoadError.value = error instanceof Error ? error.message : '后端选项加载失败';
+    ensureSelectedRuntimeOptions();
+  }
+}
+
+function ensureSelectedRuntimeOptions() {
+  if (!workbenchOptions.value.extractors.some((option) => option.value === extractor.value)) {
+    extractor.value = firstOptionValue(workbenchOptions.value.extractors, 'hybrid');
+  }
+  if (!workbenchOptions.value.generators.some((option) => option.value === generator.value)) {
+    generator.value = firstOptionValue(workbenchOptions.value.generators, 'template_evidence');
+  }
+  if (!workbenchOptions.value.models.some((option) => option.value === model.value)) {
+    model.value = firstOptionValue(workbenchOptions.value.models, 'deepseek-v4-flash');
   }
 }
 
