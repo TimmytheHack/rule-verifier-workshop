@@ -27,6 +27,10 @@ import {
   firstOptionValue,
   normalizeWorkbenchOptions,
 } from './utils/workbenchOptions';
+import {
+  defaultWorkbenchMode,
+  describeDataSourceState,
+} from './utils/workbenchPresentation';
 import demoRun from './mock/demo_run.json';
 
 const defaultHardFilters = {
@@ -78,7 +82,7 @@ const lastRequestBody = ref(null);
 const activeResult = ref(null);
 const traceVisible = ref(false);
 const activeWorkspace = ref('query');
-const mode = ref(initialDataSourceId === BUILTIN_DATA_SOURCE.id ? 'demo' : 'api');
+const mode = ref(defaultWorkbenchMode(initialDataSourceId));
 const extractor = ref('hybrid');
 const generator = ref('template_evidence');
 const model = ref('deepseek-v4-flash');
@@ -103,10 +107,11 @@ const dataSourceTitle = computed(() => (
   mode.value === 'demo' ? '演示数据' : selectedDataSource.value.label
 ));
 const dataSourceDescription = computed(() => {
-  if (mode.value === 'demo') {
-    return '当前显示演示结果；切到后端后使用所选数据。';
-  }
-  return selectedDataSource.value.description;
+  return describeDataSourceState({
+    mode: mode.value,
+    selectedDataSource: selectedDataSource.value,
+    runData: runData.value,
+  });
 });
 const dataSourceTag = computed(() => {
   if (mode.value === 'demo') return { type: 'info', label: '演示' };

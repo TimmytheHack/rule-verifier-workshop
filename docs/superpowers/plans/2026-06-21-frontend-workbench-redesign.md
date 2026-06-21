@@ -491,7 +491,10 @@ Expected: commit succeeds.
 
 **Files:**
 - Modify: `frontend/src/App.vue`
+- Modify: `frontend/src/components/WorkbenchModePanel.vue`
+- Create: `frontend/src/utils/workbenchPresentation.js`
 - Test: `frontend/src/utils/workbenchState.test.js`
+- Test: `frontend/src/utils/workbenchPresentation.test.js`
 
 - [ ] **Step 1: 扩展工具测试覆盖 selected options 和空态统计**
 
@@ -518,7 +521,7 @@ Run:
 cd frontend && npm run test:unit
 ```
 
-Expected: PASS，`# pass 8`。
+Expected: PASS。
 
 - [ ] **Step 3: 修改 `App.vue` imports 和初始状态**
 
@@ -567,6 +570,14 @@ const extractor = ref('hybrid');
 const generator = ref('template_evidence');
 const model = ref('deepseek-v4-flash');
 ```
+
+把初始运行模式改为 API 优先：
+
+```js
+const mode = ref(defaultWorkbenchMode(initialDataSourceId));
+```
+
+`defaultWorkbenchMode()` 必须返回 `api`，即使当前选择的是内置数据源。演示数据只能在用户显式切换到 demo 或后续点击显式演示入口时加载。
 
 - [ ] **Step 4: 修改 options 获取逻辑**
 

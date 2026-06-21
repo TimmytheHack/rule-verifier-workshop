@@ -28,12 +28,14 @@ const emit = defineEmits([
 ]);
 
 const demoExtractors = [
+  { value: 'hybrid', label: '规则优先' },
   { value: 'regex', label: '规则解析' },
   { value: 'deepseek', label: '模型辅助' },
   { value: 'template_coverage', label: '字段覆盖' },
 ];
 
 const apiExtractors = [
+  { value: 'hybrid', label: '规则优先' },
   { value: 'regex', label: '规则解析' },
   { value: 'deepseek', label: '模型辅助' },
 ];
