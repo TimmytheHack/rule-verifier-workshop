@@ -91,6 +91,24 @@ test('confirmableCandidates keeps only candidates with generated candidate_id va
   );
 });
 
+test('confirmableCandidates excludes preferences without generated candidate ids', () => {
+  const candidates = confirmableCandidates({
+    candidates_to_confirm: [
+      { candidate_id: 'c_rank', preference: '稳一点' },
+      { preference: '离家近', reason: '没有 schema 字段' },
+    ],
+  });
+
+  assert.deepEqual(
+    candidates.map((candidate) => candidate.confirmationId),
+    ['c_rank'],
+  );
+  assert.deepEqual(
+    candidates.map((candidate) => candidate.preference),
+    ['稳一点'],
+  );
+});
+
 test('splitCandidateConfirmationState keeps id-only candidates warning-only', () => {
   const split = splitCandidateConfirmationState({
     candidates_to_confirm: [

@@ -699,6 +699,40 @@ input {
   color: #1d3039;
 }
 
+.candidate-rerun-panel {
+  flex: 0 0 auto;
+}
+
+.candidate-rerun-panel > .el-card__body {
+  max-height: 260px;
+  overflow: auto;
+}
+
+.candidate-rerun-copy {
+  margin: 4px 0 0;
+  color: #66717c;
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.candidate-rerun-list {
+  margin-top: 0;
+}
+
+.candidate-rerun-row {
+  grid-template-columns: minmax(220px, 1.1fr) minmax(180px, 1.3fr);
+}
+
+.candidate-warning-list {
+  display: grid;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.candidate-rerun-list + .candidate-warning-list {
+  margin-top: 12px;
+}
+
 .item-card-grid,
 .section-summary-grid {
   display: grid;

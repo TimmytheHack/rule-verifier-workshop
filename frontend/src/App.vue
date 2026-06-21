@@ -8,6 +8,7 @@ import ExtractedPreferences from './components/ExtractedPreferences.vue';
 import VerificationAudit from './components/VerificationAudit.vue';
 import RuleSummaryCards from './components/RuleSummaryCards.vue';
 import CandidateConfirmation from './components/CandidateConfirmation.vue';
+import CandidateRerunPanel from './components/CandidateRerunPanel.vue';
 import ResultTable from './components/ResultTable.vue';
 import TraceDrawer from './components/TraceDrawer.vue';
 import EvidenceReport from './components/EvidenceReport.vue';
@@ -137,6 +138,12 @@ const runBarStatus = computed(() => normalizeRunBarStatus({
   lastRunFailed: lastRunFailed.value,
   runData: runData.value,
 }));
+const canConfirmCandidates = computed(() => (
+  mode.value === 'api'
+  && lastRequestContext.value?.mode === mode.value
+  && lastRequestContext.value?.dataSourceId === selectedDataSourceId.value
+  && Boolean(lastRequestContext.value?.requestBody)
+));
 
 watch(uploadedDataSources, persistUploadedDataSources, { deep: true });
 watch(selectedDataSourceId, persistSelectedDataSourceId);
@@ -576,6 +583,13 @@ function statusLabel(status) {
                   <strong>{{ item.value }}</strong>
                 </article>
               </div>
+
+              <CandidateRerunPanel
+                :run-data="runData"
+                :loading="loading"
+                :can-confirm="canConfirmCandidates"
+                @confirm="rerunWithConfirmedCandidates"
+              />
 
               <ResultTable
                 :results="resultRows"
