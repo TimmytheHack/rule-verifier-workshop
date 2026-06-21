@@ -9,6 +9,7 @@ import {
   Warning,
 } from '@element-plus/icons-vue';
 import { formatApiError } from '../utils/apiError';
+import { buildConfirmedWorkbenchRequest } from '../utils/workbenchRequests';
 import {
   candidateIdentifier,
   splitCandidateConfirmationState,
@@ -29,6 +30,7 @@ const reviewSummary = ref(null);
 const queryResult = ref(null);
 const selectedCandidateIds = ref([]);
 const auditEvents = ref([]);
+const lastUploadedQueryContext = ref(null);
 const DEFAULT_DEV_ACTOR_TOKEN = import.meta.env.DEV ? 'operator-token' : '';
 
 const emit = defineEmits(['source-ready']);
@@ -54,6 +56,21 @@ const candidateConfirmationState = computed(() => splitCandidateConfirmationStat
 }));
 const selectableCandidates = computed(() => candidateConfirmationState.value.confirmable);
 const blockedCandidates = computed(() => candidateConfirmationState.value.blocked);
+const selectableCandidateIds = computed(() => new Set(
+  selectableCandidates.value.map((candidate) => candidate.confirmationId),
+));
+const selectedConfirmableCandidateIds = computed(() => (
+  selectedCandidateIds.value.filter((candidateId) => selectableCandidateIds.value.has(candidateId))
+));
+const canConfirmUploadedCandidates = computed(() => {
+  const context = lastUploadedQueryContext.value;
+  return Boolean(
+    context?.requestBody
+    && context.datasetId === datasetId.value
+    && context.domainName === domainName.value
+    && context.queryText === queryText.value,
+  );
+});
 const queryItems = computed(() => queryResult.value?.items || []);
 const sectionEntries = computed(() => Object.entries(queryResult.value?.result_sections || {}));
 const queryOverview = computed(() => {
@@ -223,11 +240,13 @@ async function uploadDataset() {
     profile.value = null;
     reviewSummary.value = null;
     queryResult.value = null;
+    clearUploadedQueryContext();
   });
 }
 
 async function generateDomainPack() {
   await runStep('generate_domain_pack', async () => {
+    clearUploadedQueryContext();
     dataset.value = await requestJson(
       `/datasets/${datasetId.value}/generate-domain-pack`,
       {
@@ -279,6 +298,7 @@ async function approveOp() {
 
 async function approveDomain() {
   await runStep('approve_domain', async () => {
+    clearUploadedQueryContext();
     dataset.value = await requestJson(`/datasets/${datasetId.value}/approve-domain`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -296,6 +316,7 @@ async function approveDomain() {
 
 async function buildWarehouse() {
   await runStep('build_warehouse', async () => {
+    clearUploadedQueryContext();
     dataset.value = await requestJson(`/datasets/${datasetId.value}/build-warehouse`, {
       method: 'POST',
     });
@@ -306,37 +327,42 @@ async function buildWarehouse() {
 }
 
 async function runUploadedQuery(confirmedCandidateIds = []) {
+  const isConfirmedRerun = confirmedCandidateIds.length > 0;
+  const requestBody = isConfirmedRerun
+    ? confirmedUploadedQueryRequest(confirmedCandidateIds)
+    : uploadedQueryRequest();
+  if (!requestBody) {
+    return;
+  }
+  if (!isConfirmedRerun) {
+    clearUploadedQueryContext();
+  }
   await runStep(
-    confirmedCandidateIds.length ? 'query_confirmed_rerun' : 'query',
+    isConfirmedRerun ? 'query_confirmed_rerun' : 'query',
     async () => {
       queryResult.value = await requestJson('/workbench/query', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          dataset_id: datasetId.value,
-          domain_name: domainName.value,
-          user_input: queryText.value,
-          soft_preferences: { prompt: queryText.value },
-          extractor: 'regex',
-          generator: 'template_evidence',
-          confirmed_candidates: confirmedCandidateIds,
-        }),
+        body: JSON.stringify(requestBody),
       });
+      lastUploadedQueryContext.value = uploadedQueryContext(requestBody);
       selectedCandidateIds.value = [];
     },
   );
 }
 
 async function confirmSelectedCandidates() {
-  if (!selectedCandidateIds.value.length) {
+  const candidateIds = selectedConfirmableCandidateIds.value;
+  if (!candidateIds.length) {
     errorText.value = '请先勾选要确认的项目。';
     return;
   }
-  await runUploadedQuery(selectedCandidateIds.value);
+  await runUploadedQuery(candidateIds);
 }
 
 async function reviewMutation(action, payload) {
   await runStep(action, async () => {
+    clearUploadedQueryContext();
     await requestJson(`/datasets/${datasetId.value}/${action}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -410,6 +436,44 @@ function sourceReadyPayload(payload) {
     status: payload?.status,
     updated_at: payload?.updated_at,
   };
+}
+
+function uploadedQueryRequest() {
+  return {
+    dataset_id: datasetId.value,
+    domain_name: domainName.value,
+    user_input: queryText.value,
+    soft_preferences: { prompt: queryText.value },
+    extractor: 'regex',
+    generator: 'template_evidence',
+    confirmed_candidates: [],
+  };
+}
+
+function confirmedUploadedQueryRequest(candidateIds) {
+  if (!canConfirmUploadedCandidates.value) {
+    errorText.value = '查询文本或数据集状态已变化，请先重新查询后再确认。';
+    selectedCandidateIds.value = [];
+    return null;
+  }
+  return buildConfirmedWorkbenchRequest(
+    lastUploadedQueryContext.value.requestBody,
+    candidateIds,
+  );
+}
+
+function uploadedQueryContext(requestBody) {
+  return {
+    requestBody,
+    datasetId: requestBody.dataset_id,
+    domainName: requestBody.domain_name,
+    queryText: requestBody.user_input,
+  };
+}
+
+function clearUploadedQueryContext() {
+  lastUploadedQueryContext.value = null;
+  selectedCandidateIds.value = [];
 }
 
 function authHeaders() {
@@ -742,13 +806,21 @@ function stageLabel(value) {
           <el-button
             :icon="Refresh"
             type="warning"
-            :disabled="!selectedCandidateIds.length"
+            :disabled="!canConfirmUploadedCandidates || !selectedConfirmableCandidateIds.length"
             :loading="loading"
             @click="confirmSelectedCandidates"
           >
             确认后再查
           </el-button>
         </div>
+        <el-alert
+          v-if="selectableCandidates.length && !canConfirmUploadedCandidates"
+          class="inline-alert"
+          type="warning"
+          :closable="false"
+          show-icon
+          title="查询文本或数据集状态已变化，请先重新查询后再确认。"
+        />
         <el-checkbox-group
           v-if="selectableCandidates.length"
           v-model="selectedCandidateIds"

@@ -1,5 +1,5 @@
 <script setup>
-import { reactive, ref, watch } from 'vue';
+import { computed, reactive, ref, watch } from 'vue';
 import { MagicStick, Search } from '@element-plus/icons-vue';
 
 const props = defineProps({
@@ -33,7 +33,7 @@ const props = defineProps({
   },
 });
 
-const emit = defineEmits(['run']);
+const emit = defineEmits(['draft-change', 'run']);
 
 const provinceOptions = ['广东'];
 const subjectOptions = ['物理', '历史'];
@@ -66,6 +66,7 @@ const quickExamples = [
 const hard = reactive(emptyHardFilters());
 const soft = reactive(emptySoftPreferences());
 const formError = ref('');
+const draftSignature = computed(() => JSON.stringify(formDraftPayload()));
 
 function emptyHardFilters() {
   return {
@@ -115,6 +116,10 @@ watch(
   },
 );
 
+watch(draftSignature, (signature) => {
+  emit('draft-change', signature);
+}, { immediate: true });
+
 function submitRun() {
   const rankWindow = selectedRankWindow();
   const sortMode = selectedSortMode();
@@ -149,7 +154,32 @@ function submitRun() {
     user_input: composeRequest(hardPayload, softPayload),
     hard_filters: hardPayload,
     soft_preferences: softPayload,
+    form_signature: draftSignature.value,
   });
+}
+
+function formDraftPayload() {
+  const rankWindow = selectedRankWindow();
+  return {
+    hard: {
+      source_province: hard.source_province || null,
+      subject_type: hard.subject_type || null,
+      reselected_subjects: [...(hard.reselected_subjects || [])],
+      user_rank: hard.user_rank || null,
+      major_keyword: hard.major_keyword || null,
+      preferred_cities: [...(hard.preferred_cities || [])],
+      tuition_cap_yuan: hard.tuition_cap_yuan || null,
+    },
+    soft: {
+      prompt: (soft.prompt || '').trim(),
+      rank_window_preset: soft.rank_window_preset || '',
+      rank_window_label: rankWindow?.label || '',
+      rank_window_lower_percent: rankWindow?.lower ?? null,
+      rank_window_upper_percent: rankWindow?.upper ?? null,
+      sort_mode: soft.sort_mode || '',
+      tuition_cap_yuan: soft.tuition_cap_yuan || null,
+    },
+  };
 }
 
 function applyExample(example) {

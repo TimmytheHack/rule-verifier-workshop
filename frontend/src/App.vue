@@ -90,6 +90,7 @@ const activeResult = ref(null);
 const traceVisible = ref(false);
 const activeWorkspace = ref('query');
 const inputPanelRef = ref(null);
+const inputDraftSignature = ref('');
 const mode = ref(defaultWorkbenchMode());
 const extractor = ref('hybrid');
 const generator = ref('template_evidence');
@@ -142,6 +143,10 @@ const canConfirmCandidates = computed(() => (
   mode.value === 'api'
   && lastRequestContext.value?.mode === mode.value
   && lastRequestContext.value?.dataSourceId === selectedDataSourceId.value
+  && (
+    !lastRequestContext.value?.inputSignature
+    || lastRequestContext.value.inputSignature === inputDraftSignature.value
+  )
   && Boolean(lastRequestContext.value?.requestBody)
 ));
 
@@ -218,6 +223,7 @@ async function runWorkbench(runRequest) {
       requestBody,
       dataSourceId: requestDataSourceId,
       mode: requestMode,
+      inputSignature: runRequest.form_signature || inputDraftSignature.value,
     };
     runData.value = {
       ...apiPayload,
@@ -257,7 +263,9 @@ async function rerunWithConfirmedCandidates(candidateIds) {
     candidateIds,
     currentMode: mode.value,
     selectedDataSourceId: selectedDataSourceId.value,
+    currentInputSignature: inputDraftSignature.value,
   })) {
+    apiError.value = '查询条件已变化，请先重新查询后再确认。';
     return;
   }
   loading.value = true;
@@ -295,6 +303,7 @@ async function rerunWithConfirmedCandidates(candidateIds) {
       requestBody,
       dataSourceId: requestDataSourceId,
       mode: requestMode,
+      inputSignature: inputDraftSignature.value,
     };
     runData.value = {
       ...apiPayload,
@@ -349,6 +358,10 @@ function handleDataSourceChange(value) {
 
 function submitCurrentForm() {
   inputPanelRef.value?.submitRun?.();
+}
+
+function handleInputDraftChange(signature) {
+  inputDraftSignature.value = signature || '';
 }
 
 function goToUpload() {
@@ -501,6 +514,7 @@ function localStorageSafe() {
 
 function statusLabel(status) {
   const labels = {
+    idle: '待查询',
     ok: '通过',
     needs_confirmation: '待确认',
     no_results: '无结果',
@@ -556,6 +570,7 @@ function statusLabel(status) {
                 :show-panel-actions="false"
                 :rank-window-options="workbenchOptions.rank_windows"
                 :sort-mode-options="workbenchOptions.sort_modes"
+                @draft-change="handleInputDraftChange"
                 @run="runWorkbench"
               />
               <el-alert

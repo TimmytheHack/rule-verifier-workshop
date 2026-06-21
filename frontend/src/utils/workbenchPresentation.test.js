@@ -99,10 +99,12 @@ test('canRerunConfirmedRequest accepts matching api request context', () => {
         requestBody: { user_input: '广东物理，排位 32000。' },
         dataSourceId: 'uploaded:dataset_1',
         mode: 'api',
+        inputSignature: 'rank-32000',
       },
       candidateIds: ['c_city'],
       currentMode: 'api',
       selectedDataSourceId: 'uploaded:dataset_1',
+      currentInputSignature: 'rank-32000',
     }),
     true,
   );
@@ -113,6 +115,7 @@ test('canRerunConfirmedRequest rejects stale or non-api confirmation context', (
     requestBody: { user_input: '广东物理，排位 32000。' },
     dataSourceId: 'uploaded:dataset_1',
     mode: 'api',
+    inputSignature: 'rank-32000',
   };
 
   assert.equal(
@@ -148,6 +151,7 @@ test('canRerunConfirmedRequest rejects stale or non-api confirmation context', (
       candidateIds: ['c_city'],
       currentMode: 'api',
       selectedDataSourceId: 'uploaded:dataset_2',
+      currentInputSignature: 'rank-32000',
     }),
     false,
   );
@@ -157,6 +161,17 @@ test('canRerunConfirmedRequest rejects stale or non-api confirmation context', (
       candidateIds: ['c_city'],
       currentMode: 'api',
       selectedDataSourceId: 'uploaded:dataset_1',
+      currentInputSignature: 'rank-32000',
+    }),
+    false,
+  );
+  assert.equal(
+    canRerunConfirmedRequest({
+      context,
+      candidateIds: ['c_city'],
+      currentMode: 'api',
+      selectedDataSourceId: 'uploaded:dataset_1',
+      currentInputSignature: 'rank-41000',
     }),
     false,
   );

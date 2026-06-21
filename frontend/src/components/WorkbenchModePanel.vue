@@ -55,7 +55,12 @@ const availableModelOptions = computed(() => props.modelOptions);
 const usesDeepSeek = computed(
   () =>
     props.mode === 'api' &&
-    (props.extractor === 'deepseek' || props.generator === 'deepseek_evidence'),
+    (
+      props.extractor === 'deepseek'
+      || props.extractor === 'deepseek_slots'
+      || props.extractor === 'hybrid'
+      || props.generator === 'deepseek_evidence'
+    ),
 );
 
 function updateMode(value) {

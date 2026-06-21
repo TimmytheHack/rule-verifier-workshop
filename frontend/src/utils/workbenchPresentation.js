@@ -7,6 +7,7 @@ export function canRerunConfirmedRequest({
   candidateIds,
   currentMode,
   selectedDataSourceId,
+  currentInputSignature,
 }) {
   return Boolean(
     context?.requestBody
@@ -14,7 +15,11 @@ export function canRerunConfirmedRequest({
     && candidateIds.length
     && currentMode === 'api'
     && context.mode === 'api'
-    && context.dataSourceId === selectedDataSourceId,
+    && context.dataSourceId === selectedDataSourceId
+    && (
+      !context.inputSignature
+      || context.inputSignature === currentInputSignature
+    ),
   );
 }
 
