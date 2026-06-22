@@ -67,7 +67,7 @@ class DatasetCapabilityGraph:
             source_path=dataset.workbook_path,
             sheet_name=dataset.sheet_name,
             row_count=len(dataset.dataframe),
-            column_count=len(fields),
+            column_count=len(dataset.headers),
             fields=fields,
             missing_source_columns=missing_source_columns,
         )
@@ -125,10 +125,10 @@ def _infer_type(
 ) -> str:
     if numeric_ratio >= 0.95 and non_null_count > 0:
         return "number"
+    if distinct_count <= 50:
+        return "enum_or_category"
     if _has_long_text(sample_values):
         return "long_text"
-    if non_null_count > 1 and distinct_count <= 50 and distinct_count < non_null_count:
-        return "enum_or_category"
     return "string"
 
 
