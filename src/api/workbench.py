@@ -57,6 +57,7 @@ from src.semantic.admissions_recommendation import (
 )
 from src.semantic.admissions_major_rank import AdmissionsMajorRankPlanner
 from src.semantic.capability_graph import DatasetCapabilityGraph
+from src.semantic.evidence_bounded_reranker import EvidenceBoundedReranker
 from src.semantic.intent_models import SemanticIntent
 from src.semantic.llm_intent_extractor import DeepSeekSemanticIntentExtractor
 from src.semantic.query_options import SemanticQueryOptionsBuilder
@@ -621,7 +622,16 @@ def _run_semantic_capability_query(
         domain_config=domain_config,
         database_path=_warehouse_database_path(domain_config),
         table_name=domain_config.table_name,
+        reranker=_semantic_reranker(config),
     ).run(intent)
+
+
+def _semantic_reranker(config: WorkbenchConfig) -> EvidenceBoundedReranker | None:
+    if config.soft_preferences.get("live_semantic_rerank") is not True:
+        return None
+    if not deepseek_slot_adapter_enabled():
+        return None
+    return EvidenceBoundedReranker(_interactive_deepseek_client(config.model))
 
 
 def _semantic_recommendation_intent(

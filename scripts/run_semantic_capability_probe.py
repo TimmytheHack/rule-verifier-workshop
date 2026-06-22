@@ -30,6 +30,7 @@ def main(argv: list[str] | None = None) -> int:
             dataset_id=args.dataset_id,
             query=args.query,
             root=Path(args.root),
+            live_llm=args.live_llm,
         )
     except (DatasetServiceError, FileNotFoundError, ValueError) as exc:
         exit_code = 1
@@ -44,6 +45,7 @@ def run_probe(
     dataset_id: str,
     query: str,
     root: Path,
+    live_llm: bool = False,
 ) -> tuple[int, dict[str, Any]]:
     """复用 DatasetService 跑通上传、审查、建仓和语义查询。"""
 
@@ -70,7 +72,11 @@ def run_probe(
     response = service.query(
         dataset_id,
         user_input=query,
-        soft_preferences={"prompt": query},
+        soft_preferences={
+            "prompt": query,
+            "live_semantic_rerank": live_llm,
+        },
+        extractor="hybrid" if live_llm else "regex",
     )
     evidence = response.get("evidence_pack") or {}
     return 0, {
@@ -83,6 +89,11 @@ def run_probe(
         "evidence_pack": {
             "answerable_intents": evidence.get("answerable_intents", []),
             "unanswerable_intents": evidence.get("unanswerable_intents", []),
+            "not_executed_preferences": evidence.get(
+                "not_executed_preferences",
+                [],
+            ),
+            "selection_evidence": evidence.get("selection_evidence", []),
             "execution_summary": evidence.get("execution_summary", {}),
         },
     }
@@ -96,6 +107,14 @@ def _arg_parser() -> argparse.ArgumentParser:
     parser.add_argument("--dataset-id", default="ds_semantic_probe")
     parser.add_argument("--query", default=DEFAULT_QUERY)
     parser.add_argument("--root", default="outputs/uploaded_datasets")
+    parser.add_argument(
+        "--live-llm",
+        action="store_true",
+        help=(
+            "启用 Workbench 的可选 DeepSeek semantic intent / rerank 路径；"
+            "仍需要 ENABLE_LLM=true 和 DEEPSEEK_API_KEY。"
+        ),
+    )
     return parser
 
 
