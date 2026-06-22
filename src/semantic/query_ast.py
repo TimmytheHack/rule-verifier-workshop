@@ -105,9 +105,9 @@ class VerifiedQueryPlan(BaseModel):
 
     intent: str
     table_name: str
-    select_columns: list[str]
-    filters: list[QueryFilter]
-    sort: list[QuerySort]
+    select_columns: list[dict[str, str]]
+    filters: list[dict[str, Any]]
+    sort: list[dict[str, str]]
     limit: int
-    answerable_intents: list[str]
-    unanswerable_intents: list[str]
+    answerable_intents: list[dict[str, Any]]
+    unanswerable_intents: list[dict[str, Any]]

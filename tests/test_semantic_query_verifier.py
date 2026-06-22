@@ -7,6 +7,7 @@ from src.semantic import (
     QueryFilter,
     QuerySort,
     QueryVerificationIssue,
+    VerifiedQueryPlan,
 )
 
 
@@ -74,6 +75,53 @@ class QueryASTTest(unittest.TestCase):
                 "message": "字段不存在。",
                 "field_id": "city",
             },
+        )
+
+    def test_verified_query_plan_accepts_dict_records(self) -> None:
+        plan = VerifiedQueryPlan(
+            intent="table_filter",
+            table_name="admissions",
+            select_columns=[
+                {"field_id": "university_name", "column": "院校名称"},
+                {"field_id": "major_name", "column": "专业名称"},
+            ],
+            filters=[
+                {"field_id": "year", "op": "eq", "value": 2025},
+            ],
+            sort=[
+                {"field_id": "major_min_rank", "direction": "asc"},
+            ],
+            limit=30,
+            answerable_intents=[
+                {"field_id": "year", "reason": "schema_field"},
+            ],
+            unanswerable_intents=[
+                {"field_id": "city", "reason": "missing_field"},
+            ],
+        )
+
+        self.assertEqual(
+            plan.select_columns,
+            [
+                {"field_id": "university_name", "column": "院校名称"},
+                {"field_id": "major_name", "column": "专业名称"},
+            ],
+        )
+        self.assertEqual(
+            plan.filters,
+            [{"field_id": "year", "op": "eq", "value": 2025}],
+        )
+        self.assertEqual(
+            plan.sort,
+            [{"field_id": "major_min_rank", "direction": "asc"}],
+        )
+        self.assertEqual(
+            plan.answerable_intents,
+            [{"field_id": "year", "reason": "schema_field"}],
+        )
+        self.assertEqual(
+            plan.unanswerable_intents,
+            [{"field_id": "city", "reason": "missing_field"}],
         )
 
 
