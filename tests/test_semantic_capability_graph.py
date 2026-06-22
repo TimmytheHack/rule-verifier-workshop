@@ -30,6 +30,7 @@ class SemanticCapabilityGraphTest(unittest.TestCase):
         self.assertIn("between", graph.fields["最低位次"].candidate_ops)
         self.assertIn("in", graph.fields["专业"].candidate_ops)
         self.assertIn("not_in", graph.fields["专业"].candidate_ops)
+        self.assertIn("contains_any", graph.fields["专业"].candidate_ops)
         self.assertIn("sort", graph.fields["专业"].candidate_ops)
         self.assertIn("sort", graph.fields["最低分数"].candidate_ops)
 
@@ -82,6 +83,7 @@ class SemanticMappingTest(unittest.TestCase):
 
         self.assertEqual("专业", registry.source_column("major_name"))
         self.assertEqual("最低位次", registry.source_column("major_min_rank"))
+        self.assertTrue(registry.has_op("major_name", "contains_any"))
         self.assertTrue(registry.has_op("major_min_rank", "between"))
         self.assertFalse(registry.has_field("tuition_yuan_per_year"))
         self.assertIn("tuition_yuan_per_year", registry.unsupported_field_ids())

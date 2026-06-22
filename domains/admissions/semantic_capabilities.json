@@ -152,6 +152,24 @@
       "required_for": ["rank_analysis", "display"],
       "confidence": 1.0,
       "reason": "已审查专业组最低位次字段。"
+    },
+    "school_country_or_region": {
+      "source_columns": ["办学国家或地区", "所在国家或地区", "境外地区"],
+      "field_type": "enum_or_category",
+      "allowed_ops": ["eq", "in", "not_in"],
+      "required_for": ["filter"],
+      "confidence": 1.0,
+      "reason": "用于排除境外办学或国外地区。",
+      "unsupported_reason": "当前数据缺少已审查的办学国家或地区字段，不能执行“不想去国外”这类排除条件。"
+    },
+    "cooperation_type": {
+      "source_columns": ["合作办学类型", "办学类型", "项目类型"],
+      "field_type": "enum_or_category",
+      "allowed_ops": ["eq", "in", "not_in"],
+      "required_for": ["filter"],
+      "confidence": 1.0,
+      "reason": "用于区分中外合作、联合培养等特殊项目。",
+      "unsupported_reason": "当前数据缺少已审查的合作办学类型字段，不能执行合作项目排除条件。"
     }
   },
   "query_recipes": {
@@ -184,6 +202,40 @@
         {"field_id": "major_min_score", "direction": "desc"}
       ],
       "default_limit": 30
+    },
+    "semantic_recommendation": {
+      "description": "把 LLM 候选偏好约束到 reviewed fields 后，按用户省排召回专业级推荐候选。",
+      "required_fields": [
+        "year",
+        "university_name",
+        "group_code",
+        "major_name",
+        "major_min_rank"
+      ],
+      "optional_fields": [
+        "major_code",
+        "major_notes",
+        "subject_type",
+        "subject_requirement",
+        "major_min_score",
+        "school_province",
+        "school_ownership",
+        "school_is_985",
+        "school_is_211",
+        "plan_count",
+        "tuition_yuan_per_year",
+        "city",
+        "group_min_rank",
+        "school_country_or_region",
+        "cooperation_type"
+      ],
+      "rank_basis_preference": ["major_min_rank", "group_min_rank"],
+      "default_limit": 100,
+      "bucket_quotas": {
+        "reach": 10,
+        "match": 13,
+        "safety": 10
+      }
     }
   },
   "special_limit_terms": [

@@ -148,8 +148,8 @@ def _candidate_ops(inferred_type: str) -> list[str]:
     if inferred_type == "number":
         return ["eq", "<=", ">=", "between", "sort"]
     if inferred_type == "enum_or_category":
-        return ["eq", "in", "not_in", "sort"]
-    return ["contains", "eq", "sort"]
+        return ["eq", "in", "not_in", "contains", "contains_any", "sort"]
+    return ["contains", "contains_any", "eq", "sort"]
 
 
 def _parse_number(value: Any) -> float | None:
