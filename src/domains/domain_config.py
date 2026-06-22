@@ -26,6 +26,7 @@ class DomainConfig:
         self.root = root
         self.payload = payload
         self._schema_payload: dict[str, Any] | None = None
+        self._semantic_capabilities_payload: dict[str, Any] | None = None
 
     @classmethod
     def load(cls, domain_id: str = DEFAULT_DOMAIN_ID) -> "DomainConfig":
@@ -88,6 +89,13 @@ class DomainConfig:
         return self.resolve_path(paths["career_decision_policy"])
 
     @property
+    def semantic_capabilities_path(self) -> Path | None:
+        paths = self.payload.get("paths") or {}
+        if "semantic_capabilities" not in paths:
+            return None
+        return self.resolve_path(paths["semantic_capabilities"])
+
+    @property
     def domain_version(self) -> str:
         return str(self.payload.get("domain_version") or "1")
 
@@ -135,6 +143,17 @@ class DomainConfig:
                 self.schema_path.read_text(encoding="utf-8")
             )
         return self._schema_payload["fields"]
+
+    @property
+    def semantic_capabilities(self) -> dict[str, Any]:
+        path = self.semantic_capabilities_path
+        if not path or not path.exists():
+            return {}
+        if self._semantic_capabilities_payload is None:
+            self._semantic_capabilities_payload = json.loads(
+                path.read_text(encoding="utf-8")
+            )
+        return self._semantic_capabilities_payload
 
     @property
     def execution(self) -> dict[str, Any]:

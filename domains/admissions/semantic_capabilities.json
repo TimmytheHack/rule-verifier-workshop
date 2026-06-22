@@ -1,0 +1,200 @@
+{
+  "status": "approved",
+  "version": "1",
+  "capability_profile": {
+    "expected_source_columns": [
+      "学费",
+      "城市",
+      "专业组最低位次1"
+    ]
+  },
+  "reviewed_mappings": {
+    "year": {
+      "source_columns": ["年份"],
+      "field_type": "number",
+      "allowed_ops": ["eq", "sort"],
+      "required_for": ["display", "query_context"],
+      "confidence": 1.0,
+      "reason": "已审查招生年份字段。"
+    },
+    "subject_type": {
+      "source_columns": ["科类"],
+      "field_type": "enum_or_category",
+      "allowed_ops": ["eq", "in"],
+      "required_for": ["filter", "query_context"],
+      "confidence": 1.0,
+      "reason": "已审查科类字段。"
+    },
+    "subject_requirement": {
+      "source_columns": ["选科要求"],
+      "field_type": "enum_or_category",
+      "allowed_ops": ["satisfies_subject_requirement"],
+      "required_for": ["filter", "query_context"],
+      "confidence": 1.0,
+      "reason": "已审查再选科目要求字段，使用专用满足关系判断。"
+    },
+    "university_name": {
+      "source_columns": ["院校名称", "学校名称"],
+      "field_type": "string",
+      "allowed_ops": ["contains", "eq", "sort"],
+      "required_for": ["display", "trace"],
+      "confidence": 1.0,
+      "reason": "已审查院校名称展示字段。"
+    },
+    "group_code": {
+      "source_columns": ["所属专业组", "院校专业组代码", "专业组代码"],
+      "field_type": "string",
+      "allowed_ops": ["eq", "sort"],
+      "required_for": ["display", "trace"],
+      "confidence": 1.0,
+      "reason": "已审查专业组代码字段。"
+    },
+    "major_name": {
+      "source_columns": ["专业", "专业名称"],
+      "field_type": "string",
+      "allowed_ops": ["contains", "contains_any", "eq", "sort"],
+      "required_for": ["filter", "display", "trace"],
+      "confidence": 1.0,
+      "reason": "已审查专业名称字段。"
+    },
+    "major_code": {
+      "source_columns": ["专业代码"],
+      "field_type": "string",
+      "allowed_ops": ["eq", "sort"],
+      "required_for": ["display", "trace"],
+      "confidence": 1.0,
+      "reason": "已审查专业代码字段。"
+    },
+    "major_notes": {
+      "source_columns": ["专业备注", "备注"],
+      "field_type": "string",
+      "allowed_ops": ["contains", "eq"],
+      "required_for": ["display", "special_limit_detection"],
+      "confidence": 1.0,
+      "reason": "已审查专业备注字段，可用于呈现限制性说明。"
+    },
+    "major_min_rank": {
+      "source_columns": ["最低位次", "最低位次1", "专业最低位次"],
+      "field_type": "number",
+      "allowed_ops": [">=", "<=", "between", "sort"],
+      "required_for": ["rank_analysis", "display"],
+      "confidence": 1.0,
+      "reason": "已审查专业最低位次字段。"
+    },
+    "major_min_score": {
+      "source_columns": ["最低分数", "最低分1", "专业最低分"],
+      "field_type": "number",
+      "allowed_ops": ["sort"],
+      "required_for": ["display"],
+      "confidence": 1.0,
+      "reason": "已审查专业最低分数字段，仅作展示或排序辅助。"
+    },
+    "school_province": {
+      "source_columns": ["学校所在", "所在省"],
+      "field_type": "enum_or_category",
+      "allowed_ops": ["eq", "in", "sort"],
+      "required_for": ["filter", "display"],
+      "confidence": 1.0,
+      "reason": "已审查院校所在地字段。"
+    },
+    "school_ownership": {
+      "source_columns": ["学校性质", "办学性质"],
+      "field_type": "enum_or_category",
+      "allowed_ops": ["eq", "in", "sort"],
+      "required_for": ["filter", "display"],
+      "confidence": 1.0,
+      "reason": "已审查办学性质字段。"
+    },
+    "school_is_985": {
+      "source_columns": ["是否985"],
+      "field_type": "enum_or_category",
+      "allowed_ops": ["eq", "sort"],
+      "required_for": ["filter", "display"],
+      "confidence": 1.0,
+      "reason": "已审查 985 标签字段。"
+    },
+    "school_is_211": {
+      "source_columns": ["是否211"],
+      "field_type": "enum_or_category",
+      "allowed_ops": ["eq", "sort"],
+      "required_for": ["filter", "display"],
+      "confidence": 1.0,
+      "reason": "已审查 211 标签字段。"
+    },
+    "plan_count": {
+      "source_columns": ["录取人数", "计划人数"],
+      "field_type": "number",
+      "allowed_ops": [">=", "<=", "between", "sort"],
+      "required_for": ["display"],
+      "confidence": 1.0,
+      "reason": "已审查招生计划或录取人数字段。"
+    },
+    "tuition_yuan_per_year": {
+      "source_columns": ["学费"],
+      "field_type": "number_from_string",
+      "allowed_ops": [">=", "<=", "between"],
+      "required_for": ["filter", "display"],
+      "confidence": 1.0,
+      "reason": "已审查年度学费字段。"
+    },
+    "city": {
+      "source_columns": ["城市"],
+      "field_type": "string",
+      "allowed_ops": ["contains", "eq", "in", "sort"],
+      "required_for": ["filter", "display"],
+      "confidence": 1.0,
+      "reason": "已审查城市字段。"
+    },
+    "group_min_rank": {
+      "source_columns": ["专业组最低位次1", "专业组最低位次"],
+      "field_type": "number",
+      "allowed_ops": [">=", "<=", "between", "sort"],
+      "required_for": ["rank_analysis", "display"],
+      "confidence": 1.0,
+      "reason": "已审查专业组最低位次字段。"
+    }
+  },
+  "query_recipes": {
+    "admissions_major_rank": {
+      "description": "按专业最低位次进行招生专业结果筛选与展示。",
+      "required_fields": [
+        "year",
+        "university_name",
+        "group_code",
+        "major_name",
+        "major_code",
+        "school_province",
+        "major_min_rank",
+        "major_min_score"
+      ],
+      "optional_fields": [
+        "subject_type",
+        "subject_requirement",
+        "major_notes",
+        "school_ownership",
+        "school_is_985",
+        "school_is_211",
+        "plan_count",
+        "tuition_yuan_per_year",
+        "city",
+        "group_min_rank"
+      ],
+      "default_sort": [
+        {"field_id": "major_min_rank", "direction": "asc"},
+        {"field_id": "major_min_score", "direction": "desc"}
+      ],
+      "default_limit": 30
+    }
+  },
+  "special_limit_terms": [
+    "中外合作",
+    "合作办学",
+    "军检",
+    "公安专业",
+    "教师专项",
+    "地方专项",
+    "免费",
+    "只招男生",
+    "定向"
+  ]
+}
