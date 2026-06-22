@@ -17,6 +17,7 @@ from src.semantic.intent_models import SemanticIntent
 from src.semantic.preference_grounder import PreferenceGrounder
 from src.semantic.query_ast import QueryAST
 from src.semantic.query_verifier import SemanticQueryVerifier
+from src.semantic.rerank_validator import RerankValidationResult, RerankValidator
 from src.semantic.reviewed_mapping import ReviewedMappingRegistry
 from src.semantic.sql_builder import SemanticSQLBuilder
 
@@ -76,10 +77,14 @@ class SemanticAdmissionsRecommendationPlanner:
         domain_config: DomainConfig,
         database_path: str | Path,
         table_name: str,
+        reranker: Any | None = None,
+        rerank_validator: RerankValidator | None = None,
     ) -> None:
         self.domain_config = domain_config
         self.database_path = Path(database_path)
         self.table_name = table_name
+        self.reranker = reranker
+        self.rerank_validator = rerank_validator or RerankValidator()
 
     def run(
         self,
@@ -161,21 +166,26 @@ class SemanticAdmissionsRecommendationPlanner:
             subject_rows,
             self.domain_config.semantic_capabilities,
         )
-        bucketed = _bucket_rows(
+        quotas = _bucket_quotas(self.domain_config)
+        candidate_sections = _bucket_candidates(
             normal_rows,
             rank=rank,
             rank_basis=rank_basis,
-            quotas=_bucket_quotas(self.domain_config),
         )
-        rows = _ordered_rows(bucketed)
+        candidate_rows = _ordered_rows(candidate_sections)
+        rerank_validation = _rerank_or_fallback(
+            reranker=self.reranker,
+            validator=self.rerank_validator,
+            intent=intent,
+            candidates=candidate_rows,
+            quotas=quotas,
+        )
+        result_sections = rerank_validation.result_sections
+        rows = _ordered_rows(result_sections)
         for index, row in enumerate(rows, start=1):
             row["次序"] = index
 
         selection_evidence = _selection_evidence(rows, rank_basis)
-        result_sections = {
-            bucket: bucketed.get(bucket, [])
-            for bucket in BUCKET_ORDER
-        }
         return SemanticAdmissionsRecommendationResult(
             query_type=PUBLIC_QUERY_TYPE,
             status="ok" if rows else "no_results",
@@ -221,11 +231,12 @@ class SemanticAdmissionsRecommendationPlanner:
                 "rank": rank,
                 "basis": rank_basis,
                 "bucket_candidate_counts": {
-                    bucket: len(items) for bucket, items in bucketed.items()
+                    bucket: len(items) for bucket, items in candidate_sections.items()
                 },
                 "selected_counts": {
                     bucket: len(result_sections[bucket]) for bucket in BUCKET_ORDER
                 },
+                "rerank_validation": rerank_validation.to_dict(),
                 "selection_evidence": selection_evidence,
                 "excluded_rows": excluded_rows,
                 "not_executed_preferences": grounded.not_executed_preferences,
@@ -468,12 +479,62 @@ def _matched_special_terms(row: dict[str, Any], terms: list[str]) -> list[str]:
     return [term for term in terms if term and term in haystack]
 
 
-def _bucket_rows(
+def _rerank_or_fallback(
+    *,
+    reranker: Any | None,
+    validator: RerankValidator,
+    intent: SemanticIntent,
+    candidates: list[dict[str, Any]],
+    quotas: dict[str, int],
+) -> RerankValidationResult:
+    if reranker is None:
+        return RerankValidationResult(
+            ok=True,
+            result_sections=_fallback_sections(candidates, quotas),
+            raw_payload={"used": False},
+        )
+    try:
+        payload = reranker.rerank(
+            intent=intent,
+            candidates=candidates,
+            quotas=quotas,
+        )
+    except Exception as exc:  # noqa: BLE001 - rerank 失败不能影响 verified SQL 结果。
+        return RerankValidationResult(
+            ok=False,
+            result_sections=_fallback_sections(candidates, quotas),
+            issues=[
+                {
+                    "code": "reranker_error",
+                    "message": str(exc),
+                }
+            ],
+            fallback_used=True,
+            raw_payload={"used": True},
+        )
+    return validator.validate(payload, candidates=candidates, quotas=quotas)
+
+
+def _fallback_sections(
+    candidates: list[dict[str, Any]],
+    quotas: dict[str, int],
+) -> dict[str, list[dict[str, Any]]]:
+    sections = {bucket: [] for bucket in BUCKET_ORDER}
+    for candidate in candidates:
+        bucket = candidate.get("bucket")
+        if bucket not in sections:
+            continue
+        if len(sections[bucket]) >= quotas[bucket]:
+            continue
+        sections[bucket].append(dict(candidate))
+    return sections
+
+
+def _bucket_candidates(
     rows: list[dict[str, Any]],
     *,
     rank: int,
     rank_basis: str,
-    quotas: dict[str, int],
 ) -> dict[str, list[dict[str, Any]]]:
     candidates: dict[str, list[dict[str, Any]]] = {bucket: [] for bucket in BUCKET_ORDER}
     for index, row in enumerate(rows, start=1):
@@ -492,10 +553,7 @@ def _bucket_rows(
             )
         )
     return {
-        bucket: sorted(
-            candidates[bucket],
-            key=_deterministic_selection_key,
-        )[: quotas.get(bucket, DEFAULT_BUCKET_QUOTAS[bucket])]
+        bucket: sorted(candidates[bucket], key=_deterministic_selection_key)
         for bucket in BUCKET_ORDER
     }
 
@@ -575,7 +633,8 @@ def _selection_evidence(
             "basis": rank_basis,
             "rank_value": row["排序依据最低位次"],
             "margin": row["相对用户排名"],
-            "reason_codes": [
+            "reason_codes": row.get("rerank_reason_codes")
+            or [
                 "verified_sql_filter",
                 "rank_distance_bucket",
                 "deterministic_rank_distance_order",

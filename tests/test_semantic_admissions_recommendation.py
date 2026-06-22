@@ -85,6 +85,68 @@ class SemanticAdmissionsRecommendationPlannerTest(unittest.TestCase):
             ],
         )
 
+    def test_valid_rerank_can_reorder_within_valid_candidates(self) -> None:
+        result = self._run(
+            _recommendation_intent(),
+            reranker=_FakeReranker(
+                {
+                    "items": [
+                        {
+                            "row_id": "candidate_001",
+                            "bucket": "reach",
+                            "reason_codes": ["school_tier"],
+                            "field_refs": ["是否211"],
+                        },
+                        {
+                            "row_id": "candidate_002",
+                            "bucket": "reach",
+                            "reason_codes": ["rank_distance"],
+                            "field_refs": ["最低录取排名"],
+                        },
+                        {
+                            "row_id": "candidate_003",
+                            "bucket": "match",
+                            "reason_codes": ["province_match"],
+                            "field_refs": ["学校所在"],
+                        },
+                    ]
+                }
+            ),
+        )
+
+        self.assertEqual(result.status, "ok")
+        self.assertEqual(result.rows[0]["院校名称"], "深圳大学")
+        self.assertEqual(result.rows[0]["rerank_reason_codes"], ["school_tier"])
+        self.assertFalse(result.execution_summary["rerank_validation"]["fallback_used"])
+        self.assertEqual(
+            [row["row_id"] for row in result.result_sections["reach"]],
+            ["candidate_001", "candidate_002"],
+        )
+
+    def test_invalid_rerank_falls_back_to_deterministic_order(self) -> None:
+        result = self._run(
+            _recommendation_intent(),
+            reranker=_FakeReranker(
+                {
+                    "items": [
+                        {
+                            "row_id": "outside_001",
+                            "bucket": "reach",
+                            "reason_codes": ["rank_distance"],
+                        }
+                    ]
+                }
+            ),
+        )
+
+        self.assertEqual(result.status, "ok")
+        self.assertEqual(result.rows[0]["院校名称"], "深圳理工大学")
+        self.assertTrue(result.execution_summary["rerank_validation"]["fallback_used"])
+        self.assertEqual(
+            result.execution_summary["rerank_validation"]["issues"][0]["code"],
+            "unknown_row_id",
+        )
+
     def test_score_without_rank_requires_confirmation_before_sql(self) -> None:
         result = self._run(
             SemanticIntent(
@@ -112,7 +174,7 @@ class SemanticAdmissionsRecommendationPlannerTest(unittest.TestCase):
             "user_rank",
         )
 
-    def _run(self, intent: SemanticIntent):
+    def _run(self, intent: SemanticIntent, reranker=None):
         with TemporaryDirectory() as directory:
             rows = [dict(row) for row in NEW_ADMISSIONS_ROWS]
             rows.extend(_recommendation_rows())
@@ -135,6 +197,7 @@ class SemanticAdmissionsRecommendationPlannerTest(unittest.TestCase):
                 domain_config=domain_config,
                 database_path=database_path,
                 table_name="admissions",
+                reranker=reranker,
             ).run(intent)
 
 
@@ -207,6 +270,38 @@ def _recommendation_rows() -> list[dict[str, object]]:
             "是否211": "是",
         },
     ]
+
+
+def _recommendation_intent() -> SemanticIntent:
+    return SemanticIntent(
+        query_type="semantic_recommendation",
+        user_context=SemanticUserContext(user_rank=15000),
+        preferences=[
+            SemanticPreference(
+                source_text="想读人工智能，计算机",
+                semantic="major_name",
+                op="contains_any",
+                value=["人工智能", "计算机"],
+            ),
+            SemanticPreference(
+                source_text="想留在广东省",
+                semantic="school_province",
+                op="in",
+                value=["广东"],
+            ),
+        ],
+        requested_output=["recommendation_sections", "minimum_rank"],
+    )
+
+
+class _FakeReranker:
+    def __init__(self, payload: dict[str, object]) -> None:
+        self.payload = payload
+        self.calls: list[dict[str, object]] = []
+
+    def rerank(self, **kwargs):
+        self.calls.append(kwargs)
+        return self.payload
 
 
 if __name__ == "__main__":
