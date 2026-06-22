@@ -5,6 +5,11 @@ from tests.semantic_test_utils import new_admissions_dataset
 
 
 class SemanticCapabilityGraphTest(unittest.TestCase):
+    def test_next_fixture_keeps_workbook_path_available(self) -> None:
+        dataset = next(new_admissions_dataset())
+
+        self.assertTrue(dataset.workbook_path.exists())
+
     def test_graph_profiles_new_admissions_columns(self) -> None:
         dataset = next(new_admissions_dataset())
         graph = DatasetCapabilityGraph.from_dataset(dataset)

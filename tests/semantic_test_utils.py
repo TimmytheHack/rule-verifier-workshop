@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from pathlib import Path
-from tempfile import TemporaryDirectory
+from tempfile import NamedTemporaryFile
 from typing import Iterator
 
 import pandas as pd
@@ -97,6 +97,7 @@ def write_new_admissions_excel(path: Path) -> Path:
 
 
 def new_admissions_dataset() -> Iterator[ExcelDataSet]:
-    with TemporaryDirectory() as tmpdir:
-        source_path = write_new_admissions_excel(Path(tmpdir) / "new_admissions.xlsx")
-        yield load_source_dataset(source_path)
+    with NamedTemporaryFile(delete=False, suffix=".xlsx") as tmpfile:
+        source_path = Path(tmpfile.name)
+    write_new_admissions_excel(source_path)
+    yield load_source_dataset(source_path)
