@@ -105,7 +105,7 @@ class QueryVerificationIssue(BaseModel):
 
 
 class VerifiedQueryPlan(BaseModel):
-    model_config = ConfigDict(frozen=True)
+    model_config = ConfigDict(frozen=True, extra="forbid")
 
     intent: str
     table_name: str
@@ -132,6 +132,13 @@ class VerifiedQueryPlan(BaseModel):
         return min(value, 100)
 
     @staticmethod
+    def _require_exact_record_keys(
+        record: dict[str, Any], allowed_keys: set[str], record_name: str
+    ) -> None:
+        if set(record) != allowed_keys:
+            raise ValueError(f"{record_name} 字段集合不正确。")
+
+    @staticmethod
     def _require_record_text(
         record: dict[str, Any], key: str, record_name: str
     ) -> str:
@@ -147,14 +154,18 @@ class VerifiedQueryPlan(BaseModel):
     ) -> list[dict[str, str]]:
         normalized = []
         for record in value:
-            copied = dict(record)
-            copied["field_id"] = cls._require_record_text(
-                copied, "field_id", "select_columns"
+            allowed_keys = {"field_id", "source_column"}
+            cls._require_exact_record_keys(record, allowed_keys, "select_columns")
+            normalized.append(
+                {
+                    "field_id": cls._require_record_text(
+                        record, "field_id", "select_columns"
+                    ),
+                    "source_column": cls._require_record_text(
+                        record, "source_column", "select_columns"
+                    ),
+                }
             )
-            copied["source_column"] = cls._require_record_text(
-                copied, "source_column", "select_columns"
-            )
-            normalized.append(copied)
         return normalized
 
     @field_validator("filters")
@@ -164,17 +175,20 @@ class VerifiedQueryPlan(BaseModel):
     ) -> list[dict[str, Any]]:
         normalized = []
         for record in value:
-            copied = dict(record)
-            copied["field_id"] = cls._require_record_text(
-                copied, "field_id", "filters"
+            allowed_keys = {"field_id", "source_column", "op", "value"}
+            cls._require_exact_record_keys(record, allowed_keys, "filters")
+            normalized.append(
+                {
+                    "field_id": cls._require_record_text(
+                        record, "field_id", "filters"
+                    ),
+                    "source_column": cls._require_record_text(
+                        record, "source_column", "filters"
+                    ),
+                    "op": cls._require_record_text(record, "op", "filters"),
+                    "value": record["value"],
+                }
             )
-            copied["source_column"] = cls._require_record_text(
-                copied, "source_column", "filters"
-            )
-            copied["op"] = cls._require_record_text(copied, "op", "filters")
-            if "value" not in copied:
-                raise ValueError("filters.value 必须存在。")
-            normalized.append(copied)
         return normalized
 
     @field_validator("sort")
@@ -184,17 +198,21 @@ class VerifiedQueryPlan(BaseModel):
     ) -> list[dict[str, str]]:
         normalized = []
         for record in value:
-            copied = dict(record)
-            copied["field_id"] = cls._require_record_text(
-                copied, "field_id", "sort"
-            )
-            copied["source_column"] = cls._require_record_text(
-                copied, "source_column", "sort"
-            )
-            direction = cls._require_record_text(copied, "direction", "sort")
+            allowed_keys = {"field_id", "source_column", "direction"}
+            cls._require_exact_record_keys(record, allowed_keys, "sort")
+            direction = cls._require_record_text(record, "direction", "sort")
             direction = direction.lower()
             if direction not in {"asc", "desc"}:
                 raise ValueError("sort.direction 必须是 asc 或 desc。")
-            copied["direction"] = direction
-            normalized.append(copied)
+            normalized.append(
+                {
+                    "field_id": cls._require_record_text(
+                        record, "field_id", "sort"
+                    ),
+                    "source_column": cls._require_record_text(
+                        record, "source_column", "sort"
+                    ),
+                    "direction": direction,
+                }
+            )
         return normalized

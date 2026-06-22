@@ -12,6 +12,33 @@ from src.semantic import (
 
 
 class QueryASTTest(unittest.TestCase):
+    def _verified_plan_payload(self) -> dict:
+        return {
+            "intent": "table_filter",
+            "table_name": "admissions",
+            "select_columns": [
+                {"field_id": "university_name", "source_column": "院校名称"},
+            ],
+            "filters": [
+                {
+                    "field_id": "year",
+                    "source_column": "年份",
+                    "op": "eq",
+                    "value": 2025,
+                },
+            ],
+            "sort": [
+                {
+                    "field_id": "major_min_rank",
+                    "source_column": "专业最低位次",
+                    "direction": "asc",
+                },
+            ],
+            "limit": 30,
+            "answerable_intents": [{"field_id": "year"}],
+            "unanswerable_intents": [],
+        }
+
     def test_query_ast_rejects_raw_sql_payload(self) -> None:
         with self.assertRaises(pydantic.ValidationError):
             QueryAST.from_candidate(
@@ -285,6 +312,34 @@ class QueryASTTest(unittest.TestCase):
             plan.unanswerable_intents,
             [{"field_id": "city", "reason": "missing_field"}],
         )
+
+    def test_verified_query_plan_rejects_top_level_extra(self) -> None:
+        payload = self._verified_plan_payload()
+        payload["raw_sql"] = "SELECT * FROM admissions"
+
+        with self.assertRaises(pydantic.ValidationError):
+            VerifiedQueryPlan(**payload)
+
+    def test_verified_query_plan_rejects_select_extra_key(self) -> None:
+        payload = self._verified_plan_payload()
+        payload["select_columns"][0]["raw_sql"] = "院校名称"
+
+        with self.assertRaises(pydantic.ValidationError):
+            VerifiedQueryPlan(**payload)
+
+    def test_verified_query_plan_rejects_filter_extra_key(self) -> None:
+        payload = self._verified_plan_payload()
+        payload["filters"][0]["raw_sql"] = "年份 = 2025"
+
+        with self.assertRaises(pydantic.ValidationError):
+            VerifiedQueryPlan(**payload)
+
+    def test_verified_query_plan_rejects_sort_extra_key(self) -> None:
+        payload = self._verified_plan_payload()
+        payload["sort"][0]["raw_sql"] = "专业最低位次 ASC"
+
+        with self.assertRaises(pydantic.ValidationError):
+            VerifiedQueryPlan(**payload)
 
     def test_verified_query_plan_rejects_select_without_source_column(self) -> None:
         with self.assertRaises(pydantic.ValidationError):
