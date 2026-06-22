@@ -6,7 +6,7 @@
 
 **Architecture:** 新增通用能力层：上传数据先形成字段事实、语义候选、已审核映射、能力图和候选 `QueryAST`；只有通过 `FieldGrounder`、`OperationVerifier`、`AnswerabilityGate` 的查询计划才能由 `SQLBuilder` 生成参数化 SQL。admissions 作为第一个 domain recipe，只在已审核字段支持 `major_min_rank` 时执行专业最低位次冲稳保；LLM 只能提出字段语义和查询意图候选，执行与回答仍由 deterministic verifier 和 `EvidencePack` 约束。
 
-**Tech Stack:** Python `unittest`、DuckDB、Pandas/OpenPyXL、现有 `DatasetService` / `DomainConfig` / `EvidencePack` / Workbench contract、可选 DeepSeek slot/candidate provider、`git diff --check`。
+**Tech Stack:** Python `unittest`、DuckDB、Pandas/OpenPyXL、Pydantic v2、现有 `DatasetService` / `DomainConfig` / `EvidencePack` / Workbench contract、可选 DeepSeek/OpenAI structured-output candidate provider、`git diff --check`。
 
 ---
 
@@ -29,8 +29,42 @@
 - 将大 Excel 原件、DuckDB 或上传目录提交进版本库。
 - 使用 LLM 绕过 reviewer 批准字段语义。
 
+## 外部资源研究结论
+
+本计划采用可本地验证的最小依赖。已安装或现有代码已经使用、且本阶段直接采用：
+
+- `duckdb`: 继续作为 verified plan 的参数化 SQL 执行层，参考 DuckDB prepared statements 与 Python DB API 文档。
+- `pandas` / `openpyxl`: 继续用于 Excel/CSV 读取、profile 和测试夹具。
+- `pydantic`: 用于 `QueryAST`、LLM 候选输出和 verifier 输入的结构化校验。现有 API 已通过 FastAPI 间接使用 Pydantic；实现 Task 1 时如果 `requirements.txt` 仍未显式声明，应补充 `pydantic>=2.0,<3.0`。
+
+本阶段只作为设计参考，不新增依赖：
+
+- `SQLGlot`: 适合后续解析 SQL-like 用户输入；当前阶段仍拒绝 raw SQL。
+- Frictionless Table Schema: 可参考 portable table metadata 设计；不引入 runtime dependency。
+- dbt Semantic Layer / MetricFlow、LookML、Malloy、Cube: 参考“semantic model -> governed SQL”思想，不替换本项目 verifier。
+- Spider、BIRD、DIN-SQL、CHESS: 参考 text-to-SQL 的 schema linking、分解式生成和验证步骤；不把 LLM 生成 SQL 作为执行路径。
+
+研究来源：
+
+- DuckDB prepared statements: <https://duckdb.org/docs/current/sql/query_syntax/prepared_statements.html>
+- DuckDB Python DB API: <https://duckdb.org/docs/lts/clients/python/dbapi.html>
+- Pydantic JSON Schema / validation: <https://pydantic.dev/docs/validation/latest/concepts/json_schema/>
+- OpenAI Agents structured output reference: <https://openai.github.io/openai-agents-python/ref/agent_output/>
+- SQLGlot: <https://sqlglot.com/>
+- Frictionless Table Schema: <https://frictionlessdata.io/specs/table-schema/>
+- dbt Semantic Layer / MetricFlow: <https://docs.getdbt.com/docs/use-dbt-semantic-layer/dbt-sl>
+- LookML: <https://docs.cloud.google.com/looker/docs/what-is-lookml>
+- Malloy: <https://docs.malloydata.dev/>
+- Cube semantic layer: <https://docs.cube.dev/docs/introduction>
+- Spider: <https://arxiv.org/abs/1809.08887>
+- BIRD: <https://arxiv.org/abs/2305.03111>
+- DIN-SQL: <https://arxiv.org/abs/2304.11015>
+- CHESS: <https://arxiv.org/abs/2405.16755>
+
 ## 文件结构
 
+- Modify: `requirements.txt`
+  - 显式声明 `pydantic>=2.0,<3.0`，避免只依赖 FastAPI 的传递依赖。
 - Create: `src/semantic/__init__.py`
   - 暴露语义能力系统的公共类型和服务。
 - Create: `src/semantic/query_ast.py`
@@ -87,6 +121,7 @@
 ### Task 1: 增加 QueryAST 基础类型和 raw SQL 拒绝测试
 
 **Files:**
+- Modify: `requirements.txt`
 - Create: `src/semantic/__init__.py`
 - Create: `src/semantic/query_ast.py`
 - Create: `tests/test_semantic_query_verifier.py`
@@ -100,6 +135,8 @@ from __future__ import annotations
 
 import unittest
 
+from pydantic import ValidationError
+
 from src.semantic.query_ast import (
     QueryAST,
     QueryFilter,
@@ -110,7 +147,7 @@ from src.semantic.query_ast import (
 
 class QueryASTTest(unittest.TestCase):
     def test_query_ast_rejects_raw_sql_payload(self) -> None:
-        with self.assertRaises(ValueError):
+        with self.assertRaises(ValidationError):
             QueryAST.from_candidate(
                 {
                     "raw_sql": "SELECT * FROM admissions",
@@ -142,11 +179,18 @@ class QueryASTTest(unittest.TestCase):
         self.assertEqual(
             ast.filters,
             [
-                QueryFilter("year", "eq", 2025),
-                QueryFilter("major_min_rank", "between", [10000, 15000]),
+                QueryFilter(field_id="year", op="eq", value=2025),
+                QueryFilter(
+                    field_id="major_min_rank",
+                    op="between",
+                    value=[10000, 15000],
+                ),
             ],
         )
-        self.assertEqual(ast.sort, [QuerySort("major_min_rank", "asc")])
+        self.assertEqual(
+            ast.sort,
+            [QuerySort(field_id="major_min_rank", direction="asc")],
+        )
         self.assertEqual(ast.limit, 30)
 
     def test_verification_issue_serializes(self) -> None:
@@ -184,6 +228,12 @@ Expected: FAIL with `ModuleNotFoundError: No module named 'src.semantic'`.
 
 - [ ] **Step 3: 创建 QueryAST 类型**
 
+If `requirements.txt` does not explicitly list Pydantic, add:
+
+```text
+pydantic>=2.0,<3.0
+```
+
 Create `src/semantic/query_ast.py`:
 
 ```python
@@ -195,113 +245,124 @@ Create `src/semantic/query_ast.py`:
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
 from typing import Any
 
+from pydantic import (
+    BaseModel,
+    ConfigDict,
+    Field,
+    field_validator,
+    model_validator,
+)
 
 ALLOWED_SORT_DIRECTIONS = {"asc", "desc"}
 
 
-@dataclass(frozen=True)
-class QueryFilter:
+class QueryFilter(BaseModel):
     """候选查询过滤条件。"""
+
+    model_config = ConfigDict(frozen=True)
 
     field_id: str
     op: str
     value: Any
 
+    @field_validator("field_id", "op")
     @classmethod
-    def from_dict(cls, payload: dict[str, Any]) -> "QueryFilter":
-        return cls(
-            field_id=str(payload.get("field_id") or ""),
-            op=str(payload.get("op") or ""),
-            value=payload.get("value"),
-        )
+    def _non_empty(cls, value: str) -> str:
+        normalized = str(value or "").strip()
+        if not normalized:
+            raise ValueError("QueryFilter field_id and op are required.")
+        return normalized
 
 
-@dataclass(frozen=True)
-class QuerySort:
+class QuerySort(BaseModel):
     """候选查询排序条件。"""
+
+    model_config = ConfigDict(frozen=True)
 
     field_id: str
     direction: str = "asc"
 
+    @field_validator("field_id")
     @classmethod
-    def from_dict(cls, payload: dict[str, Any]) -> "QuerySort":
-        direction = str(payload.get("direction") or "asc").lower()
+    def _field_id_required(cls, value: str) -> str:
+        normalized = str(value or "").strip()
+        if not normalized:
+            raise ValueError("QuerySort field_id is required.")
+        return normalized
+
+    @field_validator("direction")
+    @classmethod
+    def _direction_allowed(cls, value: str) -> str:
+        direction = str(value or "asc").lower()
         if direction not in ALLOWED_SORT_DIRECTIONS:
             raise ValueError(f"Unsupported sort direction: {direction}")
-        return cls(
-            field_id=str(payload.get("field_id") or ""),
-            direction=direction,
-        )
+        return direction
 
 
-@dataclass(frozen=True)
-class QueryAST:
+class QueryAST(BaseModel):
     """LLM 或规则生成的候选查询计划。"""
 
-    intent: str
-    select: list[str] = field(default_factory=list)
-    filters: list[QueryFilter] = field(default_factory=list)
-    sort: list[QuerySort] = field(default_factory=list)
+    model_config = ConfigDict(frozen=True)
+
+    intent: str = "table_filter"
+    select: list[str] = Field(default_factory=list)
+    filters: list[QueryFilter] = Field(default_factory=list)
+    sort: list[QuerySort] = Field(default_factory=list)
     limit: int = 30
-    requested_output: list[str] = field(default_factory=list)
+    requested_output: list[str] = Field(default_factory=list)
     source: str = "candidate"
+    raw_sql: str | None = Field(default=None, exclude=True)
 
     @classmethod
     def from_candidate(cls, payload: dict[str, Any]) -> "QueryAST":
-        if payload.get("raw_sql"):
+        return cls.model_validate(payload)
+
+    @model_validator(mode="after")
+    def _reject_raw_sql(self) -> "QueryAST":
+        if self.raw_sql:
             raise ValueError("Raw SQL is not accepted; use verified QueryAST.")
-        limit = int(payload.get("limit") or 30)
-        if limit < 1:
+        return self
+
+    @field_validator("intent", "source", mode="before")
+    @classmethod
+    def _non_empty_string(cls, value: Any) -> str:
+        normalized = str(value or "").strip()
+        if not normalized:
+            raise ValueError("QueryAST intent and source are required.")
+        return normalized
+
+    @field_validator("limit", mode="before")
+    @classmethod
+    def _limit_bounds(cls, value: Any) -> int:
+        normalized = int(value or 30)
+        if normalized < 1:
             raise ValueError("QueryAST limit must be positive.")
-        if limit > 100:
-            limit = 100
-        return cls(
-            intent=str(payload.get("intent") or "table_filter"),
-            select=[str(item) for item in payload.get("select") or []],
-            filters=[
-                QueryFilter.from_dict(item)
-                for item in payload.get("filters") or []
-            ],
-            sort=[
-                QuerySort.from_dict(item)
-                for item in payload.get("sort") or []
-            ],
-            limit=limit,
-            requested_output=[
-                str(item) for item in payload.get("requested_output") or []
-            ],
-            source=str(payload.get("source") or "candidate"),
-        )
+        return min(normalized, 100)
 
 
-@dataclass(frozen=True)
-class QueryVerificationIssue:
+class QueryVerificationIssue(BaseModel):
     """查询计划验证问题。"""
+
+    model_config = ConfigDict(frozen=True)
 
     code: str
     severity: str
     message: str
     field_id: str | None = None
-    details: dict[str, Any] = field(default_factory=dict)
+    details: dict[str, Any] = Field(default_factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
-        payload = {
-            "code": self.code,
-            "severity": self.severity,
-            "message": self.message,
-        }
-        if self.field_id:
-            payload["field_id"] = self.field_id
+        payload = self.model_dump(exclude={"details"}, exclude_none=True)
         payload.update(self.details)
         return payload
 
 
-@dataclass(frozen=True)
-class VerifiedQueryPlan:
+class VerifiedQueryPlan(BaseModel):
     """已验证、可生成参数化 SQL 的查询计划。"""
+
+    model_config = ConfigDict(frozen=True)
 
     intent: str
     table_name: str
@@ -348,7 +409,7 @@ Expected: PASS.
 - [ ] **Step 5: 提交**
 
 ```bash
-git add src/semantic/__init__.py src/semantic/query_ast.py tests/test_semantic_query_verifier.py
+git add requirements.txt src/semantic/__init__.py src/semantic/query_ast.py tests/test_semantic_query_verifier.py
 git commit -m "feat: add verified query ast primitives"
 ```
 
@@ -2657,5 +2718,6 @@ Expected: generated answer and `top_results` reproduce the same factual basis us
 ## 自检
 
 - Spec coverage: 本计划覆盖用户提出的 LLM 候选语义、reviewed mapping、capability graph、QueryAST、verifier、SQLBuilder、EvidencePack、answerability、真实提示词验收。
+- 外部研究应用: 计划明确采用 DuckDB 参数化执行和 Pydantic 结构化校验；SQLGlot、Frictionless、semantic layer 系统和 text-to-SQL 论文只作为 phase 1 设计参考。
 - Placeholder scan: 本计划没有占位任务、空任务或未说明测试命令的步骤。
-- Type consistency: `QueryAST`、`VerifiedQueryPlan`、`DatasetCapabilityGraph`、`ReviewedMappingRegistry`、`SemanticQueryVerifier`、`SemanticSQLBuilder`、`AdmissionsMajorRankPlanner` 在各任务中的名称一致。
+- Type consistency: Pydantic `QueryAST` / `VerifiedQueryPlan`、`DatasetCapabilityGraph`、`ReviewedMappingRegistry`、`SemanticQueryVerifier`、`SemanticSQLBuilder`、`AdmissionsMajorRankPlanner` 在各任务中的名称一致。
