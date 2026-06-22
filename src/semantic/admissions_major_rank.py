@@ -41,6 +41,32 @@ OPTIONAL_CONTEXT_FIELDS = [
     "tuition_yuan_per_year",
     "group_min_rank",
 ]
+BUCKET_SPECS = [
+    {
+        "key": "reach",
+        "label": "冲",
+        "lower_offset": -1500,
+        "upper_offset": -1,
+        "sort_direction": "desc",
+        "quota": 10,
+    },
+    {
+        "key": "match",
+        "label": "稳",
+        "lower_offset": 0,
+        "upper_offset": 3000,
+        "sort_direction": "asc",
+        "quota": 13,
+    },
+    {
+        "key": "safety",
+        "label": "保",
+        "lower_offset": 3001,
+        "upper_offset": 9000,
+        "sort_direction": "asc",
+        "quota": 10,
+    },
+]
 PHYSICS_SUBJECT_TERMS = [
     "物化生",
     "物理",
@@ -139,24 +165,39 @@ class AdmissionsMajorRankPlanner:
         if missing_fields:
             return _blocked_missing_fields(missing_fields, registry)
 
-        ast = _query_ast(rank, registry, subject_type)
-        verification = SemanticQueryVerifier(
+        verifier = SemanticQueryVerifier(
             registry,
             table_name=self.table_name,
-        ).verify(ast)
-        if not verification.ok:
+        )
+        bucket_results = _execute_bucket_queries(
+            rank=rank,
+            registry=registry,
+            subject_type=subject_type,
+            database_path=self.database_path,
+            table_name=self.table_name,
+            verifier=verifier,
+        )
+        failed_verification = next(
+            (
+                result["verification"]
+                for result in bucket_results.values()
+                if not result["verification"].ok
+            ),
+            None,
+        )
+        if failed_verification is not None:
             return AdmissionsMajorRankResult(
                 query_type=QUERY_TYPE,
                 status="blocked",
                 rows=[],
-                answerable_intents=verification.answerable_intents,
-                unanswerable_intents=verification.unanswerable_intents,
+                answerable_intents=failed_verification.answerable_intents,
+                unanswerable_intents=failed_verification.unanswerable_intents,
                 execution_summary={
                     **_empty_execution_summary(),
                     "verification_issues": [
-                        issue.to_dict() for issue in verification.issues
+                        issue.to_dict() for issue in failed_verification.issues
                     ],
-                    "verified_query_plan": verification.plan.model_dump(),
+                    "verified_query_plan": failed_verification.plan.model_dump(),
                 },
                 warnings=[
                     {
@@ -167,27 +208,25 @@ class AdmissionsMajorRankPlanner:
                 ],
             )
 
-        built = SemanticSQLBuilder().build(verification.plan)
-        with duckdb.connect(str(self.database_path), read_only=True) as connection:
-            raw_rows = connection.execute(built.sql, built.params).fetchdf().to_dict(
-                "records"
+        subject_rows_by_bucket = {
+            label: _filter_subject_requirement_rows(
+                result["rows"],
+                selected_subjects,
             )
-        subject_rows = _filter_subject_requirement_rows(
-            raw_rows,
-            selected_subjects,
-        )
-
-        rows = _bucket_rows(
-            subject_rows,
+            for label, result in bucket_results.items()
+        }
+        rows, bucket_candidate_counts, selected_counts = _bucket_rows(
+            subject_rows_by_bucket,
             rank,
             self.domain_config.semantic_capabilities,
         )
+        first_verification = next(iter(bucket_results.values()))["verification"]
         return AdmissionsMajorRankResult(
             query_type=QUERY_TYPE,
             status="ok" if rows else "no_results",
             rows=rows,
             answerable_intents=[
-                *verification.answerable_intents,
+                *first_verification.answerable_intents,
                 {
                     "intent": "risk_buckets",
                     "answerable": True,
@@ -211,14 +250,35 @@ class AdmissionsMajorRankPlanner:
             execution_summary={
                 "executor": "duckdb",
                 "query_type": QUERY_TYPE,
-                "sql": built.sql,
-                "params": built.params,
+                "sql": "",
+                "params": [
+                    param
+                    for result in bucket_results.values()
+                    for param in result["params"]
+                ],
+                "bucket_queries": {
+                    label: {
+                        "sql": result["sql"],
+                        "params": result["params"],
+                        "row_count": len(result["rows"]),
+                        "verified_query_plan": result[
+                            "verification"
+                        ].plan.model_dump(),
+                    }
+                    for label, result in bucket_results.items()
+                },
                 "input_row_count": graph.row_count,
-                "sql_row_count": len(raw_rows),
-                "subject_compatible_row_count": len(subject_rows),
+                "sql_row_count": sum(
+                    len(result["rows"]) for result in bucket_results.values()
+                ),
+                "subject_compatible_row_count": sum(
+                    len(items) for items in subject_rows_by_bucket.values()
+                ),
                 "filtered_row_count": len(rows),
                 "rank": rank,
                 "basis": "major_min_rank",
+                "bucket_candidate_counts": bucket_candidate_counts,
+                "selected_counts": selected_counts,
                 "selected_subjects": selected_subjects,
                 "post_filters": [
                     {
@@ -227,7 +287,7 @@ class AdmissionsMajorRankPlanner:
                         "value": selected_subjects,
                     }
                 ],
-                "verified_query_plan": verification.plan.model_dump(),
+                "verified_query_plan": first_verification.plan.model_dump(),
             },
         )
 
@@ -341,7 +401,11 @@ def _query_ast(
     rank: int,
     registry: ReviewedMappingRegistry,
     subject_type: str,
+    lower: int,
+    upper: int,
+    sort_direction: str,
 ) -> QueryAST:
+    _ = rank
     return QueryAST.from_candidate(
         {
             "intent": QUERY_TYPE,
@@ -352,15 +416,68 @@ def _query_ast(
                 {
                     "field_id": "major_min_rank",
                     "op": "between",
-                    "value": [rank - 1500, rank + 9000],
+                    "value": [lower, upper],
                 },
             ],
-            "sort": [{"field_id": "major_min_rank", "direction": "asc"}],
+            "sort": [{"field_id": "major_min_rank", "direction": sort_direction}],
             "limit": 100,
             "requested_output": ["risk_buckets", "major_min_rank"],
             "source": "deterministic_recipe",
         }
     )
+
+
+def _execute_bucket_queries(
+    *,
+    rank: int,
+    registry: ReviewedMappingRegistry,
+    subject_type: str,
+    database_path: Path,
+    table_name: str,
+    verifier: SemanticQueryVerifier,
+) -> dict[str, dict[str, Any]]:
+    output: dict[str, dict[str, Any]] = {}
+    with duckdb.connect(str(database_path), read_only=True) as connection:
+        for spec in _bucket_specs(rank):
+            ast = _query_ast(
+                rank,
+                registry,
+                subject_type,
+                spec["lower"],
+                spec["upper"],
+                spec["sort_direction"],
+            )
+            verification = verifier.verify(ast)
+            if not verification.ok:
+                output[spec["label"]] = {
+                    "verification": verification,
+                    "sql": "",
+                    "params": [],
+                    "rows": [],
+                }
+                continue
+            built = SemanticSQLBuilder().build(verification.plan)
+            rows = connection.execute(built.sql, built.params).fetchdf().to_dict(
+                "records"
+            )
+            output[spec["label"]] = {
+                "verification": verification,
+                "sql": built.sql,
+                "params": built.params,
+                "rows": rows,
+            }
+    return output
+
+
+def _bucket_specs(rank: int) -> list[dict[str, Any]]:
+    return [
+        {
+            **spec,
+            "lower": max(1, rank + int(spec["lower_offset"])),
+            "upper": max(1, rank + int(spec["upper_offset"])),
+        }
+        for spec in BUCKET_SPECS
+    ]
 
 
 def _subject_type_filter(
@@ -399,34 +516,39 @@ def _subject_type_values(subject_type: str) -> list[str]:
 
 
 def _bucket_rows(
-    raw_rows: list[dict[str, Any]],
+    raw_rows_by_bucket: dict[str, list[dict[str, Any]]],
     rank: int,
     capabilities: dict[str, Any],
-) -> list[dict[str, Any]]:
+) -> tuple[list[dict[str, Any]], dict[str, int], dict[str, int]]:
     special_terms = [str(term) for term in capabilities.get("special_limit_terms") or []]
-    normal_rows = [
-        row for row in raw_rows if not _has_special_limit(row, special_terms)
-    ]
-    buckets = [
-        ("冲", rank - 1500, rank - 1),
-        ("稳", rank, rank + 3000),
-        ("保", rank + 3001, rank + 9000),
-    ]
-    output = []
-    for label, lower, upper in buckets:
+    output: list[dict[str, Any]] = []
+    bucket_candidate_counts: dict[str, int] = {}
+    selected_counts: dict[str, int] = {}
+    for spec in _bucket_specs(rank):
+        label = str(spec["label"])
+        lower = int(spec["lower"])
+        upper = int(spec["upper"])
+        quota = int(spec["quota"])
+        normal_rows = [
+            row
+            for row in raw_rows_by_bucket.get(label, [])
+            if not _has_special_limit(row, special_terms)
+        ]
         candidates = [
             row
             for row in normal_rows
             if _rank_in_bucket(row.get("major_min_rank"), lower, upper)
         ]
-        if not candidates:
-            continue
-        selected = min(
+        bucket_candidate_counts[label] = len(candidates)
+        selected_rows = sorted(
             candidates,
             key=lambda row: abs(int(row["major_min_rank"]) - rank),
-        )
-        output.append(_project_row(label, selected, rank))
-    return output
+        )[:quota]
+        selected_counts[label] = len(selected_rows)
+        output.extend(_project_row(label, row, rank) for row in selected_rows)
+    for index, row in enumerate(output, start=1):
+        row["次序"] = index
+    return output, bucket_candidate_counts, selected_counts
 
 
 def _project_row(label: str, row: dict[str, Any], rank: int) -> dict[str, Any]:

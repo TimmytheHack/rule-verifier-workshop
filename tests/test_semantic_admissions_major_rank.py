@@ -49,6 +49,26 @@ class AdmissionsMajorRankPlannerTest(unittest.TestCase):
         self.assertEqual(result.rows[0]["学费"], 7660)
         self.assertEqual(result.rows[0]["专业组最低位次"], 9900)
 
+    def test_bucket_queries_return_multiple_rows_and_do_not_truncate_safety(
+        self,
+    ) -> None:
+        result = self._run(
+            "广东物化生，10000名，列出冲稳保的次序，以及每个专业的最低录取排名",
+            extra_rows=_many_reach_rows_and_safety_row(),
+        )
+
+        labels = [item["档位"] for item in result.rows]
+        self.assertEqual(labels.count("冲"), 10)
+        self.assertGreaterEqual(labels.count("保"), 1)
+        self.assertIn("保底大学", [item["院校名称"] for item in result.rows])
+        self.assertEqual(result.execution_summary["selected_counts"]["冲"], 10)
+        self.assertGreater(
+            result.execution_summary["bucket_candidate_counts"]["冲"],
+            result.execution_summary["selected_counts"]["冲"],
+        )
+        self.assertIn("冲", result.execution_summary["bucket_queries"])
+        self.assertIn("保", result.execution_summary["bucket_queries"])
+
     def test_major_rank_plan_filters_incompatible_subject_requirement(self) -> None:
         incompatible_row = {
             **NEW_ADMISSIONS_ROWS[0],
@@ -164,6 +184,44 @@ def _add_context_fields(rows: list[dict[str, object]]) -> None:
         row["城市"] = city
         row["学费"] = tuition
         row["专业组最低位次1"] = group_rank
+
+
+def _many_reach_rows_and_safety_row() -> list[dict[str, object]]:
+    rows = []
+    for index in range(120):
+        rows.append(
+            {
+                **NEW_ADMISSIONS_ROWS[0],
+                "院校名称": f"冲刺大学{index:03d}",
+                "院校代码": f"20{index:03d}",
+                "专业": f"智能科学{index:03d}",
+                "专业代码": f"08{index:04d}",
+                "所属专业组": f"（{300 + index}）",
+                "专业备注": "（普通类）",
+                "最低分数": 640,
+                "最低位次": 8500 + index,
+                "学校所在": "广东",
+                "是否985": "否",
+                "是否211": "否",
+            }
+        )
+    rows.append(
+        {
+            **NEW_ADMISSIONS_ROWS[0],
+            "院校名称": "保底大学",
+            "院校代码": "20999",
+            "专业": "智能科学保底班",
+            "专业代码": "080999",
+            "所属专业组": "（499）",
+            "专业备注": "（普通类）",
+            "最低分数": 610,
+            "最低位次": 16000,
+            "学校所在": "广东",
+            "是否985": "否",
+            "是否211": "否",
+        }
+    )
+    return rows
 
 
 if __name__ == "__main__":
