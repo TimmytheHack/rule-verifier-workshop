@@ -8,11 +8,8 @@ from tempfile import TemporaryDirectory
 from unittest.mock import patch
 
 from src.api.admissions_query_planner import AdmissionsQueryPlanner
-from src.api.workbench import WorkbenchConfig, run_workbench
-from tests.warehouse_test_utils import (
-    _test_warehouse_paths,
-    run_workbench_with_test_warehouse,
-)
+from src.api.workbench import WorkbenchConfig
+from tests.warehouse_test_utils import run_workbench_with_test_warehouse
 from tests.workbench_contract_utils import assert_workbench_contract
 
 
@@ -476,22 +473,15 @@ class AdmissionsQueryTypesTest(unittest.TestCase):
                 encoding="utf-8",
             )
 
-            workbook_path, database_path, index_path = _test_warehouse_paths()
-            with patch("src.api.workbench.WORKBOOK_NAME", workbook_path):
-                with patch("src.api.workbench.WAREHOUSE_DATABASE_PATH", database_path):
-                    with patch(
-                        "src.api.workbench.WAREHOUSE_VALUE_INDEX_PATH",
-                        index_path,
-                    ):
-                        result = run_workbench(
-                            WorkbenchConfig(
-                                domain_name="admissions",
-                                domain_path=str(domain_dir),
-                                user_input=RECOMMENDATION_QUERY,
-                                soft_preferences={"prompt": RECOMMENDATION_QUERY},
-                                extractor="regex",
-                            )
-                        )
+            result = run_workbench_with_test_warehouse(
+                WorkbenchConfig(
+                    domain_name="admissions",
+                    domain_path=str(domain_dir),
+                    user_input=RECOMMENDATION_QUERY,
+                    soft_preferences={"prompt": RECOMMENDATION_QUERY},
+                    extractor="regex",
+                )
+            )
 
         self.assertIn(
             "planned_exclude_school_country_or_region",
