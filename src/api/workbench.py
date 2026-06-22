@@ -774,6 +774,9 @@ def _semantic_items(rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
                 ],
                 "secondary_attributes": [
                     {"label": "学校所在", "value": row.get("学校所在")},
+                    {"label": "城市", "value": row.get("城市")},
+                    {"label": "学费", "value": row.get("学费")},
+                    {"label": "专业组最低位次", "value": row.get("专业组最低位次")},
                     {
                         "label": "985/211",
                         "value": f"{row.get('是否985')}/{row.get('是否211')}",
@@ -796,11 +799,11 @@ def _semantic_top_results(rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
             "major_code": row.get("专业代码"),
             "major_name": row.get("专业"),
             "full_major_name": row.get("专业"),
-            "city": None,
-            "tuition": None,
+            "city": row.get("城市"),
+            "tuition": row.get("学费"),
             "rank_2024": None,
             "plan_count": row.get("录取人数"),
-            "group_min_rank": None,
+            "group_min_rank": row.get("专业组最低位次"),
             "major_min_rank": row.get("最低录取排名"),
             "safety_margin": row.get("相对用户排名"),
             "trace": [],
@@ -810,6 +813,18 @@ def _semantic_top_results(rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
 
 
 def _semantic_answer(semantic_result: Any) -> str:
+    missing_context = _semantic_missing_context_labels(semantic_result)
+    if missing_context:
+        missing_sentence = (
+            "未使用"
+            + "、".join(missing_context)
+            + "，因为当前数据缺少这些已审核字段。"
+        )
+    else:
+        missing_sentence = (
+            "城市、学费和专业组最低位次已作为结果展示字段；"
+            "本次冲稳保排序仍以专业最低录取排名为依据。"
+        )
     if semantic_result.status == "blocked":
         return "当前请求或数据未通过语义能力校验，未执行 SQL。"
     if semantic_result.status == "needs_confirmation":
@@ -817,7 +832,7 @@ def _semantic_answer(semantic_result: Any) -> str:
     if semantic_result.status == "no_results":
         return (
             "已按 2025 年、物理类、专业最低录取排名和选科要求后置过滤执行语义查询，"
-            "当前没有匹配结果。未使用学费、城市或专业组最低位次，因为当前数据缺少这些已审核字段。"
+            f"当前没有匹配结果。{missing_sentence}"
         )
 
     lines = [
@@ -825,7 +840,7 @@ def _semantic_answer(semantic_result: Any) -> str:
             "本次使用 2025 年、物理类、专业最低录取排名和选科要求生成冲稳保；"
             "SQL 筛选基于年份、科类和专业最低位次，SQL 返回后再按选科要求确定性过滤。"
         ),
-        "未使用学费、城市或专业组最低位次，因为当前数据缺少这些已审核字段。",
+        missing_sentence,
     ]
     for row in semantic_result.rows:
         lines.append(
@@ -833,6 +848,22 @@ def _semantic_answer(semantic_result: Any) -> str:
             f"最低录取排名 {row['最低录取排名']}。"
         )
     return "\n".join(lines)
+
+
+def _semantic_missing_context_labels(semantic_result: Any) -> list[str]:
+    labels = {
+        "city": "城市",
+        "tuition_yuan_per_year": "学费",
+        "group_min_rank": "专业组最低位次",
+    }
+    return [
+        labels[field_id]
+        for field_id in [
+            str(item.get("field_id"))
+            for item in semantic_result.unanswerable_intents
+        ]
+        if field_id in labels
+    ]
 
 
 def _run_admissions_planned_query(

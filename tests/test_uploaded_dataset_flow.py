@@ -10,7 +10,7 @@ import pandas as pd
 import yaml
 
 from src.api.dataset_service import DatasetService, DatasetServiceError
-from tests.semantic_test_utils import write_new_admissions_excel
+from tests.semantic_test_utils import NEW_ADMISSIONS_ROWS, write_new_admissions_excel
 from tests.workbench_contract_utils import assert_workbench_contract
 
 
@@ -277,6 +277,48 @@ class UploadedSemanticAdmissionsFlowTest(unittest.TestCase):
             ],
         )
 
+    def test_uploaded_new_admissions_projects_available_context_fields(self) -> None:
+        query = "广东物化生，10000名，列出冲稳保的次序，以及每个专业的最低录取排名"
+        with TemporaryDirectory() as directory:
+            source = _write_new_admissions_with_context(
+                Path(directory) / "new_admissions_context.xlsx"
+            )
+            service = DatasetService(Path(directory) / "managed")
+            service.upload(
+                filename=source.name,
+                content=source.read_bytes(),
+                dataset_id="ds_new_admissions_context",
+            )
+            service.generate_domain_pack(
+                "ds_new_admissions_context",
+                domain_name="admissions",
+                base_domain="admissions",
+            )
+            approved = service.approve_domain("ds_new_admissions_context")
+            self.assertTrue(approved["ok"])
+            built = service.build_warehouse("ds_new_admissions_context")
+            self.assertEqual(built["status"], "queryable")
+
+            response = service.query(
+                "ds_new_admissions_context",
+                user_input=query,
+                soft_preferences={"prompt": query},
+            )
+
+        assert_workbench_contract(self, response)
+        self.assertEqual(response["query_type"], "admissions_major_rank")
+        self.assertEqual(response["top_results"][0]["city"], "深圳")
+        self.assertEqual(response["top_results"][0]["tuition"], 7660)
+        self.assertEqual(response["top_results"][0]["group_min_rank"], 9900)
+        unanswerable = [
+            item["field_id"]
+            for item in response["evidence_pack"]["unanswerable_intents"]
+        ]
+        self.assertNotIn("city", unanswerable)
+        self.assertNotIn("tuition_yuan_per_year", unanswerable)
+        self.assertNotIn("group_min_rank", unanswerable)
+        self.assertNotIn("当前数据缺少这些已审核字段", response["answer"])
+
 
 def _generated_generic_dataset(root: Path) -> tuple[DatasetService, str]:
     source = _write_generic_csv(root)
@@ -356,6 +398,22 @@ def _write_generic_excel(root: Path) -> Path:
             {"listing_id": 2, "city": "Dallas", "rent_usd": 1600, "bedrooms": 1},
         ]
     ).to_excel(path, index=False)
+    return path
+
+
+def _write_new_admissions_with_context(path: Path) -> Path:
+    rows = [dict(row) for row in NEW_ADMISSIONS_ROWS]
+    context = [
+        ("深圳", 7660, 9900),
+        ("深圳", 6850, 10400),
+        ("广州", 6850, 16000),
+        ("成都", 68000, 9900),
+    ]
+    for row, (city, tuition, group_rank) in zip(rows, context, strict=True):
+        row["城市"] = city
+        row["学费"] = tuition
+        row["专业组最低位次1"] = group_rank
+    pd.DataFrame(rows).to_excel(path, index=False)
     return path
 
 

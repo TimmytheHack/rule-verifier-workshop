@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import math
 import re
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -35,7 +36,7 @@ DISPLAY_FIELDS = [
     "school_is_211",
     "plan_count",
 ]
-UNANSWERABLE_CONTEXT_FIELDS = [
+OPTIONAL_CONTEXT_FIELDS = [
     "city",
     "tuition_yuan_per_year",
     "group_min_rank",
@@ -204,6 +205,7 @@ class AdmissionsMajorRankPlanner:
                     "selected_subjects": selected_subjects,
                     "reason": "subject_requirement_satisfied",
                 },
+                *_answerable_context_intents(registry),
             ],
             unanswerable_intents=_unsupported_context_intents(registry),
             execution_summary={
@@ -235,10 +237,10 @@ def _matches_major_rank_query(text: str) -> bool:
 
 
 def _parse_supported_subject_type(text: str) -> str | None:
-    if "历史" in text:
-        return "历史类"
     if any(term in text for term in PHYSICS_SUBJECT_TERMS):
         return "物理类"
+    if "历史类" in text or "首选历史" in text or re.search(r"广东\s*历史", text):
+        return "历史类"
     return None
 
 
@@ -343,7 +345,7 @@ def _query_ast(
     return QueryAST.from_candidate(
         {
             "intent": QUERY_TYPE,
-            "select": DISPLAY_FIELDS,
+            "select": _select_fields(registry),
             "filters": [
                 {"field_id": "year", "op": "eq", "value": 2025},
                 _subject_type_filter(registry, subject_type),
@@ -365,6 +367,7 @@ def _subject_type_filter(
     registry: ReviewedMappingRegistry,
     subject_type: str,
 ) -> dict[str, Any]:
+    subject_values = _subject_type_values(subject_type)
     if registry.has_op("subject_type", "contains"):
         return {
             "field_id": "subject_type",
@@ -372,8 +375,27 @@ def _subject_type_filter(
             "value": subject_type.removesuffix("类"),
         }
     if registry.has_op("subject_type", "in"):
-        return {"field_id": "subject_type", "op": "in", "value": [subject_type]}
+        return {"field_id": "subject_type", "op": "in", "value": subject_values}
     return {"field_id": "subject_type", "op": "eq", "value": subject_type}
+
+
+def _select_fields(registry: ReviewedMappingRegistry) -> list[str]:
+    return [
+        *DISPLAY_FIELDS,
+        *[
+            field_id
+            for field_id in OPTIONAL_CONTEXT_FIELDS
+            if registry.has_field(field_id)
+        ],
+    ]
+
+
+def _subject_type_values(subject_type: str) -> list[str]:
+    if subject_type == "物理类":
+        return ["物理类", "物理"]
+    if subject_type == "历史类":
+        return ["历史类", "历史"]
+    return [subject_type]
 
 
 def _bucket_rows(
@@ -419,6 +441,9 @@ def _project_row(label: str, row: dict[str, Any], rank: int) -> dict[str, Any]:
         "最低录取排名": min_rank,
         "相对用户排名": min_rank - rank,
         "学校所在": row.get("school_province"),
+        "城市": row.get("city"),
+        "学费": _int_or_none(row.get("tuition_yuan_per_year")),
+        "专业组最低位次": _int_or_none(row.get("group_min_rank")),
         "是否985": row.get("school_is_985"),
         "是否211": row.get("school_is_211"),
         "录取人数": _int_or_none(row.get("plan_count")),
@@ -518,7 +543,23 @@ def _unsupported_context_intents(
             "reason": registry.unsupported_reason(field_id)
             or "当前 recipe 未使用该字段执行筛选。",
         }
-        for field_id in UNANSWERABLE_CONTEXT_FIELDS
+        for field_id in OPTIONAL_CONTEXT_FIELDS
+        if not registry.has_field(field_id)
+    ]
+
+
+def _answerable_context_intents(
+    registry: ReviewedMappingRegistry,
+) -> list[dict[str, Any]]:
+    return [
+        {
+            "field_id": field_id,
+            "answerable": True,
+            "capability": "context_projection",
+            "reason": "当前数据包含该已审查字段，结果中可展示。",
+        }
+        for field_id in OPTIONAL_CONTEXT_FIELDS
+        if registry.has_field(field_id)
     ]
 
 
@@ -562,7 +603,16 @@ def _parse_rank(text: str) -> int | None:
 def _int_or_none(value: Any) -> int | None:
     if value is None or value == "":
         return None
-    return int(float(value))
+    text = str(value).strip().replace(",", "").replace("，", "")
+    if not text or text.lower() == "nan":
+        return None
+    match = re.search(r"-?\d+(?:\.\d+)?", text)
+    if not match:
+        return None
+    parsed = float(match.group(0))
+    if not math.isfinite(parsed):
+        return None
+    return int(parsed)
 
 
 def _empty_execution_summary(rank: int | None = None) -> dict[str, Any]:

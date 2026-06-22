@@ -35,6 +35,20 @@ class AdmissionsMajorRankPlannerTest(unittest.TestCase):
             [item["field_id"] for item in result.unanswerable_intents],
         )
 
+    def test_available_context_fields_are_projected_not_unanswerable(self) -> None:
+        result = self._run(
+            "广东物化生，10000名，列出冲稳保的次序，以及每个专业的最低录取排名",
+            include_context_fields=True,
+        )
+
+        unanswerable = [item["field_id"] for item in result.unanswerable_intents]
+        self.assertNotIn("city", unanswerable)
+        self.assertNotIn("tuition_yuan_per_year", unanswerable)
+        self.assertNotIn("group_min_rank", unanswerable)
+        self.assertEqual(result.rows[0]["城市"], "深圳")
+        self.assertEqual(result.rows[0]["学费"], 7660)
+        self.assertEqual(result.rows[0]["专业组最低位次"], 9900)
+
     def test_major_rank_plan_filters_incompatible_subject_requirement(self) -> None:
         incompatible_row = {
             **NEW_ADMISSIONS_ROWS[0],
@@ -60,6 +74,22 @@ class AdmissionsMajorRankPlannerTest(unittest.TestCase):
         self.assertNotIn("政治要求大学", [item["院校名称"] for item in result.rows])
         self.assertEqual(result.rows[0]["院校名称"], "中山大学")
         self.assertEqual(result.rows[0]["最低录取排名"], 9850)
+
+    def test_subject_type_filter_accepts_physics_without_suffix(self) -> None:
+        result = self._run(
+            "广东物化生，10000名，列出冲稳保的次序，以及每个专业的最低录取排名",
+            subject_type_value="物理",
+        )
+
+        self.assertEqual(result.status, "ok")
+        self.assertEqual([item["档位"] for item in result.rows], ["冲", "稳", "保"])
+        self.assertIn("物理", result.execution_summary["params"])
+
+    def test_physics_bundle_not_blocked_by_historical_rank_wording(self) -> None:
+        result = self._run("广东物化生，10000名，按历史最低录取排名列出冲稳保")
+
+        self.assertEqual(result.status, "ok")
+        self.assertEqual(result.query_type, "admissions_major_rank")
 
     def test_history_request_does_not_execute_physics_query(self) -> None:
         result = self._run("广东历史，10000名，列出冲稳保的次序，以及每个专业的最低录取排名")
@@ -91,9 +121,16 @@ class AdmissionsMajorRankPlannerTest(unittest.TestCase):
         self,
         user_request: str,
         extra_rows: list[dict[str, object]] | None = None,
+        include_context_fields: bool = False,
+        subject_type_value: str | None = None,
     ):
         with TemporaryDirectory() as directory:
             rows = [dict(row) for row in NEW_ADMISSIONS_ROWS]
+            if subject_type_value is not None:
+                for row in rows:
+                    row["科类"] = subject_type_value
+            if include_context_fields:
+                _add_context_fields(rows)
             rows.extend(extra_rows or [])
             source_path = Path(directory) / "new_admissions.xlsx"
             pd.DataFrame(rows).to_excel(source_path, index=False)
@@ -114,6 +151,19 @@ class AdmissionsMajorRankPlannerTest(unittest.TestCase):
                 database_path=database_path,
                 table_name="admissions",
             ).run(user_request)
+
+
+def _add_context_fields(rows: list[dict[str, object]]) -> None:
+    context = [
+        ("深圳", 7660, 9900),
+        ("深圳", 6850, 10400),
+        ("广州", 6850, 16000),
+        ("成都", 68000, 9900),
+    ]
+    for row, (city, tuition, group_rank) in zip(rows, context, strict=True):
+        row["城市"] = city
+        row["学费"] = tuition
+        row["专业组最低位次1"] = group_rank
 
 
 if __name__ == "__main__":
