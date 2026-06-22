@@ -11,9 +11,11 @@ from src.semantic.intent_models import (
     SemanticPreference,
     SemanticUserContext,
 )
+from src.semantic.llm_intent_extractor import DeepSeekSemanticIntentExtractor
 
 __all__ = [
     "IntentExtractionResult",
+    "DeepSeekSemanticIntentExtractor",
     "QueryAST",
     "QueryFilter",
     "QuerySort",
