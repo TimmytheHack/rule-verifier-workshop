@@ -70,9 +70,9 @@
 - Create: `src/semantic/query_ast.py`
   - 定义 `QueryAST`、`QueryFilter`、`QuerySort`、`VerifiedQueryPlan`、`QueryVerificationIssue`。
 - Create: `src/semantic/capability_graph.py`
-  - 定义 `DatasetCapabilityGraph`、`CapabilityField`，并从 dataset/profile 构建能力图。
+  - 定义 `DatasetCapabilityGraph`、`CapabilityField`，并从 dataset/profile 和可选 domain expected columns 构建能力图。
 - Create: `src/semantic/semantic_candidates.py`
-  - 规则优先生成字段语义候选；保留 `LLMSemanticCandidateProvider` protocol，测试使用 fake provider。
+  - 从 domain semantic config 生成字段语义候选；保留 `LLMSemanticCandidateProvider` protocol，测试使用 fake provider；不内置 admissions 表头映射。
 - Create: `src/semantic/reviewed_mapping.py`
   - 读取 domain pack 中的 reviewed mapping seed，并校验字段存在、类型和 op。
 - Create: `src/semantic/query_verifier.py`
@@ -84,7 +84,7 @@
 - Modify: `domains/admissions/domain.json`
   - 增加 `semantic_capabilities` 配置路径和 admissions 新表 reviewed mapping seed。
 - Create: `domains/admissions/semantic_capabilities.json`
-  - 保存 admissions reviewed semantic mapping、query recipes、unsupported capability 文案。
+  - 保存 admissions reviewed semantic mapping、source aliases、expected missing columns、query recipes、unsupported capability 文案。
 - Modify: `src/domains/domain_config.py`
   - 增加 `semantic_capabilities_path` 和 `semantic_capabilities` 读取入口。
 - Modify: `src/api/dataset_service.py`
@@ -556,14 +556,17 @@ class SemanticCapabilityGraphTest(unittest.TestCase):
         self.assertIn("contains", graph.fields["专业"].candidate_ops)
         self.assertIn("sort", graph.fields["最低分数"].candidate_ops)
 
-    def test_graph_records_missing_common_admissions_columns(self) -> None:
+    def test_graph_records_only_explicit_expected_columns_as_missing(self) -> None:
         dataset = next(new_admissions_dataset())
 
-        graph = DatasetCapabilityGraph.from_dataset(dataset)
+        graph = DatasetCapabilityGraph.from_dataset(
+            dataset,
+            expected_source_columns=["专业", "学费", "城市"],
+        )
 
         self.assertIn("学费", graph.missing_source_columns)
         self.assertIn("城市", graph.missing_source_columns)
-        self.assertIn("专业组最低位次1", graph.missing_source_columns)
+        self.assertNotIn("专业", graph.missing_source_columns)
 
 
 if __name__ == "__main__":
@@ -597,20 +600,8 @@ from typing import Any
 
 import pandas as pd
 
-from src.adapters.excel_adapter import ExcelDataSet, cell_text
 from src.adapters.data_warehouse import _parse_number
-
-
-COMMON_ADMISSIONS_SOURCE_COLUMNS = {
-    "生源地",
-    "专业名称",
-    "专业组最低位次1",
-    "专业组最低分1",
-    "最低位次1",
-    "最低分1",
-    "城市",
-    "学费",
-}
+from src.adapters.excel_adapter import ExcelDataSet, cell_text
 
 
 @dataclass(frozen=True)
@@ -651,7 +642,11 @@ class DatasetCapabilityGraph:
     missing_source_columns: list[str]
 
     @classmethod
-    def from_dataset(cls, dataset: ExcelDataSet) -> "DatasetCapabilityGraph":
+    def from_dataset(
+        cls,
+        dataset: ExcelDataSet,
+        expected_source_columns: list[str] | None = None,
+    ) -> "DatasetCapabilityGraph":
         fields = {}
         for column in dataset.headers:
             if not column or column not in dataset.dataframe.columns:
@@ -659,7 +654,7 @@ class DatasetCapabilityGraph:
             fields[column] = _field_profile(column, dataset.dataframe[column])
         missing = sorted(
             column
-            for column in COMMON_ADMISSIONS_SOURCE_COLUMNS
+            for column in expected_source_columns or []
             if column not in fields
         )
         return cls(
@@ -765,8 +760,11 @@ class SemanticMappingTest(unittest.TestCase):
     def test_rule_based_candidates_for_new_admissions_headers(self) -> None:
         dataset = next(new_admissions_dataset())
         graph = DatasetCapabilityGraph.from_dataset(dataset)
+        domain = DomainConfig.load("admissions")
 
-        candidates = RuleBasedSemanticCandidateGenerator().generate(graph)
+        candidates = RuleBasedSemanticCandidateGenerator.from_domain(
+            domain,
+        ).generate(graph)
         by_field = {
             candidate["canonical_field_id"]: candidate
             for candidate in candidates
@@ -776,6 +774,14 @@ class SemanticMappingTest(unittest.TestCase):
         self.assertEqual(by_field["major_min_rank"]["source_column"], "最低位次")
         self.assertEqual(by_field["major_min_score"]["source_column"], "最低分数")
         self.assertEqual(by_field["school_province"]["source_column"], "学校所在")
+
+    def test_candidate_generator_has_no_builtin_admissions_header_map(self) -> None:
+        dataset = next(new_admissions_dataset())
+        graph = DatasetCapabilityGraph.from_dataset(dataset)
+
+        candidates = RuleBasedSemanticCandidateGenerator({}).generate(graph)
+
+        self.assertEqual(candidates, [])
 
     def test_reviewed_mapping_registry_activates_only_existing_columns(self) -> None:
         dataset = next(new_admissions_dataset())
@@ -816,48 +822,45 @@ from __future__ import annotations
 
 from typing import Any, Protocol
 
+from src.domains import DomainConfig
 from src.semantic.capability_graph import DatasetCapabilityGraph
 
 
 class LLMSemanticCandidateProvider(Protocol):
     """LLM 字段语义候选提供者接口。"""
 
-    def propose(self, headers: list[str], samples: dict[str, list[str]]) -> list[dict[str, Any]]:
+    def propose(
+        self,
+        headers: list[str],
+        samples: dict[str, list[str]],
+    ) -> list[dict[str, Any]]:
         """返回候选字段语义，不返回可执行规则。"""
 
 
-RULE_BASED_HEADER_MAP = {
-    "专业": "major_name",
-    "专业名称": "major_name",
-    "最低位次": "major_min_rank",
-    "最低位次1": "major_min_rank",
-    "最低分数": "major_min_score",
-    "最低分1": "major_min_score",
-    "学校所在": "school_province",
-    "所在省": "school_province",
-    "院校名称": "university_name",
-    "所属专业组": "group_code",
-    "院校专业组代码": "group_code",
-    "选科要求": "subject_requirement",
-    "科类": "subject_type",
-    "年份": "year",
-    "录取人数": "plan_count",
-    "是否985": "school_is_985",
-    "是否211": "school_is_211",
-    "学校性质": "school_ownership",
-    "专业备注": "major_notes",
-}
-
-
 class RuleBasedSemanticCandidateGenerator:
-    """基于已审查表头词典生成语义候选。"""
+    """基于 domain reviewed mapping 生成语义候选。"""
+
+    def __init__(self, reviewed_mappings: dict[str, dict[str, Any]]) -> None:
+        self.reviewed_mappings = reviewed_mappings
+
+    @classmethod
+    def from_domain(
+        cls,
+        domain_config: DomainConfig,
+    ) -> "RuleBasedSemanticCandidateGenerator":
+        payload = domain_config.semantic_capabilities
+        return cls(payload.get("reviewed_mappings") or {})
 
     def generate(self, graph: DatasetCapabilityGraph) -> list[dict[str, Any]]:
         candidates = []
-        for source_column, field in graph.fields.items():
-            field_id = RULE_BASED_HEADER_MAP.get(source_column)
-            if not field_id:
+        for field_id, spec in self.reviewed_mappings.items():
+            source_column = _first_existing_column(
+                spec.get("source_columns") or [],
+                graph,
+            )
+            if not source_column:
                 continue
+            field = graph.fields[source_column]
             candidates.append(
                 {
                     "source_column": source_column,
@@ -865,10 +868,20 @@ class RuleBasedSemanticCandidateGenerator:
                     "confidence": "rule_exact_header",
                     "inferred_type": field.inferred_type,
                     "candidate_ops": field.candidate_ops,
-                    "reason": f"表头 `{source_column}` 命中 reviewed header map。",
+                    "reason": f"表头 `{source_column}` 命中 domain reviewed mapping。",
                 }
             )
         return candidates
+
+
+def _first_existing_column(
+    source_columns: list[str],
+    graph: DatasetCapabilityGraph,
+) -> str | None:
+    for column in source_columns:
+        if column in graph.fields:
+            return str(column)
+    return None
 ```
 
 - [ ] **Step 4: 创建 reviewed mapping 配置**
@@ -879,6 +892,13 @@ Create `domains/admissions/semantic_capabilities.json`:
 {
   "status": "approved",
   "version": "1",
+  "capability_profile": {
+    "expected_source_columns": [
+      "学费",
+      "城市",
+      "专业组最低位次1"
+    ]
+  },
   "reviewed_mappings": {
     "year": {
       "source_columns": ["年份"],
@@ -2337,17 +2357,39 @@ from src.semantic.capability_graph import DatasetCapabilityGraph
 In `profile`, after loading `profile`, build capability summary from source dataset:
 
 ```python
+        expected_source_columns = _semantic_expected_source_columns(metadata)
         dataset = load_source_dataset(
             metadata["source_path"],
             sheet_name=metadata.get("sheet_name"),
         )
-        capability_graph = DatasetCapabilityGraph.from_dataset(dataset).to_dict()
+        capability_graph = DatasetCapabilityGraph.from_dataset(
+            dataset,
+            expected_source_columns=expected_source_columns,
+        ).to_dict()
 ```
 
 Add to the returned dict:
 
 ```python
             "capability_graph": capability_graph,
+```
+
+Add this helper near `_required_field_status`:
+
+```python
+def _semantic_expected_source_columns(metadata: dict[str, Any]) -> list[str]:
+    domain_dir = metadata.get("domain_dir")
+    domain_name = metadata.get("domain_name")
+    if not domain_dir or not domain_name:
+        return []
+    domain = DomainConfig.from_path(domain_dir, domain_name)
+    capability_profile = (
+        domain.semantic_capabilities.get("capability_profile") or {}
+    )
+    return [
+        str(item)
+        for item in capability_profile.get("expected_source_columns") or []
+    ]
 ```
 
 - [ ] **Step 5: 运行端到端测试确认通过**
@@ -2717,7 +2759,8 @@ Expected: generated answer and `top_results` reproduce the same factual basis us
 
 ## 自检
 
-- Spec coverage: 本计划覆盖用户提出的 LLM 候选语义、reviewed mapping、capability graph、QueryAST、verifier、SQLBuilder、EvidencePack、answerability、真实提示词验收。
+- 规格覆盖: 本计划覆盖用户提出的 LLM 候选语义、reviewed mapping、capability graph、QueryAST、verifier、SQLBuilder、EvidencePack、answerability、真实提示词验收。
 - 外部研究应用: 计划明确采用 DuckDB 参数化执行和 Pydantic 结构化校验；SQLGlot、Frictionless、semantic layer 系统和 text-to-SQL 论文只作为 phase 1 设计参考。
-- Placeholder scan: 本计划没有占位任务、空任务或未说明测试命令的步骤。
-- Type consistency: Pydantic `QueryAST` / `VerifiedQueryPlan`、`DatasetCapabilityGraph`、`ReviewedMappingRegistry`、`SemanticQueryVerifier`、`SemanticSQLBuilder`、`AdmissionsMajorRankPlanner` 在各任务中的名称一致。
+- Agent 规则兼容: 不修改 `AGENTS.md` 或 `AGENTS.override.md`；admissions source aliases 和 expected missing columns 放在 domain pack，通用 `src/semantic` 不内置招生表头映射。
+- 占位扫描: 本计划没有占位任务、空任务或未说明测试命令的步骤。
+- 类型一致性: Pydantic `QueryAST` / `VerifiedQueryPlan`、`DatasetCapabilityGraph`、`ReviewedMappingRegistry`、`SemanticQueryVerifier`、`SemanticSQLBuilder`、`AdmissionsMajorRankPlanner` 在各任务中的名称一致。
