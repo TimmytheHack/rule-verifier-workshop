@@ -215,6 +215,23 @@ class UploadedDatasetFlowTest(unittest.TestCase):
 
 
 class UploadedSemanticAdmissionsFlowTest(unittest.TestCase):
+    def test_generic_recommendation_prompt_uses_legacy_planner(self) -> None:
+        query = "我今年广东物理类位次 9000，请推荐冲稳保"
+        with TemporaryDirectory() as directory:
+            service, dataset_id = _queryable_uploaded_admissions(
+                Path(directory),
+                use_excel=False,
+            )
+
+            response = service.query(
+                dataset_id,
+                user_input=query,
+                soft_preferences={"prompt": query},
+            )
+
+        assert_workbench_contract(self, response)
+        self.assertEqual(response["query_type"], "recommendation")
+
     def test_uploaded_new_admissions_major_rank_query(self) -> None:
         query = "广东物化生，10000名，列出冲稳保的次序，以及每个专业的最低录取排名"
         with TemporaryDirectory() as directory:

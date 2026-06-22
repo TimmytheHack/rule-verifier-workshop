@@ -46,6 +46,21 @@ PHYSICS_SUBJECT_TERMS = [
     "物理类",
     "首选物理",
 ]
+MAJOR_MIN_RANK_TERMS = [
+    "最低录取排名",
+    "最低录取位次",
+    "专业最低位次",
+    "专业最低排名",
+]
+RESELECTED_SUBJECTS = ["化学", "生物", "政治", "地理"]
+SUBJECT_BUNDLES = {
+    "物化生": ["化学", "生物"],
+    "物化地": ["化学", "地理"],
+    "物政地": ["政治", "地理"],
+    "物生地": ["生物", "地理"],
+    "史政地": ["政治", "地理"],
+    "史化生": ["化学", "生物"],
+}
 
 
 @dataclass(frozen=True)
@@ -76,7 +91,7 @@ class AdmissionsMajorRankPlanner:
         self.table_name = table_name
 
     def run(self, user_request: str) -> AdmissionsMajorRankResult | None:
-        if "冲稳保" not in user_request and "最低录取排名" not in user_request:
+        if not _matches_major_rank_query(user_request):
             return None
 
         rank = _parse_rank(user_request)
@@ -108,6 +123,9 @@ class AdmissionsMajorRankPlanner:
             return _subject_type_confirmation_result(rank)
         if subject_type != "物理类":
             return _unsupported_subject_type_result(rank, subject_type)
+        selected_subjects = _parse_selected_subjects(user_request)
+        if not selected_subjects:
+            return _subject_requirement_confirmation_result(rank)
 
         dataset = load_structured_dataset(
             self.database_path,
@@ -153,9 +171,13 @@ class AdmissionsMajorRankPlanner:
             raw_rows = connection.execute(built.sql, built.params).fetchdf().to_dict(
                 "records"
             )
+        subject_rows = _filter_subject_requirement_rows(
+            raw_rows,
+            selected_subjects,
+        )
 
         rows = _bucket_rows(
-            raw_rows,
+            subject_rows,
             rank,
             self.domain_config.semantic_capabilities,
         )
@@ -175,6 +197,13 @@ class AdmissionsMajorRankPlanner:
                         "保": [rank + 3001, rank + 9000],
                     },
                 },
+                {
+                    "field_id": "subject_requirement",
+                    "answerable": True,
+                    "capability": "deterministic_post_filter",
+                    "selected_subjects": selected_subjects,
+                    "reason": "subject_requirement_satisfied",
+                },
             ],
             unanswerable_intents=_unsupported_context_intents(registry),
             execution_summary={
@@ -184,12 +213,25 @@ class AdmissionsMajorRankPlanner:
                 "params": built.params,
                 "input_row_count": graph.row_count,
                 "sql_row_count": len(raw_rows),
+                "subject_compatible_row_count": len(subject_rows),
                 "filtered_row_count": len(rows),
                 "rank": rank,
                 "basis": "major_min_rank",
+                "selected_subjects": selected_subjects,
+                "post_filters": [
+                    {
+                        "field_id": "subject_requirement",
+                        "operator": "satisfies_subject_requirement",
+                        "value": selected_subjects,
+                    }
+                ],
                 "verified_query_plan": verification.plan.model_dump(),
             },
         )
+
+
+def _matches_major_rank_query(text: str) -> bool:
+    return "冲稳保" in text and any(term in text for term in MAJOR_MIN_RANK_TERMS)
 
 
 def _parse_supported_subject_type(text: str) -> str | None:
@@ -198,6 +240,19 @@ def _parse_supported_subject_type(text: str) -> str | None:
     if any(term in text for term in PHYSICS_SUBJECT_TERMS):
         return "物理类"
     return None
+
+
+def _parse_selected_subjects(text: str) -> list[str]:
+    normalized = _normalize_subject_text(text)
+    selected = []
+    for bundle, subjects in SUBJECT_BUNDLES.items():
+        if bundle in normalized:
+            selected.extend(subjects)
+    if selected:
+        return _unique_subjects(selected)
+    return _unique_subjects(
+        subject for subject in RESELECTED_SUBJECTS if subject in normalized
+    )
 
 
 def _subject_type_confirmation_result(rank: int) -> AdmissionsMajorRankResult:
@@ -220,6 +275,31 @@ def _subject_type_confirmation_result(rank: int) -> AdmissionsMajorRankResult:
                 "severity": "error",
                 "field_id": "subject_type",
                 "message": "请补充科类或选科，例如物化生或物理类。",
+            }
+        ],
+    )
+
+
+def _subject_requirement_confirmation_result(rank: int) -> AdmissionsMajorRankResult:
+    return AdmissionsMajorRankResult(
+        query_type=QUERY_TYPE,
+        status="needs_confirmation",
+        rows=[],
+        answerable_intents=[],
+        unanswerable_intents=[
+            {
+                "field_id": "subject_requirement",
+                "answerable": False,
+                "reason": "缺少再选科目，不能按选科要求过滤专业最低位次查询。",
+            }
+        ],
+        execution_summary=_empty_execution_summary(rank=rank),
+        warnings=[
+            {
+                "code": "missing_reselected_subjects",
+                "severity": "error",
+                "field_id": "subject_requirement",
+                "message": "请补充再选科目，例如物化生。",
             }
         ],
     )
@@ -356,6 +436,65 @@ def _has_special_limit(row: dict[str, Any], terms: list[str]) -> bool:
         for key in ["major_notes", "university_name", "major_name"]
     )
     return any(term and term in haystack for term in terms)
+
+
+def _filter_subject_requirement_rows(
+    rows: list[dict[str, Any]],
+    selected_subjects: list[str],
+) -> list[dict[str, Any]]:
+    return [
+        row
+        for row in rows
+        if _subject_requirement_compatible(
+            row.get("subject_requirement"),
+            selected_subjects,
+        )
+    ]
+
+
+def _subject_requirement_compatible(
+    requirement: Any,
+    selected_subjects: list[str],
+) -> bool:
+    required_groups = _required_subject_groups(requirement)
+    if not required_groups:
+        return True
+    selected = set(_unique_subjects(selected_subjects))
+    return any(group.issubset(selected) for group in required_groups)
+
+
+def _required_subject_groups(requirement: Any) -> list[set[str]]:
+    text = _normalize_subject_text(requirement)
+    if not text or text in {"不限", "无", "nan"} or "不限" in text:
+        return []
+    if "或" in text or "/" in text:
+        return [
+            subjects
+            for subjects in (
+                _subjects_in_text(part) for part in re.split(r"或|/", text)
+            )
+            if subjects
+        ]
+    subjects = _subjects_in_text(text)
+    return [subjects] if subjects else []
+
+
+def _subjects_in_text(text: str) -> set[str]:
+    return {subject for subject in RESELECTED_SUBJECTS if subject in text}
+
+
+def _normalize_subject_text(value: Any) -> str:
+    text = "" if value is None else str(value).strip()
+    return text.replace("思想政治", "政治").replace("生物学", "生物")
+
+
+def _unique_subjects(values: Any) -> list[str]:
+    output = []
+    for value in values:
+        text = _normalize_subject_text(value)
+        if text in RESELECTED_SUBJECTS and text not in output:
+            output.append(text)
+    return output[:2]
 
 
 def _missing_recipe_fields(
