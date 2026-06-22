@@ -55,6 +55,13 @@ FRONTEND_TOP_RESULT_KEYS = {
     "safety_margin",
 }
 
+EVIDENCE_PACK_KEYS = {
+    "answerable_intents",
+    "unanswerable_intents",
+    "verified_query_plan",
+    "capability_graph_summary",
+}
+
 CHINESE_TOP_RESULT_KEYS = {
     "院校名称",
     "院校专业组代码",
@@ -91,6 +98,7 @@ def assert_workbench_contract(testcase: Any, payload: dict[str, Any]) -> None:
     testcase.assertIsInstance(payload["rejected_confirmations"], list)
     testcase.assertIsInstance(payload["warnings"], list)
     testcase.assertIsInstance(payload["evidence_pack"], dict)
+    testcase.assertTrue(EVIDENCE_PACK_KEYS <= set(payload["evidence_pack"]))
     testcase.assertIsInstance(payload["debug_trace"], dict)
     for item in payload["items"]:
         testcase.assertTrue(ITEM_KEYS <= set(item))

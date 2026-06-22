@@ -288,9 +288,26 @@ class WorkbenchResponse:
             "no_schema_field_preferences": self.no_schema_field_preferences,
             "rejected_confirmations": self.rejected_confirmations,
             "warnings": self.warnings,
-            "evidence_pack": self.evidence_pack,
+            "evidence_pack": _with_answerability_defaults(self.evidence_pack),
             "debug_trace": self.debug_trace,
         }
+
+
+def _with_answerability_defaults(evidence_pack: dict[str, Any]) -> dict[str, Any]:
+    evidence = dict(evidence_pack)
+    evidence.setdefault(
+        "answerable_intents",
+        [
+            {
+                "intent": "verified_rules",
+                "answerable": bool(evidence.get("executed_rules")),
+            }
+        ],
+    )
+    evidence.setdefault("unanswerable_intents", [])
+    evidence.setdefault("verified_query_plan", {})
+    evidence.setdefault("capability_graph_summary", {})
+    return evidence
 
 
 def available_options() -> dict[str, Any]:

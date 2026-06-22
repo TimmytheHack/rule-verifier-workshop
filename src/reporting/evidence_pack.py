@@ -49,6 +49,10 @@ class EvidencePack:
     decision_guidance: dict[str, Any] = field(
         default_factory=_default_decision_guidance
     )
+    answerable_intents: list[dict[str, Any]] = field(default_factory=list)
+    unanswerable_intents: list[dict[str, Any]] = field(default_factory=list)
+    verified_query_plan: dict[str, Any] = field(default_factory=dict)
+    capability_graph_summary: dict[str, Any] = field(default_factory=dict)
 
     @classmethod
     def from_verified_pipeline(
@@ -140,6 +144,15 @@ class EvidencePack:
             rejected_confirmations=confirmation.get("rejected_candidates", []),
             policy_references=policy_references or [],
             decision_guidance=guidance,
+            answerable_intents=[
+                {
+                    "intent": "verified_rules",
+                    "answerable": bool(compact_rules),
+                }
+            ],
+            unanswerable_intents=[],
+            verified_query_plan={},
+            capability_graph_summary={},
         )
 
     def to_dict(self) -> dict[str, Any]:

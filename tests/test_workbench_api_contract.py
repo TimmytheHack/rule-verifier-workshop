@@ -4,7 +4,7 @@ import unittest
 from tempfile import TemporaryDirectory
 
 from scripts.generate_domain_pack import generate_domain_pack
-from src.api.workbench import WorkbenchConfig
+from src.api.workbench import WorkbenchConfig, run_workbench
 from tests.warehouse_test_utils import (
     run_workbench_with_domain_warehouse,
     run_workbench_with_test_warehouse,
@@ -62,6 +62,18 @@ def _contract_snapshot(result: dict[str, object]) -> dict[str, object]:
 
 
 class WorkbenchApiContractTest(unittest.TestCase):
+    def test_evidence_pack_contains_answerability_fields(self) -> None:
+        response = run_workbench(
+            WorkbenchConfig(user_input="广东物理，位次9000，想读计算机，请推荐")
+        )
+
+        assert_workbench_contract(self, response)
+        evidence = response["evidence_pack"]
+        self.assertIn("answerable_intents", evidence)
+        self.assertIn("unanswerable_intents", evidence)
+        self.assertIn("verified_query_plan", evidence)
+        self.assertIn("capability_graph_summary", evidence)
+
     def test_admissions_ok_contract_shape_and_top_result_keys(self) -> None:
         result = _run(OK_PROMPT)
 
