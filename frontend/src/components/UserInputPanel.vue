@@ -408,6 +408,7 @@ defineExpose({ submitRun });
           <el-select
             v-model="soft.rank_window_preset"
             class="full-control"
+            popper-class="rank-window-select-popper"
             placeholder="请选择排位范围"
             @change="applyRankWindowPreset"
           >
