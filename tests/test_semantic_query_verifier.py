@@ -32,6 +32,37 @@ class QueryASTTest(unittest.TestCase):
                 }
             )
 
+    def test_query_ast_rejects_blank_intent(self) -> None:
+        with self.assertRaises(pydantic.ValidationError):
+            QueryAST.from_candidate(
+                {
+                    "intent": " ",
+                    "filters": [],
+                    "sort": [],
+                }
+            )
+
+    def test_query_ast_rejects_non_positive_limit(self) -> None:
+        with self.assertRaises(pydantic.ValidationError):
+            QueryAST.from_candidate(
+                {
+                    "filters": [],
+                    "sort": [],
+                    "limit": 0,
+                }
+            )
+
+    def test_query_ast_clamps_overlarge_limit(self) -> None:
+        query_ast = QueryAST.from_candidate(
+            {
+                "filters": [],
+                "sort": [],
+                "limit": 500,
+            }
+        )
+
+        self.assertEqual(query_ast.limit, 100)
+
     def test_query_ast_normalizes_filters_and_sort(self) -> None:
         query_ast = QueryAST.from_candidate(
             {
@@ -86,6 +117,28 @@ class QueryASTTest(unittest.TestCase):
                 "field_id": "city",
             },
         )
+
+    def test_verification_issue_serializes_non_reserved_details(self) -> None:
+        issue = QueryVerificationIssue(
+            code="missing_field",
+            severity="error",
+            message="字段不存在。",
+            field_id="city",
+            details={"candidate_id": "cand_001", "source": "schema"},
+        )
+
+        self.assertEqual(
+            issue.to_dict(),
+            {
+                "code": "missing_field",
+                "severity": "error",
+                "message": "字段不存在。",
+                "field_id": "city",
+                "candidate_id": "cand_001",
+                "source": "schema",
+            },
+        )
+        self.assertNotIn("details", issue.to_dict())
 
     def test_verified_query_plan_accepts_dict_records(self) -> None:
         plan = VerifiedQueryPlan(
