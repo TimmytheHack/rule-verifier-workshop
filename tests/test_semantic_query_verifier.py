@@ -75,6 +75,23 @@ class QueryASTTest(unittest.TestCase):
                 }
             )
 
+    def test_query_ast_rejects_filter_value_nested_raw_sql(self) -> None:
+        with self.assertRaises(pydantic.ValidationError):
+            QueryAST.from_candidate(
+                {
+                    "filters": [
+                        {
+                            "field_id": "year",
+                            "op": "eq",
+                            "value": {
+                                "metadata": {"raw_sql": "year = 2025"},
+                            },
+                        },
+                    ],
+                    "sort": [],
+                }
+            )
+
     def test_query_ast_rejects_sort_extra_raw_sql(self) -> None:
         with self.assertRaises(pydantic.ValidationError):
             QueryAST.from_candidate(
@@ -244,6 +261,16 @@ class QueryASTTest(unittest.TestCase):
         )
         self.assertNotIn("details", issue.to_dict())
 
+    def test_verification_issue_rejects_nested_raw_sql_details(self) -> None:
+        with self.assertRaises(pydantic.ValidationError):
+            QueryVerificationIssue(
+                code="missing_field",
+                severity="error",
+                message="字段不存在。",
+                field_id="city",
+                details={"metadata": {"raw_sql": "city = '广州'"}},
+            )
+
     def test_verified_query_plan_accepts_dict_records(self) -> None:
         plan = VerifiedQueryPlan(
             intent="table_filter",
@@ -341,9 +368,27 @@ class QueryASTTest(unittest.TestCase):
         with self.assertRaises(pydantic.ValidationError):
             VerifiedQueryPlan(**payload)
 
+    def test_verified_query_plan_rejects_filter_value_nested_raw_sql(self) -> None:
+        payload = self._verified_plan_payload()
+        payload["filters"][0]["value"] = {
+            "metadata": {"raw_sql": "year = 2025"},
+        }
+
+        with self.assertRaises(pydantic.ValidationError):
+            VerifiedQueryPlan(**payload)
+
     def test_verified_query_plan_rejects_answerable_intent_raw_sql(self) -> None:
         payload = self._verified_plan_payload()
         payload["answerable_intents"][0]["raw_sql"] = "year = 2025"
+
+        with self.assertRaises(pydantic.ValidationError):
+            VerifiedQueryPlan(**payload)
+
+    def test_verified_query_plan_rejects_answerable_intent_nested_raw_sql(self) -> None:
+        payload = self._verified_plan_payload()
+        payload["answerable_intents"][0]["metadata"] = {
+            "raw_sql": "year = 2025",
+        }
 
         with self.assertRaises(pydantic.ValidationError):
             VerifiedQueryPlan(**payload)
@@ -360,6 +405,45 @@ class QueryASTTest(unittest.TestCase):
 
         with self.assertRaises(pydantic.ValidationError):
             VerifiedQueryPlan(**payload)
+
+    def test_verified_query_plan_rejects_unanswerable_intent_nested_raw_sql(self) -> None:
+        payload = self._verified_plan_payload()
+        payload["unanswerable_intents"] = [
+            {
+                "field_id": "city",
+                "reason": "missing_field",
+                "metadata": {"raw_sql": "city = '广州'"},
+            }
+        ]
+
+        with self.assertRaises(pydantic.ValidationError):
+            VerifiedQueryPlan(**payload)
+
+    def test_verified_query_plan_allows_non_raw_sql_metadata(self) -> None:
+        payload = self._verified_plan_payload()
+        payload["filters"][0]["value"] = {"metadata": {"basis": "schema"}}
+        payload["answerable_intents"][0]["metadata"] = {
+            "basis": "schema",
+            "capability": "filter",
+        }
+        payload["unanswerable_intents"] = [
+            {
+                "field_id": "city",
+                "metadata": {"basis": "missing_schema"},
+            }
+        ]
+
+        plan = VerifiedQueryPlan(**payload)
+
+        self.assertEqual(plan.filters[0]["value"], {"metadata": {"basis": "schema"}})
+        self.assertEqual(
+            plan.answerable_intents[0]["metadata"],
+            {"basis": "schema", "capability": "filter"},
+        )
+        self.assertEqual(
+            plan.unanswerable_intents[0]["metadata"],
+            {"basis": "missing_schema"},
+        )
 
     def test_verified_query_plan_rejects_select_without_source_column(self) -> None:
         with self.assertRaises(pydantic.ValidationError):

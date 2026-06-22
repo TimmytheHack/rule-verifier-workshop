@@ -3,6 +3,18 @@ from typing import Any
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 
+def _reject_raw_sql_key(value: Any, context: str) -> Any:
+    if isinstance(value, dict):
+        if "raw_sql" in value:
+            raise ValueError(f"{context} 不能包含 raw_sql。")
+        for nested_value in value.values():
+            _reject_raw_sql_key(nested_value, context)
+    elif isinstance(value, list):
+        for nested_value in value:
+            _reject_raw_sql_key(nested_value, context)
+    return value
+
+
 class QueryFilter(BaseModel):
     model_config = ConfigDict(frozen=True, extra="forbid")
 
@@ -17,6 +29,11 @@ class QueryFilter(BaseModel):
         if not normalized:
             raise ValueError("字段不能为空。")
         return normalized
+
+    @field_validator("value")
+    @classmethod
+    def _reject_raw_sql_value(cls, value: Any) -> Any:
+        return _reject_raw_sql_key(value, "value")
 
 
 class QuerySort(BaseModel):
@@ -96,7 +113,7 @@ class QueryVerificationIssue(BaseModel):
         conflicts = reserved_keys.intersection(value)
         if conflicts:
             raise ValueError("details 不能覆盖标准字段。")
-        return value
+        return _reject_raw_sql_key(value, "details")
 
     def to_dict(self) -> dict[str, Any]:
         serialized = self.model_dump(exclude={"details"}, exclude_none=True)
@@ -137,8 +154,7 @@ class VerifiedQueryPlan(BaseModel):
         cls, value: list[dict[str, Any]]
     ) -> list[dict[str, Any]]:
         for record in value:
-            if "raw_sql" in record:
-                raise ValueError("intent 记录不能包含 raw_sql。")
+            _reject_raw_sql_key(record, "intent 记录")
         return value
 
     @staticmethod
@@ -196,7 +212,9 @@ class VerifiedQueryPlan(BaseModel):
                         record, "source_column", "filters"
                     ),
                     "op": cls._require_record_text(record, "op", "filters"),
-                    "value": record["value"],
+                    "value": _reject_raw_sql_key(
+                        record["value"], "filters.value"
+                    ),
                 }
             )
         return normalized
