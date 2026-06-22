@@ -42,6 +42,47 @@ class QueryASTTest(unittest.TestCase):
                 }
             )
 
+    def test_query_ast_rejects_blank_source(self) -> None:
+        with self.assertRaises(pydantic.ValidationError):
+            QueryAST.from_candidate(
+                {
+                    "source": " ",
+                    "filters": [],
+                    "sort": [],
+                }
+            )
+
+    def test_query_ast_rejects_blank_filter_field_id(self) -> None:
+        with self.assertRaises(pydantic.ValidationError):
+            QueryAST.from_candidate(
+                {
+                    "filters": [
+                        {"field_id": " ", "op": "eq", "value": 2025},
+                    ],
+                    "sort": [],
+                }
+            )
+
+    def test_query_ast_rejects_blank_filter_op(self) -> None:
+        with self.assertRaises(pydantic.ValidationError):
+            QueryAST.from_candidate(
+                {
+                    "filters": [
+                        {"field_id": "year", "op": " ", "value": 2025},
+                    ],
+                    "sort": [],
+                }
+            )
+
+    def test_query_ast_rejects_blank_sort_field_id(self) -> None:
+        with self.assertRaises(pydantic.ValidationError):
+            QueryAST.from_candidate(
+                {
+                    "filters": [],
+                    "sort": [{"field_id": " ", "direction": "asc"}],
+                }
+            )
+
     def test_query_ast_rejects_non_positive_limit(self) -> None:
         with self.assertRaises(pydantic.ValidationError):
             QueryAST.from_candidate(
@@ -218,6 +259,25 @@ class QueryASTTest(unittest.TestCase):
                     {"field_id": "university_name"},
                 ],
                 filters=[],
+                sort=[],
+                limit=30,
+                answerable_intents=[],
+                unanswerable_intents=[],
+            )
+
+    def test_verified_query_plan_rejects_filter_without_value_key(self) -> None:
+        with self.assertRaises(pydantic.ValidationError):
+            VerifiedQueryPlan(
+                intent="table_filter",
+                table_name="admissions",
+                select_columns=[],
+                filters=[
+                    {
+                        "field_id": "year",
+                        "source_column": "年份",
+                        "op": "eq",
+                    },
+                ],
                 sort=[],
                 limit=30,
                 answerable_intents=[],

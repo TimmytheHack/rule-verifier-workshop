@@ -179,6 +179,8 @@ class VerifiedQueryPlan(BaseModel):
                 copied, "source_column", "filters"
             )
             copied["op"] = cls._require_record_text(copied, "op", "filters")
+            if "value" not in copied:
+                raise ValueError("filters.value 必须存在。")
             normalized.append(copied)
         return normalized
 
