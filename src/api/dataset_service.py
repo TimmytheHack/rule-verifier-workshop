@@ -37,6 +37,7 @@ from src.adapters.data_warehouse import (
 )
 from src.api.workbench import WorkbenchConfig, run_workbench
 from src.domains import DomainConfig
+from src.semantic.capability_graph import DatasetCapabilityGraph
 
 
 DATASET_STATUS_VALUES = {
@@ -59,6 +60,7 @@ DOMAIN_PACK_TEMPLATE_FILES = [
     "golden_cases.json",
     "value_aliases.json",
     "top_result_mapping.yaml",
+    "semantic_capabilities.json",
 ]
 SUPPORTED_UPLOAD_EXTENSIONS = {".csv", ".xlsx", ".xlsm", ".xls"}
 RESERVED_DATASET_IDS = {"admissions", "housing", "products"}
@@ -220,6 +222,15 @@ class DatasetService:
                 status_code=409,
             )
         profile = _load_json(path)
+        expected_source_columns = _semantic_expected_source_columns(metadata)
+        dataset = load_source_dataset(
+            metadata["source_path"],
+            sheet_name=metadata.get("sheet_name"),
+        )
+        capability_graph = DatasetCapabilityGraph.from_dataset(
+            dataset,
+            expected_source_columns=expected_source_columns,
+        ).to_dict()
         return {
             "dataset_id": dataset_id,
             "status": metadata["status"],
@@ -241,6 +252,7 @@ class DatasetService:
                 _profile_field(column)
                 for column in profile.get("columns", [])
             ],
+            "capability_graph": capability_graph,
             "warnings": metadata.get("warnings", []),
         }
 
@@ -931,6 +943,21 @@ def _required_field_status(
             }
         )
     return statuses
+
+
+def _semantic_expected_source_columns(metadata: dict[str, Any]) -> list[str]:
+    domain_dir = metadata.get("domain_dir")
+    domain_name = metadata.get("domain_name")
+    if not domain_dir or not domain_name:
+        return []
+    domain = DomainConfig.from_path(domain_dir, domain_name)
+    capability_profile = (
+        domain.semantic_capabilities.get("capability_profile") or {}
+    )
+    return [
+        str(item)
+        for item in capability_profile.get("expected_source_columns") or []
+    ]
 
 
 def _set_domain_status(domain_dir: Path, status: str) -> None:

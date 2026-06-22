@@ -52,6 +52,7 @@ from src.rules.rule_promoter import RulePromoter
 from src.rules.rule_verifier import RuleVerifier
 from src.schema.attribute_grounder import AttributeGrounder
 from src.schema.schema_registry import SchemaRegistry
+from src.semantic.admissions_major_rank import AdmissionsMajorRankPlanner
 from src.tracing.trace_generator import TraceGenerator
 
 
@@ -356,6 +357,14 @@ def _run_workbench(config: WorkbenchConfig) -> dict[str, Any]:
     warehouse_audit = _data_warehouse_audit(domain_config)
     if not warehouse_audit["ok"]:
         return _data_warehouse_warning_payload(config, warehouse_audit)
+    semantic_result = _run_semantic_capability_query(config, domain_config)
+    if semantic_result is not None:
+        return _semantic_capability_payload(
+            config=config,
+            domain_config=domain_config,
+            warehouse_audit=warehouse_audit,
+            semantic_result=semantic_result,
+        )
     planned_result = _run_admissions_planned_query(config, domain_config)
     if planned_result is not None:
         return _planned_query_payload(
@@ -561,6 +570,252 @@ def _run_workbench(config: WorkbenchConfig) -> dict[str, Any]:
         config=config,
         domain_config=domain_config,
     )
+
+
+def _run_semantic_capability_query(
+    config: WorkbenchConfig,
+    domain_config: DomainConfig,
+) -> Any | None:
+    if domain_config.domain_id != ADMISSIONS_DOMAIN.domain_id:
+        return None
+    if not domain_config.semantic_capabilities:
+        return None
+    return AdmissionsMajorRankPlanner(
+        domain_config=domain_config,
+        database_path=_warehouse_database_path(domain_config),
+        table_name=domain_config.table_name,
+    ).run(_compose_user_request(config))
+
+
+def _semantic_capability_payload(
+    *,
+    config: WorkbenchConfig,
+    domain_config: DomainConfig,
+    warehouse_audit: dict[str, Any],
+    semantic_result: Any,
+) -> dict[str, Any]:
+    items = _semantic_items(semantic_result.rows)
+    top_results = _semantic_top_results(semantic_result.rows)
+    result_sections = {"risk_buckets": semantic_result.rows}
+    evidence_pack = _semantic_evidence_pack(
+        config=config,
+        domain_config=domain_config,
+        warehouse_audit=warehouse_audit,
+        semantic_result=semantic_result,
+        result_sections=result_sections,
+    )
+    answer = _semantic_answer(semantic_result)
+    legacy_payload = {
+        "mode": "api",
+        "status": semantic_result.status,
+        "query_type": semantic_result.query_type,
+        "user_input": _compose_user_request(config),
+        "data_warehouse": warehouse_audit,
+        "hard_filters": _display_hard_filters_for_domain(config, domain_config),
+        "soft_preferences": _display_soft_preferences_for_domain(
+            config,
+            domain_config,
+        ),
+        "selected_options": _selected_options(config),
+        "extracted_preferences": [],
+        "extracted_slots": {},
+        "attribute_grounding": {"summary": {}, "attributes": []},
+        "confirmation_candidates": [],
+        "confirmation_state": _display_confirmation_state({}),
+        "proposed_rules": [],
+        "deterministic_rules": [],
+        "candidate_rules": [],
+        "not_executed_preferences": [],
+        "simulated_confirmations": {},
+        "executable_rules": [],
+        "execution": semantic_result.execution_summary,
+        "result_count": len(semantic_result.rows),
+        "items": items,
+        "top_results": top_results,
+        "result_sections": result_sections,
+        "trace": {},
+        "evidence_pack": evidence_pack,
+        "natural_language_report": {
+            "title": "Semantic capability admissions query 结果",
+            "summary": answer,
+            "full_text": answer,
+            "result_count_text": f"当前返回 {len(semantic_result.rows)} 条结果。",
+            "executed_rules": [],
+            "attribute_explanations": [],
+            "top_results": top_results,
+            "warnings": semantic_result.warnings,
+            "disclaimer": "只执行已审查语义能力和 verified query plan 支持的字段。",
+        },
+        "token_usage": {
+            "extractor": None,
+            "generator": None,
+            "total": {"prompt_tokens": 0, "completion_tokens": 0, "total_tokens": 0},
+        },
+    }
+    response = WorkbenchResponse(
+        schema_version=WORKBENCH_SCHEMA_VERSION,
+        domain=domain_config.domain_id,
+        domain_version=domain_config.domain_version,
+        domain_pack_status=domain_config.pack_status,
+        status=semantic_result.status,
+        query_type=semantic_result.query_type,
+        query=_contract_query(config),
+        answer=answer,
+        items=items,
+        top_results=top_results,
+        result_sections=result_sections,
+        result_count=len(semantic_result.rows),
+        executed_filters=[],
+        candidates_to_confirm=[],
+        confirmed_rules=[],
+        unconfirmed_candidates=[],
+        unexecuted_preferences=[],
+        no_schema_field_preferences=[],
+        rejected_confirmations=[],
+        warnings=_contract_warnings(
+            semantic_result.warnings,
+            status=semantic_result.status,
+            confirmation_state={},
+        ),
+        evidence_pack=evidence_pack,
+        debug_trace={
+            "execution": semantic_result.execution_summary,
+            "data_warehouse": warehouse_audit,
+        },
+    ).to_dict()
+    return {**legacy_payload, **response}
+
+
+def _semantic_evidence_pack(
+    *,
+    config: WorkbenchConfig,
+    domain_config: DomainConfig,
+    warehouse_audit: dict[str, Any],
+    semantic_result: Any,
+    result_sections: dict[str, Any],
+) -> dict[str, Any]:
+    return {
+        "user_request": _compose_user_request(config),
+        "query_type": semantic_result.query_type,
+        "executed_rules": [],
+        "candidate_confirmations": [],
+        "not_executed_preferences": [],
+        "result_count": len(semantic_result.rows),
+        "top_k_results": semantic_result.rows[:EVIDENCE_TOP_K],
+        "result_sections": result_sections,
+        "trace_summary": {
+            "mode": "semantic_capability",
+            "query_type": semantic_result.query_type,
+            "result_count": len(semantic_result.rows),
+            "top_k": EVIDENCE_TOP_K,
+        },
+        "execution_summary": semantic_result.execution_summary,
+        "answerable_intents": semantic_result.answerable_intents,
+        "unanswerable_intents": semantic_result.unanswerable_intents,
+        "verified_query_plan": _json_ready(
+            semantic_result.execution_summary.get("verified_query_plan")
+        ),
+        "capability_graph_summary": {
+            "domain": domain_config.domain_id,
+            "table_name": domain_config.table_name,
+            "input_row_count": semantic_result.execution_summary.get(
+                "input_row_count"
+            ),
+            "missing_context_fields": [
+                item.get("field_id")
+                for item in semantic_result.unanswerable_intents
+                if item.get("field_id")
+            ],
+            "warehouse": warehouse_audit.get("warehouse", {}),
+        },
+        "attribute_grounding_summary": {},
+        "proposed_rule_audit": [],
+        "confirmed_rules": [],
+        "confirmation_source": [],
+        "executed_after_confirmation": [],
+        "unconfirmed_candidates": [],
+        "no_schema_field_preferences": [],
+        "rejected_confirmations": [],
+    }
+
+
+def _semantic_items(rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    items = []
+    for index, row in enumerate(rows, start=1):
+        items.append(
+            {
+                "item_id": f"semantic_{index:03d}",
+                "title": (
+                    f"{row.get('档位')}：{row.get('院校名称')} - "
+                    f"{row.get('专业')}"
+                ),
+                "subtitle": f"最低录取排名：{row.get('最低录取排名')}",
+                "primary_attributes": [
+                    {"label": "专业组", "value": row.get("专业组")},
+                    {"label": "最低分", "value": row.get("最低分")},
+                    {"label": "最低录取排名", "value": row.get("最低录取排名")},
+                ],
+                "secondary_attributes": [
+                    {"label": "学校所在", "value": row.get("学校所在")},
+                    {
+                        "label": "985/211",
+                        "value": f"{row.get('是否985')}/{row.get('是否211')}",
+                    },
+                    {"label": "相对用户排名", "value": row.get("相对用户排名")},
+                ],
+                "matched_filters": [],
+                "raw": dict(row),
+            }
+        )
+    return items
+
+
+def _semantic_top_results(rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    return [
+        {
+            "id": f"semantic_{index:03d}",
+            "university_name": row.get("院校名称"),
+            "group_code": row.get("专业组"),
+            "major_code": row.get("专业代码"),
+            "major_name": row.get("专业"),
+            "full_major_name": row.get("专业"),
+            "city": None,
+            "tuition": None,
+            "rank_2024": None,
+            "plan_count": row.get("录取人数"),
+            "group_min_rank": None,
+            "major_min_rank": row.get("最低录取排名"),
+            "safety_margin": row.get("相对用户排名"),
+            "trace": [],
+        }
+        for index, row in enumerate(rows, start=1)
+    ]
+
+
+def _semantic_answer(semantic_result: Any) -> str:
+    if semantic_result.status == "blocked":
+        return "当前请求或数据未通过语义能力校验，未执行 SQL。"
+    if semantic_result.status == "needs_confirmation":
+        return "请先补充广东省排位和科类/选科信息，当前未执行 SQL。"
+    if semantic_result.status == "no_results":
+        return (
+            "已按 2025 年、物理类、选科要求字段和专业最低录取排名执行语义查询，"
+            "当前没有匹配结果。未使用学费、城市或专业组最低位次，因为当前数据缺少这些已审核字段。"
+        )
+
+    lines = [
+        (
+            "本次使用 2025 年、物理类、选科要求字段和专业最低录取排名生成冲稳保；"
+            "SQL 筛选基于年份、科类和专业最低位次，选科要求随 verified query plan 进入证据核对。"
+        ),
+        "未使用学费、城市或专业组最低位次，因为当前数据缺少这些已审核字段。",
+    ]
+    for row in semantic_result.rows:
+        lines.append(
+            f"{row['档位']}：{row['院校名称']} {row['专业组']} {row['专业']}，"
+            f"最低录取排名 {row['最低录取排名']}。"
+        )
+    return "\n".join(lines)
 
 
 def _run_admissions_planned_query(
@@ -1156,6 +1411,26 @@ def _normalize_warning(item: Any) -> dict[str, Any]:
         "severity": "warning",
         "message": str(item),
     }
+
+
+def _json_ready(value: Any) -> Any:
+    if isinstance(value, dict):
+        return {str(key): _json_ready(item) for key, item in value.items()}
+    if isinstance(value, list):
+        return [_json_ready(item) for item in value]
+    if isinstance(value, tuple):
+        return [_json_ready(item) for item in value]
+    if isinstance(value, Path):
+        return str(value)
+    if hasattr(value, "model_dump"):
+        return _json_ready(value.model_dump())
+    if hasattr(value, "__dict__"):
+        return {
+            str(key): _json_ready(item)
+            for key, item in value.__dict__.items()
+            if not str(key).startswith("_")
+        }
+    return value
 
 
 def _debug_trace(payload: dict[str, Any]) -> dict[str, Any]:

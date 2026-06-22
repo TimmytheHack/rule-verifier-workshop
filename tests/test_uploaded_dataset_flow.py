@@ -10,6 +10,7 @@ import pandas as pd
 import yaml
 
 from src.api.dataset_service import DatasetService, DatasetServiceError
+from tests.semantic_test_utils import write_new_admissions_excel
 from tests.workbench_contract_utils import assert_workbench_contract
 
 
@@ -211,6 +212,53 @@ class UploadedDatasetFlowTest(unittest.TestCase):
         self.assertTrue(response["items"])
         self.assertEqual(set(response["result_sections"]), {"reach", "match", "safety"})
         self.assertNotIn("score_without_rank", [w["code"] for w in response["warnings"]])
+
+
+class UploadedSemanticAdmissionsFlowTest(unittest.TestCase):
+    def test_uploaded_new_admissions_major_rank_query(self) -> None:
+        query = "广东物化生，10000名，列出冲稳保的次序，以及每个专业的最低录取排名"
+        with TemporaryDirectory() as directory:
+            source = write_new_admissions_excel(Path(directory) / "new_admissions.xlsx")
+            service = DatasetService(Path(directory) / "managed")
+            service.upload(
+                filename=source.name,
+                content=source.read_bytes(),
+                dataset_id="ds_new_admissions",
+            )
+            service.generate_domain_pack(
+                "ds_new_admissions",
+                domain_name="admissions",
+                base_domain="admissions",
+            )
+            profile = service.profile("ds_new_admissions")
+            self.assertIn("capability_graph", profile)
+            self.assertIn("最低位次", profile["capability_graph"]["fields"])
+            approved = service.approve_domain("ds_new_admissions")
+            self.assertTrue(approved["ok"])
+            built = service.build_warehouse("ds_new_admissions")
+            self.assertEqual(built["status"], "queryable")
+
+            response = service.query(
+                "ds_new_admissions",
+                user_input=query,
+                soft_preferences={"prompt": query},
+            )
+
+        assert_workbench_contract(self, response)
+        self.assertEqual(response["status"], "ok")
+        self.assertEqual(response["query_type"], "admissions_major_rank")
+        self.assertEqual(
+            [item["raw"]["档位"] for item in response["items"]],
+            ["冲", "稳", "保"],
+        )
+        self.assertEqual(response["items"][0]["raw"]["最低录取排名"], 9850)
+        self.assertIn(
+            "group_min_rank",
+            [
+                item["field_id"]
+                for item in response["evidence_pack"]["unanswerable_intents"]
+            ],
+        )
 
 
 def _generated_generic_dataset(root: Path) -> tuple[DatasetService, str]:
