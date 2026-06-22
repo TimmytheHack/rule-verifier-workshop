@@ -80,7 +80,7 @@ class QueryAST(BaseModel):
 
     @model_validator(mode="after")
     def _reject_raw_sql(self) -> "QueryAST":
-        if self.raw_sql is not None:
+        if "raw_sql" in self.model_fields_set:
             raise ValueError("raw_sql 不允许作为 QueryAST 候选结构。")
         return self
 
@@ -93,6 +93,17 @@ class QueryVerificationIssue(BaseModel):
     message: str
     field_id: str | None = None
     details: dict[str, Any] = Field(default_factory=dict)
+
+    @field_validator("details")
+    @classmethod
+    def _reject_reserved_detail_keys(
+        cls, value: dict[str, Any]
+    ) -> dict[str, Any]:
+        reserved_keys = {"code", "severity", "message", "field_id"}
+        conflicts = reserved_keys.intersection(value)
+        if conflicts:
+            raise ValueError("details 不能覆盖标准字段。")
+        return value
 
     def to_dict(self) -> dict[str, Any]:
         serialized = self.model_dump(exclude={"details"}, exclude_none=True)
@@ -111,6 +122,21 @@ class VerifiedQueryPlan(BaseModel):
     limit: int
     answerable_intents: list[dict[str, Any]]
     unanswerable_intents: list[dict[str, Any]]
+
+    @field_validator("table_name")
+    @classmethod
+    def _require_non_empty_table_name(cls, value: str) -> str:
+        normalized = value.strip()
+        if not normalized:
+            raise ValueError("table_name 不能为空。")
+        return normalized
+
+    @field_validator("limit")
+    @classmethod
+    def _clamp_limit(cls, value: int) -> int:
+        if value <= 0:
+            raise ValueError("limit 必须为正整数。")
+        return min(value, 100)
 
     @staticmethod
     def _require_record_text(

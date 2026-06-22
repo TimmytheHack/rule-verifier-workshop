@@ -22,6 +22,16 @@ class QueryASTTest(unittest.TestCase):
                 }
             )
 
+    def test_query_ast_rejects_raw_sql_payload_even_when_none(self) -> None:
+        with self.assertRaises(pydantic.ValidationError):
+            QueryAST.from_candidate(
+                {
+                    "raw_sql": None,
+                    "filters": [],
+                    "sort": [],
+                }
+            )
+
     def test_query_ast_normalizes_filters_and_sort(self) -> None:
         query_ast = QueryAST.from_candidate(
             {
@@ -159,6 +169,42 @@ class QueryASTTest(unittest.TestCase):
                 limit=30,
                 answerable_intents=[],
                 unanswerable_intents=[],
+            )
+
+    def test_verified_query_plan_rejects_blank_table_name(self) -> None:
+        with self.assertRaises(pydantic.ValidationError):
+            VerifiedQueryPlan(
+                intent="table_filter",
+                table_name="",
+                select_columns=[],
+                filters=[],
+                sort=[],
+                limit=30,
+                answerable_intents=[],
+                unanswerable_intents=[],
+            )
+
+    def test_verified_query_plan_rejects_non_positive_limit(self) -> None:
+        with self.assertRaises(pydantic.ValidationError):
+            VerifiedQueryPlan(
+                intent="table_filter",
+                table_name="admissions",
+                select_columns=[],
+                filters=[],
+                sort=[],
+                limit=0,
+                answerable_intents=[],
+                unanswerable_intents=[],
+            )
+
+    def test_verification_issue_rejects_reserved_detail_keys(self) -> None:
+        with self.assertRaises(pydantic.ValidationError):
+            QueryVerificationIssue(
+                code="missing_field",
+                severity="error",
+                message="字段不存在。",
+                field_id="city",
+                details={"severity": "warning"},
             )
 
 
