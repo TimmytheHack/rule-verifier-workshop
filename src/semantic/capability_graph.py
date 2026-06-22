@@ -18,6 +18,7 @@ class CapabilityField:
     source_column: str
     inferred_type: str
     non_null_count: int
+    missing_rate: float
     distinct_count: int
     sample_values: list[str]
     numeric_min: float | None
@@ -29,6 +30,7 @@ class CapabilityField:
             "source_column": self.source_column,
             "inferred_type": self.inferred_type,
             "non_null_count": self.non_null_count,
+            "missing_rate": self.missing_rate,
             "distinct_count": self.distinct_count,
             "sample_values": self.sample_values,
             "numeric_min": self.numeric_min,
@@ -54,8 +56,9 @@ class DatasetCapabilityGraph:
         dataset: ExcelDataSet,
         expected_source_columns: list[str] | None = None,
     ) -> "DatasetCapabilityGraph":
+        row_count = len(dataset.dataframe)
         fields = {
-            header: _field_profile(header, dataset.dataframe[header])
+            header: _field_profile(header, dataset.dataframe[header], row_count)
             for header in dataset.headers
             if header and header in dataset.dataframe.columns
         }
@@ -66,7 +69,7 @@ class DatasetCapabilityGraph:
         return cls(
             source_path=dataset.workbook_path,
             sheet_name=dataset.sheet_name,
-            row_count=len(dataset.dataframe),
+            row_count=row_count,
             column_count=len(dataset.headers),
             fields=fields,
             missing_source_columns=missing_source_columns,
@@ -85,7 +88,11 @@ class DatasetCapabilityGraph:
         }
 
 
-def _field_profile(source_column: str, series: pd.Series) -> CapabilityField:
+def _field_profile(
+    source_column: str,
+    series: pd.Series,
+    row_count: int,
+) -> CapabilityField:
     values = [cell_text(value) for value in series.tolist()]
     non_empty = [value for value in values if value]
     numeric_values = [
@@ -108,6 +115,7 @@ def _field_profile(source_column: str, series: pd.Series) -> CapabilityField:
         source_column=source_column,
         inferred_type=inferred_type,
         non_null_count=non_null_count,
+        missing_rate=(row_count - non_null_count) / row_count if row_count else 0.0,
         distinct_count=distinct_count,
         sample_values=distinct_values[:5],
         numeric_min=min(numeric_values) if numeric_values else None,

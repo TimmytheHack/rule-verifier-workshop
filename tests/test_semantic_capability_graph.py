@@ -18,6 +18,11 @@ class SemanticCapabilityGraphTest(unittest.TestCase):
         self.assertEqual(17, graph.column_count)
         self.assertIn("专业", graph.fields)
         self.assertEqual("number", graph.fields["最低位次"].inferred_type)
+        self.assertEqual(0.0, graph.fields["最低位次"].missing_rate)
+        self.assertEqual(
+            0.0,
+            graph.fields["最低位次"].to_dict()["missing_rate"],
+        )
         self.assertEqual("enum_or_category", graph.fields["专业"].inferred_type)
         self.assertIn("between", graph.fields["最低位次"].candidate_ops)
         self.assertIn("in", graph.fields["专业"].candidate_ops)
@@ -29,11 +34,12 @@ class SemanticCapabilityGraphTest(unittest.TestCase):
         dataset = next(new_admissions_dataset())
         graph = DatasetCapabilityGraph.from_dataset(
             dataset,
-            expected_source_columns=["专业", "学费", "城市"],
+            expected_source_columns=["专业", "学费", "城市", "专业组最低位次1"],
         )
 
         self.assertIn("学费", graph.missing_source_columns)
         self.assertIn("城市", graph.missing_source_columns)
+        self.assertIn("专业组最低位次1", graph.missing_source_columns)
         self.assertNotIn("专业", graph.missing_source_columns)
 
 
