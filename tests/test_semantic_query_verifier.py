@@ -32,6 +32,37 @@ class QueryASTTest(unittest.TestCase):
                 }
             )
 
+    def test_query_ast_rejects_filter_extra_raw_sql(self) -> None:
+        with self.assertRaises(pydantic.ValidationError):
+            QueryAST.from_candidate(
+                {
+                    "filters": [
+                        {
+                            "field_id": "year",
+                            "op": "eq",
+                            "value": 2025,
+                            "raw_sql": "year = 2025",
+                        },
+                    ],
+                    "sort": [],
+                }
+            )
+
+    def test_query_ast_rejects_sort_extra_raw_sql(self) -> None:
+        with self.assertRaises(pydantic.ValidationError):
+            QueryAST.from_candidate(
+                {
+                    "filters": [],
+                    "sort": [
+                        {
+                            "field_id": "major_min_rank",
+                            "direction": "asc",
+                            "raw_sql": "major_min_rank ASC",
+                        },
+                    ],
+                }
+            )
+
     def test_query_ast_schema_excludes_raw_sql(self) -> None:
         properties = QueryAST.model_json_schema()["properties"]
 

@@ -4,7 +4,7 @@ from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 
 class QueryFilter(BaseModel):
-    model_config = ConfigDict(frozen=True)
+    model_config = ConfigDict(frozen=True, extra="forbid")
 
     field_id: str
     op: str
@@ -20,7 +20,7 @@ class QueryFilter(BaseModel):
 
 
 class QuerySort(BaseModel):
-    model_config = ConfigDict(frozen=True)
+    model_config = ConfigDict(frozen=True, extra="forbid")
 
     field_id: str
     direction: str = "asc"
