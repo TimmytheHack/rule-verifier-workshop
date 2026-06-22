@@ -82,14 +82,23 @@ class QueryASTTest(unittest.TestCase):
             intent="table_filter",
             table_name="admissions",
             select_columns=[
-                {"field_id": "university_name", "column": "院校名称"},
-                {"field_id": "major_name", "column": "专业名称"},
+                {"field_id": "university_name", "source_column": "院校名称"},
+                {"field_id": "major_name", "source_column": "专业名称"},
             ],
             filters=[
-                {"field_id": "year", "op": "eq", "value": 2025},
+                {
+                    "field_id": "year",
+                    "source_column": "年份",
+                    "op": "eq",
+                    "value": 2025,
+                },
             ],
             sort=[
-                {"field_id": "major_min_rank", "direction": "asc"},
+                {
+                    "field_id": "major_min_rank",
+                    "source_column": "专业最低位次",
+                    "direction": "ASC",
+                },
             ],
             limit=30,
             answerable_intents=[
@@ -103,17 +112,30 @@ class QueryASTTest(unittest.TestCase):
         self.assertEqual(
             plan.select_columns,
             [
-                {"field_id": "university_name", "column": "院校名称"},
-                {"field_id": "major_name", "column": "专业名称"},
+                {"field_id": "university_name", "source_column": "院校名称"},
+                {"field_id": "major_name", "source_column": "专业名称"},
             ],
         )
         self.assertEqual(
             plan.filters,
-            [{"field_id": "year", "op": "eq", "value": 2025}],
+            [
+                {
+                    "field_id": "year",
+                    "source_column": "年份",
+                    "op": "eq",
+                    "value": 2025,
+                }
+            ],
         )
         self.assertEqual(
             plan.sort,
-            [{"field_id": "major_min_rank", "direction": "asc"}],
+            [
+                {
+                    "field_id": "major_min_rank",
+                    "source_column": "专业最低位次",
+                    "direction": "asc",
+                }
+            ],
         )
         self.assertEqual(
             plan.answerable_intents,
@@ -123,6 +145,21 @@ class QueryASTTest(unittest.TestCase):
             plan.unanswerable_intents,
             [{"field_id": "city", "reason": "missing_field"}],
         )
+
+    def test_verified_query_plan_rejects_select_without_source_column(self) -> None:
+        with self.assertRaises(pydantic.ValidationError):
+            VerifiedQueryPlan(
+                intent="table_filter",
+                table_name="admissions",
+                select_columns=[
+                    {"field_id": "university_name"},
+                ],
+                filters=[],
+                sort=[],
+                limit=30,
+                answerable_intents=[],
+                unanswerable_intents=[],
+            )
 
 
 if __name__ == "__main__":

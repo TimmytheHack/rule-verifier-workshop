@@ -111,3 +111,69 @@ class VerifiedQueryPlan(BaseModel):
     limit: int
     answerable_intents: list[dict[str, Any]]
     unanswerable_intents: list[dict[str, Any]]
+
+    @staticmethod
+    def _require_record_text(
+        record: dict[str, Any], key: str, record_name: str
+    ) -> str:
+        value = record.get(key)
+        if not isinstance(value, str) or not value.strip():
+            raise ValueError(f"{record_name}.{key} 不能为空。")
+        return value.strip()
+
+    @field_validator("select_columns")
+    @classmethod
+    def _validate_select_columns(
+        cls, value: list[dict[str, str]]
+    ) -> list[dict[str, str]]:
+        normalized = []
+        for record in value:
+            copied = dict(record)
+            copied["field_id"] = cls._require_record_text(
+                copied, "field_id", "select_columns"
+            )
+            copied["source_column"] = cls._require_record_text(
+                copied, "source_column", "select_columns"
+            )
+            normalized.append(copied)
+        return normalized
+
+    @field_validator("filters")
+    @classmethod
+    def _validate_filters(
+        cls, value: list[dict[str, Any]]
+    ) -> list[dict[str, Any]]:
+        normalized = []
+        for record in value:
+            copied = dict(record)
+            copied["field_id"] = cls._require_record_text(
+                copied, "field_id", "filters"
+            )
+            copied["source_column"] = cls._require_record_text(
+                copied, "source_column", "filters"
+            )
+            copied["op"] = cls._require_record_text(copied, "op", "filters")
+            normalized.append(copied)
+        return normalized
+
+    @field_validator("sort")
+    @classmethod
+    def _validate_sort(
+        cls, value: list[dict[str, str]]
+    ) -> list[dict[str, str]]:
+        normalized = []
+        for record in value:
+            copied = dict(record)
+            copied["field_id"] = cls._require_record_text(
+                copied, "field_id", "sort"
+            )
+            copied["source_column"] = cls._require_record_text(
+                copied, "source_column", "sort"
+            )
+            direction = cls._require_record_text(copied, "direction", "sort")
+            direction = direction.lower()
+            if direction not in {"asc", "desc"}:
+                raise ValueError("sort.direction 必须是 asc 或 desc。")
+            copied["direction"] = direction
+            normalized.append(copied)
+        return normalized
