@@ -40,6 +40,12 @@ UNANSWERABLE_CONTEXT_FIELDS = [
     "tuition_yuan_per_year",
     "group_min_rank",
 ]
+PHYSICS_SUBJECT_TERMS = [
+    "物化生",
+    "物理",
+    "物理类",
+    "首选物理",
+]
 
 
 @dataclass(frozen=True)
@@ -97,6 +103,12 @@ class AdmissionsMajorRankPlanner:
                 ],
             )
 
+        subject_type = _parse_supported_subject_type(user_request)
+        if subject_type is None:
+            return _subject_type_confirmation_result(rank)
+        if subject_type != "物理类":
+            return _unsupported_subject_type_result(rank, subject_type)
+
         dataset = load_structured_dataset(
             self.database_path,
             required_columns=[],
@@ -108,7 +120,7 @@ class AdmissionsMajorRankPlanner:
         if missing_fields:
             return _blocked_missing_fields(missing_fields, registry)
 
-        ast = _query_ast(rank, registry)
+        ast = _query_ast(rank, registry, subject_type)
         verification = SemanticQueryVerifier(
             registry,
             table_name=self.table_name,
@@ -180,14 +192,81 @@ class AdmissionsMajorRankPlanner:
         )
 
 
-def _query_ast(rank: int, registry: ReviewedMappingRegistry) -> QueryAST:
+def _parse_supported_subject_type(text: str) -> str | None:
+    if "历史" in text:
+        return "历史类"
+    if any(term in text for term in PHYSICS_SUBJECT_TERMS):
+        return "物理类"
+    return None
+
+
+def _subject_type_confirmation_result(rank: int) -> AdmissionsMajorRankResult:
+    return AdmissionsMajorRankResult(
+        query_type=QUERY_TYPE,
+        status="needs_confirmation",
+        rows=[],
+        answerable_intents=[],
+        unanswerable_intents=[
+            {
+                "field_id": "subject_type",
+                "answerable": False,
+                "reason": "缺少科类/选科，不能默认按物理类执行专业最低位次查询。",
+            }
+        ],
+        execution_summary=_empty_execution_summary(rank=rank),
+        warnings=[
+            {
+                "code": "missing_subject_type",
+                "severity": "error",
+                "field_id": "subject_type",
+                "message": "请补充科类或选科，例如物化生或物理类。",
+            }
+        ],
+    )
+
+
+def _unsupported_subject_type_result(
+    rank: int,
+    subject_type: str,
+) -> AdmissionsMajorRankResult:
+    return AdmissionsMajorRankResult(
+        query_type=QUERY_TYPE,
+        status="blocked",
+        rows=[],
+        answerable_intents=[],
+        unanswerable_intents=[
+            {
+                "field_id": "subject_type",
+                "answerable": False,
+                "requested_value": subject_type,
+                "reason": "当前 recipe 只支持已验证的物理类专业最低位次查询。",
+            }
+        ],
+        execution_summary=_empty_execution_summary(rank=rank),
+        warnings=[
+            {
+                "code": "unsupported_subject_type",
+                "severity": "error",
+                "field_id": "subject_type",
+                "requested_value": subject_type,
+                "message": "当前 recipe 只支持物理类专业最低位次查询，未执行 SQL。",
+            }
+        ],
+    )
+
+
+def _query_ast(
+    rank: int,
+    registry: ReviewedMappingRegistry,
+    subject_type: str,
+) -> QueryAST:
     return QueryAST.from_candidate(
         {
             "intent": QUERY_TYPE,
             "select": DISPLAY_FIELDS,
             "filters": [
                 {"field_id": "year", "op": "eq", "value": 2025},
-                _subject_type_filter(registry),
+                _subject_type_filter(registry, subject_type),
                 {
                     "field_id": "major_min_rank",
                     "op": "between",
@@ -202,12 +281,19 @@ def _query_ast(rank: int, registry: ReviewedMappingRegistry) -> QueryAST:
     )
 
 
-def _subject_type_filter(registry: ReviewedMappingRegistry) -> dict[str, Any]:
+def _subject_type_filter(
+    registry: ReviewedMappingRegistry,
+    subject_type: str,
+) -> dict[str, Any]:
     if registry.has_op("subject_type", "contains"):
-        return {"field_id": "subject_type", "op": "contains", "value": "物理"}
+        return {
+            "field_id": "subject_type",
+            "op": "contains",
+            "value": subject_type.removesuffix("类"),
+        }
     if registry.has_op("subject_type", "in"):
-        return {"field_id": "subject_type", "op": "in", "value": ["物理类"]}
-    return {"field_id": "subject_type", "op": "eq", "value": "物理类"}
+        return {"field_id": "subject_type", "op": "in", "value": [subject_type]}
+    return {"field_id": "subject_type", "op": "eq", "value": subject_type}
 
 
 def _bucket_rows(
@@ -340,7 +426,7 @@ def _int_or_none(value: Any) -> int | None:
     return int(float(value))
 
 
-def _empty_execution_summary() -> dict[str, Any]:
+def _empty_execution_summary(rank: int | None = None) -> dict[str, Any]:
     return {
         "executor": None,
         "query_type": QUERY_TYPE,
@@ -348,7 +434,7 @@ def _empty_execution_summary() -> dict[str, Any]:
         "params": [],
         "input_row_count": 0,
         "filtered_row_count": 0,
-        "rank": None,
+        "rank": rank,
         "basis": "major_min_rank",
         "verified_query_plan": None,
     }

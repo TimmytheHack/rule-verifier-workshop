@@ -12,27 +12,11 @@ from tests.semantic_test_utils import new_admissions_dataset
 
 class AdmissionsMajorRankPlannerTest(unittest.TestCase):
     def test_major_rank_plan_returns_reach_match_safety(self) -> None:
-        with TemporaryDirectory() as directory:
-            dataset = next(new_admissions_dataset())
-            database_path = Path(directory) / "admissions.duckdb"
-            index_path = Path(directory) / "schema_value_index.json"
-            build_structured_store_from_dataset(
-                dataset=dataset,
-                schema_path=DomainConfig.load("admissions").schema_path,
-                database_path=database_path,
-                index_path=index_path,
-                table_name="admissions",
-                source_path=dataset.workbook_path,
-            )
-
-            result = AdmissionsMajorRankPlanner(
-                domain_config=DomainConfig.load("admissions"),
-                database_path=database_path,
-                table_name="admissions",
-            ).run("广东物化生，10000名，列出冲稳保的次序，以及每个专业的最低录取排名")
+        result = self._run("广东物化生，10000名，列出冲稳保的次序，以及每个专业的最低录取排名")
 
         self.assertEqual(result.status, "ok")
         self.assertEqual(result.query_type, "admissions_major_rank")
+        self.assertIn("物理类", result.execution_summary["params"])
         self.assertEqual([item["档位"] for item in result.rows], ["冲", "稳", "保"])
         self.assertEqual(result.rows[0]["院校名称"], "中山大学")
         self.assertEqual(result.rows[0]["专业"], "预防医学")
@@ -47,6 +31,52 @@ class AdmissionsMajorRankPlannerTest(unittest.TestCase):
             "tuition_yuan_per_year",
             [item["field_id"] for item in result.unanswerable_intents],
         )
+
+    def test_history_request_does_not_execute_physics_query(self) -> None:
+        result = self._run("广东历史，10000名，列出冲稳保的次序，以及每个专业的最低录取排名")
+
+        self.assertIn(result.status, {"blocked", "needs_confirmation"})
+        self.assertFalse(result.execution_summary["sql"])
+        self.assertIsNone(result.execution_summary["executor"])
+        self.assertIn(
+            "subject_type",
+            [item["field_id"] for item in result.unanswerable_intents],
+        )
+        self.assertIn(
+            "subject_type",
+            [item.get("field_id") for item in result.warnings],
+        )
+
+    def test_missing_subject_context_requires_confirmation(self) -> None:
+        result = self._run("广东，10000名，列出冲稳保的次序，以及每个专业的最低录取排名")
+
+        self.assertEqual(result.status, "needs_confirmation")
+        self.assertFalse(result.execution_summary["sql"])
+        self.assertIsNone(result.execution_summary["executor"])
+        self.assertIn(
+            "subject_type",
+            [item["field_id"] for item in result.unanswerable_intents],
+        )
+
+    def _run(self, user_request: str):
+        with TemporaryDirectory() as directory:
+            dataset = next(new_admissions_dataset())
+            database_path = Path(directory) / "admissions.duckdb"
+            index_path = Path(directory) / "schema_value_index.json"
+            build_structured_store_from_dataset(
+                dataset=dataset,
+                schema_path=DomainConfig.load("admissions").schema_path,
+                database_path=database_path,
+                index_path=index_path,
+                table_name="admissions",
+                source_path=dataset.workbook_path,
+            )
+
+            return AdmissionsMajorRankPlanner(
+                domain_config=DomainConfig.load("admissions"),
+                database_path=database_path,
+                table_name="admissions",
+            ).run(user_request)
 
 
 if __name__ == "__main__":
