@@ -341,6 +341,26 @@ class QueryASTTest(unittest.TestCase):
         with self.assertRaises(pydantic.ValidationError):
             VerifiedQueryPlan(**payload)
 
+    def test_verified_query_plan_rejects_answerable_intent_raw_sql(self) -> None:
+        payload = self._verified_plan_payload()
+        payload["answerable_intents"][0]["raw_sql"] = "year = 2025"
+
+        with self.assertRaises(pydantic.ValidationError):
+            VerifiedQueryPlan(**payload)
+
+    def test_verified_query_plan_rejects_unanswerable_intent_raw_sql(self) -> None:
+        payload = self._verified_plan_payload()
+        payload["unanswerable_intents"] = [
+            {
+                "field_id": "city",
+                "reason": "missing_field",
+                "raw_sql": "city = '广州'",
+            }
+        ]
+
+        with self.assertRaises(pydantic.ValidationError):
+            VerifiedQueryPlan(**payload)
+
     def test_verified_query_plan_rejects_select_without_source_column(self) -> None:
         with self.assertRaises(pydantic.ValidationError):
             VerifiedQueryPlan(

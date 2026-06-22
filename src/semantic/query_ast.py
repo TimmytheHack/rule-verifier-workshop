@@ -131,6 +131,16 @@ class VerifiedQueryPlan(BaseModel):
             raise ValueError("limit 必须为正整数。")
         return min(value, 100)
 
+    @field_validator("answerable_intents", "unanswerable_intents")
+    @classmethod
+    def _reject_raw_sql_intent_records(
+        cls, value: list[dict[str, Any]]
+    ) -> list[dict[str, Any]]:
+        for record in value:
+            if "raw_sql" in record:
+                raise ValueError("intent 记录不能包含 raw_sql。")
+        return value
+
     @staticmethod
     def _require_exact_record_keys(
         record: dict[str, Any], allowed_keys: set[str], record_name: str
