@@ -93,6 +93,18 @@ python scripts/build_data_warehouse.py
 
 上传流程会把数据状态从 `uploaded` 推到 `queryable`。未审核、缺少必填字段、warehouse 过期或 `dataset_id` 不合法时，系统会返回 blocked/error，不会执行 SQL。
 
+### 语义能力查询
+
+上传招生 Excel/CSV 后，系统会基于表格字段生成 `capability_graph`，用来描述当前数据集实际支持哪些字段、值和语义能力。自然语言只会提出候选 `QueryAST`；只有经过已审查字段、已允许操作和值解析校验后，才会进入参数化 SQL。
+
+例如一张新的 admissions 分数/位次表只包含 `专业`、`最低位次`、`最低分数`、`学校所在` 等字段时，系统可以生成按专业最低位次计算的 `冲`、`稳`、`保` 结果，并在 EvidencePack 中明确记录 `学费`、`城市`、`专业组最低位次` 等缺失字段没有执行。缺失字段不能从自然语言里补出来，也不能被回答层暗示为已经筛选。
+
+本地探针命令：
+
+```bash
+.venv/bin/python scripts/run_semantic_capability_probe.py path/to/admissions.xlsx
+```
+
 ## 怎么填写查询
 
 主查询页默认只需要填这些：

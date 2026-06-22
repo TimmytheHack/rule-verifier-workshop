@@ -356,6 +356,26 @@ DuckDB hard filter，并记录在 `executed_filters`、
   `latest_available_year`，不跨年加权；专业匹配来源必须区分 deterministic fields、
   exact keywords 和 confirmed candidates。回答不得声称录取概率。
 
+## EvidencePack 语义能力字段
+
+语义能力查询仍然遵守同一个 EvidencePack 边界。`evidence_pack.answerable_intents`
+记录已经通过字段映射、操作白名单和值解析的意图；`evidence_pack.unanswerable_intents`
+记录当前数据集缺字段、缺 reviewed semantics、操作不合法或值无法安全解析的意图；
+`evidence_pack.verified_query_plan` 只保存系统校验后的计划结构。客户端、LLM 或第二轮
+自由文本提交的 raw SQL 不被接收，也不会被执行。
+
+固定流程为：
+
+```text
+NL -> candidate QueryAST -> FieldGrounder -> OperationVerifier -> AnswerabilityGate -> parameterized SQL
+```
+
+`candidate QueryAST` 只是候选结构，不能直接驱动查询。`FieldGrounder` 必须把候选字段落到
+`capability_graph` 中已审查的字段；`OperationVerifier` 必须确认操作属于该字段允许集合；
+`AnswerabilityGate` 必须把不可回答部分移入 `unanswerable_intents`。只有剩余的
+`answerable_intents` 可以由 SQL builder 生成参数化 SQL，并把 `sql`、`params`、
+`query_type` 和相关执行摘要写入 `execution_summary`。
+
 ## EvidencePack reference-only 资料
 
 `EvidencePack.policy_references` 是可选数组，用于承载已审核非结构化资料的 lexical

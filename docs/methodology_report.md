@@ -91,6 +91,26 @@ DatasetService、review workflow、DuckDB warehouse、WorkbenchResponse 和 Evid
 approval fixture、warehouse fingerprint 和两条目标查询结果，用于 operator 在正式 Quality Gate
 前记录卡点和人工结论。
 
+## LLM 辅助语义能力边界
+
+LLM 只能提出 intent、field candidate 和候选 `QueryAST`。它不能声明某个字段已经存在，不能放宽
+reviewed semantics，也不能把自然语言直接编译为 SQL。deterministic verifier 控制字段存在性、
+已审查语义、操作合法性、值解析和 SQL 可执行性。
+
+```text
+LLM proposes.
+System verifies.
+SQL executes.
+EvidencePack constrains answer.
+```
+
+当上传 admissions 分数/位次表只包含 `专业`、`最低位次`、`最低分数`、`学校所在` 等字段时，
+系统可以在 `capability_graph` 支持下生成专业最低位次的 `冲`、`稳`、`保` 结果。缺失字段例如
+`学费`、`城市`、`专业组最低位次` 必须进入 `unanswerable_intents`，不能被暗示为已经执行，
+也不能在回答层被描述成已经参与筛选。`verified_query_plan` 只能包含通过
+`FieldGrounder`、`OperationVerifier` 和 `AnswerabilityGate` 后的结构，最终 SQL 必须是
+parameterized SQL。
+
 functional tool layer 位于 `src/api/tool_registry.py`，机器可读契约位于
 `schemas/tools/*.json`。LLM-safe tools 只包括 `dataset.profile`、`dataset.review_summary`、
 `workbench.query`、`workbench.confirm` 和 `evidence.get`。review/admin/warehouse/
