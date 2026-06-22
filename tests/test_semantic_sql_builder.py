@@ -48,6 +48,31 @@ class SemanticSQLBuilderTest(unittest.TestCase):
         )
         self.assertEqual(built.params, [2025, 9000, 18000, 20])
 
+    def test_contains_any_builds_parameterized_or_expression(self) -> None:
+        plan = VerifiedQueryPlan(
+            intent="semantic_recommendation",
+            table_name="admissions",
+            select_columns=[{"field_id": "major_name", "source_column": "专业"}],
+            filters=[
+                {
+                    "field_id": "major_name",
+                    "source_column": "专业",
+                    "op": "contains_any",
+                    "value": ["人工智能", "计算机"],
+                }
+            ],
+            sort=[],
+            limit=30,
+            answerable_intents=[],
+            unanswerable_intents=[],
+        )
+
+        built = SemanticSQLBuilder().build(plan)
+
+        self.assertIn('STRPOS(CAST("专业" AS VARCHAR), ?) > 0', built.sql)
+        self.assertIn(" OR ", built.sql)
+        self.assertEqual(built.params, ["人工智能", "计算机", 30])
+
 
 if __name__ == "__main__":
     unittest.main()

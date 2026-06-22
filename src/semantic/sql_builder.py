@@ -73,6 +73,13 @@ class SemanticSQLBuilder:
         if op == "contains":
             params.append(value)
             return f"STRPOS(CAST({column} AS VARCHAR), ?) > 0"
+        if op == "contains_any":
+            values = _require_non_empty_values(value, op)
+            expressions = []
+            for item in values:
+                params.append(item)
+                expressions.append(f"STRPOS(CAST({column} AS VARCHAR), ?) > 0")
+            return "(" + " OR ".join(expressions) + ")"
         if op == "between":
             lower, upper = _require_pair(value, op)
             params.extend([lower, upper])
