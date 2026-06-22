@@ -1,6 +1,6 @@
 from typing import Any
 
-from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 
 class QueryFilter(BaseModel):
@@ -43,7 +43,7 @@ class QuerySort(BaseModel):
 
 
 class QueryAST(BaseModel):
-    model_config = ConfigDict(frozen=True)
+    model_config = ConfigDict(frozen=True, extra="forbid")
 
     intent: str = "table_filter"
     select: list[str] = Field(default_factory=list)
@@ -52,7 +52,6 @@ class QueryAST(BaseModel):
     limit: int = 30
     requested_output: list[str] = Field(default_factory=list)
     source: str = "candidate"
-    raw_sql: str | None = Field(default=None, exclude=True)
 
     @classmethod
     def from_candidate(cls, candidate: Any) -> "QueryAST":
@@ -77,12 +76,6 @@ class QueryAST(BaseModel):
         if value <= 0:
             raise ValueError("limit 必须为正整数。")
         return min(value, 100)
-
-    @model_validator(mode="after")
-    def _reject_raw_sql(self) -> "QueryAST":
-        if "raw_sql" in self.model_fields_set:
-            raise ValueError("raw_sql 不允许作为 QueryAST 候选结构。")
-        return self
 
 
 class QueryVerificationIssue(BaseModel):

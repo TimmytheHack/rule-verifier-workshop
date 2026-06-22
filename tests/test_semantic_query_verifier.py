@@ -32,6 +32,11 @@ class QueryASTTest(unittest.TestCase):
                 }
             )
 
+    def test_query_ast_schema_excludes_raw_sql(self) -> None:
+        properties = QueryAST.model_json_schema()["properties"]
+
+        self.assertNotIn("raw_sql", properties)
+
     def test_query_ast_rejects_blank_intent(self) -> None:
         with self.assertRaises(pydantic.ValidationError):
             QueryAST.from_candidate(
