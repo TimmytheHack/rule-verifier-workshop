@@ -319,6 +319,82 @@ class UploadedSemanticAdmissionsFlowTest(unittest.TestCase):
         self.assertNotIn("group_min_rank", unanswerable)
         self.assertNotIn("当前数据缺少这些已审核字段", response["answer"])
 
+    def test_uploaded_admissions_semantic_recommendation_uses_verified_sql(self) -> None:
+        query = "我的排位是15000，想读人工智能，计算机，而且不想去国外，想留在广东省，请给出推荐"
+        with TemporaryDirectory() as directory:
+            service, dataset_id = _queryable_uploaded_admissions(
+                Path(directory),
+                use_excel=False,
+            )
+
+            response = service.query(
+                dataset_id,
+                user_input=query,
+                soft_preferences={
+                    "prompt": query,
+                    "semantic_intent": _semantic_recommendation_intent(),
+                },
+            )
+
+        assert_workbench_contract(self, response)
+        self.assertEqual(response["status"], "ok")
+        self.assertEqual(response["query_type"], "recommendation")
+        self.assertEqual(
+            set(response["result_sections"]),
+            {"reach", "match", "safety"},
+        )
+        self.assertEqual(
+            response["debug_trace"]["execution"]["query_type"],
+            "semantic_recommendation",
+        )
+        self.assertEqual(response["debug_trace"]["execution"]["year"], 2024)
+        self.assertIn("STRPOS", response["debug_trace"]["execution"]["sql"])
+        self.assertTrue(response["top_results"])
+        self.assertIn(
+            "school_country_or_region",
+            [
+                item["field_id"]
+                for item in response["evidence_pack"]["unanswerable_intents"]
+            ],
+        )
+        self.assertEqual(
+            response["no_schema_field_preferences"][0]["field_id"],
+            "school_country_or_region",
+        )
+        self.assertIn("不想去国外", response["answer"])
+
+    def test_uploaded_admissions_semantic_score_only_requires_rank(self) -> None:
+        query = "假设我今年的高考分数是630分，想读人工智能，计算机，而且不想去国外，想留在广东省，请给出推荐"
+        with TemporaryDirectory() as directory:
+            service, dataset_id = _queryable_uploaded_admissions(
+                Path(directory),
+                use_excel=False,
+            )
+
+            response = service.query(
+                dataset_id,
+                user_input=query,
+                soft_preferences={
+                    "prompt": query,
+                    "semantic_intent": {
+                        **_semantic_recommendation_intent(),
+                        "user_context": {
+                            "user_score": 630,
+                            "user_rank": None,
+                            "source_province": "广东",
+                            "subject_type": None,
+                            "reselected_subjects": [],
+                        },
+                    },
+                },
+            )
+
+        assert_workbench_contract(self, response)
+        self.assertEqual(response["status"], "needs_confirmation")
+        self.assertEqual(response["query_type"], "recommendation")
+        self.assertEqual(response["debug_trace"]["execution"]["sql"], "")
+        self.assertIn("score_without_rank", [w["code"] for w in response["warnings"]])
+
 
 def _generated_generic_dataset(root: Path) -> tuple[DatasetService, str]:
     source = _write_generic_csv(root)
@@ -527,6 +603,47 @@ def _admissions_rows() -> list[dict[str, object]]:
             "院校排名": 120,
         },
     ]
+
+
+def _semantic_recommendation_intent() -> dict[str, object]:
+    return {
+        "query_type": "semantic_recommendation",
+        "user_context": {
+            "user_rank": 15000,
+            "user_score": None,
+            "source_province": "广东",
+            "subject_type": None,
+            "reselected_subjects": [],
+        },
+        "preferences": [
+            {
+                "source_text": "想读人工智能，计算机",
+                "semantic": "major_name",
+                "op": "contains_any",
+                "value": ["人工智能", "计算机"],
+                "confidence": 1.0,
+                "reason": None,
+            },
+            {
+                "source_text": "想留在广东省",
+                "semantic": "school_province",
+                "op": "in",
+                "value": ["广东"],
+                "confidence": 1.0,
+                "reason": None,
+            },
+            {
+                "source_text": "不想去国外",
+                "semantic": "school_country_or_region",
+                "op": "not_in",
+                "value": ["国外", "境外", "海外"],
+                "confidence": 1.0,
+                "reason": None,
+            },
+        ],
+        "requested_output": ["recommendation_sections", "minimum_rank"],
+        "source_language": "zh-CN",
+    }
 
 
 if __name__ == "__main__":

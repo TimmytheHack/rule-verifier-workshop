@@ -52,7 +52,15 @@ from src.rules.rule_promoter import RulePromoter
 from src.rules.rule_verifier import RuleVerifier
 from src.schema.attribute_grounder import AttributeGrounder
 from src.schema.schema_registry import SchemaRegistry
+from src.semantic.admissions_recommendation import (
+    SemanticAdmissionsRecommendationPlanner,
+)
 from src.semantic.admissions_major_rank import AdmissionsMajorRankPlanner
+from src.semantic.capability_graph import DatasetCapabilityGraph
+from src.semantic.intent_models import SemanticIntent
+from src.semantic.llm_intent_extractor import DeepSeekSemanticIntentExtractor
+from src.semantic.query_options import SemanticQueryOptionsBuilder
+from src.semantic.reviewed_mapping import ReviewedMappingRegistry
 from src.tracing.trace_generator import TraceGenerator
 
 
@@ -597,11 +605,74 @@ def _run_semantic_capability_query(
         return None
     if not domain_config.semantic_capabilities:
         return None
-    return AdmissionsMajorRankPlanner(
+    user_request = _compose_user_request(config)
+    major_rank_result = AdmissionsMajorRankPlanner(
         domain_config=domain_config,
         database_path=_warehouse_database_path(domain_config),
         table_name=domain_config.table_name,
-    ).run(_compose_user_request(config))
+    ).run(user_request)
+    if major_rank_result is not None:
+        return major_rank_result
+
+    intent = _semantic_recommendation_intent(config, domain_config)
+    if intent is None:
+        return None
+    return SemanticAdmissionsRecommendationPlanner(
+        domain_config=domain_config,
+        database_path=_warehouse_database_path(domain_config),
+        table_name=domain_config.table_name,
+    ).run(intent)
+
+
+def _semantic_recommendation_intent(
+    config: WorkbenchConfig,
+    domain_config: DomainConfig,
+) -> SemanticIntent | None:
+    supplied_intent = config.soft_preferences.get("semantic_intent")
+    if supplied_intent:
+        return SemanticIntent.model_validate(supplied_intent)
+    if not deepseek_slot_adapter_enabled():
+        return None
+    try:
+        schema_context, query_options = _semantic_llm_context(domain_config)
+        extraction = DeepSeekSemanticIntentExtractor(
+            _interactive_deepseek_client(config.model)
+        ).extract(
+            _compose_user_request(config),
+            schema_context=schema_context,
+            hard_context={
+                "domain": domain_config.domain_id,
+                "query_options": query_options,
+            },
+        )
+    except Exception:  # noqa: BLE001 - optional LLM path falls back to legacy planner.
+        return None
+    if extraction.intent.query_type != "semantic_recommendation":
+        return None
+    return extraction.intent
+
+
+def _semantic_llm_context(
+    domain_config: DomainConfig,
+) -> tuple[list[dict[str, Any]], dict[str, Any]]:
+    dataset = load_structured_dataset(
+        _warehouse_database_path(domain_config),
+        required_columns=[],
+        table_name=domain_config.table_name,
+    )
+    graph = DatasetCapabilityGraph.from_dataset(dataset)
+    registry = ReviewedMappingRegistry.from_domain(domain_config, graph)
+    schema_context = list(registry.active_field_dicts())
+    schema_context.extend(
+        {
+            "field_id": field_id,
+            "active": False,
+            "unsupported_reason": registry.unsupported_reason(field_id),
+        }
+        for field_id in registry.unsupported_field_ids()
+    )
+    query_options = SemanticQueryOptionsBuilder(registry).build()
+    return schema_context, query_options
 
 
 def _semantic_capability_payload(
@@ -613,7 +684,18 @@ def _semantic_capability_payload(
 ) -> dict[str, Any]:
     items = _semantic_items(semantic_result.rows)
     top_results = _semantic_top_results(semantic_result.rows)
-    result_sections = {"risk_buckets": semantic_result.rows}
+    result_sections = getattr(semantic_result, "result_sections", None) or {
+        "risk_buckets": semantic_result.rows
+    }
+    not_executed_preferences = list(
+        getattr(semantic_result, "not_executed_preferences", []) or []
+    )
+    no_schema_field_preferences = [
+        item
+        for item in not_executed_preferences
+        if item.get("match_type") == "no_schema_field"
+    ]
+    executed_filters = _semantic_executed_filters(semantic_result)
     evidence_pack = _semantic_evidence_pack(
         config=config,
         domain_config=domain_config,
@@ -640,11 +722,11 @@ def _semantic_capability_payload(
         "confirmation_candidates": [],
         "confirmation_state": _display_confirmation_state({}),
         "proposed_rules": [],
-        "deterministic_rules": [],
+        "deterministic_rules": executed_filters,
         "candidate_rules": [],
-        "not_executed_preferences": [],
+        "not_executed_preferences": not_executed_preferences,
         "simulated_confirmations": {},
-        "executable_rules": [],
+        "executable_rules": executed_filters,
         "execution": semantic_result.execution_summary,
         "result_count": len(semantic_result.rows),
         "items": items,
@@ -682,12 +764,12 @@ def _semantic_capability_payload(
         top_results=top_results,
         result_sections=result_sections,
         result_count=len(semantic_result.rows),
-        executed_filters=[],
+        executed_filters=executed_filters,
         candidates_to_confirm=[],
         confirmed_rules=[],
         unconfirmed_candidates=[],
-        unexecuted_preferences=[],
-        no_schema_field_preferences=[],
+        unexecuted_preferences=not_executed_preferences,
+        no_schema_field_preferences=no_schema_field_preferences,
         rejected_confirmations=[],
         warnings=_contract_warnings(
             semantic_result.warnings,
@@ -711,12 +793,20 @@ def _semantic_evidence_pack(
     semantic_result: Any,
     result_sections: dict[str, Any],
 ) -> dict[str, Any]:
+    not_executed_preferences = list(
+        getattr(semantic_result, "not_executed_preferences", []) or []
+    )
+    no_schema_field_preferences = [
+        item
+        for item in not_executed_preferences
+        if item.get("match_type") == "no_schema_field"
+    ]
     return {
         "user_request": _compose_user_request(config),
         "query_type": semantic_result.query_type,
         "executed_rules": [],
         "candidate_confirmations": [],
-        "not_executed_preferences": [],
+        "not_executed_preferences": not_executed_preferences,
         "result_count": len(semantic_result.rows),
         "top_k_results": semantic_result.rows[:EVIDENCE_TOP_K],
         "result_sections": result_sections,
@@ -727,6 +817,9 @@ def _semantic_evidence_pack(
             "top_k": EVIDENCE_TOP_K,
         },
         "execution_summary": semantic_result.execution_summary,
+        "selection_evidence": list(
+            getattr(semantic_result, "selection_evidence", []) or []
+        ),
         "answerable_intents": semantic_result.answerable_intents,
         "unanswerable_intents": semantic_result.unanswerable_intents,
         "verified_query_plan": _json_ready(
@@ -751,9 +844,25 @@ def _semantic_evidence_pack(
         "confirmation_source": [],
         "executed_after_confirmation": [],
         "unconfirmed_candidates": [],
-        "no_schema_field_preferences": [],
+        "no_schema_field_preferences": no_schema_field_preferences,
         "rejected_confirmations": [],
     }
+
+
+def _semantic_executed_filters(semantic_result: Any) -> list[dict[str, Any]]:
+    plan = (semantic_result.execution_summary or {}).get("verified_query_plan") or {}
+    return [
+        {
+            "field_id": item.get("field_id"),
+            "field": item.get("source_column"),
+            "operator": item.get("op"),
+            "value": item.get("value"),
+            "source": "verified_query_plan",
+            "executable": True,
+        }
+        for item in plan.get("filters") or []
+        if isinstance(item, dict)
+    ]
 
 
 def _semantic_items(rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
@@ -813,6 +922,13 @@ def _semantic_top_results(rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
 
 
 def _semantic_answer(semantic_result: Any) -> str:
+    if (
+        semantic_result.query_type == "recommendation"
+        or semantic_result.execution_summary.get("query_type")
+        == "semantic_recommendation"
+    ):
+        return _semantic_recommendation_answer(semantic_result)
+
     missing_context = _semantic_missing_context_labels(semantic_result)
     if missing_context:
         missing_sentence = (
@@ -846,6 +962,56 @@ def _semantic_answer(semantic_result: Any) -> str:
         lines.append(
             f"{row['档位']}：{row['院校名称']} {row['专业组']} {row['专业']}，"
             f"最低录取排名 {row['最低录取排名']}。"
+        )
+    return "\n".join(lines)
+
+
+def _semantic_recommendation_answer(semantic_result: Any) -> str:
+    summary = semantic_result.execution_summary
+    if semantic_result.status == "needs_confirmation":
+        warning_codes = {item.get("code") for item in semantic_result.warnings}
+        if "score_without_rank" in warning_codes:
+            return "只给分数时不执行推荐 SQL；请补充广东省排位/位次。"
+        return "缺少广东省排位，当前未执行推荐 SQL。"
+    if semantic_result.status == "blocked":
+        return "当前推荐请求未通过语义能力校验，未执行 SQL。"
+
+    unexecuted = list(getattr(semantic_result, "not_executed_preferences", []) or [])
+    if unexecuted:
+        unexecuted_sentence = "未执行偏好：" + "；".join(
+            f"{item.get('source_text')}（{item.get('reason')}）"
+            for item in unexecuted
+        )
+    else:
+        unexecuted_sentence = "所有进入 QueryAST 的偏好均已通过 reviewed mapping 和 verifier。"
+
+    if semantic_result.status == "no_results":
+        return (
+            f"已按 {summary.get('year')} 年、用户排位 {summary.get('rank')}、"
+            "已审核字段和 verified SQL 召回推荐候选，但没有匹配结果。"
+            f"{unexecuted_sentence}"
+        )
+
+    rerank = summary.get("rerank_validation") or {}
+    if rerank.get("fallback_used"):
+        rerank_sentence = "LLM rerank 未通过校验，已回退到确定性位次距离排序。"
+    elif rerank.get("raw_payload", {}).get("used") is False:
+        rerank_sentence = "本次未使用 LLM rerank，按确定性位次距离排序。"
+    else:
+        rerank_sentence = "LLM rerank 已通过候选集和证据字段校验。"
+
+    lines = [
+        (
+            f"本次使用 {summary.get('year')} 年、用户排位 {summary.get('rank')}，"
+            "只执行 reviewed mapping 支持的专业、省份、位次等确定性规则。"
+        ),
+        unexecuted_sentence,
+        rerank_sentence,
+    ]
+    for row in semantic_result.rows:
+        lines.append(
+            f"{row['档位']} {row['次序']}：{row['院校名称']} {row['专业组']} "
+            f"{row['专业']}，最低录取排名 {row['最低录取排名']}。"
         )
     return "\n".join(lines)
 

@@ -109,10 +109,12 @@ class SemanticAdmissionsRecommendationPlanner:
             return _blocked_missing_fields(missing_fields, registry)
 
         rank_basis = _rank_basis(self.domain_config, registry)
+        year_value = _latest_year(graph, registry)
         grounded = PreferenceGrounder(registry).ground(intent.preferences)
         ast = _query_ast(
             intent=intent,
             rank=rank,
+            year_value=year_value,
             rank_basis=rank_basis,
             registry=registry,
             grounded_filters=grounded.filters,
@@ -229,6 +231,7 @@ class SemanticAdmissionsRecommendationPlanner:
                 "special_limit_excluded_count": len(excluded_rows),
                 "filtered_row_count": len(rows),
                 "rank": rank,
+                "year": year_value,
                 "basis": rank_basis,
                 "bucket_candidate_counts": {
                     bucket: len(items) for bucket, items in candidate_sections.items()
@@ -287,13 +290,14 @@ def _query_ast(
     *,
     intent: SemanticIntent,
     rank: int,
+    year_value: int | None,
     rank_basis: str,
     registry: ReviewedMappingRegistry,
     grounded_filters: list[dict[str, Any]],
 ) -> QueryAST:
     filters: list[dict[str, Any]] = []
-    if registry.has_field("year") and registry.has_op("year", "eq"):
-        filters.append({"field_id": "year", "op": "eq", "value": 2025})
+    if year_value is not None and registry.has_field("year") and registry.has_op("year", "eq"):
+        filters.append({"field_id": "year", "op": "eq", "value": year_value})
     subject_filter = _subject_type_filter(intent, registry)
     if subject_filter:
         filters.append(subject_filter)
@@ -662,6 +666,19 @@ def _rank_basis(
         if registry.has_field(str(field_id)):
             return str(field_id)
     return "major_min_rank"
+
+
+def _latest_year(
+    graph: DatasetCapabilityGraph,
+    registry: ReviewedMappingRegistry,
+) -> int | None:
+    source_column = registry.source_column_or_none("year")
+    if not source_column:
+        return None
+    field = graph.fields.get(source_column)
+    if field is None or field.numeric_max is None:
+        return None
+    return int(field.numeric_max)
 
 
 def _bucket_quotas(domain_config: DomainConfig) -> dict[str, int]:
