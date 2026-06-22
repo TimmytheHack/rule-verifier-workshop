@@ -2,9 +2,9 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** 把 uploaded admissions 的普通推荐请求从 regex/legacy planner 迁到 DeepSeek 辅助的 reviewed semantic recommendation 路径，并保持“LLM proposes, verifier executes, EvidencePack answers”的边界。
+**Goal:** 把 uploaded data 的查询/推荐链路升级为 schema-aware LLM planning + verified query execution + evidence-bounded LLM reranking/answering，并先在 uploaded admissions recommendation 上落地。
 
-**Architecture:** DeepSeek 只读取字段摘要、reviewed mapping 和用户句子，输出候选 `SemanticIntent`；`PreferenceGrounder` 把候选偏好拆成可执行 filters 与不可执行 preferences；`SemanticQueryVerifier` 和 `SemanticSQLBuilder` 只处理 reviewed field/op 后的 `QueryAST`。uploaded admissions 查询优先走 semantic recommendation；旧固定 schema planner 保留为 legacy fallback，不允许 LLM 生成 SQL 或直接生成最终答案。
+**Architecture:** 上传数据先生成 `DatasetCapabilityGraph`、reviewed semantic mapping 和可选查询选项；DeepSeek 只读取 schema/capability 摘要和用户句子，输出候选 `SemanticIntent` / `QueryAST`，不输出 SQL。系统把候选意图拆成可执行 deterministic filters 与不可执行偏好，验证后用 DuckDB 召回 bounded candidate rows；如果请求需要推荐，DeepSeek 只能在候选 `row_id` 内 rerank，`RerankValidator` 校验后生成 EvidencePack，最终 AnswerGenerator 只能基于 EvidencePack 回答。
 
 **Tech Stack:** Python `unittest`、DuckDB、Pandas/OpenPyXL、Pydantic v2、现有 `DeepSeekClient`、`DatasetService`、`DomainConfig`、`ReviewedMappingRegistry`、`QueryAST`、`SemanticQueryVerifier`、`SemanticSQLBuilder`、`EvidencePack`、Workbench contract。
 
@@ -12,16 +12,19 @@
 
 ## 范围检查
 
-本计划只完成 admissions recommendation 的下一段架构演进，不重写所有领域。
+本计划实现通用 workflow 的 admissions 垂直切片：任意上传表先生成 schema/capability，uploaded admissions 的自然语言推荐走 LLM candidate intent、verified SQL、bounded rerank 和 evidence-only answer。其他领域复用同一接口，但不在本计划内完成领域 recipe。
 
 必须完成：
 
+- 上传后的 profile/capability 输出能说明当前表有哪些 deterministic fields、allowed ops、query options 和 unsupported fields，供 UI 生成用户可选项，也供 LLM prompt 使用。
 - 原句 `我的排位是15000，想读人工智能，计算机，而且不想去国外，想留在广东省，请给出推荐` 能被 DeepSeek-backed intent extractor 解析出 `user_rank=15000`、专业偏好、广东省内偏好和境外不可执行偏好。
-- uploaded admissions 数据集使用 reviewed semantic mapping 执行 recommendation SQL，不再因为旧 planner 的 `group_score/group_rank` 字段歧义阻塞。
+- uploaded admissions 数据集使用 reviewed semantic mapping 生成 verified `QueryAST` 并执行 SQL 召回候选，不再因为旧 planner 的 `group_score/group_rank` 字段歧义阻塞。
 - `不想去国外` 在没有 reviewed `school_country_or_region` 字段时进入 `not_executed_preferences`，不阻塞可执行的专业和省份筛选。
 - `假设我今年的高考分数是630分，想读人工智能，计算机，而且不想去国外，想留在广东省，请给出推荐` 继续返回 `needs_confirmation`，不执行 SQL。
+- 推荐排序不靠 hardcoded school list 或 LLM 编答案；SQL 先召回 bounded candidates，LLM reranker 只能返回候选集内的 `row_id` 排序和 evidence-compatible reason codes。
+- `RerankValidator` 必须拒绝候选集外 row、错误 bucket、超出每档数量、引用缺失字段的理由；失败时 fallback 到 deterministic rank-distance order。
 - `列出冲稳保的次序，以及每个专业的最低录取排名` 从每档只取一条升级为可返回多条，并修复全局 `LIMIT 100` 截断保档的问题。
-- 所有回答只引用 `EvidencePack` / semantic result，不读取 raw Excel 编答案。
+- 所有回答只引用 `EvidencePack` / bounded candidate rows / validated rerank，不读取 raw Excel 编答案。
 
 不完成：
 
@@ -34,12 +37,18 @@
 
 - Create: `src/semantic/intent_models.py`
   - 定义 LLM 候选意图的数据合同：`SemanticIntent`、`SemanticPreference`、`SemanticUserContext`、`IntentExtractionResult`。
+- Create: `src/semantic/query_options.py`
+  - 从 `ReviewedMappingRegistry` 和 capability graph 生成 UI/LLM 可见的 deterministic query options、required context 和 unsupported fields。
 - Create: `src/semantic/llm_intent_extractor.py`
   - 包装现有 `DeepSeekClient`，生成 schema-aware prompt，返回 normalized `SemanticIntent`；测试使用 fake client。
 - Create: `src/semantic/preference_grounder.py`
   - 把 `SemanticPreference` 转成可执行 filter candidates、not-executed preferences 和 confirmation issues；缺字段偏好不进入 executable `QueryAST`。
+- Create: `src/semantic/evidence_bounded_reranker.py`
+  - DeepSeek 只接收 bounded candidates 和 allowed reason codes，只能返回候选 `row_id` 顺序。
+- Create: `src/semantic/rerank_validator.py`
+  - 校验 LLM rerank 输出是否只引用候选集、bucket 正确、数量合法、reason codes 不越界；失败返回 deterministic fallback。
 - Create: `src/semantic/admissions_recommendation.py`
-  - 新 semantic recommendation planner：rank 必需；基于 reviewed `major_min_rank` 或 `group_min_rank` 执行；输出冲稳保 sections、EvidencePack 字段和 Workbench rows。
+  - 新 semantic recommendation orchestrator：rank 必需；先执行 verified SQL 召回候选 rows，再调用可选 reranker、validator，输出冲稳保 sections、selection evidence、EvidencePack 字段和 Workbench rows。
 - Modify: `src/semantic/sql_builder.py`
   - 支持 verified `contains_any`，用参数化 `STRPOS(..., ?) > 0` OR 表达式。
 - Modify: `src/semantic/query_verifier.py`
@@ -66,6 +75,166 @@
   - 增加 `--live-llm` 和 `--query` 支持 recommendation smoke；默认仍不强制 live LLM。
 - Modify: `README.md`、`docs/api_contract.md`、`docs/methodology_report.md`
   - 说明 uploaded admissions recommendation 已使用 LLM candidate intent + reviewed semantic execution；说明 score-only 拒答和 no-schema preference 行为。
+
+## Task 0: Capability-Derived Query Options
+
+**Files:**
+- Create: `src/semantic/query_options.py`
+- Modify: `src/api/dataset_service.py`
+- Test: `tests/test_semantic_query_options.py`
+
+- [ ] **Step 1: Write the failing query-options test**
+
+Create `tests/test_semantic_query_options.py`:
+
+```python
+from __future__ import annotations
+
+import unittest
+
+from src.semantic.query_options import SemanticQueryOptionsBuilder
+from src.semantic.reviewed_mapping import ReviewedFieldMapping, ReviewedMappingRegistry
+
+
+class SemanticQueryOptionsBuilderTest(unittest.TestCase):
+    def test_builds_options_from_reviewed_mapping(self) -> None:
+        registry = ReviewedMappingRegistry(
+            active_fields={
+                "major_name": ReviewedFieldMapping(
+                    field_id="major_name",
+                    source_column="专业",
+                    field_type="string",
+                    allowed_ops=("contains_any", "contains"),
+                    required_for=("filter", "display"),
+                ),
+                "school_province": ReviewedFieldMapping(
+                    field_id="school_province",
+                    source_column="学校所在",
+                    field_type="enum_or_category",
+                    allowed_ops=("in", "eq"),
+                    required_for=("filter", "display"),
+                ),
+                "major_min_rank": ReviewedFieldMapping(
+                    field_id="major_min_rank",
+                    source_column="最低位次",
+                    field_type="number",
+                    allowed_ops=("between", "sort"),
+                    required_for=("rank_analysis", "display"),
+                ),
+            },
+            unsupported_fields={
+                "school_country_or_region": "当前数据缺少境外办学字段，不能执行该排除条件。"
+            },
+        )
+
+        options = SemanticQueryOptionsBuilder(registry).build()
+
+        self.assertEqual(options["required_user_context"], ["user_rank"])
+        self.assertIn("semantic_recommendation", options["query_types"])
+        self.assertEqual(
+            options["filters"]["major_name"]["source_column"],
+            "专业",
+        )
+        self.assertEqual(
+            options["unsupported_fields"]["school_country_or_region"],
+            "当前数据缺少境外办学字段，不能执行该排除条件。",
+        )
+```
+
+- [ ] **Step 2: Run the failing query-options test**
+
+Run:
+
+```bash
+.venv/bin/python -m unittest tests.test_semantic_query_options
+```
+
+Expected: FAIL with `ModuleNotFoundError: No module named 'src.semantic.query_options'`.
+
+- [ ] **Step 3: Implement query options builder**
+
+Create `src/semantic/query_options.py`:
+
+```python
+from __future__ import annotations
+
+from typing import Any
+
+from src.semantic.reviewed_mapping import ReviewedMappingRegistry
+
+
+class SemanticQueryOptionsBuilder:
+    """从 reviewed mapping 生成 UI 和 LLM 可见的查询能力摘要。"""
+
+    def __init__(self, registry: ReviewedMappingRegistry) -> None:
+        self.registry = registry
+
+    def build(self) -> dict[str, Any]:
+        fields = {item["field_id"]: item for item in self.registry.active_field_dicts()}
+        filters = {
+            field_id: {
+                "source_column": item["source_column"],
+                "allowed_ops": item["allowed_ops"],
+                "field_type": item["field_type"],
+            }
+            for field_id, item in fields.items()
+            if any(op in item["allowed_ops"] for op in ["eq", "in", "contains", "contains_any", "between"])
+        }
+        query_types: list[str] = []
+        if "major_name" in fields and (
+            "major_min_rank" in fields or "group_min_rank" in fields
+        ):
+            query_types.append("semantic_recommendation")
+        if "major_min_rank" in fields:
+            query_types.append("admissions_major_rank")
+        return {
+            "query_types": query_types,
+            "required_user_context": ["user_rank"] if query_types else [],
+            "filters": filters,
+            "sort_fields": {
+                field_id: item
+                for field_id, item in fields.items()
+                if "sort" in item["allowed_ops"]
+            },
+            "unsupported_fields": {
+                field_id: self.registry.unsupported_reason(field_id)
+                for field_id in self.registry.unsupported_field_ids()
+            },
+        }
+```
+
+- [ ] **Step 4: Expose options in dataset profile**
+
+In `src/api/dataset_service.py`, import `SemanticQueryOptionsBuilder` and add the options where profile currently includes `capability_graph`. Use this code shape after `registry = ReviewedMappingRegistry.from_domain(...)` is available or after building the registry in the same block:
+
+```python
+profile["semantic_query_options"] = SemanticQueryOptionsBuilder(registry).build()
+```
+
+If `profile()` does not currently create a registry, create one from the generated domain config and capability graph:
+
+```python
+graph = DatasetCapabilityGraph.from_dataset(dataset)
+registry = ReviewedMappingRegistry.from_domain(domain_config, graph)
+profile["semantic_query_options"] = SemanticQueryOptionsBuilder(registry).build()
+```
+
+- [ ] **Step 5: Run query-options tests**
+
+Run:
+
+```bash
+.venv/bin/python -m unittest tests.test_semantic_query_options tests.test_uploaded_dataset_flow.UploadedSemanticAdmissionsFlowTest
+```
+
+Expected: PASS.
+
+- [ ] **Step 6: Commit**
+
+```bash
+git add src/semantic/query_options.py src/api/dataset_service.py tests/test_semantic_query_options.py
+git commit -m "feat: expose semantic query options"
+```
 
 ## Task 1: Semantic Intent Contract
 
@@ -969,7 +1138,7 @@ class SemanticAdmissionsRecommendationPlannerTest(unittest.TestCase):
         self.assertEqual(result.query_type, "semantic_recommendation")
         self.assertTrue(result.rows)
         self.assertEqual(result.execution_summary["basis"], "major_min_rank")
-        self.assertIn("contains_any", result.execution_summary["sql"])
+        self.assertIn("STRPOS", result.execution_summary["sql"])
         self.assertEqual(
             result.not_executed_preferences[0]["field_id"],
             "school_country_or_region",
@@ -1343,8 +1512,9 @@ def _project_row(row: dict[str, Any], rank: int, basis: str) -> dict[str, Any]:
 
 def _section_rows(rows: list[dict[str, Any]]) -> dict[str, dict[str, Any]]:
     sections = _empty_sections()
+    section_key_by_label = {"冲": "reach", "稳": "match", "保": "safety"}
     for row in rows:
-        key = row.get("档位")
+        key = section_key_by_label.get(str(row.get("档位") or ""))
         if key in sections:
             sections[key]["items"].append(row)
     return sections
@@ -1352,12 +1522,12 @@ def _section_rows(rows: list[dict[str, Any]]) -> dict[str, dict[str, Any]]:
 
 def _section_key(margin: int | None) -> str:
     if margin is None:
-        return "match"
+        return "稳"
     if margin < 0:
-        return "reach"
+        return "冲"
     if margin <= 15000:
-        return "match"
-    return "safety"
+        return "稳"
+    return "保"
 
 
 def _empty_sections() -> dict[str, dict[str, Any]]:
@@ -1423,7 +1593,425 @@ git add src/semantic/admissions_recommendation.py domains/admissions/semantic_ca
 git commit -m "feat: execute semantic admissions recommendations"
 ```
 
-## Task 5: Workbench Uploaded Admissions Integration
+## Task 5: Evidence-Bounded Reranker And Validator
+
+**Files:**
+- Create: `src/semantic/evidence_bounded_reranker.py`
+- Create: `src/semantic/rerank_validator.py`
+- Modify: `src/semantic/admissions_recommendation.py`
+- Test: `tests/test_semantic_reranker.py`
+- Test: `tests/test_semantic_admissions_recommendation.py`
+
+- [ ] **Step 1: Write failing reranker and validator tests**
+
+Create `tests/test_semantic_reranker.py`:
+
+```python
+from __future__ import annotations
+
+import unittest
+
+from src.semantic.evidence_bounded_reranker import EvidenceBoundedReranker
+from src.semantic.rerank_validator import RerankValidator
+
+
+class FakeDeepSeekClient:
+    def __init__(self, payload: dict[str, object]) -> None:
+        self.payload = payload
+        self.calls: list[dict[str, str]] = []
+
+    def chat_json(self, system_prompt: str, user_prompt: str):
+        self.calls.append({"system_prompt": system_prompt, "user_prompt": user_prompt})
+
+        class Response:
+            def __init__(self, payload: dict[str, object]) -> None:
+                self.payload = payload
+                self.usage = {
+                    "prompt_tokens": 20,
+                    "completion_tokens": 10,
+                    "total_tokens": 30,
+                }
+
+        return Response(self.payload)
+
+
+CANDIDATES = [
+    {
+        "row_id": "r_001",
+        "档位": "稳",
+        "院校名称": "深圳大学",
+        "专业": "计算机科学与技术",
+        "最低录取排名": 15020,
+        "相对用户排名": 20,
+        "deterministic_evidence": ["bucket_match", "major_match", "rank_near"],
+    },
+    {
+        "row_id": "r_002",
+        "档位": "保",
+        "院校名称": "广东工业大学",
+        "专业": "人工智能",
+        "最低录取排名": 21000,
+        "相对用户排名": 6000,
+        "deterministic_evidence": ["bucket_safety", "major_match"],
+    },
+]
+
+
+class EvidenceBoundedRerankerTest(unittest.TestCase):
+    def test_reranker_only_returns_row_id_selections(self) -> None:
+        client = FakeDeepSeekClient(
+            {
+                "selected": [
+                    {
+                        "row_id": "r_002",
+                        "bucket": "保",
+                        "reason_codes": ["major_match"],
+                        "reason": "专业命中人工智能。",
+                    },
+                    {
+                        "row_id": "r_001",
+                        "bucket": "稳",
+                        "reason_codes": ["major_match", "rank_near"],
+                        "reason": "专业命中计算机且位次接近。",
+                    },
+                ],
+                "not_used_preferences": [
+                    {
+                        "source_text": "不想去国外",
+                        "reason": "候选数据没有境外办学字段，不能执行。",
+                    }
+                ],
+            }
+        )
+        reranker = EvidenceBoundedReranker(client=client)
+
+        result = reranker.rerank(
+            user_request="我的排位是15000，想读人工智能，计算机",
+            candidates=CANDIDATES,
+            not_executed_preferences=[],
+            limits={"冲": 10, "稳": 13, "保": 10},
+        )
+
+        self.assertEqual([item["row_id"] for item in result.selected], ["r_002", "r_001"])
+        self.assertIn("候选", client.calls[0]["user_prompt"])
+        self.assertNotIn("raw_excel", client.calls[0]["user_prompt"])
+
+    def test_validator_rejects_external_row_id_and_bad_reason_code(self) -> None:
+        validator = RerankValidator(allowed_reason_codes={"major_match", "rank_near"})
+        validated = validator.validate(
+            candidates=CANDIDATES,
+            proposed=[
+                {
+                    "row_id": "r_999",
+                    "bucket": "稳",
+                    "reason_codes": ["major_match"],
+                    "reason": "不存在的行。",
+                },
+                {
+                    "row_id": "r_001",
+                    "bucket": "稳",
+                    "reason_codes": ["invented_school_tier"],
+                    "reason": "引用了未提供字段。",
+                },
+            ],
+            limits={"冲": 10, "稳": 13, "保": 10},
+        )
+
+        self.assertFalse(validated.ok)
+        self.assertEqual([item["row_id"] for item in validated.selected], ["r_001", "r_002"])
+        self.assertEqual(validated.fallback_reason, "invalid_rerank_output")
+
+
+if __name__ == "__main__":
+    unittest.main()
+```
+
+- [ ] **Step 2: Run failing reranker tests**
+
+Run:
+
+```bash
+.venv/bin/python -m unittest tests.test_semantic_reranker
+```
+
+Expected: FAIL with missing `evidence_bounded_reranker` and `rerank_validator`.
+
+- [ ] **Step 3: Implement evidence-bounded reranker**
+
+Create `src/semantic/evidence_bounded_reranker.py`:
+
+```python
+from __future__ import annotations
+
+import json
+from dataclasses import dataclass, field
+from typing import Any, Protocol
+
+from src.extractors.deepseek_extractor import DeepSeekClient
+
+
+class JSONChatClient(Protocol):
+    def chat_json(self, system_prompt: str, user_prompt: str) -> Any:
+        """返回 JSON payload 和 usage。"""
+
+
+@dataclass(frozen=True)
+class RerankResult:
+    selected: list[dict[str, Any]]
+    not_used_preferences: list[dict[str, Any]] = field(default_factory=list)
+    usage: dict[str, int] = field(default_factory=dict)
+    raw_payload: dict[str, Any] = field(default_factory=dict)
+
+
+class EvidenceBoundedReranker:
+    """LLM 只能在 bounded candidates 内选择 row_id。"""
+
+    def __init__(self, client: JSONChatClient | None = None) -> None:
+        self.client = client or DeepSeekClient()
+
+    def rerank(
+        self,
+        *,
+        user_request: str,
+        candidates: list[dict[str, Any]],
+        not_executed_preferences: list[dict[str, Any]],
+        limits: dict[str, int],
+    ) -> RerankResult:
+        response = self.client.chat_json(
+            system_prompt=(
+                "你是证据受限的招生推荐 reranker。只能从候选 row_id 中选择，"
+                "不能新增学校、专业、分数、位次或筛选条件。只返回 JSON。"
+            ),
+            user_prompt=(
+                "请按用户偏好在候选内排序。"
+                "禁止引用候选字段之外的信息，禁止声称未执行偏好已执行。"
+                "输出 JSON：{\"selected\":[{\"row_id\":string,\"bucket\":string,"
+                "\"reason_codes\":[string],\"reason\":string}],"
+                "\"not_used_preferences\":[{\"source_text\":string,\"reason\":string}]}。"
+                f"每档数量限制：{json.dumps(limits, ensure_ascii=False)}。"
+                f"未执行偏好：{json.dumps(not_executed_preferences, ensure_ascii=False)}。"
+                f"候选：{json.dumps(_compact_candidates(candidates), ensure_ascii=False)}。"
+                f"用户输入：{user_request}"
+            ),
+        )
+        payload = dict(response.payload)
+        return RerankResult(
+            selected=[
+                item for item in payload.get("selected") or [] if isinstance(item, dict)
+            ],
+            not_used_preferences=[
+                item
+                for item in payload.get("not_used_preferences") or []
+                if isinstance(item, dict)
+            ],
+            usage=dict(getattr(response, "usage", {}) or {}),
+            raw_payload=payload,
+        )
+
+
+def _compact_candidates(candidates: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    allowed = [
+        "row_id",
+        "档位",
+        "院校名称",
+        "专业组",
+        "专业",
+        "最低录取排名",
+        "相对用户排名",
+        "学校所在",
+        "城市",
+        "录取人数",
+        "deterministic_evidence",
+    ]
+    return [{key: row.get(key) for key in allowed if key in row} for row in candidates]
+```
+
+- [ ] **Step 4: Implement rerank validator**
+
+Create `src/semantic/rerank_validator.py`:
+
+```python
+from __future__ import annotations
+
+from dataclasses import dataclass, field
+from typing import Any
+
+
+@dataclass(frozen=True)
+class ValidatedRerank:
+    ok: bool
+    selected: list[dict[str, Any]]
+    rejected: list[dict[str, Any]] = field(default_factory=list)
+    fallback_reason: str | None = None
+
+
+class RerankValidator:
+    def __init__(self, allowed_reason_codes: set[str] | None = None) -> None:
+        self.allowed_reason_codes = allowed_reason_codes or {
+            "major_match",
+            "rank_near",
+            "bucket_reach",
+            "bucket_match",
+            "bucket_safety",
+            "location_match",
+            "available_school_tag",
+        }
+
+    def validate(
+        self,
+        *,
+        candidates: list[dict[str, Any]],
+        proposed: list[dict[str, Any]],
+        limits: dict[str, int],
+    ) -> ValidatedRerank:
+        by_id = {str(row.get("row_id")): row for row in candidates}
+        selected: list[dict[str, Any]] = []
+        rejected: list[dict[str, Any]] = []
+        counts = {label: 0 for label in limits}
+        seen: set[str] = set()
+        for item in proposed:
+            row_id = str(item.get("row_id") or "")
+            if row_id not in by_id or row_id in seen:
+                rejected.append({"row_id": row_id, "reason": "unknown_or_duplicate_row"})
+                continue
+            candidate = by_id[row_id]
+            bucket = str(item.get("bucket") or "")
+            if bucket != str(candidate.get("档位") or ""):
+                rejected.append({"row_id": row_id, "reason": "bucket_mismatch"})
+                continue
+            if counts.get(bucket, 0) >= limits.get(bucket, 0):
+                rejected.append({"row_id": row_id, "reason": "bucket_limit_exceeded"})
+                continue
+            reason_codes = [str(code) for code in item.get("reason_codes") or []]
+            if any(code not in self.allowed_reason_codes for code in reason_codes):
+                rejected.append({"row_id": row_id, "reason": "unsupported_reason_code"})
+                continue
+            output = dict(candidate)
+            output["rerank_reason"] = item.get("reason")
+            output["rerank_reason_codes"] = reason_codes
+            selected.append(output)
+            seen.add(row_id)
+            counts[bucket] = counts.get(bucket, 0) + 1
+        if rejected:
+            return ValidatedRerank(
+                ok=False,
+                selected=_deterministic_fallback(candidates, limits),
+                rejected=rejected,
+                fallback_reason="invalid_rerank_output",
+            )
+        return ValidatedRerank(ok=True, selected=selected, rejected=[])
+
+
+def _deterministic_fallback(
+    candidates: list[dict[str, Any]],
+    limits: dict[str, int],
+) -> list[dict[str, Any]]:
+    counts = {label: 0 for label in limits}
+    output: list[dict[str, Any]] = []
+    sorted_candidates = sorted(
+        candidates,
+        key=lambda row: (
+            abs(int(row.get("相对用户排名") or 0)),
+            int(row.get("最低录取排名") or 0),
+            str(row.get("院校名称") or ""),
+            str(row.get("专业") or ""),
+        ),
+    )
+    for row in sorted_candidates:
+        bucket = str(row.get("档位") or "")
+        if counts.get(bucket, 0) >= limits.get(bucket, 0):
+            continue
+        output.append(dict(row))
+        counts[bucket] = counts.get(bucket, 0) + 1
+    return output
+```
+
+- [ ] **Step 5: Wire reranker into admissions recommendation**
+
+In `src/semantic/admissions_recommendation.py`, after SQL candidates are projected but before `result_sections` are created:
+
+```python
+        candidates = [
+            {
+                **row,
+                "row_id": f"r_{index:03d}",
+                "deterministic_evidence": _deterministic_evidence(row),
+            }
+            for index, row in enumerate(rows, start=1)
+        ]
+        rerank = EvidenceBoundedReranker().rerank(
+            user_request=intent.model_dump_json(),
+            candidates=candidates,
+            not_executed_preferences=grounding.not_executed_preferences,
+            limits={"冲": 10, "稳": 13, "保": 10},
+        )
+        validated = RerankValidator().validate(
+            candidates=candidates,
+            proposed=rerank.selected,
+            limits={"冲": 10, "稳": 13, "保": 10},
+        )
+        rows = validated.selected
+```
+
+Add this helper in the same file:
+
+```python
+def _deterministic_evidence(row: dict[str, Any]) -> list[str]:
+    evidence = []
+    bucket = row.get("档位")
+    if bucket == "冲":
+        evidence.append("bucket_reach")
+    elif bucket == "稳":
+        evidence.append("bucket_match")
+    elif bucket == "保":
+        evidence.append("bucket_safety")
+    if row.get("专业"):
+        evidence.append("major_match")
+    if row.get("相对用户排名") is not None:
+        evidence.append("rank_near")
+    if row.get("学校所在"):
+        evidence.append("location_match")
+    return evidence
+```
+
+Add these imports:
+
+```python
+from src.semantic.evidence_bounded_reranker import EvidenceBoundedReranker
+from src.semantic.rerank_validator import RerankValidator
+```
+
+Add these keys to `execution_summary`:
+
+```python
+                "candidate_row_count": len(candidates),
+                "rerank": {
+                    "used": True,
+                    "valid": validated.ok,
+                    "fallback_reason": validated.fallback_reason,
+                    "rejected": validated.rejected,
+                    "usage": rerank.usage,
+                },
+```
+
+- [ ] **Step 6: Run reranker tests**
+
+Run:
+
+```bash
+.venv/bin/python -m unittest tests.test_semantic_reranker tests.test_semantic_admissions_recommendation
+```
+
+Expected: PASS.
+
+- [ ] **Step 7: Commit**
+
+```bash
+git add src/semantic/evidence_bounded_reranker.py src/semantic/rerank_validator.py src/semantic/admissions_recommendation.py tests/test_semantic_reranker.py tests/test_semantic_admissions_recommendation.py
+git commit -m "feat: add evidence bounded reranking"
+```
+
+## Task 6: Workbench Uploaded Admissions Integration
 
 **Files:**
 - Modify: `src/api/workbench.py`
@@ -1861,7 +2449,7 @@ git add src/api/workbench.py tests/test_uploaded_dataset_flow.py tests/workbench
 git commit -m "feat: route uploaded recommendations through semantic planner"
 ```
 
-## Task 6: Expand Major Rank Output And Avoid Bucket Truncation
+## Task 7: Expand Major Rank Output And Avoid Bucket Truncation
 
 **Files:**
 - Modify: `src/semantic/admissions_major_rank.py`
@@ -2061,7 +2649,7 @@ git add src/semantic/admissions_major_rank.py tests/test_semantic_admissions_maj
 git commit -m "feat: return multi-row major rank buckets"
 ```
 
-## Task 7: Probe Script And Live DeepSeek Smoke
+## Task 8: Probe Script And Live DeepSeek Smoke
 
 **Files:**
 - Modify: `scripts/run_semantic_capability_probe.py`
@@ -2123,6 +2711,8 @@ Use this code shape:
                 "rank": summary.get("rank"),
                 "basis": summary.get("basis"),
                 "bucket_counts": summary.get("bucket_counts"),
+                "candidate_row_count": summary.get("candidate_row_count"),
+                "rerank": summary.get("rerank"),
             },
         },
     }
@@ -2155,7 +2745,7 @@ Do not print `.env`. Run:
   --live-llm
 ```
 
-Expected: JSON with `query_type: semantic_recommendation`, `status: ok`, `execution_summary.executor: duckdb`, `execution_summary.basis: major_min_rank`, and `not_executed_preferences` containing `school_country_or_region`.
+Expected: JSON with `query_type: semantic_recommendation`, `status: ok`, `execution_summary.executor: duckdb`, `execution_summary.basis: major_min_rank`, `execution_summary.rerank.valid: true`, bounded `top_results`, and `not_executed_preferences` containing `school_country_or_region`.
 
 - [ ] **Step 5: Commit**
 
@@ -2164,7 +2754,7 @@ git add scripts/run_semantic_capability_probe.py
 git commit -m "chore: add semantic recommendation probe output"
 ```
 
-## Task 8: Docs, Regression Suite, And Final Verification
+## Task 9: Docs, Regression Suite, And Final Verification
 
 **Files:**
 - Modify: `README.md`
@@ -2177,7 +2767,7 @@ git commit -m "chore: add semantic recommendation probe output"
 Add this Chinese paragraph near the uploaded admissions semantic capability section:
 
 ```markdown
-uploaded admissions 的普通推荐请求会先由 DeepSeek 生成候选 `SemanticIntent`，再由 reviewed semantic mapping 校验字段和操作。用户说“我的排位是15000，想读人工智能、计算机，想留在广东省”时，系统可以执行 `major_name contains_any`、`school_province in` 和位次窗口；用户说“不想去国外”但当前表没有境外办学字段时，该偏好进入 `not_executed_preferences`，不会被暗示为已执行。只有分数没有位次时继续返回 `needs_confirmation`，不执行推荐 SQL。
+uploaded admissions 的普通推荐请求会先由 DeepSeek 生成候选 `SemanticIntent`，再由 reviewed semantic mapping 校验字段和操作。用户说“我的排位是15000，想读人工智能、计算机，想留在广东省”时，系统可以执行 `major_name contains_any`、`school_province in` 和位次窗口；用户说“不想去国外”但当前表没有境外办学字段时，该偏好进入 `not_executed_preferences`，不会被暗示为已执行。推荐排序采用 evidence-bounded reranker：LLM 只能在 SQL 召回的候选 `row_id` 中排序，validator 会拒绝候选集外结果或 unsupported reason。只有分数没有位次时继续返回 `needs_confirmation`，不执行推荐 SQL。
 ```
 
 - [ ] **Step 2: Update API contract**
@@ -2185,7 +2775,7 @@ uploaded admissions 的普通推荐请求会先由 DeepSeek 生成候选 `Semant
 In `docs/api_contract.md`, add this contract note under `POST /workbench/query`:
 
 ```markdown
-当 uploaded admissions 数据集具备 `semantic_capabilities.json` 且 LLM 候选意图为 `semantic_recommendation` 时，Workbench 返回同一个 `WorkbenchResponse` contract，但 `evidence_pack.execution_summary.query_type` 为 `semantic_recommendation`。`evidence_pack.llm_candidate_intent` 保存 LLM 候选结构；`not_executed_preferences` 保存缺字段或不支持操作的偏好。LLM 候选不包含 SQL，SQL 只来自 verified `QueryAST`。
+当 uploaded admissions 数据集具备 `semantic_capabilities.json` 且 LLM 候选意图为 `semantic_recommendation` 时，Workbench 返回同一个 `WorkbenchResponse` contract，但 `evidence_pack.execution_summary.query_type` 为 `semantic_recommendation`。`evidence_pack.llm_candidate_intent` 保存 LLM 候选结构；`not_executed_preferences` 保存缺字段或不支持操作的偏好。LLM 候选不包含 SQL，SQL 只来自 verified `QueryAST`。如果启用 rerank，`execution_summary.rerank` 必须记录候选数量、LLM usage、validator 结果、fallback reason 和 rejected selections。
 ```
 
 - [ ] **Step 3: Update methodology report**
@@ -2193,7 +2783,7 @@ In `docs/api_contract.md`, add this contract note under `POST /workbench/query`:
 In `docs/methodology_report.md`, add this method note:
 
 ```markdown
-本阶段将 LLM 从 answer 层前移到 candidate intent 层：LLM 读取 reviewed schema 摘要并输出 `SemanticIntent`，但不执行、不确认字段、不生成 SQL。`PreferenceGrounder` 会把缺字段偏好保留下来，`SemanticQueryVerifier` 只验证可执行 filters，`SemanticSQLBuilder` 生成参数化 SQL，最终回答只使用 EvidencePack。
+本阶段将 LLM 从 answer 层前移到 candidate intent 和 bounded rerank 层：LLM 读取 reviewed schema 摘要并输出 `SemanticIntent`，但不执行、不确认字段、不生成 SQL。`PreferenceGrounder` 会把缺字段偏好保留下来，`SemanticQueryVerifier` 只验证可执行 filters，`SemanticSQLBuilder` 生成参数化 SQL。推荐场景下，LLM reranker 只接收 bounded candidate rows 并返回 row_id 排序；`RerankValidator` 校验后才进入 EvidencePack，最终回答只使用 EvidencePack。
 ```
 
 - [ ] **Step 4: Run focused tests**
@@ -2202,8 +2792,10 @@ Run:
 
 ```bash
 .venv/bin/python -m unittest \
+  tests.test_semantic_query_options \
   tests.test_semantic_llm_intent_extractor \
   tests.test_semantic_preference_grounder \
+  tests.test_semantic_reranker \
   tests.test_semantic_admissions_recommendation \
   tests.test_semantic_sql_builder \
   tests.test_semantic_admissions_major_rank \
@@ -2230,8 +2822,11 @@ Run:
 ```bash
 .venv/bin/python -m py_compile \
   src/semantic/intent_models.py \
+  src/semantic/query_options.py \
   src/semantic/llm_intent_extractor.py \
   src/semantic/preference_grounder.py \
+  src/semantic/evidence_bounded_reranker.py \
+  src/semantic/rerank_validator.py \
   src/semantic/admissions_recommendation.py \
   src/semantic/sql_builder.py \
   src/semantic/admissions_major_rank.py \
@@ -2253,9 +2848,9 @@ If any code files changed during final fixes, include them in the same commit on
 
 ## Self-Review
 
-- Spec coverage: the plan covers LLM candidate intent extraction, reviewed mapping grounding, verified SQL execution, EvidencePack-bound answering, exact `排位是15000` recommendation prompt, score-only refusal, no-schema `不想去国外`, and multi-row major-rank bucket output.
+- Spec coverage: the plan covers upload-derived schema/query options, LLM candidate intent extraction, reviewed mapping grounding, verified SQL execution, bounded candidate retrieval, evidence-bounded reranking, EvidencePack-only answering, exact `排位是15000` recommendation prompt, score-only refusal, no-schema `不想去国外`, and multi-row major-rank bucket output.
 - Placeholder scan: the plan does not contain unresolved placeholder work, empty “add tests” instructions, or any executable path for raw SQL. Every task has concrete files, commands, expected outcomes, and code blocks for changed behavior.
-- Type consistency: `SemanticIntent` and `SemanticPreference` are introduced in Task 1, consumed by the extractor in Task 2, consumed by `PreferenceGrounder` in Task 3, and consumed by `SemanticAdmissionsRecommendationPlanner` in Task 4. `contains_any` is added to SQL builder before the planner uses it.
+- Type consistency: `SemanticQueryOptionsBuilder` is introduced before prompt usage; `SemanticIntent` and `SemanticPreference` are introduced in Task 1, consumed by the extractor in Task 2, consumed by `PreferenceGrounder` in Task 3, and consumed by `SemanticAdmissionsRecommendationPlanner` in Task 4. Rerank output types are introduced before Workbench integration. `contains_any` is added to SQL builder before the planner uses it.
 
 ## Execution Handoff
 
