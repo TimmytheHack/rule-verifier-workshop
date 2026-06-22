@@ -38,6 +38,8 @@ from src.adapters.data_warehouse import (
 from src.api.workbench import WorkbenchConfig, run_workbench
 from src.domains import DomainConfig
 from src.semantic.capability_graph import DatasetCapabilityGraph
+from src.semantic.query_options import SemanticQueryOptionsBuilder
+from src.semantic.reviewed_mapping import ReviewedMappingRegistry
 
 
 DATASET_STATUS_VALUES = {
@@ -227,10 +229,22 @@ class DatasetService:
             metadata["source_path"],
             sheet_name=metadata.get("sheet_name"),
         )
-        capability_graph = DatasetCapabilityGraph.from_dataset(
+        capability_graph_object = DatasetCapabilityGraph.from_dataset(
             dataset,
             expected_source_columns=expected_source_columns,
-        ).to_dict()
+        )
+        capability_graph = capability_graph_object.to_dict()
+        semantic_query_options: dict[str, Any] = {}
+        if metadata.get("domain_dir") and metadata.get("domain_name"):
+            domain_config = DomainConfig.from_path(
+                Path(metadata["domain_dir"]),
+                metadata["domain_name"],
+            )
+            registry = ReviewedMappingRegistry.from_domain(
+                domain_config,
+                capability_graph_object,
+            )
+            semantic_query_options = SemanticQueryOptionsBuilder(registry).build()
         return {
             "dataset_id": dataset_id,
             "status": metadata["status"],
@@ -253,6 +267,7 @@ class DatasetService:
                 for column in profile.get("columns", [])
             ],
             "capability_graph": capability_graph,
+            "semantic_query_options": semantic_query_options,
             "warnings": metadata.get("warnings", []),
         }
 
