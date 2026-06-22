@@ -641,6 +641,10 @@ def _semantic_recommendation_intent(
     supplied_intent = config.soft_preferences.get("semantic_intent")
     if supplied_intent:
         return SemanticIntent.model_validate(supplied_intent)
+    if not config.dataset_id:
+        return None
+    if config.extractor == "regex":
+        return None
     if not deepseek_slot_adapter_enabled():
         return None
     try:
