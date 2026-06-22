@@ -2,6 +2,7 @@ import unittest
 
 import pydantic
 
+from src.domains import DomainConfig
 from src.semantic import (
     QueryAST,
     QueryFilter,
@@ -9,6 +10,10 @@ from src.semantic import (
     QueryVerificationIssue,
     VerifiedQueryPlan,
 )
+from src.semantic.capability_graph import DatasetCapabilityGraph
+from src.semantic.query_verifier import SemanticQueryVerifier
+from src.semantic.reviewed_mapping import ReviewedMappingRegistry
+from tests.semantic_test_utils import new_admissions_dataset
 
 
 class QueryASTTest(unittest.TestCase):
@@ -514,6 +519,81 @@ class QueryASTTest(unittest.TestCase):
                 field_id="city",
                 details={"severity": "warning"},
             )
+
+
+class SemanticQueryVerifierTest(unittest.TestCase):
+    def test_verifier_accepts_reviewed_fields_and_ops(self) -> None:
+        dataset = next(new_admissions_dataset())
+        graph = DatasetCapabilityGraph.from_dataset(dataset)
+        registry = ReviewedMappingRegistry.from_domain(
+            DomainConfig.load("admissions"),
+            graph,
+        )
+        ast = QueryAST.from_candidate(
+            {
+                "intent": "table_filter",
+                "select": ["university_name", "major_name", "major_min_rank"],
+                "filters": [
+                    {"field_id": "year", "op": "eq", "value": 2025},
+                    {
+                        "field_id": "major_min_rank",
+                        "op": "between",
+                        "value": [9000, 18000],
+                    },
+                ],
+                "sort": [{"field_id": "major_min_rank", "direction": "asc"}],
+                "limit": 20,
+            }
+        )
+
+        result = SemanticQueryVerifier(registry, table_name="admissions").verify(ast)
+
+        self.assertTrue(result.ok)
+        self.assertEqual(result.plan.table_name, "admissions")
+        self.assertEqual(result.plan.filters[0]["source_column"], "年份")
+        self.assertEqual(result.plan.filters[1]["source_column"], "最低位次")
+        self.assertEqual(result.issues, [])
+
+    def test_verifier_rejects_unavailable_city_and_tuition(self) -> None:
+        dataset = next(new_admissions_dataset())
+        graph = DatasetCapabilityGraph.from_dataset(dataset)
+        registry = ReviewedMappingRegistry.from_domain(
+            DomainConfig.load("admissions"),
+            graph,
+        )
+        ast = QueryAST.from_candidate(
+            {
+                "intent": "table_filter",
+                "select": [
+                    "university_name",
+                    "major_name",
+                    "city",
+                    "tuition_yuan_per_year",
+                ],
+                "filters": [
+                    {"field_id": "city", "op": "contains", "value": "广州"},
+                    {
+                        "field_id": "tuition_yuan_per_year",
+                        "op": "<=",
+                        "value": 20000,
+                    },
+                ],
+                "sort": [],
+                "limit": 20,
+            }
+        )
+
+        result = SemanticQueryVerifier(registry, table_name="admissions").verify(ast)
+
+        self.assertFalse(result.ok)
+        self.assertEqual(
+            [issue.code for issue in result.issues],
+            ["missing_field", "missing_field", "missing_field", "missing_field"],
+        )
+        self.assertEqual(
+            [item["field_id"] for item in result.unanswerable_intents],
+            ["city", "tuition_yuan_per_year", "city", "tuition_yuan_per_year"],
+        )
 
 
 if __name__ == "__main__":
