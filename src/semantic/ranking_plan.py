@@ -23,7 +23,7 @@ RankingOperation = Literal[
 ALLOWED_RANKING_OPERATIONS = frozenset(RankingOperation.__args__)
 BOOLEAN_STRING_VALUES = frozenset({"是", "否", "true", "false", "1", "0"})
 SQL_COMMAND_TEXT_PATTERN = re.compile(
-    r"(?:^|[;:\r\n])\s*select\b|"
+    r"\bselect\b|"
     r"\b(?:"
     r"insert\s+into|"
     r"update\s+\S+\s+set|"

@@ -172,7 +172,14 @@ class RankingPlanVerifierTest(unittest.TestCase):
             )
 
     def test_ranking_plan_rejects_standalone_select_command_text(self) -> None:
-        for command_text in ("SELECT 1", "SELECT count(*)", "SELECT 1 + 1"):
+        for command_text in (
+            "SELECT 1",
+            "SELECT count(*)",
+            "SELECT 1 + 1",
+            "按 SELECT 1 排序",
+            "note SELECT count(*)",
+            "prefix SELECT * FROM admissions",
+        ):
             with self.subTest(command_text=command_text):
                 with self.assertRaises(ValidationError):
                     RankingPlan.model_validate(

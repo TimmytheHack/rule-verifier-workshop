@@ -195,6 +195,23 @@ class UploadedDatasetFlowTest(unittest.TestCase):
             "[redacted_forbidden_payload]",
         )
 
+    def test_builtin_admissions_major_keyword_scalar_select_does_not_leak(
+        self,
+    ) -> None:
+        response = run_workbench(
+            WorkbenchConfig(
+                hard_filters={"major_keyword": "SELECT count(*)"},
+            )
+        )
+
+        assert_workbench_contract(self, response)
+        serialized = json.dumps(response, ensure_ascii=False)
+        self.assertNotIn("SELECT count(*)", serialized)
+        self.assertEqual(
+            response["hard_filters"]["major_keyword"],
+            "[redacted_forbidden_payload]",
+        )
+
     def test_generic_domain_structured_prompt_payload_does_not_leak(self) -> None:
         with TemporaryDirectory() as directory:
             service, dataset_id = _generated_generic_dataset(Path(directory))
@@ -884,6 +901,45 @@ print(json.dumps({
         assert_workbench_contract(self, response)
         self.assertEqual(response["status"], "error")
         serialized = json.dumps(response, ensure_ascii=False)
+        self.assertNotIn("SELECT count(*)", serialized)
+
+    def test_unsafe_semantic_ranking_plan_prefixed_select_is_rejected(
+        self,
+    ) -> None:
+        query = "我的排位是15000，想读人工智能，计算机，而且想留在广东省，请给出推荐"
+        unsafe_plan = {
+            "criteria": [
+                {
+                    "criterion_id": "unsafe",
+                    "source_text": "按 SELECT 1 排序",
+                    "required_field": "major_name",
+                    "operation": "external_prestige_score",
+                    "value": {"note": "note SELECT count(*)"},
+                    "priority": 1,
+                    "rationale": "不允许候选排序合同携带 SQL 命令文本。",
+                }
+            ]
+        }
+        with TemporaryDirectory() as directory:
+            service, dataset_id = _queryable_uploaded_admissions(
+                Path(directory),
+                use_excel=False,
+            )
+
+            response = service.query(
+                dataset_id,
+                user_input=query,
+                soft_preferences={
+                    "prompt": query,
+                    "semantic_intent": _semantic_recommendation_intent(),
+                    "semantic_ranking_plan": unsafe_plan,
+                },
+            )
+
+        assert_workbench_contract(self, response)
+        self.assertEqual(response["status"], "error")
+        serialized = json.dumps(response, ensure_ascii=False)
+        self.assertNotIn("SELECT 1", serialized)
         self.assertNotIn("SELECT count(*)", serialized)
 
     def test_rejected_semantic_ranking_plan_does_not_leak_in_composed_text(

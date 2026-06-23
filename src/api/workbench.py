@@ -190,7 +190,7 @@ WORKBENCH_SCHEMA_VERSION = "workbench_response.v1"
 FORBIDDEN_PUBLIC_PAYLOAD_KEYS = {"raw_sql", "sql"}
 REDACTED_FORBIDDEN_PAYLOAD = "[redacted_forbidden_payload]"
 SQL_COMMAND_TEXT_PATTERN = re.compile(
-    r"(?:^|[;:\r\n])\s*select\b|"
+    r"\bselect\b|"
     r"\b(?:"
     r"insert\s+into|"
     r"update\s+\S+\s+set|"
@@ -3262,7 +3262,7 @@ def _compose_user_request(config: WorkbenchConfig) -> str:
             parts.append(f"{key}={_format_value(value)}")
         return "，".join(parts) if parts else config.user_input
 
-    hard = config.hard_filters
+    hard = _public_structured_filters(_display_hard_filters(config.hard_filters))
     soft = config.soft_preferences
     parts = []
     source_province = _clean_text(hard.get("source_province"))
