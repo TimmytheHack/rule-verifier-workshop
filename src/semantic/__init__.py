@@ -16,11 +16,19 @@ from src.semantic.llm_semantic_candidates import (
     DeepSeekSemanticCandidateGenerator,
     SemanticCandidateGenerationResult,
 )
+from src.semantic.evidence_requirements import (
+    DeepSeekEvidenceRequirementClassifier,
+    EvidenceRequirement,
+    EvidenceRequirementResult,
+)
 
 __all__ = [
     "IntentExtractionResult",
+    "DeepSeekEvidenceRequirementClassifier",
     "DeepSeekSemanticIntentExtractor",
     "DeepSeekSemanticCandidateGenerator",
+    "EvidenceRequirement",
+    "EvidenceRequirementResult",
     "QueryAST",
     "QueryFilter",
     "QuerySort",
