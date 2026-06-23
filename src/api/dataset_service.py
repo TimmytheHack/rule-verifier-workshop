@@ -40,6 +40,7 @@ from src.domains import DomainConfig
 from src.semantic.capability_graph import DatasetCapabilityGraph
 from src.semantic.query_options import SemanticQueryOptionsBuilder
 from src.semantic.reviewed_mapping import ReviewedMappingRegistry
+from src.semantic.semantic_candidates import RuleBasedSemanticCandidateGenerator
 
 
 DATASET_STATUS_VALUES = {
@@ -235,6 +236,15 @@ class DatasetService:
         )
         capability_graph = capability_graph_object.to_dict()
         semantic_query_options: dict[str, Any] = {}
+        semantic_mapping_candidates: dict[str, Any] = {
+            "rule_based": [],
+            "llm": {
+                "status": "not_available",
+                "reason": "domain pack not generated",
+                "candidates": [],
+                "rejected_candidates": [],
+            },
+        }
         if metadata.get("domain_dir") and metadata.get("domain_name"):
             domain_config = DomainConfig.from_path(
                 Path(metadata["domain_dir"]),
@@ -245,6 +255,23 @@ class DatasetService:
                 capability_graph_object,
             )
             semantic_query_options = SemanticQueryOptionsBuilder(registry).build()
+            semantic_mapping_candidates = {
+                "rule_based": [
+                    {**candidate, "status": "candidate_only"}
+                    for candidate in RuleBasedSemanticCandidateGenerator.from_domain(
+                        domain_config
+                    ).generate(capability_graph_object)
+                ],
+                "llm": {
+                    "status": "not_run",
+                    "reason": (
+                        "LLM semantic mapping candidates require explicit probe "
+                        "or admin action."
+                    ),
+                    "candidates": [],
+                    "rejected_candidates": [],
+                },
+            }
         return {
             "dataset_id": dataset_id,
             "status": metadata["status"],
@@ -268,6 +295,7 @@ class DatasetService:
             ],
             "capability_graph": capability_graph,
             "semantic_query_options": semantic_query_options,
+            "semantic_mapping_candidates": semantic_mapping_candidates,
             "warnings": metadata.get("warnings", []),
         }
 

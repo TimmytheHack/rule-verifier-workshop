@@ -4,7 +4,6 @@ from __future__ import annotations
 
 from typing import Any, Protocol
 
-from src.extractors.deepseek_extractor import DeepSeekExtractor, has_deepseek_api_key
 from src.extractors.regex_extractor import RegexExtractor
 
 
@@ -26,9 +25,12 @@ class ExtractorFallbackPipeline:
     ) -> None:
         self.deterministic_extractor = deterministic_extractor or RegexExtractor()
         self.fallback_extractor = fallback_extractor
-        self.fallback_enabled = (
-            has_deepseek_api_key() if fallback_enabled is None else fallback_enabled
-        )
+        if fallback_enabled is None:
+            from src.extractors.deepseek_extractor import has_deepseek_api_key
+
+            self.fallback_enabled = has_deepseek_api_key()
+        else:
+            self.fallback_enabled = fallback_enabled
 
     def extract(
         self,
@@ -51,7 +53,13 @@ class ExtractorFallbackPipeline:
             }
             return deterministic
 
-        fallback = (self.fallback_extractor or DeepSeekExtractor()).extract(
+        fallback_extractor = self.fallback_extractor
+        if fallback_extractor is None:
+            from src.extractors.deepseek_extractor import DeepSeekExtractor
+
+            fallback_extractor = DeepSeekExtractor()
+
+        fallback = fallback_extractor.extract(
             text,
             schema_context=schema_context or [],
             hard_context=hard_context or {},

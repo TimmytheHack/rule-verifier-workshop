@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 import json
+import subprocess
+import sys
 import unittest
 from pathlib import Path
 from tempfile import TemporaryDirectory
@@ -215,6 +217,110 @@ class UploadedDatasetFlowTest(unittest.TestCase):
 
 
 class UploadedSemanticAdmissionsFlowTest(unittest.TestCase):
+    def test_semantic_probe_import_does_not_load_deepseek_modules(self) -> None:
+        script = """
+import json
+import sys
+
+import scripts.run_semantic_capability_probe
+
+print(json.dumps({
+    "llm_semantic_candidates": "src.semantic.llm_semantic_candidates" in sys.modules,
+    "deepseek_extractor": "src.extractors.deepseek_extractor" in sys.modules,
+}))
+"""
+        completed = subprocess.run(
+            [sys.executable, "-c", script],
+            check=True,
+            capture_output=True,
+            text=True,
+        )
+        loaded = json.loads(completed.stdout)
+
+        self.assertFalse(loaded["llm_semantic_candidates"])
+        self.assertFalse(loaded["deepseek_extractor"])
+
+    def test_dataset_service_import_does_not_load_deepseek_modules(self) -> None:
+        script = """
+import json
+import sys
+
+import src.api.dataset_service
+
+print(json.dumps({
+    "llm_semantic_candidates": "src.semantic.llm_semantic_candidates" in sys.modules,
+    "deepseek_extractor": "src.extractors.deepseek_extractor" in sys.modules,
+}))
+"""
+        completed = subprocess.run(
+            [sys.executable, "-c", script],
+            check=True,
+            capture_output=True,
+            text=True,
+        )
+        loaded = json.loads(completed.stdout)
+
+        self.assertFalse(loaded["llm_semantic_candidates"])
+        self.assertFalse(loaded["deepseek_extractor"])
+
+    def test_default_probe_run_does_not_load_deepseek_modules(self) -> None:
+        script = """
+import json
+import sys
+from pathlib import Path
+from tempfile import TemporaryDirectory
+
+from scripts.run_semantic_capability_probe import run_probe
+
+with TemporaryDirectory() as directory:
+    try:
+        run_probe(
+            workbook_path=Path(directory) / "missing.xlsx",
+            dataset_id="ds_missing_probe",
+            query="probe",
+            root=Path(directory) / "managed",
+        )
+    except FileNotFoundError:
+        pass
+
+print(json.dumps({
+    "llm_semantic_candidates": "src.semantic.llm_semantic_candidates" in sys.modules,
+    "deepseek_extractor": "src.extractors.deepseek_extractor" in sys.modules,
+}))
+"""
+        completed = subprocess.run(
+            [sys.executable, "-c", script],
+            check=True,
+            capture_output=True,
+            text=True,
+        )
+        loaded = json.loads(completed.stdout)
+
+        self.assertFalse(loaded["llm_semantic_candidates"])
+        self.assertFalse(loaded["deepseek_extractor"])
+
+    def test_profile_exposes_candidate_only_semantic_mapping_records(self) -> None:
+        with TemporaryDirectory() as directory:
+            source = write_new_admissions_excel(Path(directory) / "new_admissions.xlsx")
+            service = DatasetService(Path(directory) / "managed")
+            service.upload(
+                filename=source.name,
+                content=source.read_bytes(),
+                dataset_id="ds_candidate_profile",
+            )
+            service.generate_domain_pack(
+                "ds_candidate_profile",
+                domain_name="admissions",
+                base_domain="admissions",
+            )
+
+            profile = service.profile("ds_candidate_profile")
+
+        self.assertIn("semantic_mapping_candidates", profile)
+        candidates = profile["semantic_mapping_candidates"]["rule_based"]
+        self.assertTrue(candidates)
+        self.assertEqual(candidates[0]["status"], "candidate_only")
+
     def test_generic_recommendation_prompt_uses_legacy_planner(self) -> None:
         query = "我今年广东物理类位次 9000，请推荐冲稳保"
         with TemporaryDirectory() as directory:

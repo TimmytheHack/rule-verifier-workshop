@@ -164,7 +164,9 @@ class WorkbenchGoldenE2ETest(unittest.TestCase):
                 )
 
         adapter_class.assert_not_called()
-        self.assertFalse(result["extracted_slots"]["fallback_extraction"]["used"])
+        fallback = result["extracted_slots"]["fallback_extraction"]
+        self.assertFalse(fallback["used"])
+        self.assertIn("preferences.major_exact_terms", fallback["missing_paths"])
         self.assertEqual(result["token_usage"]["extractor"], None)
 
     def test_legacy_deepseek_slots_alias_is_accepted(self) -> None:

@@ -1,3 +1,6 @@
+from importlib import import_module
+from typing import Any
+
 from src.semantic.query_ast import (
     QueryAST,
     QueryFilter,
@@ -13,16 +16,42 @@ from src.semantic.intent_models import (
     SemanticPreference,
     SemanticUserContext,
 )
-from src.semantic.llm_intent_extractor import DeepSeekSemanticIntentExtractor
-from src.semantic.llm_semantic_candidates import (
-    DeepSeekSemanticCandidateGenerator,
-    SemanticCandidateGenerationResult,
-)
-from src.semantic.evidence_requirements import (
-    DeepSeekEvidenceRequirementClassifier,
-    EvidenceRequirement,
-    EvidenceRequirementResult,
-)
+
+_LAZY_EXPORTS = {
+    "DeepSeekSemanticIntentExtractor": (
+        "src.semantic.llm_intent_extractor",
+        "DeepSeekSemanticIntentExtractor",
+    ),
+    "DeepSeekSemanticCandidateGenerator": (
+        "src.semantic.llm_semantic_candidates",
+        "DeepSeekSemanticCandidateGenerator",
+    ),
+    "SemanticCandidateGenerationResult": (
+        "src.semantic.llm_semantic_candidates",
+        "SemanticCandidateGenerationResult",
+    ),
+    "DeepSeekEvidenceRequirementClassifier": (
+        "src.semantic.evidence_requirements",
+        "DeepSeekEvidenceRequirementClassifier",
+    ),
+    "EvidenceRequirement": (
+        "src.semantic.evidence_requirements",
+        "EvidenceRequirement",
+    ),
+    "EvidenceRequirementResult": (
+        "src.semantic.evidence_requirements",
+        "EvidenceRequirementResult",
+    ),
+}
+
+
+def __getattr__(name: str) -> Any:
+    if name not in _LAZY_EXPORTS:
+        raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
+    module_name, attribute_name = _LAZY_EXPORTS[name]
+    value = getattr(import_module(module_name), attribute_name)
+    globals()[name] = value
+    return value
 
 __all__ = [
     "IntentExtractionResult",

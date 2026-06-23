@@ -27,22 +27,10 @@ from src.executors.duckdb_executor import (
     hard_filter_rules,
 )
 from src.api.admissions_query_planner import AdmissionsQueryPlanner
-from src.extractors.deepseek_extractor import (
-    DeepSeekClient,
-)
-from src.extractors.extractor_pipeline import ExtractorFallbackPipeline
-from src.extractors.llm_slot_adapter import (
-    DeepSeekSlotAdapter,
-    deepseek_slot_adapter_enabled,
-    llm_runtime_enabled,
-)
 from src.extractors.regex_extractor import RegexExtractor
 from src.reporting.career_guidance import career_guidance_for_query
 from src.reporting.decision_option_suggester import (
     decision_option_suggestions_for_query,
-)
-from src.reporting.deepseek_answer_generator import (
-    DeepSeekAnswerGenerator,
 )
 from src.reporting.evidence_pack import EvidencePack
 from src.reporting.policy_reference import policy_references_for_query
@@ -57,9 +45,7 @@ from src.semantic.admissions_recommendation import (
 )
 from src.semantic.admissions_major_rank import AdmissionsMajorRankPlanner
 from src.semantic.capability_graph import DatasetCapabilityGraph
-from src.semantic.evidence_bounded_reranker import EvidenceBoundedReranker
 from src.semantic.intent_models import SemanticIntent
-from src.semantic.llm_intent_extractor import DeepSeekSemanticIntentExtractor
 from src.semantic.query_options import SemanticQueryOptionsBuilder
 from src.semantic.ranking_plan import RankingPlan
 from src.semantic.reviewed_mapping import ReviewedMappingRegistry
@@ -208,6 +194,28 @@ WORKBOOK_NAME = ADMISSIONS_DOMAIN.workbook_path
 SCHEMA_PATH = ADMISSIONS_DOMAIN.schema_path
 TAXONOMY_PATH = ADMISSIONS_DOMAIN.rule_taxonomy_path
 REQUIRED_COLUMNS = ADMISSIONS_DOMAIN.required_columns
+
+
+class DeepSeekSlotAdapter:
+    @classmethod
+    def from_client(cls, client: Any) -> Any:
+        from src.extractors.llm_slot_adapter import DeepSeekSlotAdapter as Adapter
+
+        return Adapter.from_client(client)
+
+
+def deepseek_slot_adapter_enabled() -> bool:
+    from src.extractors.llm_slot_adapter import (
+        deepseek_slot_adapter_enabled as enabled,
+    )
+
+    return enabled()
+
+
+def llm_runtime_enabled() -> bool:
+    from src.extractors.llm_slot_adapter import llm_runtime_enabled as enabled
+
+    return enabled()
 
 
 @dataclass(frozen=True)
@@ -628,11 +636,13 @@ def _run_semantic_capability_query(
     ).run(intent)
 
 
-def _semantic_reranker(config: WorkbenchConfig) -> EvidenceBoundedReranker | None:
+def _semantic_reranker(config: WorkbenchConfig) -> Any | None:
     if config.soft_preferences.get("live_semantic_rerank") is not True:
         return None
     if not deepseek_slot_adapter_enabled():
         return None
+    from src.semantic.evidence_bounded_reranker import EvidenceBoundedReranker
+
     return EvidenceBoundedReranker(_interactive_deepseek_client(config.model))
 
 
@@ -657,6 +667,10 @@ def _semantic_recommendation_intent(
     if not deepseek_slot_adapter_enabled():
         return None
     try:
+        from src.semantic.llm_intent_extractor import (
+            DeepSeekSemanticIntentExtractor,
+        )
+
         schema_context, query_options = _semantic_llm_context(domain_config)
         extraction = DeepSeekSemanticIntentExtractor(
             _interactive_deepseek_client(config.model)
@@ -2312,22 +2326,25 @@ def _extract_slots(
             config=config,
         ), None
     if config.extractor == "hybrid":
-        client = (
-            _interactive_deepseek_client(config.model)
-            if deepseek_slot_adapter_enabled()
-            else None
-        )
+        if not deepseek_slot_adapter_enabled():
+            return _slots_from_inputs(
+                _deterministic_slots_with_disabled_fallback(
+                    soft_prompt,
+                    domain_config,
+                ),
+                config=config,
+            ), None
+
+        from src.extractors.extractor_pipeline import ExtractorFallbackPipeline
+
+        client = _interactive_deepseek_client(config.model)
         slots = _slots_from_inputs(
             ExtractorFallbackPipeline(
                 deterministic_extractor=RegexExtractor(
                     alias_path=domain_config.value_aliases_path
                 ),
-                fallback_extractor=(
-                    DeepSeekSlotAdapter.from_client(client)
-                    if client is not None
-                    else None
-                ),
-                fallback_enabled=client is not None,
+                fallback_extractor=DeepSeekSlotAdapter.from_client(client),
+                fallback_enabled=True,
             ).extract(
                 soft_prompt,
                 schema_context=(
@@ -2342,19 +2359,26 @@ def _extract_slots(
         )
         return slots, slots.get("deepseek_usage")
 
+    if not deepseek_slot_adapter_enabled():
+        return _slots_from_inputs(
+            _deterministic_slots_with_disabled_fallback(
+                soft_prompt,
+                domain_config,
+            ),
+            config=config,
+        ), None
+
+    from src.extractors.extractor_pipeline import ExtractorFallbackPipeline
+
     slots = _slots_from_inputs(
         ExtractorFallbackPipeline(
             deterministic_extractor=RegexExtractor(
                 alias_path=domain_config.value_aliases_path
             ),
-            fallback_extractor=(
-                DeepSeekSlotAdapter.from_client(
-                    _interactive_deepseek_client(config.model)
-                )
-                if deepseek_slot_adapter_enabled()
-                else None
+            fallback_extractor=DeepSeekSlotAdapter.from_client(
+                _interactive_deepseek_client(config.model)
             ),
-            fallback_enabled=deepseek_slot_adapter_enabled(),
+            fallback_enabled=True,
         ).extract(
             soft_prompt,
             schema_context=(
@@ -2370,6 +2394,28 @@ def _extract_slots(
     return slots, slots.get("deepseek_usage")
 
 
+def _deterministic_slots_with_disabled_fallback(
+    soft_prompt: str,
+    domain_config: DomainConfig,
+) -> dict[str, Any]:
+    from src.extractors.extractor_pipeline import missing_slot_paths
+
+    slots = RegexExtractor(alias_path=domain_config.value_aliases_path).extract(
+        soft_prompt
+    )
+    missing_paths = missing_slot_paths(slots, soft_prompt)
+    slots["fallback_extraction"] = {
+        "used": False,
+        "reason": (
+            "没有需要 LLM 补槽的明显缺口。"
+            if not missing_paths
+            else "未启用 LLM 补槽或缺少可用密钥。"
+        ),
+        "missing_paths": missing_paths,
+    }
+    return slots
+
+
 def _generate_report(
     config: WorkbenchConfig,
     evidence: EvidencePack,
@@ -2383,6 +2429,8 @@ def _generate_report(
         return _report_from_answer(answer, evidence_dict, domain_config), None
 
     client = _interactive_deepseek_client(config.model)
+    from src.reporting.deepseek_answer_generator import DeepSeekAnswerGenerator
+
     payload = DeepSeekAnswerGenerator(client=client).generate(evidence)
     return (
         _report_from_answer(payload["answer"], evidence_dict, domain_config),
@@ -2390,7 +2438,9 @@ def _generate_report(
     )
 
 
-def _interactive_deepseek_client(model: str) -> DeepSeekClient:
+def _interactive_deepseek_client(model: str) -> Any:
+    from src.extractors.deepseek_extractor import DeepSeekClient
+
     return DeepSeekClient(
         model=model,
         timeout_seconds=INTERACTIVE_DEEPSEEK_TIMEOUT_SECONDS,
