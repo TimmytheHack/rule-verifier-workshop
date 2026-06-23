@@ -112,6 +112,32 @@ class UploadedDatasetFlowTest(unittest.TestCase):
             response["query"]["soft_preferences"],
         )
 
+    def test_generic_domain_forbidden_hard_filter_does_not_leak(self) -> None:
+        with TemporaryDirectory() as directory:
+            service, dataset_id = _generated_generic_dataset(Path(directory))
+            _approve_generic_dataset(service, dataset_id)
+            service.build_warehouse(dataset_id)
+
+            response = service.query(
+                dataset_id,
+                user_input="Austin under 1900",
+                hard_filters={
+                    "city": ["Austin"],
+                    "rent_usd": 1900,
+                    "SQL": "SELECT * FROM leases",
+                },
+            )
+
+        assert_workbench_contract(self, response)
+        self.assertEqual(response["status"], "ok")
+        serialized = json.dumps(response, ensure_ascii=False)
+        self.assertNotIn("SELECT * FROM leases", serialized)
+        self.assertNotIn('"SQL"', serialized)
+        self.assertIn(
+            "[redacted_forbidden_payload]",
+            response["query"]["hard_filters"],
+        )
+
     def test_generic_domain_structured_prompt_payload_does_not_leak(self) -> None:
         with TemporaryDirectory() as directory:
             service, dataset_id = _generated_generic_dataset(Path(directory))
@@ -503,7 +529,12 @@ print(json.dumps({
             "semantic_recommendation",
         )
         self.assertEqual(response["debug_trace"]["execution"]["year"], 2024)
-        self.assertIn("STRPOS", response["debug_trace"]["execution"]["sql"])
+        self.assertNotIn("sql", response["debug_trace"]["execution"])
+        self.assertNotIn("sql", response["execution"])
+        self.assertNotIn("sql", response["evidence_pack"]["execution_summary"])
+        serialized = json.dumps(response, ensure_ascii=False)
+        self.assertNotIn('"sql":', serialized)
+        self.assertNotIn("STRPOS", serialized)
         self.assertTrue(response["top_results"])
         self.assertIn(
             "school_country_or_region",
@@ -909,7 +940,7 @@ print(json.dumps({
         assert_workbench_contract(self, response)
         self.assertEqual(response["status"], "needs_confirmation")
         self.assertEqual(response["query_type"], "recommendation")
-        self.assertEqual(response["debug_trace"]["execution"]["sql"], "")
+        self.assertNotIn("sql", response["debug_trace"]["execution"])
         self.assertIn("score_without_rank", [w["code"] for w in response["warnings"]])
 
 

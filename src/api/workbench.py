@@ -770,7 +770,7 @@ def _semantic_capability_payload(
         "not_executed_preferences": not_executed_preferences,
         "simulated_confirmations": {},
         "executable_rules": executed_filters,
-        "execution": semantic_result.execution_summary,
+        "execution": _public_execution_summary(semantic_result.execution_summary),
         "result_count": len(semantic_result.rows),
         "items": items,
         "top_results": top_results,
@@ -821,7 +821,7 @@ def _semantic_capability_payload(
         ),
         evidence_pack=evidence_pack,
         debug_trace={
-            "execution": semantic_result.execution_summary,
+            "execution": _public_execution_summary(semantic_result.execution_summary),
             "data_warehouse": warehouse_audit,
         },
     ).to_dict()
@@ -861,7 +861,9 @@ def _semantic_evidence_pack(
             "result_count": len(semantic_result.rows),
             "top_k": EVIDENCE_TOP_K,
         },
-        "execution_summary": semantic_result.execution_summary,
+        "execution_summary": _public_execution_summary(
+            semantic_result.execution_summary
+        ),
         "selection_evidence": list(
             getattr(semantic_result, "selection_evidence", []) or []
         ),
@@ -2073,7 +2075,7 @@ def _error_payload(config: WorkbenchConfig, exc: Exception) -> dict[str, Any]:
                 "error_type": type(exc).__name__,
             }
         ],
-        "hard_filters": dict(config.hard_filters),
+        "hard_filters": _public_structured_filters(config.hard_filters),
         "soft_preferences": _public_soft_preferences(config.soft_preferences),
         "selected_options": _selected_options(config),
         "extracted_preferences": [],
@@ -2327,7 +2329,7 @@ def _contract_query(config: WorkbenchConfig) -> dict[str, Any]:
         "domain": config.domain_name,
         "dataset_id": config.dataset_id,
         "query_type": config.hard_filters.get("query_type"),
-        "hard_filters": dict(config.hard_filters),
+        "hard_filters": _public_structured_filters(config.hard_filters),
         "soft_preferences": _public_soft_preferences(config.soft_preferences),
         "confirmed_candidates": list(config.confirmed_candidates),
     }
@@ -3315,7 +3317,7 @@ def _display_hard_filters_for_domain(
 ) -> dict[str, Any]:
     if domain_config.domain_id == ADMISSIONS_DOMAIN.domain_id:
         return _display_hard_filters(config.hard_filters)
-    return dict(config.hard_filters)
+    return _public_structured_filters(config.hard_filters)
 
 
 def _boundary_context(soft_preferences: dict[str, Any]) -> dict[str, Any]:
@@ -3370,6 +3372,20 @@ def _display_soft_preferences_for_domain(
     return _public_soft_preferences(config.soft_preferences)
 
 
+def _public_structured_filters(filters: dict[str, Any]) -> dict[str, Any]:
+    public: dict[str, Any] = {}
+    for key, value in dict(filters).items():
+        if _is_forbidden_public_payload_key(key):
+            public[REDACTED_FORBIDDEN_PAYLOAD] = REDACTED_FORBIDDEN_PAYLOAD
+            continue
+        public[key] = (
+            REDACTED_FORBIDDEN_PAYLOAD
+            if _contains_forbidden_public_payload(value)
+            else _redact_forbidden_public_payload(value)
+        )
+    return public
+
+
 def _public_soft_preferences(soft_preferences: dict[str, Any]) -> dict[str, Any]:
     public: dict[str, Any] = {}
     for key, value in dict(soft_preferences).items():
@@ -3403,6 +3419,26 @@ def _public_prompt_value(value: Any) -> Any:
     if isinstance(value, str):
         return _clean_text(value)
     return REDACTED_FORBIDDEN_PAYLOAD
+
+
+def _public_execution_summary(summary: dict[str, Any]) -> dict[str, Any]:
+    sanitized = _redact_public_execution_payload(summary)
+    return sanitized if isinstance(sanitized, dict) else {}
+
+
+def _redact_public_execution_payload(value: Any) -> Any:
+    if isinstance(value, dict):
+        output: dict[str, Any] = {}
+        for key, item in value.items():
+            if _is_forbidden_public_payload_key(key):
+                continue
+            output[key] = _redact_public_execution_payload(item)
+        return output
+    if isinstance(value, list):
+        return [_redact_public_execution_payload(item) for item in value]
+    if isinstance(value, str) and SQL_COMMAND_TEXT_PATTERN.search(value):
+        return REDACTED_FORBIDDEN_PAYLOAD
+    return value
 
 
 def _contains_forbidden_public_payload(value: Any) -> bool:
