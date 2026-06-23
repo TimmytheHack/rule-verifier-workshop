@@ -189,6 +189,10 @@ EVIDENCE_TOP_K = 5
 WORKBENCH_SCHEMA_VERSION = "workbench_response.v1"
 FORBIDDEN_PUBLIC_PAYLOAD_KEYS = {"raw_sql", "sql"}
 REDACTED_FORBIDDEN_PAYLOAD = "[redacted_forbidden_payload]"
+SQL_COMMAND_TEXT_PATTERN = re.compile(
+    r"\b(select|insert|update|delete|drop|alter|create)\b",
+    re.IGNORECASE,
+)
 
 WAREHOUSE_DATABASE_PATH = Path("outputs/data/guangdong_admissions.duckdb")
 WAREHOUSE_VALUE_INDEX_PATH = Path("outputs/data/schema_value_index.json")
@@ -742,7 +746,7 @@ def _semantic_capability_payload(
         semantic_result=semantic_result,
         result_sections=result_sections,
     )
-    answer = _semantic_answer(semantic_result)
+    answer = _semantic_answer(evidence_pack)
     legacy_payload = {
         "mode": "api",
         "status": semantic_result.status,
@@ -842,7 +846,9 @@ def _semantic_evidence_pack(
     ]
     return {
         "user_request": _compose_user_request(config),
+        "status": semantic_result.status,
         "query_type": semantic_result.query_type,
+        "warnings": list(getattr(semantic_result, "warnings", []) or []),
         "executed_rules": [],
         "candidate_confirmations": [],
         "not_executed_preferences": not_executed_preferences,
@@ -969,15 +975,15 @@ def _semantic_top_results(rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
     ]
 
 
-def _semantic_answer(semantic_result: Any) -> str:
+def _semantic_answer(evidence_pack: dict[str, Any]) -> str:
+    summary = dict(evidence_pack.get("execution_summary") or {})
     if (
-        semantic_result.query_type == "recommendation"
-        or semantic_result.execution_summary.get("query_type")
-        == "semantic_recommendation"
+        evidence_pack.get("query_type") == "recommendation"
+        or summary.get("query_type") == "semantic_recommendation"
     ):
-        return _semantic_recommendation_answer(semantic_result)
+        return _semantic_recommendation_answer(evidence_pack)
 
-    missing_context = _semantic_missing_context_labels(semantic_result)
+    missing_context = _semantic_missing_context_labels(evidence_pack)
     if missing_context:
         missing_sentence = (
             "未使用"
@@ -989,42 +995,48 @@ def _semantic_answer(semantic_result: Any) -> str:
             "城市、学费和专业组最低位次已作为结果展示字段；"
             "本次冲稳保排序仍以专业最低录取排名为依据。"
         )
-    if semantic_result.status == "blocked":
+    status = evidence_pack.get("status")
+    if status == "blocked":
         return "当前请求或数据未通过语义能力校验，未执行 SQL。"
-    if semantic_result.status == "needs_confirmation":
+    if status == "needs_confirmation":
         return "请先补充广东省排位和科类/选科信息，当前未执行 SQL。"
-    if semantic_result.status == "no_results":
+    year = summary.get("year") or 2025
+    if status == "no_results":
         return (
-            "已按 2025 年、物理类、专业最低录取排名和选科要求后置过滤执行语义查询，"
+            f"已按 {year} 年、物理类、专业最低录取排名和选科要求后置过滤执行语义查询，"
             f"当前没有匹配结果。{missing_sentence}"
         )
 
     lines = [
         (
-            "本次使用 2025 年、物理类、专业最低录取排名和选科要求生成冲稳保；"
+            f"本次使用 {year} 年、物理类、专业最低录取排名和选科要求生成冲稳保；"
             "SQL 筛选基于年份、科类和专业最低位次，SQL 返回后再按选科要求确定性过滤。"
         ),
         missing_sentence,
     ]
-    for row in semantic_result.rows:
+    for row in evidence_pack.get("top_k_results") or []:
         lines.append(
-            f"{row['档位']}：{row['院校名称']} {row['专业组']} {row['专业']}，"
-            f"最低录取排名 {row['最低录取排名']}。"
+            f"{row.get('档位')}：{row.get('院校名称')} {row.get('专业组')} "
+            f"{row.get('专业')}，最低录取排名 {row.get('最低录取排名')}。"
         )
     return "\n".join(lines)
 
 
-def _semantic_recommendation_answer(semantic_result: Any) -> str:
-    summary = semantic_result.execution_summary
-    if semantic_result.status == "needs_confirmation":
-        warning_codes = {item.get("code") for item in semantic_result.warnings}
+def _semantic_recommendation_answer(evidence_pack: dict[str, Any]) -> str:
+    summary = dict(evidence_pack.get("execution_summary") or {})
+    status = evidence_pack.get("status")
+    if status == "needs_confirmation":
+        warning_codes = {
+            item.get("code")
+            for item in evidence_pack.get("warnings") or []
+        }
         if "score_without_rank" in warning_codes:
             return "只给分数时不执行推荐 SQL；请补充广东省排位/位次。"
         return "缺少广东省排位，当前未执行推荐 SQL。"
-    if semantic_result.status == "blocked":
+    if status == "blocked":
         return "当前推荐请求未通过语义能力校验，未执行 SQL。"
 
-    unexecuted = list(getattr(semantic_result, "not_executed_preferences", []) or [])
+    unexecuted = list(evidence_pack.get("not_executed_preferences") or [])
     if unexecuted:
         unexecuted_sentence = "未执行偏好：" + "；".join(
             f"{item.get('source_text')}（{item.get('reason')}）"
@@ -1033,14 +1045,14 @@ def _semantic_recommendation_answer(semantic_result: Any) -> str:
     else:
         unexecuted_sentence = "所有进入 QueryAST 的偏好均已通过 reviewed mapping 和 verifier。"
 
-    if semantic_result.status == "no_results":
+    if status == "no_results":
         return (
             f"已按 {summary.get('year')} 年、用户排位 {summary.get('rank')}、"
             "已审核字段和 verified SQL 召回推荐候选，但没有匹配结果。"
             f"{unexecuted_sentence}"
         )
 
-    ranking = summary.get("ranking") or {}
+    ranking = evidence_pack.get("ranking") or {}
     if ranking.get("status") == "ranked":
         ranking_sentence = (
             "本次使用 verified RankingPlan 排序，criterion_evidence 已写入 EvidencePack。"
@@ -1059,15 +1071,16 @@ def _semantic_recommendation_answer(semantic_result: Any) -> str:
         unexecuted_sentence,
         ranking_sentence,
     ]
-    for row in semantic_result.rows:
+    for row in evidence_pack.get("top_k_results") or []:
         lines.append(
-            f"{row['档位']} {row['次序']}：{row['院校名称']} {row['专业组']} "
-            f"{row['专业']}，最低录取排名 {row['最低录取排名']}。"
+            f"{row.get('档位')} {row.get('次序')}：{row.get('院校名称')} "
+            f"{row.get('专业组')} {row.get('专业')}，"
+            f"最低录取排名 {row.get('最低录取排名')}。"
         )
     return "\n".join(lines)
 
 
-def _semantic_missing_context_labels(semantic_result: Any) -> list[str]:
+def _semantic_missing_context_labels(evidence_pack: dict[str, Any]) -> list[str]:
     labels = {
         "city": "城市",
         "tuition_yuan_per_year": "学费",
@@ -1077,7 +1090,7 @@ def _semantic_missing_context_labels(semantic_result: Any) -> list[str]:
         labels[field_id]
         for field_id in [
             str(item.get("field_id"))
-            for item in semantic_result.unanswerable_intents
+            for item in evidence_pack.get("unanswerable_intents") or []
         ]
         if field_id in labels
     ]
@@ -2037,11 +2050,7 @@ def _blocked_execution_summary() -> dict[str, Any]:
 
 
 def _error_payload(config: WorkbenchConfig, exc: Exception) -> dict[str, Any]:
-    message = (
-        _sanitize_user_text(str(exc))
-        if isinstance(exc, ValueError)
-        else "Workbench 运行失败，前端不应展示内部异常细节。"
-    )
+    message = _public_error_message(config, exc)
     legacy_payload = {
         "mode": "api",
         "status": "error",
@@ -2126,6 +2135,19 @@ def _error_payload(config: WorkbenchConfig, exc: Exception) -> dict[str, Any]:
         debug_trace=_debug_trace(legacy_payload),
     ).to_dict()
     return {**legacy_payload, **response}
+
+
+def _public_error_message(config: WorkbenchConfig, exc: Exception) -> str:
+    raw_message = str(exc)
+    if (
+        _contains_forbidden_public_payload(config.hard_filters)
+        or _contains_forbidden_public_payload(config.soft_preferences)
+        or SQL_COMMAND_TEXT_PATTERN.search(raw_message)
+    ):
+        return "Workbench 输入包含不允许的 SQL payload，已拒绝执行。"
+    if isinstance(exc, ValueError):
+        return _sanitize_user_text(raw_message)
+    return "Workbench 运行失败，前端不应展示内部异常细节。"
 
 
 def _load_dataset(domain_config: DomainConfig) -> ExcelDataSet:
@@ -3334,19 +3356,26 @@ def _display_soft_preferences_for_domain(
 
 
 def _public_soft_preferences(soft_preferences: dict[str, Any]) -> dict[str, Any]:
-    return {
-        key: (
+    public: dict[str, Any] = {}
+    for key, value in dict(soft_preferences).items():
+        if _is_forbidden_public_payload_key(key):
+            public[REDACTED_FORBIDDEN_PAYLOAD] = REDACTED_FORBIDDEN_PAYLOAD
+            continue
+        public[key] = (
             REDACTED_FORBIDDEN_PAYLOAD
             if _contains_forbidden_public_payload(value)
             else _redact_forbidden_public_payload(value)
         )
-        for key, value in dict(soft_preferences).items()
-    }
+    return public
+
+
+def _is_forbidden_public_payload_key(key: Any) -> bool:
+    return str(key).casefold() in FORBIDDEN_PUBLIC_PAYLOAD_KEYS
 
 
 def _contains_forbidden_public_payload(value: Any) -> bool:
     if isinstance(value, dict):
-        if any(str(key).casefold() in FORBIDDEN_PUBLIC_PAYLOAD_KEYS for key in value):
+        if any(_is_forbidden_public_payload_key(key) for key in value):
             return True
         return any(
             _contains_forbidden_public_payload(nested_value)
@@ -3359,7 +3388,7 @@ def _contains_forbidden_public_payload(value: Any) -> bool:
 
 def _redact_forbidden_public_payload(value: Any) -> Any:
     if isinstance(value, dict):
-        if any(str(key).casefold() in FORBIDDEN_PUBLIC_PAYLOAD_KEYS for key in value):
+        if any(_is_forbidden_public_payload_key(key) for key in value):
             return REDACTED_FORBIDDEN_PAYLOAD
         return {
             key: _redact_forbidden_public_payload(nested_value)

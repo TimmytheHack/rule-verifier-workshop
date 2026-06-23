@@ -429,7 +429,7 @@ class DeepSeekSemanticCandidateGeneratorTest(unittest.TestCase):
 
     def test_generate_rejects_top_level_sql_keys(self) -> None:
         graph, domain = self._graph_and_domain()
-        for key in ("raw_sql", "sql"):
+        for key in ("raw_sql", "sql", "SQL"):
             with self.subTest(key=key):
                 client = _FakeClient(
                     {

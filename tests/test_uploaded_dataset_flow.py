@@ -675,6 +675,69 @@ print(json.dumps({
         self.assertNotIn("SELECT", response["query"]["text"])
         self.assertNotIn("SELECT", response["user_input"])
 
+    def test_top_level_forbidden_soft_preference_key_is_redacted(
+        self,
+    ) -> None:
+        query = "我的排位是15000，想读人工智能，计算机，而且想留在广东省，请给出推荐"
+        with TemporaryDirectory() as directory:
+            service, dataset_id = _queryable_uploaded_admissions(
+                Path(directory),
+                use_excel=False,
+            )
+
+            response = service.query(
+                dataset_id,
+                user_input=query,
+                soft_preferences={
+                    "semantic_intent": _semantic_recommendation_intent(),
+                    "SQL": "SELECT * FROM admissions",
+                },
+            )
+
+        assert_workbench_contract(self, response)
+        serialized = json.dumps(response, ensure_ascii=False)
+        self.assertNotIn("SELECT * FROM admissions", serialized)
+        self.assertNotIn("SQL", response["query"]["soft_preferences"])
+        self.assertIn(
+            "[redacted_forbidden_payload]",
+            response["query"]["soft_preferences"],
+        )
+
+    def test_semantic_answer_receives_evidence_pack_only(self) -> None:
+        query = "我的排位是15000，想读人工智能，计算机，而且想留在广东省，请给出推荐"
+        captured: list[object] = []
+
+        def answer_from_evidence_pack(evidence_pack: object) -> str:
+            captured.append(evidence_pack)
+            self.assertIsInstance(evidence_pack, dict)
+            self.assertIn("top_k_results", evidence_pack)
+            self.assertIn("execution_summary", evidence_pack)
+            self.assertIn("ranking", evidence_pack)
+            return "evidence-only answer"
+
+        with TemporaryDirectory() as directory:
+            service, dataset_id = _queryable_uploaded_admissions(
+                Path(directory),
+                use_excel=False,
+            )
+
+            with patch(
+                "src.api.workbench._semantic_answer",
+                side_effect=answer_from_evidence_pack,
+            ):
+                response = service.query(
+                    dataset_id,
+                    user_input=query,
+                    soft_preferences={
+                        "prompt": query,
+                        "semantic_intent": _semantic_recommendation_intent(),
+                    },
+                )
+
+        assert_workbench_contract(self, response)
+        self.assertEqual("evidence-only answer", response["answer"])
+        self.assertTrue(captured)
+
     def test_external_knowledge_preference_is_not_ranked_without_reviewed_evidence(
         self,
     ) -> None:

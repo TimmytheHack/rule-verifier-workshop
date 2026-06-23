@@ -302,7 +302,7 @@ def _non_candidate_payload(payload: dict[str, Any]) -> dict[str, Any]:
 
 def _contains_forbidden_sql_key(value: Any) -> bool:
     if isinstance(value, dict):
-        if any(key in value for key in FORBIDDEN_SQL_KEYS):
+        if any(str(key).casefold() in FORBIDDEN_SQL_KEYS for key in value):
             return True
         return any(_contains_forbidden_sql_key(item) for item in value.values())
     if isinstance(value, list):
@@ -318,8 +318,13 @@ def _reject_raw_or_plain_sql_key(value: Any, context: str) -> Any:
 
 def _reject_plain_sql_key(value: Any, context: str) -> Any:
     if isinstance(value, dict):
-        if "sql" in value:
-            raise ValueError(f"{context} 不能包含 sql。")
+        forbidden_keys = [
+            str(key)
+            for key in value
+            if str(key).casefold() == "sql"
+        ]
+        if forbidden_keys:
+            raise ValueError(f"{context} 不能包含 {'、'.join(forbidden_keys)}。")
         for nested_value in value.values():
             _reject_plain_sql_key(nested_value, context)
     elif isinstance(value, list):
@@ -369,7 +374,7 @@ def _safe_candidate(raw: Any) -> dict[str, Any]:
     return {
         _safe_key(key): _safe_value(value)
         for key, value in raw.items()
-        if str(key) not in FORBIDDEN_SQL_KEYS
+        if str(key).casefold() not in FORBIDDEN_SQL_KEYS
     }
 
 
