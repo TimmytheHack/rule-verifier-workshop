@@ -190,8 +190,16 @@ WORKBENCH_SCHEMA_VERSION = "workbench_response.v1"
 FORBIDDEN_PUBLIC_PAYLOAD_KEYS = {"raw_sql", "sql"}
 REDACTED_FORBIDDEN_PAYLOAD = "[redacted_forbidden_payload]"
 SQL_COMMAND_TEXT_PATTERN = re.compile(
-    r"\b(select|insert|update|delete|drop|alter|create)\b",
-    re.IGNORECASE,
+    r"\b("
+    r"select\s+.+\s+from|"
+    r"insert\s+into|"
+    r"update\s+\S+\s+set|"
+    r"delete\s+from|"
+    r"drop\s+(table|database|view|index)|"
+    r"alter\s+(table|database|view)|"
+    r"create\s+(table|database|view|index)"
+    r")\b",
+    re.IGNORECASE | re.DOTALL,
 )
 
 WAREHOUSE_DATABASE_PATH = Path("outputs/data/guangdong_admissions.duckdb")
@@ -3410,6 +3418,8 @@ def _is_forbidden_public_payload_key(key: Any) -> bool:
 def _clean_prompt_text(value: Any) -> str | None:
     if not isinstance(value, str):
         return None
+    if SQL_COMMAND_TEXT_PATTERN.search(value):
+        return None
     return _clean_sentence(value)
 
 
@@ -3417,6 +3427,8 @@ def _public_prompt_value(value: Any) -> Any:
     if value is None:
         return None
     if isinstance(value, str):
+        if SQL_COMMAND_TEXT_PATTERN.search(value):
+            return REDACTED_FORBIDDEN_PAYLOAD
         return _clean_text(value)
     return REDACTED_FORBIDDEN_PAYLOAD
 
@@ -3451,6 +3463,8 @@ def _contains_forbidden_public_payload(value: Any) -> bool:
         )
     if isinstance(value, list):
         return any(_contains_forbidden_public_payload(item) for item in value)
+    if isinstance(value, str):
+        return bool(SQL_COMMAND_TEXT_PATTERN.search(value))
     return False
 
 
@@ -3464,6 +3478,8 @@ def _redact_forbidden_public_payload(value: Any) -> Any:
         }
     if isinstance(value, list):
         return [_redact_forbidden_public_payload(item) for item in value]
+    if isinstance(value, str) and SQL_COMMAND_TEXT_PATTERN.search(value):
+        return REDACTED_FORBIDDEN_PAYLOAD
     return value
 
 

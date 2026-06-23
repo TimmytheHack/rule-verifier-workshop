@@ -153,6 +153,24 @@ class RankingPlanVerifierTest(unittest.TestCase):
                 }
             )
 
+    def test_ranking_plan_rejects_sql_command_text_inside_criteria(self) -> None:
+        with self.assertRaises(ValidationError):
+            RankingPlan.model_validate(
+                {
+                    "criteria": [
+                        {
+                            "criterion_id": "unsafe",
+                            "source_text": "SELECT * FROM admissions",
+                            "required_field": "major_name",
+                            "operation": "external_prestige_score",
+                            "value": None,
+                            "priority": 1,
+                            "rationale": "不允许候选排序合同携带 SQL 命令文本。",
+                        }
+                    ],
+                }
+            )
+
     def test_verifier_accepts_reviewed_criteria_and_excludes_missing_field(
         self,
     ) -> None:

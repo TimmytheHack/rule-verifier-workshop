@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import math
+import re
 from typing import Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
@@ -21,6 +22,18 @@ RankingOperation = Literal[
 
 ALLOWED_RANKING_OPERATIONS = frozenset(RankingOperation.__args__)
 BOOLEAN_STRING_VALUES = frozenset({"是", "否", "true", "false", "1", "0"})
+SQL_COMMAND_TEXT_PATTERN = re.compile(
+    r"\b("
+    r"select\s+.+\s+from|"
+    r"insert\s+into|"
+    r"update\s+\S+\s+set|"
+    r"delete\s+from|"
+    r"drop\s+(table|database|view|index)|"
+    r"alter\s+(table|database|view)|"
+    r"create\s+(table|database|view|index)"
+    r")\b",
+    re.IGNORECASE | re.DOTALL,
+)
 
 
 class RankingCriterion(BaseModel):
@@ -38,7 +51,8 @@ class RankingCriterion(BaseModel):
     @model_validator(mode="before")
     @classmethod
     def _reject_raw_sql_payload(cls, value: Any) -> Any:
-        return _reject_raw_sql_key(value, "ranking criterion")
+        _reject_raw_sql_key(value, "ranking criterion")
+        return _reject_sql_command_text(value, "ranking criterion")
 
     @field_validator(
         "criterion_id",
@@ -109,7 +123,8 @@ class RankingPlan(BaseModel):
     @model_validator(mode="before")
     @classmethod
     def _reject_raw_sql_payload(cls, value: Any) -> Any:
-        return _reject_raw_sql_key(value, "ranking plan")
+        _reject_raw_sql_key(value, "ranking plan")
+        return _reject_sql_command_text(value, "ranking plan")
 
     @field_validator("rationale_summary")
     @classmethod
@@ -122,6 +137,18 @@ class RankingPlan(BaseModel):
 
 def _is_non_empty_string(value: Any) -> bool:
     return isinstance(value, str) and bool(value.strip())
+
+
+def _reject_sql_command_text(value: Any, context: str) -> Any:
+    if isinstance(value, str) and SQL_COMMAND_TEXT_PATTERN.search(value):
+        raise ValueError(f"{context} 不能包含 SQL 命令文本。")
+    if isinstance(value, dict):
+        for nested_value in value.values():
+            _reject_sql_command_text(nested_value, context)
+    elif isinstance(value, list):
+        for nested_value in value:
+            _reject_sql_command_text(nested_value, context)
+    return value
 
 
 def _is_scalar_value(value: Any) -> bool:
