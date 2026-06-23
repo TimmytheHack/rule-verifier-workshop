@@ -487,6 +487,149 @@ print(json.dumps({
         assert_workbench_contract(self, response)
         self.assertEqual(response["query_type"], "recommendation")
 
+    def test_uploaded_major_rank_query_uses_llm_semantic_planner_first(
+        self,
+    ) -> None:
+        query = "广东物化生，10000名，列出冲稳保的次序，以及每个专业的最低录取排名"
+        fake_client = FakeSemanticIntentClient(_major_rank_semantic_intent())
+        with TemporaryDirectory() as directory:
+            service, dataset_id = _queryable_uploaded_admissions(
+                Path(directory),
+                use_excel=False,
+            )
+
+            with patch(
+                "src.api.workbench.deepseek_slot_adapter_enabled",
+                return_value=True,
+            ):
+                with patch(
+                    "src.api.workbench._interactive_deepseek_client",
+                    return_value=fake_client,
+                ):
+                    response = service.query(
+                        dataset_id,
+                        user_input=query,
+                        soft_preferences={"prompt": query},
+                    )
+
+        assert_workbench_contract(self, response)
+        self.assertTrue(fake_client.calls)
+        self.assertEqual(response["status"], "ok")
+        self.assertEqual(response["query_type"], "admissions_major_rank")
+        _assert_llm_planner_used(
+            self,
+            response,
+            query_type="admissions_major_rank",
+        )
+        self.assertEqual(
+            response["debug_trace"]["planner"]["semantic_intent"]["query_type"],
+            "admissions_major_rank",
+        )
+        self.assertEqual(
+            response["debug_trace"]["execution"]["selected_subjects"],
+            ["化学", "生物"],
+        )
+
+    def test_uploaded_recommendation_query_uses_llm_semantic_planner_first(
+        self,
+    ) -> None:
+        query = "我的排位是15000，想读人工智能，计算机，而且不想去国外，想留在广东省，请给出推荐"
+        fake_client = FakeSemanticIntentClient(_semantic_recommendation_intent())
+        with TemporaryDirectory() as directory:
+            service, dataset_id = _queryable_uploaded_admissions(
+                Path(directory),
+                use_excel=False,
+            )
+
+            with patch(
+                "src.api.workbench.deepseek_slot_adapter_enabled",
+                return_value=True,
+            ):
+                with patch(
+                    "src.api.workbench._interactive_deepseek_client",
+                    return_value=fake_client,
+                ):
+                    response = service.query(
+                        dataset_id,
+                        user_input=query,
+                        soft_preferences={"prompt": query},
+                    )
+
+        assert_workbench_contract(self, response)
+        self.assertTrue(fake_client.calls)
+        self.assertEqual(response["status"], "ok")
+        self.assertEqual(response["query_type"], "recommendation")
+        _assert_llm_planner_used(
+            self,
+            response,
+            query_type="semantic_recommendation",
+        )
+        self.assertEqual(
+            response["evidence_pack"]["ranking"]["status"],
+            "candidate_list_only",
+        )
+        self.assertIn("候选列表", response["answer"])
+        self.assertEqual(
+            response["no_schema_field_preferences"][0]["field_id"],
+            "school_country_or_region",
+        )
+
+    def test_uploaded_score_without_rank_uses_llm_but_needs_rank_confirmation(
+        self,
+    ) -> None:
+        query = "假设我今年的高考分数是630分，想读人工智能，计算机，而且不想去国外，想留在广东省，请给出推荐"
+        fake_client = FakeSemanticIntentClient(
+            {
+                "query_type": "semantic_recommendation",
+                "user_context": {
+                    "user_rank": None,
+                    "user_score": 630,
+                    "source_province": "广东",
+                    "subject_type": None,
+                    "reselected_subjects": [],
+                },
+                "preferences": [
+                    {
+                        "source_text": "人工智能，计算机",
+                        "semantic": "major_name",
+                        "op": "contains_any",
+                        "value": ["人工智能", "计算机"],
+                        "reason": "用户明确专业方向。",
+                    }
+                ],
+                "requested_output": ["recommendations"],
+            }
+        )
+        with TemporaryDirectory() as directory:
+            service, dataset_id = _queryable_uploaded_admissions(
+                Path(directory),
+                use_excel=False,
+            )
+
+            with patch(
+                "src.api.workbench.deepseek_slot_adapter_enabled",
+                return_value=True,
+            ):
+                with patch(
+                    "src.api.workbench._interactive_deepseek_client",
+                    return_value=fake_client,
+                ):
+                    response = service.query(
+                        dataset_id,
+                        user_input=query,
+                        soft_preferences={"prompt": query},
+                    )
+
+        assert_workbench_contract(self, response)
+        self.assertEqual(response["status"], "needs_confirmation")
+        _assert_llm_planner_used(
+            self,
+            response,
+            query_type="semantic_recommendation",
+        )
+        self.assertIn("请补充广东省排位", response["answer"])
+        self.assertEqual(response["result_count"], 0)
+
     def test_uploaded_new_admissions_major_rank_query(self) -> None:
         query = "广东物化生，10000名，列出冲稳保的次序，以及每个专业的最低录取排名"
         with TemporaryDirectory() as directory:
@@ -1382,6 +1525,73 @@ def _admissions_rows() -> list[dict[str, object]]:
             "院校排名": 120,
         },
     ]
+
+
+class FakeSemanticIntentClient:
+    def __init__(
+        self,
+        payload: dict[str, object],
+        usage: dict[str, int] | None = None,
+    ) -> None:
+        self.payload = payload
+        self.usage = usage or {
+            "prompt_tokens": 21,
+            "completion_tokens": 9,
+            "total_tokens": 30,
+        }
+        self.calls: list[dict[str, object]] = []
+
+    def chat_json(
+        self,
+        messages: list[dict[str, object]],
+        temperature: float = 0.0,
+        **kwargs: object,
+    ) -> dict[str, object]:
+        self.calls.append(
+            {
+                "messages": messages,
+                "temperature": temperature,
+                **kwargs,
+            }
+        )
+        return {**self.payload, "usage": self.usage}
+
+
+def _major_rank_semantic_intent() -> dict[str, object]:
+    return {
+        "query_type": "admissions_major_rank",
+        "user_context": {
+            "user_rank": 10000,
+            "user_score": None,
+            "source_province": "广东",
+            "subject_type": "物理",
+            "reselected_subjects": ["化学", "生物"],
+        },
+        "preferences": [],
+        "requested_output": ["risk_buckets", "minimum_rank"],
+        "source_language": "zh-CN",
+    }
+
+
+def _assert_llm_planner_used(
+    test_case: unittest.TestCase,
+    response: dict[str, object],
+    *,
+    query_type: str,
+) -> None:
+    token_usage = response["token_usage"]["extractor"]
+    test_case.assertIsNotNone(token_usage)
+    test_case.assertGreater(token_usage["total_tokens"], 0)
+    planner = response["evidence_pack"]["planner"]
+    test_case.assertEqual(planner["mode"], "llm_semantic")
+    test_case.assertEqual(planner["provider"], "deepseek")
+    test_case.assertTrue(planner["called"])
+    test_case.assertFalse(planner["fallback_used"])
+    test_case.assertEqual(planner["token_usage"]["total_tokens"], 30)
+    test_case.assertEqual(
+        response["evidence_pack"]["semantic_intent"]["query_type"],
+        query_type,
+    )
 
 
 def _semantic_recommendation_intent() -> dict[str, object]:
