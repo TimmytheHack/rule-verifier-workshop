@@ -8,6 +8,7 @@
 - 旧版 `outputs/mvp_demo/` 生成文件已从版本库移除，只保留 `AGENTS.override.md`。
 - Python cache、`.pyc` 和 `.DS_Store` 属于本地运行缓存，由 `.gitignore` 和 `make clean-artifacts` 覆盖。
 - `scripts/run_answer_demo.py`、`scripts/run_mvp_demo.py` 和相关测试仍保留；需要旧演示时本地重跑，不把产物作为当前交付基线。
+- 临时、占位、生成证据和需决策数据资产的当前盘点见 `docs/cleanup_inventory.md`。
 
 ## 当前交付基线
 
