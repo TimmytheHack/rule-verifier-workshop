@@ -5,6 +5,8 @@ from src.semantic.query_ast import (
     QueryVerificationIssue,
     VerifiedQueryPlan,
 )
+from src.semantic.ranking_plan import RankingCriterion, RankingPlan
+from src.semantic.ranking_verifier import RankingVerifier, RankingVerificationResult
 from src.semantic.intent_models import (
     IntentExtractionResult,
     SemanticIntent,
@@ -33,6 +35,10 @@ __all__ = [
     "QueryFilter",
     "QuerySort",
     "QueryVerificationIssue",
+    "RankingCriterion",
+    "RankingPlan",
+    "RankingVerifier",
+    "RankingVerificationResult",
     "SemanticCandidateGenerationResult",
     "SemanticIntent",
     "SemanticPreference",
