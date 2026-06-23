@@ -67,6 +67,12 @@ EXTRACTOR_ALIASES = {
     "deepseek_slots": "deepseek",
 }
 
+PLANNER_MODE_OPTIONS = {
+    "auto": "uploaded dataset 优先 LLM SemanticIntent",
+    "legacy": "跳过 LLM semantic planner",
+    "llm_semantic": "强制 LLM SemanticIntent planner",
+}
+
 GENERATOR_OPTIONS = {
     "template_evidence": "模板证据回答",
     "deepseek_evidence": "LLM 证据回答",
@@ -242,10 +248,43 @@ class WorkbenchConfig:
     extractor: str = "hybrid"
     generator: str = "template_evidence"
     model: str = "deepseek-v4-flash"
+    planner_mode: str = "auto"
     confirmed_candidates: list[str] = field(default_factory=list)
     domain_name: str = "admissions"
     domain_path: str | None = None
     dataset_id: str | None = None
+
+
+@dataclass(frozen=True)
+class SemanticPlannerAttempt:
+    """LLM semantic planner 的候选意图和调用证据。"""
+
+    intent: SemanticIntent | None
+    planner: dict[str, Any]
+    usage: dict[str, int] | None = None
+
+
+@dataclass(frozen=True)
+class SemanticCapabilityRun:
+    """semantic capability planner 执行结果和 planner 证据。"""
+
+    result: Any
+    planner: dict[str, Any]
+    semantic_intent: dict[str, Any] | None = None
+    extractor_usage: dict[str, int] | None = None
+
+
+@dataclass(frozen=True)
+class SemanticPlannerBlockedResult:
+    """强制 LLM semantic planner 失败时的 contract-ready 结果。"""
+
+    query_type: str
+    status: str
+    rows: list[dict[str, Any]]
+    answerable_intents: list[dict[str, Any]]
+    unanswerable_intents: list[dict[str, Any]]
+    execution_summary: dict[str, Any]
+    warnings: list[dict[str, Any]] = field(default_factory=list)
 
 
 @dataclass(frozen=True)
@@ -406,13 +445,13 @@ def _run_workbench(config: WorkbenchConfig) -> dict[str, Any]:
     warehouse_audit = _data_warehouse_audit(domain_config)
     if not warehouse_audit["ok"]:
         return _data_warehouse_warning_payload(config, warehouse_audit)
-    semantic_result = _run_semantic_capability_query(config, domain_config)
-    if semantic_result is not None:
+    semantic_run = _run_semantic_capability_query(config, domain_config)
+    if semantic_run is not None:
         return _semantic_capability_payload(
             config=config,
             domain_config=domain_config,
             warehouse_audit=warehouse_audit,
-            semantic_result=semantic_result,
+            semantic_run=semantic_run,
         )
     planned_result = _run_admissions_planned_query(config, domain_config)
     if planned_result is not None:
@@ -624,11 +663,35 @@ def _run_workbench(config: WorkbenchConfig) -> dict[str, Any]:
 def _run_semantic_capability_query(
     config: WorkbenchConfig,
     domain_config: DomainConfig,
-) -> Any | None:
+) -> SemanticCapabilityRun | None:
     if domain_config.domain_id != ADMISSIONS_DOMAIN.domain_id:
         return None
     if not domain_config.semantic_capabilities:
         return None
+
+    planner_attempt = _semantic_planner_attempt(config, domain_config)
+    if planner_attempt.intent is None and config.planner_mode == "llm_semantic":
+        return _semantic_planner_blocked_run(config, planner_attempt)
+    if planner_attempt.intent is not None:
+        semantic_result = _run_semantic_intent_query(
+            planner_attempt.intent,
+            config=config,
+            domain_config=domain_config,
+        )
+        if semantic_result is not None:
+            return SemanticCapabilityRun(
+                result=semantic_result,
+                planner=planner_attempt.planner,
+                semantic_intent=planner_attempt.intent.model_dump(),
+                extractor_usage=planner_attempt.usage,
+            )
+        planner_attempt = _with_planner_fallback(
+            planner_attempt,
+            reason="unsupported_semantic_intent",
+        )
+        if config.planner_mode == "llm_semantic":
+            return _semantic_planner_blocked_run(config, planner_attempt)
+
     user_request = _compose_user_request(config)
     major_rank_result = AdmissionsMajorRankPlanner(
         domain_config=domain_config,
@@ -636,18 +699,104 @@ def _run_semantic_capability_query(
         table_name=domain_config.table_name,
     ).run(user_request)
     if major_rank_result is not None:
-        return major_rank_result
+        return SemanticCapabilityRun(
+            result=major_rank_result,
+            planner=_legacy_planner_trace(
+                fallback_attempt=planner_attempt,
+                route="admissions_major_rank",
+            ),
+        )
 
-    intent = _semantic_recommendation_intent(config, domain_config)
-    if intent is None:
+    intent_attempt = planner_attempt
+    if intent_attempt.intent is None and config.planner_mode == "legacy":
+        intent_attempt = _supplied_semantic_intent_attempt(config)
+    if intent_attempt.intent is None:
         return None
-    return SemanticAdmissionsRecommendationPlanner(
+    semantic_result = SemanticAdmissionsRecommendationPlanner(
         domain_config=domain_config,
         database_path=_warehouse_database_path(domain_config),
         table_name=domain_config.table_name,
         reranker=_semantic_reranker(config),
         ranking_plan=_semantic_ranking_plan(config),
-    ).run(intent)
+    ).run(intent_attempt.intent)
+    if semantic_result is None:
+        return None
+    return SemanticCapabilityRun(
+        result=semantic_result,
+        planner=intent_attempt.planner,
+        semantic_intent=intent_attempt.intent.model_dump(),
+        extractor_usage=intent_attempt.usage,
+    )
+
+
+def _semantic_planner_blocked_run(
+    config: WorkbenchConfig,
+    planner_attempt: SemanticPlannerAttempt,
+) -> SemanticCapabilityRun:
+    reason = str(planner_attempt.planner.get("fallback_reason") or "not_available")
+    return SemanticCapabilityRun(
+        result=SemanticPlannerBlockedResult(
+            query_type=str(
+                planner_attempt.planner.get("semantic_intent_query_type") or "unknown"
+            ),
+            status="blocked",
+            rows=[],
+            answerable_intents=[],
+            unanswerable_intents=[
+                {
+                    "intent": "llm_semantic_planner",
+                    "answerable": False,
+                    "reason": reason,
+                }
+            ],
+            execution_summary={
+                "executor": None,
+                "query_type": "llm_semantic_planner",
+                "input_row_count": 0,
+                "filtered_row_count": 0,
+                "verified_query_plan": None,
+                "planner_mode": config.planner_mode,
+            },
+            warnings=[
+                {
+                    "code": "llm_semantic_planner_unavailable",
+                    "severity": "error",
+                    "message": "LLM semantic planner 未产出可执行 SemanticIntent。",
+                    "reason": reason,
+                }
+            ],
+        ),
+        planner=planner_attempt.planner,
+        semantic_intent=(
+            planner_attempt.intent.model_dump()
+            if planner_attempt.intent is not None
+            else None
+        ),
+        extractor_usage=planner_attempt.usage,
+    )
+
+
+def _run_semantic_intent_query(
+    intent: SemanticIntent,
+    *,
+    config: WorkbenchConfig,
+    domain_config: DomainConfig,
+) -> Any | None:
+    if intent.query_type == "admissions_major_rank":
+        return AdmissionsMajorRankPlanner(
+            domain_config=domain_config,
+            database_path=_warehouse_database_path(domain_config),
+            table_name=domain_config.table_name,
+        ).run_intent(intent)
+    if intent.query_type == "semantic_recommendation":
+        return SemanticAdmissionsRecommendationPlanner(
+            domain_config=domain_config,
+            database_path=_warehouse_database_path(domain_config),
+            table_name=domain_config.table_name,
+            reranker=_semantic_reranker(config),
+            ranking_plan=_semantic_ranking_plan(config),
+        ).run(intent)
+    return None
 
 
 def _semantic_reranker(config: WorkbenchConfig) -> Any | None:
@@ -667,19 +816,35 @@ def _semantic_ranking_plan(config: WorkbenchConfig) -> RankingPlan | None:
     return RankingPlan.model_validate(payload)
 
 
-def _semantic_recommendation_intent(
+def _semantic_planner_attempt(
     config: WorkbenchConfig,
     domain_config: DomainConfig,
-) -> SemanticIntent | None:
-    supplied_intent = config.soft_preferences.get("semantic_intent")
-    if supplied_intent:
-        return SemanticIntent.model_validate(supplied_intent)
-    if not config.dataset_id:
-        return None
-    if config.extractor == "regex":
-        return None
+) -> SemanticPlannerAttempt:
+    supplied = _supplied_semantic_intent_attempt(config)
+    if supplied.intent is not None:
+        return supplied
+    if not _should_call_llm_semantic_planner(config):
+        return SemanticPlannerAttempt(
+            intent=None,
+            planner=_planner_trace(
+                mode="legacy",
+                provider=None,
+                called=False,
+                fallback_used=False,
+                fallback_reason=None,
+            ),
+        )
     if not deepseek_slot_adapter_enabled():
-        return None
+        return SemanticPlannerAttempt(
+            intent=None,
+            planner=_planner_trace(
+                mode="llm_semantic",
+                provider="deepseek",
+                called=False,
+                fallback_used=True,
+                fallback_reason="deepseek_disabled",
+            ),
+        )
     try:
         from src.semantic.llm_intent_extractor import (
             DeepSeekSemanticIntentExtractor,
@@ -696,11 +861,145 @@ def _semantic_recommendation_intent(
                 "query_options": query_options,
             },
         )
-    except Exception:  # noqa: BLE001 - optional LLM path falls back to legacy planner.
-        return None
-    if extraction.intent.query_type != "semantic_recommendation":
-        return None
-    return extraction.intent
+    except Exception as exc:  # noqa: BLE001 - optional LLM path falls back.
+        return SemanticPlannerAttempt(
+            intent=None,
+            planner=_planner_trace(
+                mode="llm_semantic",
+                provider="deepseek",
+                called=True,
+                fallback_used=True,
+                fallback_reason="intent_extraction_failed",
+                error_type=type(exc).__name__,
+            ),
+        )
+
+    usage = dict(extraction.usage or {})
+    return SemanticPlannerAttempt(
+        intent=extraction.intent,
+        usage=usage,
+        planner=_planner_trace(
+            mode="llm_semantic",
+            provider=extraction.provider,
+            called=True,
+            fallback_used=False,
+            fallback_reason=None,
+            token_usage=usage,
+            semantic_intent_query_type=extraction.intent.query_type,
+        ),
+    )
+
+
+def _supplied_semantic_intent_attempt(config: WorkbenchConfig) -> SemanticPlannerAttempt:
+    supplied_intent = config.soft_preferences.get("semantic_intent")
+    if supplied_intent:
+        intent = SemanticIntent.model_validate(supplied_intent)
+        return SemanticPlannerAttempt(
+            intent=intent,
+            planner=_planner_trace(
+                mode="supplied_semantic_intent",
+                provider=None,
+                called=False,
+                fallback_used=False,
+                fallback_reason=None,
+                semantic_intent_query_type=intent.query_type,
+            ),
+        )
+    return SemanticPlannerAttempt(
+        intent=None,
+        planner=_planner_trace(
+            mode="legacy",
+            provider=None,
+            called=False,
+            fallback_used=False,
+            fallback_reason=None,
+        ),
+    )
+
+
+def _should_call_llm_semantic_planner(config: WorkbenchConfig) -> bool:
+    if config.planner_mode == "legacy":
+        return False
+    if not config.dataset_id:
+        return config.planner_mode == "llm_semantic"
+    return config.planner_mode in {"auto", "llm_semantic"}
+
+
+def _with_planner_fallback(
+    attempt: SemanticPlannerAttempt,
+    *,
+    reason: str,
+) -> SemanticPlannerAttempt:
+    return SemanticPlannerAttempt(
+        intent=None,
+        usage=attempt.usage,
+        planner={
+            **attempt.planner,
+            "fallback_used": True,
+            "fallback_reason": reason,
+        },
+    )
+
+
+def _legacy_planner_trace(
+    *,
+    fallback_attempt: SemanticPlannerAttempt,
+    route: str,
+) -> dict[str, Any]:
+    fallback_used = bool(fallback_attempt.planner.get("fallback_used"))
+    if fallback_attempt.planner.get("mode") == "llm_semantic":
+        fallback_used = True
+    return _planner_trace(
+        mode="legacy",
+        provider=None,
+        called=False,
+        fallback_used=fallback_used,
+        fallback_reason=fallback_attempt.planner.get("fallback_reason"),
+        legacy_route=route,
+        prior_planner=(
+            fallback_attempt.planner
+            if fallback_attempt.planner.get("mode") != "legacy"
+            else None
+        ),
+    )
+
+
+def _planner_trace(
+    *,
+    mode: str,
+    provider: str | None,
+    called: bool,
+    fallback_used: bool,
+    fallback_reason: str | None,
+    token_usage: dict[str, int] | None = None,
+    **extra: Any,
+) -> dict[str, Any]:
+    return {
+        "mode": mode,
+        "provider": provider,
+        "called": called,
+        "fallback_used": fallback_used,
+        "fallback_reason": fallback_reason,
+        "token_usage": token_usage,
+        **{
+            key: value
+            for key, value in extra.items()
+            if value is not None
+        },
+    }
+
+
+def _semantic_recommendation_intent(
+    config: WorkbenchConfig,
+    domain_config: DomainConfig,
+) -> SemanticIntent | None:
+    attempt = _semantic_planner_attempt(config, domain_config)
+    if (
+        attempt.intent is not None
+        and attempt.intent.query_type == "semantic_recommendation"
+    ):
+        return attempt.intent
+    return None
 
 
 def _semantic_llm_context(
@@ -731,8 +1030,9 @@ def _semantic_capability_payload(
     config: WorkbenchConfig,
     domain_config: DomainConfig,
     warehouse_audit: dict[str, Any],
-    semantic_result: Any,
+    semantic_run: SemanticCapabilityRun,
 ) -> dict[str, Any]:
+    semantic_result = semantic_run.result
     items = _semantic_items(semantic_result.rows)
     top_results = _semantic_top_results(semantic_result.rows)
     result_sections = getattr(semantic_result, "result_sections", None) or {
@@ -751,10 +1051,18 @@ def _semantic_capability_payload(
         config=config,
         domain_config=domain_config,
         warehouse_audit=warehouse_audit,
-        semantic_result=semantic_result,
+        semantic_run=semantic_run,
         result_sections=result_sections,
     )
     answer = _semantic_answer(evidence_pack)
+    generator_usage = None
+    token_total = _sum_usage([semantic_run.extractor_usage, generator_usage])
+    if not token_total:
+        token_total = {
+            "prompt_tokens": 0,
+            "completion_tokens": 0,
+            "total_tokens": 0,
+        }
     legacy_payload = {
         "mode": "api",
         "status": semantic_result.status,
@@ -797,9 +1105,9 @@ def _semantic_capability_payload(
             "disclaimer": "只执行已审查语义能力和 verified query plan 支持的字段。",
         },
         "token_usage": {
-            "extractor": None,
-            "generator": None,
-            "total": {"prompt_tokens": 0, "completion_tokens": 0, "total_tokens": 0},
+            "extractor": semantic_run.extractor_usage,
+            "generator": generator_usage,
+            "total": token_total,
         },
     }
     response = WorkbenchResponse(
@@ -831,9 +1139,13 @@ def _semantic_capability_payload(
         debug_trace={
             "execution": _public_execution_summary(semantic_result.execution_summary),
             "data_warehouse": warehouse_audit,
+            "planner": {
+                "metadata": semantic_run.planner,
+                "semantic_intent": semantic_run.semantic_intent,
+            },
         },
     ).to_dict()
-    return {**legacy_payload, **response}
+    return {**legacy_payload, **response, "token_usage": legacy_payload["token_usage"]}
 
 
 def _semantic_evidence_pack(
@@ -841,9 +1153,10 @@ def _semantic_evidence_pack(
     config: WorkbenchConfig,
     domain_config: DomainConfig,
     warehouse_audit: dict[str, Any],
-    semantic_result: Any,
+    semantic_run: SemanticCapabilityRun,
     result_sections: dict[str, Any],
 ) -> dict[str, Any]:
+    semantic_result = semantic_run.result
     not_executed_preferences = list(
         getattr(semantic_result, "not_executed_preferences", []) or []
     )
@@ -857,6 +1170,8 @@ def _semantic_evidence_pack(
         "status": semantic_result.status,
         "query_type": semantic_result.query_type,
         "warnings": list(getattr(semantic_result, "warnings", []) or []),
+        "planner": semantic_run.planner,
+        "semantic_intent": semantic_run.semantic_intent,
         "executed_rules": [],
         "candidate_confirmations": [],
         "not_executed_preferences": not_executed_preferences,
@@ -2271,6 +2586,8 @@ def _load_value_index_cached(
 def _validate_config(config: WorkbenchConfig) -> None:
     if config.extractor not in EXTRACTOR_OPTIONS:
         raise ValueError(f"不支持的规则提取方式：{config.extractor}")
+    if config.planner_mode not in PLANNER_MODE_OPTIONS:
+        raise ValueError(f"不支持的 planner 模式：{config.planner_mode}")
     if config.generator not in GENERATOR_OPTIONS:
         raise ValueError(f"不支持的证据回答方式：{config.generator}")
     if config.model not in MODEL_OPTIONS:
@@ -2325,6 +2642,10 @@ def _normalize_config(config: WorkbenchConfig) -> WorkbenchConfig:
 def _selected_options(config: WorkbenchConfig) -> dict[str, str]:
     return {
         "extractor": EXTRACTOR_OPTIONS.get(config.extractor, str(config.extractor)),
+        "planner_mode": PLANNER_MODE_OPTIONS.get(
+            config.planner_mode,
+            str(config.planner_mode),
+        ),
         "generator": GENERATOR_OPTIONS.get(config.generator, str(config.generator)),
         "model": MODEL_OPTIONS.get(config.model, str(config.model)),
         "domain": config.domain_name,
@@ -2337,6 +2658,7 @@ def _contract_query(config: WorkbenchConfig) -> dict[str, Any]:
         "domain": config.domain_name,
         "dataset_id": config.dataset_id,
         "query_type": config.hard_filters.get("query_type"),
+        "planner_mode": config.planner_mode,
         "hard_filters": _public_structured_filters(config.hard_filters),
         "soft_preferences": _public_soft_preferences(config.soft_preferences),
         "confirmed_candidates": list(config.confirmed_candidates),

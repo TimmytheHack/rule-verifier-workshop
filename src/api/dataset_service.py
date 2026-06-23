@@ -517,6 +517,7 @@ class DatasetService:
         extractor: str = "regex",
         generator: str = "template_evidence",
         model: str = "deepseek-v4-flash",
+        planner_mode: str = "auto",
         confirmed_candidates: list[str] | None = None,
         domain_name: str | None = None,
     ) -> dict[str, Any]:
@@ -538,6 +539,7 @@ class DatasetService:
             extractor=extractor,
             generator=generator,
             model=model,
+            planner_mode=planner_mode,
             confirmed_candidates=confirmed_candidates or [],
             domain_name=domain_name,
             domain_path=str(self._domain_dir(metadata)),

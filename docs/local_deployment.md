@@ -53,6 +53,11 @@ DeepSeek slot adapter 默认不启用。需要验证真实 API 时，确认 `.en
 
 该脚本只输出 fallback/adapter/token 使用摘要，不输出密钥或完整 prompt。
 
+对 uploaded admissions 查询，`planner_mode=auto` 会在 `ENABLE_LLM=true` 且 DeepSeek 可用时先尝试
+`DeepSeekSemanticIntentExtractor`；不可用时会降级到 legacy verified planner，并在
+`EvidencePack.planner` 记录降级原因。需要强制跳过 LLM planner 时，API 或 probe 可传
+`planner_mode=legacy`。
+
 ## 启动服务
 
 ```bash

@@ -13,6 +13,7 @@ import duckdb
 from src.adapters.data_warehouse import load_structured_dataset
 from src.domains import DomainConfig
 from src.semantic.capability_graph import DatasetCapabilityGraph
+from src.semantic.intent_models import SemanticIntent
 from src.semantic.query_ast import QueryAST
 from src.semantic.query_verifier import SemanticQueryVerifier
 from src.semantic.reviewed_mapping import ReviewedMappingRegistry
@@ -154,6 +155,74 @@ class AdmissionsMajorRankPlanner:
         if not selected_subjects:
             return _subject_requirement_confirmation_result(rank)
 
+        return self._run_verified(
+            rank=rank,
+            subject_type=subject_type,
+            selected_subjects=selected_subjects,
+        )
+
+    def run_intent(
+        self,
+        intent: SemanticIntent,
+    ) -> AdmissionsMajorRankResult | None:
+        """执行已经抽取出的 SemanticIntent，不再从自然语言重解析。"""
+
+        if intent.query_type != QUERY_TYPE:
+            return None
+
+        rank = intent.user_context.user_rank
+        if rank is None:
+            return AdmissionsMajorRankResult(
+                query_type=QUERY_TYPE,
+                status="needs_confirmation",
+                rows=[],
+                answerable_intents=[],
+                unanswerable_intents=[
+                    {
+                        "field_id": "user_rank",
+                        "answerable": False,
+                        "reason": "缺少广东省排位，不能生成冲稳保。",
+                    }
+                ],
+                execution_summary=_empty_execution_summary(),
+                warnings=[
+                    {
+                        "code": "missing_rank",
+                        "severity": "error",
+                        "message": "缺少广东省排位。",
+                    }
+                ],
+            )
+
+        subject_type = _supported_subject_type_from_intent(
+            intent.user_context.subject_type
+        )
+        if subject_type is None:
+            return _subject_type_confirmation_result(rank)
+        if subject_type != "物理类":
+            return _unsupported_subject_type_result(rank, subject_type)
+
+        selected_subjects = _unique_subjects(intent.user_context.reselected_subjects)
+        if not selected_subjects:
+            selected_subjects = _parse_selected_subjects(
+                str(intent.user_context.subject_type or "")
+            )
+        if not selected_subjects:
+            return _subject_requirement_confirmation_result(rank)
+
+        return self._run_verified(
+            rank=rank,
+            subject_type=subject_type,
+            selected_subjects=selected_subjects,
+        )
+
+    def _run_verified(
+        self,
+        *,
+        rank: int,
+        subject_type: str,
+        selected_subjects: list[str],
+    ) -> AdmissionsMajorRankResult:
         dataset = load_structured_dataset(
             self.database_path,
             required_columns=[],
@@ -165,12 +234,14 @@ class AdmissionsMajorRankPlanner:
         if missing_fields:
             return _blocked_missing_fields(missing_fields, registry)
 
+        year_value = _latest_year(graph, registry) or 2025
         verifier = SemanticQueryVerifier(
             registry,
             table_name=self.table_name,
         )
         bucket_results = _execute_bucket_queries(
             rank=rank,
+            year_value=year_value,
             registry=registry,
             subject_type=subject_type,
             database_path=self.database_path,
@@ -276,6 +347,7 @@ class AdmissionsMajorRankPlanner:
                 ),
                 "filtered_row_count": len(rows),
                 "rank": rank,
+                "year": year_value,
                 "basis": "major_min_rank",
                 "bucket_candidate_counts": bucket_candidate_counts,
                 "selected_counts": selected_counts,
@@ -300,6 +372,15 @@ def _parse_supported_subject_type(text: str) -> str | None:
     if any(term in text for term in PHYSICS_SUBJECT_TERMS):
         return "物理类"
     if "历史类" in text or "首选历史" in text or re.search(r"广东\s*历史", text):
+        return "历史类"
+    return None
+
+
+def _supported_subject_type_from_intent(value: Any) -> str | None:
+    text = _normalize_subject_text(value)
+    if "物理" in text or any(text.startswith(bundle) for bundle in SUBJECT_BUNDLES):
+        return "物理类"
+    if "历史" in text or text.startswith("史"):
         return "历史类"
     return None
 
@@ -399,6 +480,7 @@ def _unsupported_subject_type_result(
 
 def _query_ast(
     rank: int,
+    year_value: int,
     registry: ReviewedMappingRegistry,
     subject_type: str,
     lower: int,
@@ -411,7 +493,7 @@ def _query_ast(
             "intent": QUERY_TYPE,
             "select": _select_fields(registry),
             "filters": [
-                {"field_id": "year", "op": "eq", "value": 2025},
+                {"field_id": "year", "op": "eq", "value": year_value},
                 _subject_type_filter(registry, subject_type),
                 {
                     "field_id": "major_min_rank",
@@ -430,6 +512,7 @@ def _query_ast(
 def _execute_bucket_queries(
     *,
     rank: int,
+    year_value: int,
     registry: ReviewedMappingRegistry,
     subject_type: str,
     database_path: Path,
@@ -441,6 +524,7 @@ def _execute_bucket_queries(
         for spec in _bucket_specs(rank):
             ast = _query_ast(
                 rank,
+                year_value,
                 registry,
                 subject_type,
                 spec["lower"],
@@ -498,7 +582,11 @@ def _subject_type_filter(
 
 def _select_fields(registry: ReviewedMappingRegistry) -> list[str]:
     return [
-        *DISPLAY_FIELDS,
+        *[
+            field_id
+            for field_id in DISPLAY_FIELDS
+            if registry.has_field(field_id)
+        ],
         *[
             field_id
             for field_id in OPTIONAL_CONTEXT_FIELDS
@@ -683,6 +771,19 @@ def _answerable_context_intents(
         for field_id in OPTIONAL_CONTEXT_FIELDS
         if registry.has_field(field_id)
     ]
+
+
+def _latest_year(
+    graph: DatasetCapabilityGraph,
+    registry: ReviewedMappingRegistry,
+) -> int | None:
+    source_column = registry.source_column_or_none("year")
+    if not source_column:
+        return None
+    field = graph.fields.get(source_column)
+    if field is None or field.numeric_max is None:
+        return None
+    return int(field.numeric_max)
 
 
 def _blocked_missing_fields(

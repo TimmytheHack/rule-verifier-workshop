@@ -186,6 +186,46 @@ class DeepSeekSemanticIntentExtractorTest(unittest.TestCase):
         self.assertIsNone(result.intent.user_context.user_rank)
         self.assertEqual(result.intent.user_context.user_score, 630)
 
+    def test_extracts_major_rank_intent(self) -> None:
+        payload = {
+            "query_type": "admissions_major_rank",
+            "user_context": {
+                "user_rank": 10000,
+                "user_score": None,
+                "source_province": "广东",
+                "subject_type": "物理",
+                "reselected_subjects": ["化学", "生物"],
+            },
+            "preferences": [],
+            "requested_output": ["risk_buckets", "minimum_rank"],
+        }
+        extractor = DeepSeekSemanticIntentExtractor(
+            client=FakeDeepSeekClient(payload)
+        )
+
+        result = extractor.extract(
+            "广东物化生，10000名，列出冲稳保的次序，以及每个专业的最低录取排名",
+            schema_context=[
+                {
+                    "field_id": "major_min_rank",
+                    "source_column": "最低位次1",
+                    "allowed_ops": ["between", "sort"],
+                }
+            ],
+        )
+
+        self.assertEqual(result.intent.query_type, "admissions_major_rank")
+        self.assertEqual(result.intent.user_context.user_rank, 10000)
+        self.assertEqual(result.intent.user_context.subject_type, "物理")
+        self.assertEqual(
+            result.intent.user_context.reselected_subjects,
+            ["化学", "生物"],
+        )
+        prompt = extractor.client.calls[0]["user_prompt"]
+        self.assertIn("冲稳保", prompt)
+        self.assertIn("admissions_major_rank", prompt)
+        self.assertIn("最低录取排名", prompt)
+
 
 if __name__ == "__main__":
     unittest.main()

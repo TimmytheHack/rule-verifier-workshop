@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import inspect
 import json
 import re
 from typing import Any, Protocol
@@ -26,21 +27,51 @@ class DeepSeekSemanticIntentExtractor:
         schema_context: list[dict[str, Any]],
         hard_context: dict[str, Any] | None = None,
     ) -> IntentExtractionResult:
-        response = self.client.chat_json(
-            system_prompt=_system_prompt(),
-            user_prompt=_user_prompt(
-                text=text,
-                schema_context=schema_context,
-                hard_context=hard_context or {},
-            ),
+        system_prompt = _system_prompt()
+        user_prompt = _user_prompt(
+            text=text,
+            schema_context=schema_context,
+            hard_context=hard_context or {},
         )
-        payload = _normalize_payload(response.payload, original_text=text)
+        response = _chat_json(self.client, system_prompt, user_prompt)
+        response_payload, usage = _response_payload_and_usage(response)
+        payload = _normalize_payload(response_payload, original_text=text)
         return IntentExtractionResult(
             intent=SemanticIntent.model_validate(payload),
             provider="deepseek",
             raw_payload=payload,
-            usage=dict(getattr(response, "usage", {}) or {}),
+            usage=usage,
         )
+
+
+def _chat_json(client: JSONChatClient, system_prompt: str, user_prompt: str) -> Any:
+    signature = inspect.signature(client.chat_json)
+    if (
+        "messages" in signature.parameters
+        and "system_prompt" not in signature.parameters
+    ):
+        return client.chat_json(
+            messages=[
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": user_prompt},
+            ],
+            temperature=0.0,
+        )
+    return client.chat_json(system_prompt=system_prompt, user_prompt=user_prompt)
+
+
+def _response_payload_and_usage(response: Any) -> tuple[dict[str, Any], dict[str, int]]:
+    if isinstance(response, dict):
+        usage = dict(response.get("usage") or {})
+        payload = {
+            str(key): value
+            for key, value in response.items()
+            if key != "usage"
+        }
+        return payload, usage
+    payload = dict(getattr(response, "payload", {}) or {})
+    usage = dict(getattr(response, "usage", {}) or {})
+    return payload, usage
 
 
 def _system_prompt() -> str:
@@ -66,12 +97,17 @@ def _user_prompt(
         "如果用户说“排位是15000”“位次是15000”“省排15000”，"
         "user_context.user_rank=15000。"
         "如果用户只有分数没有位次，保留 user_score，user_rank=null。"
+        "如果用户要求“冲稳保”并列出“最低录取排名/最低录取位次/专业最低位次”，"
+        "query_type=admissions_major_rank；抽取 user_rank、subject_type "
+        "和 reselected_subjects，例如“广东物化生，10000名”表示 "
+        "source_province=广东, subject_type=物理, user_rank=10000, "
+        "reselected_subjects=[\"化学\",\"生物\"]。"
         "如果用户说想读人工智能、计算机，生成 semantic=major_name, "
         "op=contains_any。"
         "如果用户说留在广东省、省内、不出省，生成 semantic=school_province, "
         "op=in, value=[\"广东\"]。"
         "如果用户说不想去国外、不出国，生成 semantic=school_country_or_region, "
-        "op=not_in。"
+        "op=not_in, value=[\"国外\",\"境外\",\"海外\"]。"
         "不要把 unsupported preference 改写成别的字段。"
         "JSON schema："
         "{"

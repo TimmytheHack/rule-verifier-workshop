@@ -630,6 +630,139 @@ print(json.dumps({
         self.assertIn("请补充广东省排位", response["answer"])
         self.assertEqual(response["result_count"], 0)
 
+    def test_uploaded_major_rank_falls_back_when_llm_disabled(self) -> None:
+        query = "广东物化生，10000名，列出冲稳保的次序，以及每个专业的最低录取排名"
+        with TemporaryDirectory() as directory:
+            service, dataset_id = _queryable_uploaded_admissions(
+                Path(directory),
+                use_excel=False,
+            )
+
+            with patch(
+                "src.api.workbench.deepseek_slot_adapter_enabled",
+                return_value=False,
+            ):
+                with patch(
+                    "src.api.workbench._interactive_deepseek_client",
+                    side_effect=AssertionError("DeepSeek should not be created"),
+                ):
+                    response = service.query(
+                        dataset_id,
+                        user_input=query,
+                        soft_preferences={"prompt": query},
+                    )
+
+        assert_workbench_contract(self, response)
+        self.assertEqual(response["status"], "ok")
+        planner = response["evidence_pack"]["planner"]
+        self.assertEqual(planner["mode"], "legacy")
+        self.assertTrue(planner["fallback_used"])
+        self.assertEqual(
+            planner["prior_planner"]["fallback_reason"],
+            "deepseek_disabled",
+        )
+        self.assertIsNone(response["token_usage"]["extractor"])
+
+    def test_uploaded_major_rank_falls_back_when_llm_extraction_fails(self) -> None:
+        query = "广东物化生，10000名，列出冲稳保的次序，以及每个专业的最低录取排名"
+        failing_client = FailingSemanticIntentClient(RuntimeError("simulated"))
+        with TemporaryDirectory() as directory:
+            service, dataset_id = _queryable_uploaded_admissions(
+                Path(directory),
+                use_excel=False,
+            )
+
+            with patch(
+                "src.api.workbench.deepseek_slot_adapter_enabled",
+                return_value=True,
+            ):
+                with patch(
+                    "src.api.workbench._interactive_deepseek_client",
+                    return_value=failing_client,
+                ):
+                    response = service.query(
+                        dataset_id,
+                        user_input=query,
+                        soft_preferences={"prompt": query},
+                    )
+
+        assert_workbench_contract(self, response)
+        self.assertEqual(response["status"], "ok")
+        self.assertTrue(failing_client.calls)
+        planner = response["evidence_pack"]["planner"]
+        self.assertEqual(planner["mode"], "legacy")
+        self.assertTrue(planner["fallback_used"])
+        self.assertEqual(
+            planner["prior_planner"]["fallback_reason"],
+            "intent_extraction_failed",
+        )
+        self.assertEqual(planner["prior_planner"]["error_type"], "RuntimeError")
+
+    def test_uploaded_planner_mode_legacy_skips_llm_semantic_planner(self) -> None:
+        query = "广东物化生，10000名，列出冲稳保的次序，以及每个专业的最低录取排名"
+        with TemporaryDirectory() as directory:
+            service, dataset_id = _queryable_uploaded_admissions(
+                Path(directory),
+                use_excel=False,
+            )
+
+            with patch(
+                "src.api.workbench.deepseek_slot_adapter_enabled",
+                return_value=True,
+            ):
+                with patch(
+                    "src.api.workbench._interactive_deepseek_client",
+                    side_effect=AssertionError("DeepSeek should not be created"),
+                ):
+                    response = service.query(
+                        dataset_id,
+                        user_input=query,
+                        soft_preferences={"prompt": query},
+                        planner_mode="legacy",
+                    )
+
+        assert_workbench_contract(self, response)
+        self.assertEqual(response["status"], "ok")
+        planner = response["evidence_pack"]["planner"]
+        self.assertEqual(planner["mode"], "legacy")
+        self.assertFalse(planner["fallback_used"])
+        self.assertIsNone(response["token_usage"]["extractor"])
+
+    def test_uploaded_planner_mode_llm_semantic_blocks_when_extraction_fails(
+        self,
+    ) -> None:
+        query = "广东物化生，10000名，列出冲稳保的次序，以及每个专业的最低录取排名"
+        failing_client = FailingSemanticIntentClient(RuntimeError("simulated"))
+        with TemporaryDirectory() as directory:
+            service, dataset_id = _queryable_uploaded_admissions(
+                Path(directory),
+                use_excel=False,
+            )
+
+            with patch(
+                "src.api.workbench.deepseek_slot_adapter_enabled",
+                return_value=True,
+            ):
+                with patch(
+                    "src.api.workbench._interactive_deepseek_client",
+                    return_value=failing_client,
+                ):
+                    response = service.query(
+                        dataset_id,
+                        user_input=query,
+                        soft_preferences={"prompt": query},
+                        planner_mode="llm_semantic",
+                    )
+
+        assert_workbench_contract(self, response)
+        self.assertEqual(response["status"], "blocked")
+        self.assertEqual(response["result_count"], 0)
+        planner = response["evidence_pack"]["planner"]
+        self.assertEqual(planner["mode"], "llm_semantic")
+        self.assertTrue(planner["fallback_used"])
+        self.assertEqual(planner["fallback_reason"], "intent_extraction_failed")
+        self.assertEqual(planner["error_type"], "RuntimeError")
+
     def test_uploaded_new_admissions_major_rank_query(self) -> None:
         query = "广东物化生，10000名，列出冲稳保的次序，以及每个专业的最低录取排名"
         with TemporaryDirectory() as directory:
@@ -1555,6 +1688,27 @@ class FakeSemanticIntentClient:
             }
         )
         return {**self.payload, "usage": self.usage}
+
+
+class FailingSemanticIntentClient:
+    def __init__(self, exc: Exception) -> None:
+        self.exc = exc
+        self.calls: list[dict[str, object]] = []
+
+    def chat_json(
+        self,
+        messages: list[dict[str, object]],
+        temperature: float = 0.0,
+        **kwargs: object,
+    ) -> dict[str, object]:
+        self.calls.append(
+            {
+                "messages": messages,
+                "temperature": temperature,
+                **kwargs,
+            }
+        )
+        raise self.exc
 
 
 def _major_rank_semantic_intent() -> dict[str, object]:

@@ -101,12 +101,15 @@ python scripts/build_data_warehouse.py
 
 uploaded admissions 推荐现在走 reviewed semantic 链路：DeepSeek 只提出候选 `SemanticIntent`，系统把专业、省份、位次等偏好 ground 到 reviewed mapping，再用 verified `QueryAST` 生成 DuckDB SQL 召回 bounded candidates。推荐请求先得到 verified SQL 候选集；只有存在 verified `RankingPlan` 时，系统才把候选集排序为推荐，否则回答会明确称为“候选列表”。LLM 可以提出 `RankingPlan` 和 rationale，但不能直接排序、不能新增候选 item，也不能引用 EvidencePack 之外的就业、城市发展、学校氛围等结论。`不想去国外` 这类偏好在缺少 `school_country_or_region` 字段时会进入 `not_executed_preferences`；只给分数没有位次时返回 `needs_confirmation`，不执行 SQL。
 
+uploaded admissions 查询的 `planner_mode` 默认为 `auto`：在 `ENABLE_LLM=true` 且 DeepSeek 可用时，系统会先调用 `DeepSeekSemanticIntentExtractor` 生成候选 `SemanticIntent`，再由系统验证并执行 `admissions_major_rank` 或 `semantic_recommendation`。DeepSeek 不可用或抽取失败时，`auto` 会降级到 legacy verified planner，但 `EvidencePack.planner` 会记录 `fallback_used`、`fallback_reason` 和错误类型摘要；显式传 `planner_mode=legacy` 可以跳过 LLM semantic planner。是否真的调用了 DeepSeek，应看 `token_usage.extractor` 和 `EvidencePack.planner`，不能只看答案文本。
+
 本地探针命令：
 
 ```bash
 .venv/bin/python scripts/run_semantic_capability_probe.py path/to/admissions.xlsx
 .venv/bin/python scripts/run_semantic_capability_probe.py path/to/admissions.xlsx --query "我的排位是15000，想读人工智能，计算机，而且不想去国外，想留在广东省，请给出推荐"
-ENABLE_LLM=true .venv/bin/python scripts/run_semantic_capability_probe.py path/to/admissions.xlsx --live-llm --query "我的排位是15000，想读人工智能，计算机，而且不想去国外，想留在广东省，请给出推荐"
+ENABLE_LLM=true .venv/bin/python scripts/run_semantic_capability_probe.py path/to/admissions.xlsx --planner-mode llm_semantic --query "广东物化生，10000名，列出冲稳保的次序，以及每个专业的最低录取排名"
+ENABLE_LLM=true .venv/bin/python scripts/run_semantic_capability_probe.py path/to/admissions.xlsx --planner-mode llm_semantic --live-llm --query "我的排位是15000，想读人工智能，计算机，而且不想去国外，想留在广东省，请给出推荐"
 ```
 
 ## 怎么填写查询
@@ -171,7 +174,7 @@ ENABLE_LLM=false
 
 不配置 LLM 也可以使用 demo、上传数据、字段审核、DuckDB 查询、Quality Gate 和 tool server。
 
-如果显式设置 `ENABLE_LLM=true` 并配置 `DEEPSEEK_API_KEY`，DeepSeek 只用于补齐 deterministic extractor 缺失的 slots、提出 schema-aware `SemanticIntent`、可选地在 bounded candidates 的 `row_id` 内 rerank，或基于证据解释结果。它不能生成 SQL，不能生成 hard rules，也不能绕过 `RuleVerifier`、reviewed mapping、确认回路、rerank validator 或 warehouse fingerprint guard。
+如果显式设置 `ENABLE_LLM=true` 并配置 `DEEPSEEK_API_KEY`，DeepSeek 只用于补齐 deterministic extractor 缺失的 slots、为 uploaded admissions 提出 schema-aware `SemanticIntent`、可选地在 bounded candidates 的 `row_id` 内 rerank，或基于证据解释结果。它不能生成 SQL，不能生成 hard rules，也不能绕过 `RuleVerifier`、reviewed mapping、确认回路、rerank validator 或 warehouse fingerprint guard。
 
 验证 DeepSeek slot adapter：
 

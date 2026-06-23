@@ -128,6 +128,14 @@ uploaded admissions recommendation 现在使用 reviewed semantic capability pat
 -> AnswerGenerator
 ```
 
+对 uploaded admissions 数据集，Workbench 的 `planner_mode=auto` 会先尝试
+`DeepSeekSemanticIntentExtractor`，让 LLM 提出 `SemanticIntent.query_type` 和候选偏好，再把
+`admissions_major_rank` 或 `semantic_recommendation` 交给系统 planner 验证并执行。LLM 不可用
+或抽取失败时，`auto` 可降级到 legacy verified planner；`EvidencePack.planner` 必须记录
+`mode`、`provider`、`called`、`fallback_used`、`fallback_reason`、`token_usage` 和必要的错误类型摘要。
+显式 `planner_mode=legacy` 会跳过 LLM semantic planner。判断 DeepSeek 是否参与，应看
+`token_usage.extractor` 和 `EvidencePack.planner`，不能只根据回答是否可用推断。
+
 其中 DeepSeek 只能提出 `SemanticIntent` 或候选排序，不能直接生成 SQL，也不能返回候选集外
 row。`RankingPlan` 是 LLM 生成的可验证计划，不是 recommendation function。系统只执行通用
 operation：`text_match`、`equals_preferred_value`、`in_preferred_set`、

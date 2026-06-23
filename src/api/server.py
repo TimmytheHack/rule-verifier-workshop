@@ -96,6 +96,7 @@ class WorkbenchQueryRequest(BaseModel):
     extractor: str = "regex"
     generator: str = "template_evidence"
     model: str = "deepseek-v4-flash"
+    planner_mode: str = "auto"
     confirmed_candidates: list[str] = Field(default_factory=list)
 
 
@@ -354,6 +355,7 @@ def query_workbench(
                 extractor=request.extractor,
                 generator=request.generator,
                 model=request.model,
+                planner_mode=request.planner_mode,
                 confirmed_candidates=request.confirmed_candidates,
                 domain_name=request.domain_name,
             )
@@ -365,6 +367,7 @@ def query_workbench(
                 extractor=request.extractor,
                 generator=request.generator,
                 model=request.model,
+                planner_mode=request.planner_mode,
                 confirmed_candidates=request.confirmed_candidates,
                 domain_name=request.domain_name,
             )

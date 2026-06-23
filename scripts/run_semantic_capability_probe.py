@@ -31,6 +31,7 @@ def main(argv: list[str] | None = None) -> int:
             root=Path(args.root),
             live_llm=args.live_llm,
             live_semantic_candidates=args.live_semantic_candidates,
+            planner_mode=args.planner_mode,
         )
     except (FileNotFoundError, ValueError) as exc:
         exit_code = 1
@@ -47,6 +48,7 @@ def run_probe(
     root: Path,
     live_llm: bool = False,
     live_semantic_candidates: bool = False,
+    planner_mode: str = "auto",
 ) -> tuple[int, dict[str, Any]]:
     """复用 DatasetService 跑通上传、审查、建仓和语义查询。"""
 
@@ -108,6 +110,7 @@ def run_probe(
             "live_semantic_rerank": live_llm,
         },
         extractor="hybrid" if live_llm else "regex",
+        planner_mode=planner_mode,
     )
     evidence = response.get("evidence_pack") or {}
     return 0, {
@@ -116,9 +119,14 @@ def run_probe(
         "semantic_mapping_candidates": semantic_mapping_candidates,
         "status": response.get("status"),
         "query_type": response.get("query_type"),
+        "planner": evidence.get("planner", {}),
+        "semantic_intent": evidence.get("semantic_intent"),
+        "token_usage": response.get("token_usage", {}),
         "answer": response.get("answer"),
         "top_results": response.get("top_results", []),
         "evidence_pack": {
+            "planner": evidence.get("planner", {}),
+            "semantic_intent": evidence.get("semantic_intent"),
             "answerable_intents": evidence.get("answerable_intents", []),
             "unanswerable_intents": evidence.get("unanswerable_intents", []),
             "not_executed_preferences": evidence.get(
@@ -140,11 +148,20 @@ def _arg_parser() -> argparse.ArgumentParser:
     parser.add_argument("--query", default=DEFAULT_QUERY)
     parser.add_argument("--root", default="outputs/uploaded_datasets")
     parser.add_argument(
+        "--planner-mode",
+        choices=["auto", "legacy", "llm_semantic"],
+        default="auto",
+        help=(
+            "Workbench semantic planner 模式。auto 对 uploaded dataset "
+            "优先尝试 LLM SemanticIntent；legacy 跳过 LLM planner。"
+        ),
+    )
+    parser.add_argument(
         "--live-llm",
         action="store_true",
         help=(
-            "启用 Workbench 的可选 DeepSeek semantic intent / rerank 路径；"
-            "仍需要 ENABLE_LLM=true 和 DEEPSEEK_API_KEY。"
+            "启用 Workbench 的可选 DeepSeek rerank 路径；"
+            "SemanticIntent planner 由 --planner-mode 控制。"
         ),
     )
     parser.add_argument(
