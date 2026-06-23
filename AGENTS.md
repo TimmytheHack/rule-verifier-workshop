@@ -3,8 +3,8 @@
 ## Mission
 
 This repository is a research-engineering project for preference-to-rule
-verification in Guangdong college application planning. It is not a generic
-recommendation bot.
+verification over structured Excel/CSV data, with Guangdong college application
+planning as the primary domain. It is not a generic recommendation bot.
 
 Core invariant:
 
@@ -35,7 +35,7 @@ Natural language may propose structure, but only verified schema-grounded rules 
 
 ## Architecture Boundary
 
-Runtime flow:
+Legacy verified-rule flow:
 
 ```text
 Extractor
@@ -49,15 +49,38 @@ Extractor
 -> ReportBuilder / AnswerGenerator
 ```
 
+Uploaded reviewed-semantic flow:
+
+```text
+Dataset profiling / domain pack review
+-> optional LLM SemanticIntent proposal
+-> reviewed mapping / preference grounding
+-> SemanticQueryVerifier
+-> SemanticSQLBuilder
+-> DuckDBExecutor
+-> EvidencePack
+-> ReportBuilder / AnswerGenerator
+```
+
 Keep these boundaries intact:
 
 - Extractors may extract preferences and source spans, but must not decide final
   executability.
 - `RegexExtractor` is a benchmark baseline, not the final extraction strategy.
 - `DeepSeekExtractor` may extract preferences and source spans only.
+- `DeepSeekSemanticIntentExtractor` may propose `SemanticIntent`, user context,
+  requested output, and source spans only. It must not generate SQL, hard
+  rules, approved operations, final candidate rows, or final recommendations.
+- `DeepSeekSemanticCandidateGenerator` is a schema review aid. It may propose
+  candidate semantic mappings only; it must not write reviewed mappings.
 - Attribute grounding audits extracted slots before rule construction.
+- Reviewed semantic grounding audits LLM-proposed `SemanticIntent` before any
+  `QueryAST` construction.
 - Rule verification controls schema existence, operator validity, ambiguity,
   and execution level.
+- `SemanticQueryVerifier` controls reviewed semantic field existence, allowed
+  operations, value parseability, missing-schema preferences, and generated
+  `QueryAST` execution level.
 - Candidate rules must not execute before confirmation or simulated
   confirmation.
 - Runtime confirmation must reference a system-generated `candidate_id` from the
@@ -70,6 +93,8 @@ Keep these boundaries intact:
   executed.
 - LLM-only baselines are evaluation baselines, not production execution paths.
 - `DuckDBExecutor` is the primary Workbench executor for verified hard rules.
+- `SemanticSQLBuilder` may build SQL only from verified `QueryAST`; never accept
+  raw SQL from users or LLM output.
 - `PandasExecutor` is retained for the legacy MVP demo, evaluation comparison,
   and focused tests; Workbench must not silently fall back from DuckDB to raw
   Excel/Pandas execution.
@@ -82,7 +107,16 @@ Keep these boundaries intact:
   contract docs and snapshot tests are updated in the same quest.
 - `TemplateReportBuilder` is deterministic and uses no LLM.
 - `DeepSeekAnswerGenerator` is optional and evidence-only.
+- `EvidenceBoundedReranker` is optional and may operate only on bounded
+  evidence rows identified by system-provided row IDs. It must not add new
+  rows, use raw Excel, or cite evidence outside the provided pack.
 - `SchemaProfiler` is an offline schema-review tool, not runtime.
+- `SchemaProfiler`, `CapabilityGraph`, `semantic_query_options`, and
+  schema/value indexes describe available deterministic data; they do not make
+  fields executable until review and verifier checks pass.
+- `planner_mode=auto` may try the LLM semantic planner for uploaded approved
+  datasets when `ENABLE_LLM=true`. Any fallback to legacy verified planners must
+  be recorded in `EvidencePack.planner`.
 
 ## Frontend Boundary
 
@@ -123,6 +157,14 @@ safety margin
 - Vague preferences such as `太贵`, `稳一点`, `学校好一点`, `计算机相关`, or
   `离家近` remain candidate or external-info needs until their boundaries are
   confirmed.
+- Recommendation ranking must be evidence-bounded. Without a verified
+  `RankingPlan`, semantic recommendation flows should return candidate lists
+  rather than pretend to provide ranked recommendations.
+- A verified `RankingPlan` may use only reviewed fields and allowed operations.
+  External knowledge needs, such as employment outlook, city development,
+  school atmosphere, dorm quality, or overseas/cooperation status, remain
+  non-executable unless a reviewed structured field or reviewed evidence source
+  exists.
 
 ## Data Parsing And Knowledge Base Policy
 
@@ -137,6 +179,13 @@ safety margin
   bypass `AttributeGrounder`, `RuleVerifier`, or the evidence-pack boundary.
 - Keep raw large files and local database artifacts out of commits unless the
   repository explicitly tracks that artifact class.
+- Root-level raw data files such as `*.xlsx`, `*.xls`, `*.xlsm`, `*.csv`,
+  `*.tsv`, `*.parquet`, local DuckDB, SQLite, or database files are ignored and
+  should remain local. Reviewed small fixtures belong under `sample_data/` or
+  `domains/*/fixtures/`.
+- Tracked files under `outputs/` are evidence artifacts, not source policy. Do
+  not hand-edit large generated output unless deliberately synchronizing a known
+  evidence artifact and updating docs that cite it.
 
 ## Verification Guardrails
 
@@ -214,6 +263,19 @@ Build the frontend:
 ```bash
 cd frontend
 npm run build
+```
+
+Run the uploaded semantic capability probe:
+
+```bash
+python scripts/run_semantic_capability_probe.py path/to/admissions.xlsx
+```
+
+Run release/package checks and artifact cleanup:
+
+```bash
+python scripts/validate_release_package.py
+make clean-artifacts
 ```
 
 DeepSeek-backed checks read `.env` automatically and may incur API latency and
