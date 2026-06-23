@@ -190,15 +190,14 @@ WORKBENCH_SCHEMA_VERSION = "workbench_response.v1"
 FORBIDDEN_PUBLIC_PAYLOAD_KEYS = {"raw_sql", "sql"}
 REDACTED_FORBIDDEN_PAYLOAD = "[redacted_forbidden_payload]"
 SQL_COMMAND_TEXT_PATTERN = re.compile(
-    r"\b("
-    r"select\s+.+\s+from|"
-    r"select\s+(?:\*|\d+|'[^']*'|\"[^\"]*\"|[A-Za-z_][\w.]*)\s*;?(?:$|\s+from\b)|"
+    r"(?:^|[;:\r\n])\s*select\b|"
+    r"\b(?:"
     r"insert\s+into|"
     r"update\s+\S+\s+set|"
     r"delete\s+from|"
-    r"drop\s+(table|database|view|index)|"
-    r"alter\s+(table|database|view)|"
-    r"create\s+(table|database|view|index)"
+    r"drop\s+(?:table|database|view|index)|"
+    r"alter\s+(?:table|database|view)|"
+    r"create\s+(?:table|database|view|index)"
     r")\b",
     re.IGNORECASE | re.DOTALL,
 )
