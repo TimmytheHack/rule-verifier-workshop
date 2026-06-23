@@ -335,6 +335,7 @@ class UploadedDatasetFlowTest(unittest.TestCase):
                 dataset_id,
                 user_input=GROUP_DETAIL_QUERY,
                 soft_preferences={"prompt": GROUP_DETAIL_QUERY},
+                planner_mode="legacy",
             )
 
         assert_workbench_contract(self, response)
@@ -355,6 +356,7 @@ class UploadedDatasetFlowTest(unittest.TestCase):
                 dataset_id,
                 user_input=query,
                 soft_preferences={"prompt": query},
+                planner_mode="legacy",
             )
 
         assert_workbench_contract(self, response)
@@ -472,20 +474,37 @@ print(json.dumps({
 
     def test_generic_recommendation_prompt_uses_legacy_planner(self) -> None:
         query = "我今年广东物理类位次 9000，请推荐冲稳保"
+        fake_client = FakeSemanticIntentClient(_major_rank_semantic_intent())
         with TemporaryDirectory() as directory:
             service, dataset_id = _queryable_uploaded_admissions(
                 Path(directory),
                 use_excel=False,
             )
 
-            response = service.query(
-                dataset_id,
-                user_input=query,
-                soft_preferences={"prompt": query},
-            )
+            with patch(
+                "src.api.workbench.deepseek_slot_adapter_enabled",
+                return_value=True,
+            ):
+                with patch(
+                    "src.api.workbench._interactive_deepseek_client",
+                    return_value=fake_client,
+                ):
+                    response = service.query(
+                        dataset_id,
+                        user_input=query,
+                        soft_preferences={"prompt": query},
+                    )
 
         assert_workbench_contract(self, response)
+        self.assertTrue(fake_client.calls)
         self.assertEqual(response["query_type"], "recommendation")
+        planner = response["evidence_pack"]["planner"]
+        self.assertEqual(planner["mode"], "legacy")
+        self.assertTrue(planner["fallback_used"])
+        self.assertEqual(
+            planner["prior_planner"]["fallback_reason"],
+            "unsupported_admissions_major_rank_text",
+        )
 
     def test_uploaded_major_rank_query_uses_llm_semantic_planner_first(
         self,
@@ -972,6 +991,7 @@ print(json.dumps({
                 "ds_new_admissions",
                 user_input=query,
                 soft_preferences={"prompt": query},
+                planner_mode="legacy",
             )
 
         assert_workbench_contract(self, response)
@@ -1016,6 +1036,7 @@ print(json.dumps({
                 "ds_new_admissions_context",
                 user_input=query,
                 soft_preferences={"prompt": query},
+                planner_mode="legacy",
             )
 
         assert_workbench_contract(self, response)

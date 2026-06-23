@@ -43,7 +43,10 @@ from src.schema.schema_registry import SchemaRegistry
 from src.semantic.admissions_recommendation import (
     SemanticAdmissionsRecommendationPlanner,
 )
-from src.semantic.admissions_major_rank import AdmissionsMajorRankPlanner
+from src.semantic.admissions_major_rank import (
+    AdmissionsMajorRankPlanner,
+    admissions_major_rank_query_matches,
+)
 from src.semantic.capability_graph import DatasetCapabilityGraph
 from src.semantic.intent_models import SemanticIntent
 from src.semantic.query_options import SemanticQueryOptionsBuilder
@@ -687,24 +690,35 @@ def _run_semantic_capability_query(
     if planner_attempt.intent is None and config.planner_mode == "llm_semantic":
         return _semantic_planner_blocked_run(config, planner_attempt)
     if planner_attempt.intent is not None:
-        semantic_result = _run_semantic_intent_query(
+        if _llm_major_rank_intent_not_supported_by_text(
             planner_attempt.intent,
-            config=config,
-            domain_config=domain_config,
-        )
-        if semantic_result is not None:
-            return SemanticCapabilityRun(
-                result=semantic_result,
-                planner=planner_attempt.planner,
-                semantic_intent=planner_attempt.intent.model_dump(),
-                extractor_usage=planner_attempt.usage,
+            config,
+        ):
+            planner_attempt = _with_planner_fallback(
+                planner_attempt,
+                reason="unsupported_admissions_major_rank_text",
             )
-        planner_attempt = _with_planner_fallback(
-            planner_attempt,
-            reason="unsupported_semantic_intent",
-        )
-        if config.planner_mode == "llm_semantic":
-            return _semantic_planner_blocked_run(config, planner_attempt)
+            if config.planner_mode == "llm_semantic":
+                return _semantic_planner_blocked_run(config, planner_attempt)
+        else:
+            semantic_result = _run_semantic_intent_query(
+                planner_attempt.intent,
+                config=config,
+                domain_config=domain_config,
+            )
+            if semantic_result is not None:
+                return SemanticCapabilityRun(
+                    result=semantic_result,
+                    planner=planner_attempt.planner,
+                    semantic_intent=planner_attempt.intent.model_dump(),
+                    extractor_usage=planner_attempt.usage,
+                )
+            planner_attempt = _with_planner_fallback(
+                planner_attempt,
+                reason="unsupported_semantic_intent",
+            )
+            if config.planner_mode == "llm_semantic":
+                return _semantic_planner_blocked_run(config, planner_attempt)
 
     user_request = _compose_user_request(config)
     major_rank_result = AdmissionsMajorRankPlanner(
@@ -760,6 +774,16 @@ def _run_semantic_capability_query(
         planner=intent_attempt.planner,
         semantic_intent=intent_attempt.intent.model_dump(),
         extractor_usage=intent_attempt.usage,
+    )
+
+
+def _llm_major_rank_intent_not_supported_by_text(
+    intent: SemanticIntent,
+    config: WorkbenchConfig,
+) -> bool:
+    return (
+        intent.query_type == "admissions_major_rank"
+        and not admissions_major_rank_query_matches(_compose_user_request(config))
     )
 
 

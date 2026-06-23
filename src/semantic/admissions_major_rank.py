@@ -119,7 +119,7 @@ class AdmissionsMajorRankPlanner:
         self.table_name = table_name
 
     def run(self, user_request: str) -> AdmissionsMajorRankResult | None:
-        if not _matches_major_rank_query(user_request):
+        if not admissions_major_rank_query_matches(user_request):
             return None
 
         rank = _parse_rank(user_request)
@@ -364,7 +364,9 @@ class AdmissionsMajorRankPlanner:
         )
 
 
-def _matches_major_rank_query(text: str) -> bool:
+def admissions_major_rank_query_matches(text: str) -> bool:
+    """判断自然语言是否明确请求专业最低位次冲稳保 recipe。"""
+
     return "冲稳保" in text and any(term in text for term in MAJOR_MIN_RANK_TERMS)
 
 
@@ -855,4 +857,5 @@ def _empty_execution_summary(rank: int | None = None) -> dict[str, Any]:
 __all__ = [
     "AdmissionsMajorRankPlanner",
     "AdmissionsMajorRankResult",
+    "admissions_major_rank_query_matches",
 ]

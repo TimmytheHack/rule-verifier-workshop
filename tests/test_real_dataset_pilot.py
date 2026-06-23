@@ -154,6 +154,7 @@ class RealDatasetPilotTest(unittest.TestCase):
                 dataset_id,
                 user_input=GROUP_DETAIL_QUERY,
                 soft_preferences={"prompt": GROUP_DETAIL_QUERY},
+                planner_mode="legacy",
             )
 
         assert_workbench_contract(self, response)
@@ -183,6 +184,7 @@ class RealDatasetPilotTest(unittest.TestCase):
                 dataset_id,
                 user_input=GROUP_DETAIL_QUERY,
                 soft_preferences={"prompt": GROUP_DETAIL_QUERY},
+                planner_mode="legacy",
             )
 
         assert_workbench_contract(self, response)
@@ -198,6 +200,7 @@ class RealDatasetPilotTest(unittest.TestCase):
                 dataset_id,
                 user_input=GROUP_DETAIL_QUERY,
                 soft_preferences={"prompt": GROUP_DETAIL_QUERY},
+                planner_mode="legacy",
             )
 
         assert_workbench_contract(self, response)
@@ -218,6 +221,7 @@ class RealDatasetPilotTest(unittest.TestCase):
                 dataset_id,
                 user_input=RECOMMENDATION_QUERY,
                 soft_preferences={"prompt": RECOMMENDATION_QUERY},
+                planner_mode="legacy",
             )
 
         assert_workbench_contract(self, response)

@@ -123,6 +123,7 @@ def run_pilot(
                 user_input=query,
                 soft_preferences={"prompt": query},
                 extractor="regex",
+                planner_mode="legacy",
             )
             target_results.append(_target_query_record(query, response))
         for result in target_results:
