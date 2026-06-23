@@ -3,10 +3,14 @@ from typing import Any
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 
+FORBIDDEN_SQL_PAYLOAD_KEYS = ("raw_sql", "sql")
+
+
 def _reject_raw_sql_key(value: Any, context: str) -> Any:
     if isinstance(value, dict):
-        if "raw_sql" in value:
-            raise ValueError(f"{context} 不能包含 raw_sql。")
+        forbidden_keys = [key for key in FORBIDDEN_SQL_PAYLOAD_KEYS if key in value]
+        if forbidden_keys:
+            raise ValueError(f"{context} 不能包含 {'、'.join(forbidden_keys)}。")
         for nested_value in value.values():
             _reject_raw_sql_key(nested_value, context)
     elif isinstance(value, list):

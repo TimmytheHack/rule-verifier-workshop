@@ -543,6 +543,52 @@ print(json.dumps({
         )
         self.assertIn("候选列表", response["answer"])
 
+    def test_unsafe_semantic_ranking_plan_is_rejected_and_redacted(
+        self,
+    ) -> None:
+        query = "我的排位是15000，想读人工智能，计算机，而且想留在广东省，请给出推荐"
+        unsafe_plan = {
+            "criteria": [
+                {
+                    "criterion_id": "unsafe",
+                    "source_text": "按 SQL 排序",
+                    "required_field": "major_name",
+                    "operation": "external_prestige_score",
+                    "value": {"sql": "SELECT * FROM admissions"},
+                    "priority": 1,
+                    "rationale": "不允许候选排序合同携带 SQL。",
+                }
+            ]
+        }
+        with TemporaryDirectory() as directory:
+            service, dataset_id = _queryable_uploaded_admissions(
+                Path(directory),
+                use_excel=False,
+            )
+
+            response = service.query(
+                dataset_id,
+                user_input=query,
+                soft_preferences={
+                    "prompt": query,
+                    "semantic_intent": _semantic_recommendation_intent(),
+                    "semantic_ranking_plan": unsafe_plan,
+                },
+            )
+
+        assert_workbench_contract(self, response)
+        self.assertEqual(response["status"], "error")
+        self.assertEqual(
+            response["query"]["soft_preferences"]["semantic_ranking_plan"],
+            "[redacted_forbidden_payload]",
+        )
+        self.assertEqual(
+            response["soft_preferences"]["semantic_ranking_plan"],
+            "[redacted_forbidden_payload]",
+        )
+        serialized = json.dumps(response, ensure_ascii=False)
+        self.assertNotIn("SELECT * FROM admissions", serialized)
+
     def test_external_knowledge_preference_is_not_ranked_without_reviewed_evidence(
         self,
     ) -> None:

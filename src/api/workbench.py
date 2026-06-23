@@ -187,6 +187,8 @@ INTERACTIVE_DEEPSEEK_TIMEOUT_SECONDS = 25
 INTERACTIVE_DEEPSEEK_MAX_RETRIES = 1
 EVIDENCE_TOP_K = 5
 WORKBENCH_SCHEMA_VERSION = "workbench_response.v1"
+FORBIDDEN_PUBLIC_PAYLOAD_KEYS = {"raw_sql", "sql"}
+REDACTED_FORBIDDEN_PAYLOAD = "[redacted_forbidden_payload]"
 
 WAREHOUSE_DATABASE_PATH = Path("outputs/data/guangdong_admissions.duckdb")
 WAREHOUSE_VALUE_INDEX_PATH = Path("outputs/data/schema_value_index.json")
@@ -2063,7 +2065,7 @@ def _error_payload(config: WorkbenchConfig, exc: Exception) -> dict[str, Any]:
             }
         ],
         "hard_filters": dict(config.hard_filters),
-        "soft_preferences": dict(config.soft_preferences),
+        "soft_preferences": _public_soft_preferences(config.soft_preferences),
         "selected_options": _selected_options(config),
         "extracted_preferences": [],
         "extracted_slots": {},
@@ -2304,7 +2306,7 @@ def _contract_query(config: WorkbenchConfig) -> dict[str, Any]:
         "dataset_id": config.dataset_id,
         "query_type": config.hard_filters.get("query_type"),
         "hard_filters": dict(config.hard_filters),
-        "soft_preferences": dict(config.soft_preferences),
+        "soft_preferences": _public_soft_preferences(config.soft_preferences),
         "confirmed_candidates": list(config.confirmed_candidates),
     }
 
@@ -3323,8 +3325,45 @@ def _display_soft_preferences_for_domain(
     domain_config: DomainConfig,
 ) -> dict[str, Any]:
     if domain_config.domain_id == ADMISSIONS_DOMAIN.domain_id:
-        return _display_soft_preferences(config.soft_preferences)
-    return dict(config.soft_preferences)
+        return _public_soft_preferences(_display_soft_preferences(config.soft_preferences))
+    return _public_soft_preferences(config.soft_preferences)
+
+
+def _public_soft_preferences(soft_preferences: dict[str, Any]) -> dict[str, Any]:
+    return {
+        key: (
+            REDACTED_FORBIDDEN_PAYLOAD
+            if _contains_forbidden_public_payload(value)
+            else _redact_forbidden_public_payload(value)
+        )
+        for key, value in dict(soft_preferences).items()
+    }
+
+
+def _contains_forbidden_public_payload(value: Any) -> bool:
+    if isinstance(value, dict):
+        if any(key in value for key in FORBIDDEN_PUBLIC_PAYLOAD_KEYS):
+            return True
+        return any(
+            _contains_forbidden_public_payload(nested_value)
+            for nested_value in value.values()
+        )
+    if isinstance(value, list):
+        return any(_contains_forbidden_public_payload(item) for item in value)
+    return False
+
+
+def _redact_forbidden_public_payload(value: Any) -> Any:
+    if isinstance(value, dict):
+        if any(key in value for key in FORBIDDEN_PUBLIC_PAYLOAD_KEYS):
+            return REDACTED_FORBIDDEN_PAYLOAD
+        return {
+            key: _redact_forbidden_public_payload(nested_value)
+            for key, nested_value in value.items()
+        }
+    if isinstance(value, list):
+        return [_redact_forbidden_public_payload(item) for item in value]
+    return value
 
 
 def _rank_window_selection(
