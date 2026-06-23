@@ -2474,7 +2474,9 @@ def _interactive_deepseek_client(model: str) -> Any:
 
 def _soft_prompt(config: WorkbenchConfig) -> str:
     if "prompt" in config.soft_preferences:
-        return str(config.soft_preferences.get("prompt") or "").strip()
+        prompt = config.soft_preferences.get("prompt")
+        if isinstance(prompt, str):
+            return prompt.strip()
     return config.user_input
 
 
@@ -3236,7 +3238,7 @@ def _stable_value(value: Any) -> str:
 
 def _compose_user_request(config: WorkbenchConfig) -> str:
     if config.domain_name != ADMISSIONS_DOMAIN.domain_id or config.domain_path:
-        prompt = _clean_sentence(config.soft_preferences.get("prompt"))
+        prompt = _clean_prompt_text(config.soft_preferences.get("prompt"))
         if prompt:
             return prompt
         parts = []
@@ -3282,7 +3284,7 @@ def _compose_user_request(config: WorkbenchConfig) -> str:
         boundary_parts.append(_rank_window_boundary_text(rank_window))
     if soft_tuition_cap and not tuition_cap:
         boundary_parts.append(f"费用上限 {soft_tuition_cap} 元/年")
-    prompt = _clean_sentence(soft.get("prompt"))
+    prompt = _clean_prompt_text(soft.get("prompt"))
     soft_parts = []
     if boundary_parts:
         soft_parts.append(f"已确认边界：{'，'.join(boundary_parts)}")
@@ -3340,7 +3342,7 @@ def _boundary_context(soft_preferences: dict[str, Any]) -> dict[str, Any]:
 def _display_soft_preferences(soft_preferences: dict[str, Any]) -> dict[str, Any]:
     rank_window = _rank_window_selection(soft_preferences)
     return {
-        "prompt": _clean_text(soft_preferences.get("prompt")),
+        "prompt": _public_prompt_value(soft_preferences.get("prompt")),
         "safety_margin_percent": (
             rank_window.lower_percent
             if rank_window
@@ -3374,6 +3376,9 @@ def _public_soft_preferences(soft_preferences: dict[str, Any]) -> dict[str, Any]
         if _is_forbidden_public_payload_key(key):
             public[REDACTED_FORBIDDEN_PAYLOAD] = REDACTED_FORBIDDEN_PAYLOAD
             continue
+        if str(key) == "prompt":
+            public[key] = _public_prompt_value(value)
+            continue
         public[key] = (
             REDACTED_FORBIDDEN_PAYLOAD
             if _contains_forbidden_public_payload(value)
@@ -3384,6 +3389,20 @@ def _public_soft_preferences(soft_preferences: dict[str, Any]) -> dict[str, Any]
 
 def _is_forbidden_public_payload_key(key: Any) -> bool:
     return str(key).casefold() in FORBIDDEN_PUBLIC_PAYLOAD_KEYS
+
+
+def _clean_prompt_text(value: Any) -> str | None:
+    if not isinstance(value, str):
+        return None
+    return _clean_sentence(value)
+
+
+def _public_prompt_value(value: Any) -> Any:
+    if value is None:
+        return None
+    if isinstance(value, str):
+        return _clean_text(value)
+    return REDACTED_FORBIDDEN_PAYLOAD
 
 
 def _contains_forbidden_public_payload(value: Any) -> bool:

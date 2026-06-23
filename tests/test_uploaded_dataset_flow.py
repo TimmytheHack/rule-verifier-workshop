@@ -112,6 +112,31 @@ class UploadedDatasetFlowTest(unittest.TestCase):
             response["query"]["soft_preferences"],
         )
 
+    def test_generic_domain_structured_prompt_payload_does_not_leak(self) -> None:
+        with TemporaryDirectory() as directory:
+            service, dataset_id = _generated_generic_dataset(Path(directory))
+            _approve_generic_dataset(service, dataset_id)
+            service.build_warehouse(dataset_id)
+
+            response = service.query(
+                dataset_id,
+                user_input="Austin under 1900",
+                hard_filters={"city": ["Austin"], "rent_usd": 1900},
+                soft_preferences={
+                    "prompt": {"SQL": "SELECT * FROM leases"},
+                },
+            )
+
+        assert_workbench_contract(self, response)
+        self.assertEqual(response["status"], "ok")
+        serialized = json.dumps(response, ensure_ascii=False)
+        self.assertNotIn("SELECT * FROM leases", serialized)
+        self.assertNotIn('"SQL"', serialized)
+        self.assertEqual(
+            response["query"]["soft_preferences"]["prompt"],
+            "[redacted_forbidden_payload]",
+        )
+
     def test_stale_fingerprint_blocks_uploaded_dataset_query(self) -> None:
         with TemporaryDirectory() as directory:
             service, dataset_id = _generated_generic_dataset(Path(directory))
@@ -724,6 +749,34 @@ print(json.dumps({
         self.assertIn(
             "[redacted_forbidden_payload]",
             response["query"]["soft_preferences"],
+        )
+
+    def test_structured_prompt_payload_does_not_leak_in_semantic_flow(
+        self,
+    ) -> None:
+        query = "我的排位是15000，想读人工智能，计算机，而且想留在广东省，请给出推荐"
+        with TemporaryDirectory() as directory:
+            service, dataset_id = _queryable_uploaded_admissions(
+                Path(directory),
+                use_excel=False,
+            )
+
+            response = service.query(
+                dataset_id,
+                user_input=query,
+                soft_preferences={
+                    "prompt": {"SQL": "SELECT * FROM admissions"},
+                    "semantic_intent": _semantic_recommendation_intent(),
+                },
+            )
+
+        assert_workbench_contract(self, response)
+        serialized = json.dumps(response, ensure_ascii=False)
+        self.assertNotIn("SELECT * FROM admissions", serialized)
+        self.assertNotIn('"SQL"', serialized)
+        self.assertEqual(
+            response["query"]["soft_preferences"]["prompt"],
+            "[redacted_forbidden_payload]",
         )
 
     def test_semantic_answer_receives_evidence_pack_only(self) -> None:
