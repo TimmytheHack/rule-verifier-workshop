@@ -25,6 +25,7 @@ BOOLEAN_STRING_VALUES = frozenset({"是", "否", "true", "false", "1", "0"})
 SQL_COMMAND_TEXT_PATTERN = re.compile(
     r"\b("
     r"select\s+.+\s+from|"
+    r"select\s+(?:\*|\d+|'[^']*'|\"[^\"]*\"|[A-Za-z_][\w.]*)\s*;?(?:$|\s+from\b)|"
     r"insert\s+into|"
     r"update\s+\S+\s+set|"
     r"delete\s+from|"

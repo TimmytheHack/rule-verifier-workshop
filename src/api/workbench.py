@@ -192,6 +192,7 @@ REDACTED_FORBIDDEN_PAYLOAD = "[redacted_forbidden_payload]"
 SQL_COMMAND_TEXT_PATTERN = re.compile(
     r"\b("
     r"select\s+.+\s+from|"
+    r"select\s+(?:\*|\d+|'[^']*'|\"[^\"]*\"|[A-Za-z_][\w.]*)\s*;?(?:$|\s+from\b)|"
     r"insert\s+into|"
     r"update\s+\S+\s+set|"
     r"delete\s+from|"
@@ -3324,7 +3325,7 @@ def _display_hard_filters_for_domain(
     domain_config: DomainConfig,
 ) -> dict[str, Any]:
     if domain_config.domain_id == ADMISSIONS_DOMAIN.domain_id:
-        return _display_hard_filters(config.hard_filters)
+        return _public_structured_filters(_display_hard_filters(config.hard_filters))
     return _public_structured_filters(config.hard_filters)
 
 
