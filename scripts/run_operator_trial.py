@@ -185,6 +185,7 @@ def run_operator_trial(
                     user_input=query,
                     soft_preferences={"prompt": query},
                     extractor="regex",
+                    planner_mode="legacy",
                 ),
             )
             if response:

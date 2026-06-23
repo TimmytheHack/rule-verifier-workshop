@@ -64,15 +64,21 @@ class GenericRankingEngine:
         index: int,
     ) -> tuple[Any, ...]:
         criterion_keys = tuple(
-            self._sort_score(score, criterion.direction)
+            self._sort_score(score, criterion)
             for score, criterion in zip(scores, criteria)
         )
         return criterion_keys + (index,)
 
-    def _sort_score(self, score: float, direction: str) -> tuple[int, float]:
+    def _sort_score(
+        self,
+        score: float,
+        criterion: RankingCriterion,
+    ) -> tuple[int, float]:
         if not math.isfinite(score):
             return (1, 0.0)
-        if direction == "asc":
+        if criterion.operation == "numeric_distance_to_user_value":
+            return (0, -score)
+        if criterion.direction == "asc":
             return (0, score)
         return (0, -score)
 

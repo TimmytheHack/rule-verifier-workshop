@@ -139,6 +139,32 @@ class GenericRankingEngineTest(unittest.TestCase):
         self.assertEqual([row["row_id"] for row in descending.rows], ["high", "mid", "low"])
         self.assertEqual([row["row_id"] for row in ascending.rows], ["low", "mid", "high"])
 
+    def test_numeric_distance_always_ranks_closer_values_first(self) -> None:
+        rows = [
+            {"row_id": "far", "rank": 34000},
+            {"row_id": "near", "rank": 14831},
+            {"row_id": "mid", "rank": 17051},
+        ]
+        plan = RankingPlan(
+            criteria=[
+                _criterion(
+                    criterion_id="rank_distance",
+                    required_field="rank",
+                    operation="numeric_distance_to_user_value",
+                    value=15000,
+                    direction="asc",
+                )
+            ]
+        )
+
+        result = GenericRankingEngine().rank(rows=rows, plan=plan)
+
+        self.assertEqual([row["row_id"] for row in result.rows], ["near", "mid", "far"])
+        self.assertEqual(
+            result.criterion_evidence[0]["criteria"][0]["derived"],
+            {"distance": 169},
+        )
+
     def test_preserves_input_order_after_all_criterion_scores_tie(self) -> None:
         plan = RankingPlan(
             criteria=[

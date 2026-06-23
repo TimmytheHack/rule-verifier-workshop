@@ -71,6 +71,9 @@ Keep these boundaries intact:
 - `DeepSeekSemanticIntentExtractor` may propose `SemanticIntent`, user context,
   requested output, and source spans only. It must not generate SQL, hard
   rules, approved operations, final candidate rows, or final recommendations.
+- `DeepSeekRankingPlanGenerator` may propose candidate `RankingPlan` criteria
+  only. `RankingVerifier` must verify reviewed fields, allowed operations, and
+  trusted value evidence before `GenericRankingEngine` may sort candidates.
 - `DeepSeekSemanticCandidateGenerator` is a schema review aid. It may propose
   candidate semantic mappings only; it must not write reviewed mappings.
 - Attribute grounding audits extracted slots before rule construction.

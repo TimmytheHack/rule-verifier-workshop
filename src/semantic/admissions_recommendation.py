@@ -214,6 +214,11 @@ class SemanticAdmissionsRecommendationPlanner:
             ranking_engine=self.ranking_engine,
             registry=registry,
             rows=rows,
+            value_evidence=_ranking_value_evidence(
+                intent=intent,
+                ranking_plan=self.ranking_plan,
+                rank_basis=rank_basis,
+            ),
         )
         result_sections = _sections_from_ordered_rows(rows)
         for index, row in enumerate(rows, start=1):
@@ -559,6 +564,7 @@ def _apply_ranking_plan(
     ranking_engine: Any | None,
     registry: ReviewedMappingRegistry,
     rows: list[dict[str, Any]],
+    value_evidence: list[dict[str, Any]] | None = None,
 ) -> tuple[list[dict[str, Any]], dict[str, Any]]:
     summary = {
         "status": "candidate_list_only",
@@ -569,7 +575,10 @@ def _apply_ranking_plan(
     if ranking_plan is None:
         return rows, summary
 
-    verifier = ranking_verifier or RankingVerifier(registry)
+    verifier = ranking_verifier or RankingVerifier(
+        registry,
+        value_evidence=value_evidence,
+    )
     ranking_result = verifier.verify(ranking_plan)
     summary["verified_ranking_plan"] = ranking_result.verified_plan.model_dump()
     summary["excluded_criteria"] = ranking_result.excluded_criteria
@@ -585,6 +594,34 @@ def _apply_ranking_plan(
         summary["criterion_evidence"] = ranked.criterion_evidence
         return _restore_ranked_rows(rows, ranked.rows), summary
     return rows, summary
+
+
+def _ranking_value_evidence(
+    *,
+    intent: SemanticIntent,
+    ranking_plan: Any | None,
+    rank_basis: str,
+) -> list[dict[str, Any]]:
+    if ranking_plan is None:
+        return []
+    evidence: list[dict[str, Any]] = []
+    for criterion in getattr(ranking_plan, "criteria", []) or []:
+        if (
+            criterion.required_field == rank_basis
+            and criterion.operation == "numeric_distance_to_user_value"
+            and intent.user_context.user_rank is not None
+            and _int_or_none(criterion.value) == intent.user_context.user_rank
+        ):
+            evidence.append(
+                {
+                    "criterion_id": criterion.criterion_id,
+                    "source": "user_input",
+                    "field_id": criterion.required_field,
+                    "operation": criterion.operation,
+                    "value": intent.user_context.user_rank,
+                }
+            )
+    return evidence
 
 
 def _ranking_rows(rows: list[dict[str, Any]]) -> list[dict[str, Any]]:

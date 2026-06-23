@@ -149,6 +149,13 @@ operation：`text_match`、`equals_preferred_value`、`in_preferred_set`、
 受限候选集内的辅助实验，不是语义排序权威；它不能绕过 verified `RankingPlan`、`RankingVerifier`
 或 EvidencePack 中的 `ranking.status`、`excluded_criteria`、`criterion_evidence` 语义。
 
+在 `semantic_recommendation` 且 LLM semantic planner 成功时，Workbench 会自动调用
+`DeepSeekRankingPlanGenerator` 生成候选 `RankingPlan`，并把这一层的状态写入
+`EvidencePack.planner.ranking_plan`。该候选计划仍必须经过 `RankingVerifier`：例如
+`numeric_distance_to_user_value` 只有在 value 和用户输入的省排位一致时，才会获得可信
+value evidence；专业、省份等已用于 SQL filter 的 preference 不会自动升级成排序证据。
+验证失败或生成失败时，系统保留 verified SQL 候选集并标记为候选列表，不声称已完成推荐排序。
+
 `admissions_major_rank` 也已改为每个档位单独 verified SQL 召回，不再用一个全局 `LIMIT 100`
 截断所有档位。每档可以返回多条候选，`EvidencePack.execution_summary` 记录
 `bucket_queries`、`bucket_candidate_counts` 和 `selected_counts`，回答层只能基于这些证据说明

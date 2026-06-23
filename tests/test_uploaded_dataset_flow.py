@@ -1150,6 +1150,87 @@ print(json.dumps({
         )
         self.assertIn("criterion_evidence", response["answer"])
 
+    def test_llm_semantic_recommendation_generates_verified_ranking_plan(
+        self,
+    ) -> None:
+        query = "我的排位是15000，想读人工智能，计算机，而且想留在广东省，请给出推荐"
+        fake_client = FakeSemanticIntentClient(
+            [
+                _semantic_recommendation_intent(),
+                {
+                    "criteria": [
+                        {
+                            "criterion_id": "rank_distance_to_user",
+                            "source_text": "我的排位是15000",
+                            "required_field": "major_min_rank",
+                            "operation": "numeric_distance_to_user_value",
+                            "value": 15000,
+                            "priority": 1,
+                            "direction": "desc",
+                            "rationale": "专业最低位次越接近用户排位，候选越贴近。",
+                        }
+                    ],
+                    "rationale_summary": "按已审核专业最低位次与用户排位距离排序。",
+                },
+            ],
+            usage=[
+                {
+                    "prompt_tokens": 21,
+                    "completion_tokens": 9,
+                    "total_tokens": 30,
+                },
+                {
+                    "prompt_tokens": 17,
+                    "completion_tokens": 11,
+                    "total_tokens": 28,
+                },
+            ],
+        )
+        with TemporaryDirectory() as directory:
+            service, dataset_id = _queryable_uploaded_admissions(
+                Path(directory),
+                use_excel=False,
+            )
+
+            with patch(
+                "src.api.workbench.deepseek_slot_adapter_enabled",
+                return_value=True,
+            ):
+                with patch(
+                    "src.api.workbench._interactive_deepseek_client",
+                    return_value=fake_client,
+                ):
+                    response = service.query(
+                        dataset_id,
+                        user_input=query,
+                        soft_preferences={"prompt": query},
+                    )
+
+        assert_workbench_contract(self, response)
+        self.assertEqual(len(fake_client.calls), 2)
+        self.assertEqual(response["status"], "ok")
+        self.assertEqual(response["query_type"], "recommendation")
+        ranking = response["evidence_pack"]["ranking"]
+        self.assertEqual(ranking["status"], "ranked")
+        self.assertEqual(
+            ranking["verified_ranking_plan"]["criteria"][0]["criterion_id"],
+            "rank_distance_to_user",
+        )
+        self.assertTrue(ranking["criterion_evidence"])
+        self.assertEqual(
+            response["evidence_pack"]["planner"]["ranking_plan"]["status"],
+            "generated",
+        )
+        self.assertEqual(
+            response["token_usage"]["extractor"]["total_tokens"],
+            58,
+        )
+        first_distance = ranking["criterion_evidence"][0]["criteria"][0][
+            "derived"
+        ]["distance"]
+        self.assertEqual(first_distance, 5900)
+        self.assertIn("verified RankingPlan", response["answer"])
+
     def test_semantic_recommendation_without_ranking_plan_is_candidate_list(
         self,
     ) -> None:
@@ -1866,15 +1947,21 @@ def _admissions_rows() -> list[dict[str, object]]:
 class FakeSemanticIntentClient:
     def __init__(
         self,
-        payload: dict[str, object],
-        usage: dict[str, int] | None = None,
+        payload: dict[str, object] | list[dict[str, object]],
+        usage: dict[str, int] | list[dict[str, int]] | None = None,
     ) -> None:
-        self.payload = payload
-        self.usage = usage or {
+        self.payloads = payload if isinstance(payload, list) else [payload]
+        default_usage = {
             "prompt_tokens": 21,
             "completion_tokens": 9,
             "total_tokens": 30,
         }
+        if isinstance(usage, list):
+            self.usages = usage
+        elif usage is None:
+            self.usages = [default_usage for _ in self.payloads]
+        else:
+            self.usages = [usage]
         self.calls: list[dict[str, object]] = []
 
     def chat_json(
@@ -1890,7 +1977,9 @@ class FakeSemanticIntentClient:
                 **kwargs,
             }
         )
-        return {**self.payload, "usage": self.usage}
+        index = min(len(self.calls) - 1, len(self.payloads) - 1)
+        usage_index = min(len(self.calls) - 1, len(self.usages) - 1)
+        return {**self.payloads[index], "usage": self.usages[usage_index]}
 
 
 class FailingSemanticIntentClient:

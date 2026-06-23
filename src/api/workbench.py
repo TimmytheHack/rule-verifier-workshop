@@ -287,6 +287,15 @@ class SemanticCapabilityFallback:
 
 
 @dataclass(frozen=True)
+class RankingPlanAttempt:
+    """LLM RankingPlan 候选和调用证据。"""
+
+    plan: RankingPlan | None
+    planner: dict[str, Any] | None = None
+    usage: dict[str, int] | None = None
+
+
+@dataclass(frozen=True)
 class SemanticPlannerBlockedResult:
     """强制 LLM semantic planner 失败时的 contract-ready 结果。"""
 
@@ -701,17 +710,30 @@ def _run_semantic_capability_query(
             if config.planner_mode == "llm_semantic":
                 return _semantic_planner_blocked_run(config, planner_attempt)
         else:
+            ranking_attempt = _semantic_ranking_plan_attempt(
+                config,
+                domain_config,
+                planner_attempt.intent,
+                planner_attempt.planner,
+            )
             semantic_result = _run_semantic_intent_query(
                 planner_attempt.intent,
                 config=config,
                 domain_config=domain_config,
+                ranking_plan=ranking_attempt.plan,
             )
             if semantic_result is not None:
                 return SemanticCapabilityRun(
                     result=semantic_result,
-                    planner=planner_attempt.planner,
+                    planner=_with_ranking_plan_trace(
+                        planner_attempt.planner,
+                        ranking_attempt,
+                    ),
                     semantic_intent=planner_attempt.intent.model_dump(),
-                    extractor_usage=planner_attempt.usage,
+                    extractor_usage=_combined_usage(
+                        planner_attempt.usage,
+                        ranking_attempt.usage,
+                    ),
                 )
             planner_attempt = _with_planner_fallback(
                 planner_attempt,
@@ -748,13 +770,18 @@ def _run_semantic_capability_query(
                 extractor_usage=planner_attempt.usage,
             )
         return None
-    semantic_result = SemanticAdmissionsRecommendationPlanner(
+    ranking_attempt = _semantic_ranking_plan_attempt(
+        config,
+        domain_config,
+        intent_attempt.intent,
+        intent_attempt.planner,
+    )
+    semantic_result = _run_semantic_intent_query(
+        intent_attempt.intent,
+        config=config,
         domain_config=domain_config,
-        database_path=_warehouse_database_path(domain_config),
-        table_name=domain_config.table_name,
-        reranker=_semantic_reranker(config),
-        ranking_plan=_semantic_ranking_plan(config),
-    ).run(intent_attempt.intent)
+        ranking_plan=ranking_attempt.plan,
+    )
     if semantic_result is None:
         if _should_preserve_semantic_fallback(config, intent_attempt):
             return SemanticCapabilityFallback(
@@ -771,9 +798,9 @@ def _run_semantic_capability_query(
         return None
     return SemanticCapabilityRun(
         result=semantic_result,
-        planner=intent_attempt.planner,
+        planner=_with_ranking_plan_trace(intent_attempt.planner, ranking_attempt),
         semantic_intent=intent_attempt.intent.model_dump(),
-        extractor_usage=intent_attempt.usage,
+        extractor_usage=_combined_usage(intent_attempt.usage, ranking_attempt.usage),
     )
 
 
@@ -785,6 +812,108 @@ def _llm_major_rank_intent_not_supported_by_text(
         intent.query_type == "admissions_major_rank"
         and not admissions_major_rank_query_matches(_compose_user_request(config))
     )
+
+
+def _semantic_ranking_plan_attempt(
+    config: WorkbenchConfig,
+    domain_config: DomainConfig,
+    intent: SemanticIntent,
+    planner: dict[str, Any],
+) -> RankingPlanAttempt:
+    supplied = _semantic_ranking_plan(config)
+    if supplied is not None:
+        return RankingPlanAttempt(
+            plan=supplied,
+            planner={
+                "status": "supplied",
+                "called": False,
+                "fallback_used": False,
+            },
+        )
+    if intent.query_type != "semantic_recommendation":
+        return RankingPlanAttempt(plan=None)
+    if planner.get("mode") != "llm_semantic" or planner.get("fallback_used"):
+        return RankingPlanAttempt(plan=None)
+    if not deepseek_slot_adapter_enabled():
+        return RankingPlanAttempt(
+            plan=None,
+            planner={
+                "status": "deepseek_disabled",
+                "provider": "deepseek",
+                "called": False,
+                "fallback_used": True,
+            },
+        )
+    try:
+        from src.semantic.llm_ranking_plan import DeepSeekRankingPlanGenerator
+
+        schema_context, query_options = _semantic_llm_context(domain_config)
+        generation = DeepSeekRankingPlanGenerator(
+            _interactive_deepseek_client(config.model)
+        ).generate(
+            user_input=_compose_user_request(config),
+            intent=intent,
+            schema_context=schema_context,
+            hard_context={
+                "domain": domain_config.domain_id,
+                "query_options": query_options,
+            },
+        )
+    except Exception as exc:  # noqa: BLE001 - 排序计划失败时保留候选列表。
+        return RankingPlanAttempt(
+            plan=None,
+            planner={
+                "status": "generation_failed",
+                "provider": "deepseek",
+                "called": True,
+                "fallback_used": True,
+                "fallback_reason": "ranking_plan_generation_failed",
+                "error_type": type(exc).__name__,
+            },
+        )
+    usage = dict(generation.usage or {})
+    if not generation.plan.criteria:
+        return RankingPlanAttempt(
+            plan=None,
+            usage=usage,
+            planner={
+                "status": "empty",
+                "provider": generation.provider,
+                "called": True,
+                "fallback_used": False,
+                "token_usage": usage,
+            },
+        )
+    return RankingPlanAttempt(
+        plan=generation.plan,
+        usage=usage,
+        planner={
+            "status": "generated",
+            "provider": generation.provider,
+            "called": True,
+            "fallback_used": False,
+            "token_usage": usage,
+        },
+    )
+
+
+def _with_ranking_plan_trace(
+    planner: dict[str, Any],
+    ranking_attempt: RankingPlanAttempt,
+) -> dict[str, Any]:
+    if ranking_attempt.planner is None:
+        return planner
+    return {
+        **planner,
+        "ranking_plan": ranking_attempt.planner,
+    }
+
+
+def _combined_usage(
+    *usages: dict[str, int] | None,
+) -> dict[str, int] | None:
+    combined = _sum_usage(list(usages))
+    return combined or None
 
 
 def _should_preserve_semantic_fallback(
@@ -850,6 +979,7 @@ def _run_semantic_intent_query(
     *,
     config: WorkbenchConfig,
     domain_config: DomainConfig,
+    ranking_plan: RankingPlan | None = None,
 ) -> Any | None:
     if intent.query_type == "admissions_major_rank":
         return AdmissionsMajorRankPlanner(
@@ -863,7 +993,7 @@ def _run_semantic_intent_query(
             database_path=_warehouse_database_path(domain_config),
             table_name=domain_config.table_name,
             reranker=_semantic_reranker(config),
-            ranking_plan=_semantic_ranking_plan(config),
+            ranking_plan=ranking_plan,
         ).run(intent)
     return None
 

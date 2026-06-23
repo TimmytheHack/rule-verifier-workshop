@@ -399,6 +399,13 @@ NL -> candidate QueryAST -> FieldGrounder -> OperationVerifier -> AnswerabilityG
 前端不得把结果标题写成推荐排序。`excluded_criteria` 必须展示给用户，尤其是需要外部知识库、
 缺字段或 unsupported operation 的偏好。
 
+uploaded admissions 的 `planner_mode=llm_semantic` 或可用的 `auto` 路径中，
+`semantic_recommendation` 会先让 DeepSeek 生成候选 `SemanticIntent`，再让 DeepSeek 生成候选
+`RankingPlan`。第二步只会写入 `evidence_pack.planner.ranking_plan`，状态可能是
+`generated`、`empty`、`generation_failed` 或 `deepseek_disabled`；排序是否执行仍只看
+`evidence_pack.ranking.status`。`token_usage.extractor` 会合并 intent 抽取和 RankingPlan 生成的
+用量。
+
 ## EvidencePack reference-only 资料
 
 `EvidencePack.policy_references` 是可选数组，用于承载已审核非结构化资料的 lexical
