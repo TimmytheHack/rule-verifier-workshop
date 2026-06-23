@@ -543,6 +543,72 @@ print(json.dumps({
         )
         self.assertIn("候选列表", response["answer"])
 
+    def test_external_knowledge_preference_is_not_ranked_without_reviewed_evidence(
+        self,
+    ) -> None:
+        query = "我的排位是15000，想读人工智能，计算机，好就业，城市发展好，想留在广东省"
+        with TemporaryDirectory() as directory:
+            service, dataset_id = _queryable_uploaded_admissions(
+                Path(directory),
+                use_excel=False,
+            )
+
+            response = service.query(
+                dataset_id,
+                user_input=query,
+                soft_preferences={
+                    "prompt": query,
+                    "semantic_intent": _semantic_recommendation_intent(),
+                    "semantic_ranking_plan": {
+                        "criteria": [
+                            {
+                                "criterion_id": "major_text_match",
+                                "source_text": "想读人工智能，计算机",
+                                "required_field": "major_name",
+                                "operation": "text_match",
+                                "value": ["人工智能", "计算机"],
+                                "priority": 1,
+                                "rationale": "专业字段可验证。",
+                            },
+                            {
+                                "criterion_id": "employment",
+                                "source_text": "好就业",
+                                "required_field": "employment_outcome",
+                                "operation": "numeric_higher_is_better",
+                                "priority": 2,
+                                "rationale": "需要就业字段。",
+                            },
+                        ]
+                    },
+                },
+            )
+
+        assert_workbench_contract(self, response)
+        ranking = response["evidence_pack"]["ranking"]
+        self.assertEqual(ranking["status"], "not_ranked_unverified_plan")
+        self.assertEqual(ranking["criterion_evidence"], [])
+        verified_criteria = ranking["verified_ranking_plan"]["criteria"]
+        self.assertNotIn(
+            "employment",
+            [item["criterion_id"] for item in verified_criteria],
+        )
+        excluded_by_id = {
+            item["criterion_id"]: item for item in ranking["excluded_criteria"]
+        }
+        self.assertEqual(excluded_by_id["employment"]["reason"], "missing_field")
+        self.assertEqual(
+            excluded_by_id["major_text_match"]["reason"],
+            "unverified_value",
+        )
+        for unsupported_phrase in [
+            "就业前景好",
+            "好就业",
+            "就业表现更好",
+            "城市发展好",
+            "学校氛围好",
+        ]:
+            self.assertNotIn(unsupported_phrase, response["answer"])
+
     def test_uploaded_admissions_semantic_score_only_requires_rank(self) -> None:
         query = "假设我今年的高考分数是630分，想读人工智能，计算机，而且不想去国外，想留在广东省，请给出推荐"
         with TemporaryDirectory() as directory:

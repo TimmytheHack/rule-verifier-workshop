@@ -99,7 +99,7 @@ python scripts/build_data_warehouse.py
 
 例如一张新的 admissions 分数/位次表只包含 `专业`、`最低位次`、`最低分数`、`学校所在` 等字段时，系统可以生成按专业最低位次计算的 `冲`、`稳`、`保` 结果，并在 EvidencePack 中明确记录 `学费`、`城市`、`专业组最低位次` 等缺失字段没有执行。缺失字段不能从自然语言里补出来，也不能被回答层暗示为已经筛选。
 
-uploaded admissions 推荐现在走 reviewed semantic 链路：DeepSeek 只提出候选 `SemanticIntent`，系统把专业、省份、位次等偏好 ground 到 reviewed mapping，再用 verified `QueryAST` 生成 DuckDB SQL 召回 bounded candidates。`不想去国外` 这类偏好在缺少 `school_country_or_region` 字段时会进入 `not_executed_preferences`；只给分数没有位次时返回 `needs_confirmation`，不执行 SQL。可选 rerank 只能在候选 `row_id` 内排序，未通过校验会回退到确定性位次距离排序。
+uploaded admissions 推荐现在走 reviewed semantic 链路：DeepSeek 只提出候选 `SemanticIntent`，系统把专业、省份、位次等偏好 ground 到 reviewed mapping，再用 verified `QueryAST` 生成 DuckDB SQL 召回 bounded candidates。推荐请求先得到 verified SQL 候选集；只有存在 verified `RankingPlan` 时，系统才把候选集排序为推荐，否则回答会明确称为“候选列表”。LLM 可以提出 `RankingPlan` 和 rationale，但不能直接排序、不能新增候选 item，也不能引用 EvidencePack 之外的就业、城市发展、学校氛围等结论。`不想去国外` 这类偏好在缺少 `school_country_or_region` 字段时会进入 `not_executed_preferences`；只给分数没有位次时返回 `needs_confirmation`，不执行 SQL。
 
 本地探针命令：
 

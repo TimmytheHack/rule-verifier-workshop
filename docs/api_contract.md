@@ -392,6 +392,11 @@ NL -> candidate QueryAST -> FieldGrounder -> OperationVerifier -> AnswerabilityG
 `answerable_intents` 可以由 SQL builder 生成参数化 SQL，并把 `sql`、`params`、
 `query_type` 和相关执行摘要写入 `execution_summary`。
 
+`evidence_pack.ranking` 固定包含 `status`、`verified_ranking_plan`、`excluded_criteria`
+和 `criterion_evidence`。`status=candidate_list_only` 表示没有 verified `RankingPlan`，
+前端不得把结果标题写成推荐排序。`excluded_criteria` 必须展示给用户，尤其是需要外部知识库、
+缺字段或 unsupported operation 的偏好。
+
 ## EvidencePack reference-only 资料
 
 `EvidencePack.policy_references` 是可选数组，用于承载已审核非结构化资料的 lexical

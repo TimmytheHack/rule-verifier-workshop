@@ -120,19 +120,26 @@ uploaded admissions recommendation 现在使用 reviewed semantic capability pat
 -> SemanticQueryVerifier
 -> SemanticSQLBuilder
 -> DuckDB bounded candidates
--> optional EvidenceBoundedReranker
--> RerankValidator
+-> RankingPlan
+-> RankingVerifier
+-> GenericRankingEngine
+-> criterion_evidence
 -> EvidencePack
 -> AnswerGenerator
 ```
 
 其中 DeepSeek 只能提出 `SemanticIntent` 或候选排序，不能直接生成 SQL，也不能返回候选集外
-row。`PreferenceGrounder` 会把 `major_name contains_any`、`school_province in` 等 reviewed
+row。`RankingPlan` 是 LLM 生成的可验证计划，不是 recommendation function。系统只执行通用
+operation：`text_match`、`equals_preferred_value`、`in_preferred_set`、
+`numeric_distance_to_user_value`、`numeric_higher_is_better`、`numeric_lower_is_better`、
+`boolean_preferred_value`、`missing_value_penalty`。所有自然语言说服力来自系统生成的
+`criterion_evidence`，不是自由 CoT。`PreferenceGrounder` 会把 `major_name contains_any`、
+`school_province in` 等 reviewed
 字段变成可执行 filter，把 `school_country_or_region` 这类缺字段偏好保留到
 `not_executed_preferences`。只有分数没有省排位时，`recommendation` 必须返回
-`needs_confirmation`，`execution_summary.sql` 为空。可选 rerank 只能引用 bounded candidates
-里的 `row_id`、bucket 和已有字段；`RerankValidator` 拒绝候选集外 row、bucket 错配、超出每档
-quota、unsupported reason code 和缺失字段引用，失败时回退到确定性位次距离排序。
+`needs_confirmation`，`execution_summary.sql` 为空。历史 `EvidenceBoundedReranker` 只能作为
+受限候选集内的辅助实验，不是语义排序权威；它不能绕过 verified `RankingPlan`、`RankingVerifier`
+或 EvidencePack 中的 `ranking.status`、`excluded_criteria`、`criterion_evidence` 语义。
 
 `admissions_major_rank` 也已改为每个档位单独 verified SQL 召回，不再用一个全局 `LIMIT 100`
 截断所有档位。每档可以返回多条候选，`EvidencePack.execution_summary` 记录
