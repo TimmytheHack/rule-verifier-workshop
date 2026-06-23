@@ -17,6 +17,8 @@ from src.semantic.intent_models import (
     SemanticPreference,
     SemanticUserContext,
 )
+from src.semantic.ranking_plan import RankingPlan
+from src.semantic.ranking_verifier import RankingVerificationResult
 from tests.semantic_test_utils import NEW_ADMISSIONS_ROWS
 
 
@@ -174,7 +176,128 @@ class SemanticAdmissionsRecommendationPlannerTest(unittest.TestCase):
             "user_rank",
         )
 
-    def _run(self, intent: SemanticIntent, reranker=None):
+    def test_ranking_plan_does_not_trust_grounded_filter_values(self) -> None:
+        result = self._run(
+            _recommendation_intent(),
+            ranking_plan=_ranking_plan(
+                [
+                    {
+                        "criterion_id": "major_text_match",
+                        "source_text": "想读人工智能，计算机",
+                        "required_field": "major_name",
+                        "operation": "text_match",
+                        "value": ["人工智能", "计算机"],
+                        "priority": 1,
+                        "rationale": "缺少显式可信 value evidence 时不能排序。",
+                    }
+                ]
+            ),
+        )
+
+        ranking = result.execution_summary["ranking"]
+        self.assertEqual(ranking["status"], "not_ranked_unverified_plan")
+        self.assertEqual(result.rows[0]["院校名称"], "深圳理工大学")
+        self.assertEqual(ranking["criterion_evidence"], [])
+        self.assertEqual(
+            ranking["excluded_criteria"][0]["reason"],
+            "unverified_value",
+        )
+
+    def test_ranking_result_not_ok_does_not_execute_partial_verified_plan(
+        self,
+    ) -> None:
+        plan = _ranking_plan(
+            [
+                {
+                    "criterion_id": "prefer_211",
+                    "source_text": "优先 211",
+                    "required_field": "school_is_211",
+                    "operation": "boolean_preferred_value",
+                    "value": True,
+                    "priority": 1,
+                    "rationale": "测试 ok=False 时即使有 verified criteria 也不排序。",
+                }
+            ]
+        )
+        verifier = _FakeRankingVerifier(
+            RankingVerificationResult(
+                ok=False,
+                verified_plan=plan,
+                excluded_criteria=[
+                    {
+                        "criterion_id": "unsupported",
+                        "reason": "unsupported_operation",
+                        "message": "存在未验证排序条件。",
+                    }
+                ],
+            )
+        )
+
+        result = self._run(
+            _recommendation_intent(),
+            ranking_plan=plan,
+            ranking_verifier=verifier,
+        )
+
+        ranking = result.execution_summary["ranking"]
+        self.assertEqual(ranking["status"], "not_ranked_unverified_plan")
+        self.assertEqual(result.rows[0]["院校名称"], "深圳理工大学")
+        self.assertEqual(ranking["criterion_evidence"], [])
+        self.assertEqual(
+            ranking["verified_ranking_plan"]["criteria"][0]["criterion_id"],
+            "prefer_211",
+        )
+
+    def test_verified_ranking_keeps_rows_evidence_and_sections_aligned(
+        self,
+    ) -> None:
+        plan = _ranking_plan(
+            [
+                {
+                    "criterion_id": "major_text_match",
+                    "source_text": "优先计算机",
+                    "required_field": "major_name",
+                    "operation": "text_match",
+                    "value": ["计算机"],
+                    "priority": 1,
+                    "rationale": "通过注入 verifier 表示该排序计划已验证。",
+                }
+            ]
+        )
+        result = self._run(
+            _recommendation_intent(),
+            ranking_plan=plan,
+            ranking_verifier=_FakeRankingVerifier(
+                RankingVerificationResult(
+                    ok=True,
+                    verified_plan=plan,
+                    excluded_criteria=[],
+                )
+            ),
+        )
+
+        ranking = result.execution_summary["ranking"]
+        evidence_row_ids = [
+            item["row_id"] for item in ranking["criterion_evidence"]
+        ]
+        row_ids = [row["row_id"] for row in result.rows]
+
+        self.assertEqual(ranking["status"], "ranked")
+        self.assertEqual(evidence_row_ids, row_ids)
+        self.assertEqual(result.rows[0]["院校名称"], "深圳大学")
+        self.assertEqual(result.result_sections["reach"][0]["院校名称"], "深圳大学")
+        self.assertEqual(
+            result.result_sections["reach"][0]["row_id"],
+            result.rows[0]["row_id"],
+        )
+
+    def _run(
+        self,
+        intent: SemanticIntent,
+        reranker=None,
+        ranking_plan=None,
+        ranking_verifier=None,
+    ):
         with TemporaryDirectory() as directory:
             rows = [dict(row) for row in NEW_ADMISSIONS_ROWS]
             rows.extend(_recommendation_rows())
@@ -198,6 +321,8 @@ class SemanticAdmissionsRecommendationPlannerTest(unittest.TestCase):
                 database_path=database_path,
                 table_name="admissions",
                 reranker=reranker,
+                ranking_plan=ranking_plan,
+                ranking_verifier=ranking_verifier,
             ).run(intent)
 
 
@@ -294,6 +419,10 @@ def _recommendation_intent() -> SemanticIntent:
     )
 
 
+def _ranking_plan(criteria: list[dict[str, object]]) -> RankingPlan:
+    return RankingPlan.model_validate({"criteria": criteria})
+
+
 class _FakeReranker:
     def __init__(self, payload: dict[str, object]) -> None:
         self.payload = payload
@@ -302,6 +431,16 @@ class _FakeReranker:
     def rerank(self, **kwargs):
         self.calls.append(kwargs)
         return self.payload
+
+
+class _FakeRankingVerifier:
+    def __init__(self, result: RankingVerificationResult) -> None:
+        self.result = result
+        self.calls: list[RankingPlan] = []
+
+    def verify(self, plan: RankingPlan) -> RankingVerificationResult:
+        self.calls.append(plan)
+        return self.result
 
 
 if __name__ == "__main__":

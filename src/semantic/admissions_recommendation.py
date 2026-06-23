@@ -13,10 +13,12 @@ import duckdb
 from src.adapters.data_warehouse import load_structured_dataset
 from src.domains import DomainConfig
 from src.semantic.capability_graph import DatasetCapabilityGraph
+from src.semantic.generic_ranking import GenericRankingEngine
 from src.semantic.intent_models import SemanticIntent
 from src.semantic.preference_grounder import PreferenceGrounder
 from src.semantic.query_ast import QueryAST
 from src.semantic.query_verifier import SemanticQueryVerifier
+from src.semantic.ranking_verifier import RankingVerifier
 from src.semantic.rerank_validator import RerankValidationResult, RerankValidator
 from src.semantic.reviewed_mapping import ReviewedMappingRegistry
 from src.semantic.sql_builder import SemanticSQLBuilder
@@ -50,6 +52,22 @@ RESELECTED_SUBJECTS = ["化学", "生物", "政治", "地理"]
 BUCKET_ORDER = ["reach", "match", "safety"]
 BUCKET_LABELS = {"reach": "冲", "match": "稳", "safety": "保"}
 DEFAULT_BUCKET_QUOTAS = {"reach": 10, "match": 13, "safety": 10}
+RANKING_FIELD_ALIASES = {
+    "year": "年份",
+    "university_name": "院校名称",
+    "group_code": "专业组",
+    "major_name": "专业",
+    "major_code": "专业代码",
+    "major_min_score": "最低分",
+    "major_min_rank": "最低录取排名",
+    "school_province": "学校所在",
+    "city": "城市",
+    "tuition_yuan_per_year": "学费",
+    "group_min_rank": "专业组最低位次",
+    "school_is_985": "是否985",
+    "school_is_211": "是否211",
+    "plan_count": "录取人数",
+}
 
 
 @dataclass(frozen=True)
@@ -79,12 +97,18 @@ class SemanticAdmissionsRecommendationPlanner:
         table_name: str,
         reranker: Any | None = None,
         rerank_validator: RerankValidator | None = None,
+        ranking_plan: Any | None = None,
+        ranking_verifier: Any | None = None,
+        ranking_engine: Any | None = None,
     ) -> None:
         self.domain_config = domain_config
         self.database_path = Path(database_path)
         self.table_name = table_name
         self.reranker = reranker
         self.rerank_validator = rerank_validator or RerankValidator()
+        self.ranking_plan = ranking_plan
+        self.ranking_verifier = ranking_verifier
+        self.ranking_engine = ranking_engine
 
     def run(
         self,
@@ -184,6 +208,14 @@ class SemanticAdmissionsRecommendationPlanner:
         )
         result_sections = rerank_validation.result_sections
         rows = _ordered_rows(result_sections)
+        rows, ranking_summary = _apply_ranking_plan(
+            ranking_plan=self.ranking_plan,
+            ranking_verifier=self.ranking_verifier,
+            ranking_engine=self.ranking_engine,
+            registry=registry,
+            rows=rows,
+        )
+        result_sections = _sections_from_ordered_rows(rows)
         for index, row in enumerate(rows, start=1):
             row["次序"] = index
 
@@ -240,6 +272,7 @@ class SemanticAdmissionsRecommendationPlanner:
                     bucket: len(result_sections[bucket]) for bucket in BUCKET_ORDER
                 },
                 "rerank_validation": rerank_validation.to_dict(),
+                "ranking": ranking_summary,
                 "selection_evidence": selection_evidence,
                 "excluded_rows": excluded_rows,
                 "not_executed_preferences": grounded.not_executed_preferences,
@@ -519,6 +552,64 @@ def _rerank_or_fallback(
     return validator.validate(payload, candidates=candidates, quotas=quotas)
 
 
+def _apply_ranking_plan(
+    *,
+    ranking_plan: Any | None,
+    ranking_verifier: Any | None,
+    ranking_engine: Any | None,
+    registry: ReviewedMappingRegistry,
+    rows: list[dict[str, Any]],
+) -> tuple[list[dict[str, Any]], dict[str, Any]]:
+    summary = {
+        "status": "candidate_list_only",
+        "verified_ranking_plan": None,
+        "excluded_criteria": [],
+        "criterion_evidence": [],
+    }
+    if ranking_plan is None:
+        return rows, summary
+
+    verifier = ranking_verifier or RankingVerifier(registry)
+    ranking_result = verifier.verify(ranking_plan)
+    summary["verified_ranking_plan"] = ranking_result.verified_plan.model_dump()
+    summary["excluded_criteria"] = ranking_result.excluded_criteria
+    if not ranking_result.ok:
+        summary["status"] = "not_ranked_unverified_plan"
+        return rows, summary
+    if ranking_result.verified_plan.criteria:
+        ranked = (ranking_engine or GenericRankingEngine()).rank(
+            rows=_ranking_rows(rows),
+            plan=ranking_result.verified_plan,
+        )
+        summary["status"] = "ranked"
+        summary["criterion_evidence"] = ranked.criterion_evidence
+        return _restore_ranked_rows(rows, ranked.rows), summary
+    return rows, summary
+
+
+def _ranking_rows(rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    return [_ranking_row(row) for row in rows]
+
+
+def _ranking_row(row: dict[str, Any]) -> dict[str, Any]:
+    output = dict(row)
+    for field_id, display_key in RANKING_FIELD_ALIASES.items():
+        if field_id not in output and display_key in row:
+            output[field_id] = row.get(display_key)
+    return output
+
+
+def _restore_ranked_rows(
+    original_rows: list[dict[str, Any]],
+    ranked_rows: list[dict[str, Any]],
+) -> list[dict[str, Any]]:
+    rows_by_id = {row.get("row_id"): row for row in original_rows}
+    return [
+        rows_by_id.get(row.get("row_id"), row)
+        for row in ranked_rows
+    ]
+
+
 def _fallback_sections(
     candidates: list[dict[str, Any]],
     quotas: dict[str, int],
@@ -623,6 +714,17 @@ def _ordered_rows(bucketed: dict[str, list[dict[str, Any]]]) -> list[dict[str, A
     for bucket in BUCKET_ORDER:
         rows.extend(bucketed.get(bucket) or [])
     return rows
+
+
+def _sections_from_ordered_rows(
+    rows: list[dict[str, Any]],
+) -> dict[str, list[dict[str, Any]]]:
+    sections: dict[str, list[dict[str, Any]]] = {bucket: [] for bucket in BUCKET_ORDER}
+    for row in rows:
+        bucket = row.get("bucket")
+        if bucket in sections:
+            sections[bucket].append(row)
+    return sections
 
 
 def _selection_evidence(

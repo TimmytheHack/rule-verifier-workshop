@@ -363,6 +363,80 @@ class UploadedSemanticAdmissionsFlowTest(unittest.TestCase):
         )
         self.assertIn("不想去国外", response["answer"])
 
+    def test_semantic_recommendation_with_ranking_plan_records_criterion_evidence(
+        self,
+    ) -> None:
+        query = "我的排位是15000，想读人工智能，计算机，而且想留在广东省，请给出推荐"
+        with TemporaryDirectory() as directory:
+            service, dataset_id = _queryable_uploaded_admissions(
+                Path(directory),
+                use_excel=False,
+            )
+
+            response = service.query(
+                dataset_id,
+                user_input=query,
+                soft_preferences={
+                    "prompt": query,
+                    "semantic_intent": _semantic_recommendation_intent(),
+                    "semantic_ranking_plan": {
+                        "criteria": [
+                            {
+                                "criterion_id": "major_rank_priority",
+                                "source_text": "优先历史专业最低位次更靠前",
+                                "required_field": "major_min_rank",
+                                "operation": "numeric_lower_is_better",
+                                "value": None,
+                                "priority": 1,
+                                "rationale": "专业最低位次字段可验证并支持通用排序。",
+                            },
+                        ]
+                    },
+                },
+            )
+
+        assert_workbench_contract(self, response)
+        self.assertEqual(response["status"], "ok")
+        self.assertEqual(response["query_type"], "recommendation")
+        ranking = response["evidence_pack"]["ranking"]
+        self.assertEqual(ranking["status"], "ranked")
+        self.assertEqual(
+            ranking["verified_ranking_plan"]["criteria"][0]["criterion_id"],
+            "major_rank_priority",
+        )
+        self.assertTrue(ranking["criterion_evidence"])
+        self.assertEqual(
+            ranking["criterion_evidence"][0]["criteria"][0]["row_value"],
+            response["top_results"][0]["major_min_rank"],
+        )
+        self.assertIn("criterion_evidence", response["answer"])
+
+    def test_semantic_recommendation_without_ranking_plan_is_candidate_list(
+        self,
+    ) -> None:
+        query = "我的排位是15000，想读人工智能，计算机，而且想留在广东省，请给出推荐"
+        with TemporaryDirectory() as directory:
+            service, dataset_id = _queryable_uploaded_admissions(
+                Path(directory),
+                use_excel=False,
+            )
+
+            response = service.query(
+                dataset_id,
+                user_input=query,
+                soft_preferences={
+                    "prompt": query,
+                    "semantic_intent": _semantic_recommendation_intent(),
+                },
+            )
+
+        self.assertEqual(response["status"], "ok")
+        self.assertEqual(
+            response["evidence_pack"]["ranking"]["status"],
+            "candidate_list_only",
+        )
+        self.assertIn("候选列表", response["answer"])
+
     def test_uploaded_admissions_semantic_score_only_requires_rank(self) -> None:
         query = "假设我今年的高考分数是630分，想读人工智能，计算机，而且不想去国外，想留在广东省，请给出推荐"
         with TemporaryDirectory() as directory:

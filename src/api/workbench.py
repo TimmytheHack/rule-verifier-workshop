@@ -61,6 +61,7 @@ from src.semantic.evidence_bounded_reranker import EvidenceBoundedReranker
 from src.semantic.intent_models import SemanticIntent
 from src.semantic.llm_intent_extractor import DeepSeekSemanticIntentExtractor
 from src.semantic.query_options import SemanticQueryOptionsBuilder
+from src.semantic.ranking_plan import RankingPlan
 from src.semantic.reviewed_mapping import ReviewedMappingRegistry
 from src.tracing.trace_generator import TraceGenerator
 
@@ -623,6 +624,7 @@ def _run_semantic_capability_query(
         database_path=_warehouse_database_path(domain_config),
         table_name=domain_config.table_name,
         reranker=_semantic_reranker(config),
+        ranking_plan=_semantic_ranking_plan(config),
     ).run(intent)
 
 
@@ -632,6 +634,13 @@ def _semantic_reranker(config: WorkbenchConfig) -> EvidenceBoundedReranker | Non
     if not deepseek_slot_adapter_enabled():
         return None
     return EvidenceBoundedReranker(_interactive_deepseek_client(config.model))
+
+
+def _semantic_ranking_plan(config: WorkbenchConfig) -> RankingPlan | None:
+    payload = config.soft_preferences.get("semantic_ranking_plan")
+    if not payload:
+        return None
+    return RankingPlan.model_validate(payload)
 
 
 def _semantic_recommendation_intent(
@@ -834,6 +843,15 @@ def _semantic_evidence_pack(
         "selection_evidence": list(
             getattr(semantic_result, "selection_evidence", []) or []
         ),
+        "ranking": (
+            semantic_result.execution_summary.get("ranking")
+            or {
+                "status": "not_applicable",
+                "verified_ranking_plan": None,
+                "excluded_criteria": [],
+                "criterion_evidence": [],
+            }
+        ),
         "answerable_intents": semantic_result.answerable_intents,
         "unanswerable_intents": semantic_result.unanswerable_intents,
         "verified_query_plan": _json_ready(
@@ -1006,13 +1024,16 @@ def _semantic_recommendation_answer(semantic_result: Any) -> str:
             f"{unexecuted_sentence}"
         )
 
-    rerank = summary.get("rerank_validation") or {}
-    if rerank.get("fallback_used"):
-        rerank_sentence = "LLM rerank 未通过校验，已回退到确定性位次距离排序。"
-    elif rerank.get("raw_payload", {}).get("used") is False:
-        rerank_sentence = "本次未使用 LLM rerank，按确定性位次距离排序。"
+    ranking = summary.get("ranking") or {}
+    if ranking.get("status") == "ranked":
+        ranking_sentence = (
+            "本次使用 verified RankingPlan 排序，criterion_evidence 已写入 EvidencePack。"
+        )
     else:
-        rerank_sentence = "LLM rerank 已通过候选集和证据字段校验。"
+        ranking_sentence = (
+            "当前没有 verified RankingPlan；以下是满足确定性条件的候选列表，"
+            "不声称为推荐排序。"
+        )
 
     lines = [
         (
@@ -1020,7 +1041,7 @@ def _semantic_recommendation_answer(semantic_result: Any) -> str:
             "只执行 reviewed mapping 支持的专业、省份、位次等确定性规则。"
         ),
         unexecuted_sentence,
-        rerank_sentence,
+        ranking_sentence,
     ]
     for row in semantic_result.rows:
         lines.append(
