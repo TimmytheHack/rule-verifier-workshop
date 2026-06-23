@@ -2504,7 +2504,7 @@ def _slots_from_inputs(
     slots["input"] = _compose_user_request(config)
     context = dict(slots.get("user_context") or {})
     preferences = dict(slots.get("preferences") or {})
-    hard = config.hard_filters
+    hard = _execution_safe_structured_preferences(config.hard_filters)
     soft = config.soft_preferences
 
     context["source_province"] = _clean_text(
