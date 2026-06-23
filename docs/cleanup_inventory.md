@@ -25,6 +25,7 @@
 | `outputs/eval/deepseek_fuzzy_cache.json` | DeepSeek evaluator 缓存 | 根 `.gitignore` 已覆盖 | 可清理 |
 | `outputs/eval/fuzzy_quick_*.json` | 快速 eval 临时结果 | 根 `.gitignore` 已覆盖 | 可清理 |
 | `outputs/eval/fuzzy_deepseek_extractor_results.json` | DeepSeek fuzzy 临时结果 | 根 `.gitignore` 已覆盖 | 若不是当前报告证据，可清理 |
+| 根目录 `*.xlsx`、`*.xls`、`*.xlsm`、`*.csv`、`*.tsv`、`*.parquet`、`*.duckdb`、`*.sqlite*`、`*.db` | 本地原始数据或本地仓库 | 根 `.gitignore` 已覆盖；已审查 fixture 应放在 `sample_data/` 或 `domains/*/fixtures/` | 不提交；需要使用时本地保留 |
 
 ## 需要产品或发布决策的候选项
 
@@ -32,9 +33,8 @@
 
 | 路径 | 当前状态 | 风险 | 决策建议 |
 | --- | --- | --- | --- |
-| `广东省2025年志愿填报大数据（24-25）0523.xlsx` | tracked，大约 8.3MB；`domains/admissions/domain.json` 和 README 引用 | 真实大表直接进仓，与“大文件和本地数据默认不提交”的边界有张力 | 高优先级：替换为小型脱敏 fixture，或明确写入 release policy |
-| `outputs/data/schema_value_index.json` | tracked；内置 admissions value index | 指向根目录真实 Excel；删除会影响内置 admissions 能力 | 与上面的 Excel 一起处理，不能单独删 |
-| `outputs/data/ingestion_summary.json` | tracked；内置 admissions 摄取摘要 | 同样指向根目录真实 Excel | 与上面的 Excel 一起处理，不能单独删 |
+| `outputs/data/schema_value_index.json` | tracked；内置 admissions value index | 指向本地真实 Excel；删除会影响内置 admissions 能力 | 后续应改为从脱敏 fixture 或本地重建产物生成 |
+| `outputs/data/ingestion_summary.json` | tracked；内置 admissions 摄取摘要 | 同样指向本地真实 Excel | 后续应改为从脱敏 fixture 或本地重建产物生成 |
 | `outputs/demo_acceptance/report.json`、`outputs/demo_acceptance/report.md` | tracked；demo acceptance 证据 | 体积较大，但 release evidence 引用 | 保留或改成 `sample_outputs/` 摘要；不要当普通临时文件删 |
 | `outputs/real_dataset_pilot/report.json`、`outputs/real_dataset_pilot/report.md` | tracked；pilot 证据 | release evidence 和文档引用 | 保留或改成精简摘要 |
 | `outputs/eval/deepseek_token_usage.jsonl` | tracked；LLM token 证据 | API-backed run 后会增长，容易混入无关 token 记录 | 只在作为报告证据时保留；否则转为本地忽略 |
@@ -58,11 +58,11 @@
 
 ## 已发现的文档口径问题
 
-- `docs/risk_review/2026-06-20-program-risk-review.md` 曾记录 tracked 文件未命中真实大表；当前 `git ls-files` 已能命中 `广东省2025年志愿填报大数据（24-25）0523.xlsx`。如果决定保留该文件，需要更新风险文档；如果决定移除，需要同步更新 `domains/admissions/domain.json`、README、schema profile 和相关输出证据。
+- `docs/risk_review/2026-06-20-program-risk-review.md` 曾记录 tracked 文件未命中真实大表；当前已将 `广东省2025年志愿填报大数据（24-25）0523.xlsx` 从 index 移除，并通过 `.gitignore` 排除根目录真实数据文件。
 - `make clean-artifacts` 已覆盖多数 outputs 临时目录，但还没有清理 `frontend/dist/` 和 `outputs/data/*.duckdb`。如果希望一条命令清完本地垃圾，可扩展该目标。
 
 ## 建议清理顺序
 
 1. 先只清理本地产物：缓存、`frontend/dist/`、临时上传目录、临时 DuckDB、quick eval 缓存。
-2. 再处理真实招生 Excel 和 `outputs/data/*.json` 的边界：要么替换为脱敏 fixture，要么明确声明它是仓库内置数据资产。
+2. 再处理 `outputs/data/*.json` 的边界：要么替换为脱敏 fixture 生成结果，要么明确声明它是稳定证据。
 3. 最后再评估 tracked `outputs/` 报告是否缩减为 `sample_outputs/` 摘要，避免 release evidence 和测试同时断裂。

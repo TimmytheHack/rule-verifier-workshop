@@ -6,6 +6,21 @@ __pycache__/
 .superpowers/
 .worktrees/
 tmp/
+
+# Local raw data files dropped at the repository root.
+# Reviewed fixtures belong under sample_data/ or domains/*/fixtures/.
+/*.xlsx
+/*.xls
+/*.xlsm
+/*.csv
+/*.tsv
+/*.parquet
+/*.duckdb
+/*.duckdb.wal
+/*.sqlite
+/*.sqlite3
+/*.db
+
 outputs/eval/deepseek_fuzzy_cache.json
 outputs/eval/fuzzy_quick_*.json
 outputs/eval/fuzzy_deepseek_extractor_results.json
@@ -27,5 +42,6 @@ outputs/real_dataset_pilot/fixtures/
 outputs/real_dataset_pilot/uploaded_datasets/
 outputs/operator_trial/
 outputs/tool_audit/
+outputs/release_package/
 domains/**/*.duckdb
 domains/**/*.duckdb.wal
