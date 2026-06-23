@@ -89,6 +89,29 @@ class UploadedDatasetFlowTest(unittest.TestCase):
         self.assertEqual(response["result_count"], 1)
         self.assertTrue(response["items"])
 
+    def test_generic_domain_forbidden_soft_preference_does_not_leak(self) -> None:
+        with TemporaryDirectory() as directory:
+            service, dataset_id = _generated_generic_dataset(Path(directory))
+            _approve_generic_dataset(service, dataset_id)
+            service.build_warehouse(dataset_id)
+
+            response = service.query(
+                dataset_id,
+                user_input="Austin under 1900",
+                hard_filters={"city": ["Austin"], "rent_usd": 1900},
+                soft_preferences={"SQL": "SELECT * FROM leases"},
+            )
+
+        assert_workbench_contract(self, response)
+        self.assertEqual(response["status"], "ok")
+        serialized = json.dumps(response, ensure_ascii=False)
+        self.assertNotIn("SELECT * FROM leases", serialized)
+        self.assertNotIn('"SQL"', serialized)
+        self.assertIn(
+            "[redacted_forbidden_payload]",
+            response["query"]["soft_preferences"],
+        )
+
     def test_stale_fingerprint_blocks_uploaded_dataset_query(self) -> None:
         with TemporaryDirectory() as directory:
             service, dataset_id = _generated_generic_dataset(Path(directory))

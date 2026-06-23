@@ -2544,15 +2544,16 @@ def _generic_domain_slots(config: WorkbenchConfig) -> dict[str, Any]:
 
     preferences = {
         key: value
-        for key, value in {
-            **config.hard_filters,
-            **{
-                key: value
-                for key, value in config.soft_preferences.items()
-                if key != "prompt"
-            },
-        }.items()
-        if value not in (None, "", [])
+        for key, value in _execution_safe_structured_preferences(
+            {
+                **config.hard_filters,
+                **{
+                    key: value
+                    for key, value in config.soft_preferences.items()
+                    if key != "prompt"
+                },
+            }
+        ).items()
     }
     return {
         "input": _compose_user_request(config),
@@ -2567,6 +2568,18 @@ def _generic_domain_slots(config: WorkbenchConfig) -> dict[str, Any]:
             for value in preferences.values()
             if value not in (None, "", [])
         ],
+    }
+
+
+def _execution_safe_structured_preferences(
+    preferences: dict[str, Any],
+) -> dict[str, Any]:
+    return {
+        key: value
+        for key, value in preferences.items()
+        if value not in (None, "", [])
+        and not _is_forbidden_public_payload_key(key)
+        and not _contains_forbidden_public_payload(value)
     }
 
 
