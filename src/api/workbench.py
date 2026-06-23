@@ -3205,7 +3205,11 @@ def _compose_user_request(config: WorkbenchConfig) -> str:
         if prompt:
             return prompt
         parts = []
-        for key, value in {**config.hard_filters, **config.soft_preferences}.items():
+        public_inputs = {
+            **_public_soft_preferences(config.hard_filters),
+            **_public_soft_preferences(config.soft_preferences),
+        }
+        for key, value in public_inputs.items():
             if value in (None, "", []):
                 continue
             parts.append(f"{key}={_format_value(value)}")
@@ -3342,7 +3346,7 @@ def _public_soft_preferences(soft_preferences: dict[str, Any]) -> dict[str, Any]
 
 def _contains_forbidden_public_payload(value: Any) -> bool:
     if isinstance(value, dict):
-        if any(key in value for key in FORBIDDEN_PUBLIC_PAYLOAD_KEYS):
+        if any(str(key).casefold() in FORBIDDEN_PUBLIC_PAYLOAD_KEYS for key in value):
             return True
         return any(
             _contains_forbidden_public_payload(nested_value)
@@ -3355,7 +3359,7 @@ def _contains_forbidden_public_payload(value: Any) -> bool:
 
 def _redact_forbidden_public_payload(value: Any) -> Any:
     if isinstance(value, dict):
-        if any(key in value for key in FORBIDDEN_PUBLIC_PAYLOAD_KEYS):
+        if any(str(key).casefold() in FORBIDDEN_PUBLIC_PAYLOAD_KEYS for key in value):
             return REDACTED_FORBIDDEN_PAYLOAD
         return {
             key: _redact_forbidden_public_payload(nested_value)

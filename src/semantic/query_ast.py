@@ -8,7 +8,11 @@ FORBIDDEN_SQL_PAYLOAD_KEYS = ("raw_sql", "sql")
 
 def _reject_raw_sql_key(value: Any, context: str) -> Any:
     if isinstance(value, dict):
-        forbidden_keys = [key for key in FORBIDDEN_SQL_PAYLOAD_KEYS if key in value]
+        forbidden_keys = [
+            str(key)
+            for key in value
+            if str(key).casefold() in FORBIDDEN_SQL_PAYLOAD_KEYS
+        ]
         if forbidden_keys:
             raise ValueError(f"{context} 不能包含 {'、'.join(forbidden_keys)}。")
         for nested_value in value.values():

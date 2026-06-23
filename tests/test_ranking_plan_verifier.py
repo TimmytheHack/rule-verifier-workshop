@@ -135,6 +135,24 @@ class RankingPlanVerifierTest(unittest.TestCase):
                 }
             )
 
+    def test_ranking_plan_rejects_uppercase_sql_key_inside_criteria(self) -> None:
+        with self.assertRaises(ValidationError):
+            RankingPlan.model_validate(
+                {
+                    "criteria": [
+                        {
+                            "criterion_id": "unsafe",
+                            "source_text": "按 SQL 排序",
+                            "required_field": "major_name",
+                            "operation": "external_prestige_score",
+                            "value": {"SQL": "SELECT * FROM admissions"},
+                            "priority": 1,
+                            "rationale": "不允许候选排序合同携带 SQL。",
+                        }
+                    ],
+                }
+            )
+
     def test_verifier_accepts_reviewed_criteria_and_excludes_missing_field(
         self,
     ) -> None:
