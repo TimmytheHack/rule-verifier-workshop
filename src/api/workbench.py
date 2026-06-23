@@ -275,6 +275,15 @@ class SemanticCapabilityRun:
 
 
 @dataclass(frozen=True)
+class SemanticCapabilityFallback:
+    """semantic planner 未直接执行时，传给后续 planner 的证据。"""
+
+    planner: dict[str, Any]
+    semantic_intent: dict[str, Any] | None = None
+    extractor_usage: dict[str, int] | None = None
+
+
+@dataclass(frozen=True)
 class SemanticPlannerBlockedResult:
     """强制 LLM semantic planner 失败时的 contract-ready 结果。"""
 
@@ -386,6 +395,7 @@ def available_options() -> dict[str, Any]:
 
     return {
         "extractors": _options(EXTRACTOR_OPTIONS),
+        "planner_modes": _options(PLANNER_MODE_OPTIONS),
         "generators": _options(GENERATOR_OPTIONS),
         "models": _options(MODEL_OPTIONS),
         "rank_windows": [dict(item) for item in RANK_WINDOW_OPTIONS],
@@ -445,14 +455,17 @@ def _run_workbench(config: WorkbenchConfig) -> dict[str, Any]:
     warehouse_audit = _data_warehouse_audit(domain_config)
     if not warehouse_audit["ok"]:
         return _data_warehouse_warning_payload(config, warehouse_audit)
-    semantic_run = _run_semantic_capability_query(config, domain_config)
-    if semantic_run is not None:
+    semantic_outcome = _run_semantic_capability_query(config, domain_config)
+    semantic_fallback = None
+    if isinstance(semantic_outcome, SemanticCapabilityRun):
         return _semantic_capability_payload(
             config=config,
             domain_config=domain_config,
             warehouse_audit=warehouse_audit,
-            semantic_run=semantic_run,
+            semantic_run=semantic_outcome,
         )
+    if isinstance(semantic_outcome, SemanticCapabilityFallback):
+        semantic_fallback = semantic_outcome
     planned_result = _run_admissions_planned_query(config, domain_config)
     if planned_result is not None:
         return _planned_query_payload(
@@ -460,6 +473,7 @@ def _run_workbench(config: WorkbenchConfig) -> dict[str, Any]:
             domain_config=domain_config,
             warehouse_audit=warehouse_audit,
             planned_result=planned_result,
+            semantic_fallback=semantic_fallback,
         )
 
     dataset = _load_dataset(domain_config)
@@ -663,7 +677,7 @@ def _run_workbench(config: WorkbenchConfig) -> dict[str, Any]:
 def _run_semantic_capability_query(
     config: WorkbenchConfig,
     domain_config: DomainConfig,
-) -> SemanticCapabilityRun | None:
+) -> SemanticCapabilityRun | SemanticCapabilityFallback | None:
     if domain_config.domain_id != ADMISSIONS_DOMAIN.domain_id:
         return None
     if not domain_config.semantic_capabilities:
@@ -711,6 +725,14 @@ def _run_semantic_capability_query(
     if intent_attempt.intent is None and config.planner_mode == "legacy":
         intent_attempt = _supplied_semantic_intent_attempt(config)
     if intent_attempt.intent is None:
+        if _should_preserve_semantic_fallback(config, planner_attempt):
+            return SemanticCapabilityFallback(
+                planner=_legacy_planner_trace(
+                    fallback_attempt=planner_attempt,
+                    route="planned_query",
+                ),
+                extractor_usage=planner_attempt.usage,
+            )
         return None
     semantic_result = SemanticAdmissionsRecommendationPlanner(
         domain_config=domain_config,
@@ -720,6 +742,18 @@ def _run_semantic_capability_query(
         ranking_plan=_semantic_ranking_plan(config),
     ).run(intent_attempt.intent)
     if semantic_result is None:
+        if _should_preserve_semantic_fallback(config, intent_attempt):
+            return SemanticCapabilityFallback(
+                planner=_legacy_planner_trace(
+                    fallback_attempt=_with_planner_fallback(
+                        intent_attempt,
+                        reason="unsupported_semantic_intent",
+                    ),
+                    route="planned_query",
+                ),
+                semantic_intent=intent_attempt.intent.model_dump(),
+                extractor_usage=intent_attempt.usage,
+            )
         return None
     return SemanticCapabilityRun(
         result=semantic_result,
@@ -727,6 +761,17 @@ def _run_semantic_capability_query(
         semantic_intent=intent_attempt.intent.model_dump(),
         extractor_usage=intent_attempt.usage,
     )
+
+
+def _should_preserve_semantic_fallback(
+    config: WorkbenchConfig,
+    attempt: SemanticPlannerAttempt,
+) -> bool:
+    if not config.dataset_id:
+        return False
+    if config.planner_mode == "legacy":
+        return True
+    return attempt.planner.get("mode") == "llm_semantic"
 
 
 def _semantic_planner_blocked_run(
@@ -1470,6 +1515,7 @@ def _planned_query_payload(
     domain_config: DomainConfig,
     warehouse_audit: dict[str, Any],
     planned_result: Any,
+    semantic_fallback: SemanticCapabilityFallback | None = None,
 ) -> dict[str, Any]:
     hard_rules = list(planned_result.executed_rules)
     planned_rows = _planned_rows_with_trace(planned_result.rows, hard_rules)
@@ -1559,6 +1605,26 @@ def _planned_query_payload(
         "decision_guidance": decision_guidance,
         "decision_option_suggestions": decision_option_suggestions,
     }
+    if semantic_fallback is not None:
+        evidence_pack["planner"] = semantic_fallback.planner
+        evidence_pack["semantic_intent"] = semantic_fallback.semantic_intent
+    token_usage = {
+        "extractor": (
+            semantic_fallback.extractor_usage
+            if semantic_fallback is not None
+            else None
+        ),
+        "generator": None,
+        "total": _planned_token_total(semantic_fallback),
+    }
+    planner_debug = (
+        {
+            "metadata": semantic_fallback.planner,
+            "semantic_intent": semantic_fallback.semantic_intent,
+        }
+        if semantic_fallback is not None
+        else None
+    )
     legacy_payload = {
         "mode": "api",
         "status": planned_result.status,
@@ -1603,6 +1669,7 @@ def _planned_query_payload(
         "top_results": top_results,
         "result_sections": planned_result.result_sections,
         "trace": {},
+        **({"planner": planner_debug} if planner_debug is not None else {}),
         "evidence_pack": evidence_pack,
         "natural_language_report": {
             "title": "Admissions query planner 结果",
@@ -1615,11 +1682,7 @@ def _planned_query_payload(
             "warnings": planned_result.warnings,
             "disclaimer": _planned_query_disclaimer(planned_result),
         },
-        "token_usage": {
-            "extractor": None,
-            "generator": None,
-            "total": {"prompt_tokens": 0, "completion_tokens": 0, "total_tokens": 0},
-        },
+        "token_usage": token_usage,
     }
     response = WorkbenchResponse(
         schema_version=WORKBENCH_SCHEMA_VERSION,
@@ -1649,7 +1712,16 @@ def _planned_query_payload(
         evidence_pack=evidence_pack,
         debug_trace=_debug_trace(legacy_payload),
     ).to_dict()
-    return {**legacy_payload, **response}
+    return {**legacy_payload, **response, "token_usage": token_usage}
+
+
+def _planned_token_total(
+    semantic_fallback: SemanticCapabilityFallback | None,
+) -> dict[str, int]:
+    if semantic_fallback is None:
+        return {"prompt_tokens": 0, "completion_tokens": 0, "total_tokens": 0}
+    total = _sum_usage([semantic_fallback.extractor_usage])
+    return total or {"prompt_tokens": 0, "completion_tokens": 0, "total_tokens": 0}
 
 
 def _planned_query_disclaimer(planned_result: Any) -> str:
@@ -2057,6 +2129,7 @@ def _debug_trace(payload: dict[str, Any]) -> dict[str, Any]:
         "simulated_confirmations",
         "executable_rules",
         "execution",
+        "planner",
         "trace",
         "items",
         "result_sections",

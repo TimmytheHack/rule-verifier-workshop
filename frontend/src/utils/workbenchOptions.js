@@ -4,6 +4,11 @@ export const FALLBACK_WORKBENCH_OPTIONS = {
     { value: 'regex', label: '规则解析软偏好' },
     { value: 'deepseek', label: 'LLM 辅助解析软偏好' },
   ],
+  planner_modes: [
+    { value: 'auto', label: 'uploaded dataset 优先 LLM SemanticIntent' },
+    { value: 'legacy', label: '跳过 LLM semantic planner' },
+    { value: 'llm_semantic', label: '强制 LLM SemanticIntent planner' },
+  ],
   generators: [
     { value: 'template_evidence', label: '模板证据回答' },
     { value: 'deepseek_evidence', label: 'LLM 证据回答' },
@@ -44,6 +49,7 @@ export const FALLBACK_WORKBENCH_OPTIONS = {
 
 const OPTION_GROUPS = [
   'extractors',
+  'planner_modes',
   'generators',
   'models',
   'rank_windows',

@@ -11,8 +11,10 @@
 
 ## `/api/workbench/options`
 
-`GET /api/workbench/options` 必须返回 `rank_windows` 和 `sort_modes`。
+`GET /api/workbench/options` 必须返回 `planner_modes`、`rank_windows` 和 `sort_modes`。
 前端只能提交这些 `value` 对应的受控字段；LLM 建议不得绕过这些白名单。
+`planner_modes` 当前包括 `auto`、`legacy` 和 `llm_semantic`，用于控制 uploaded admissions
+是否先尝试 LLM `SemanticIntent` planner。
 
 ## status 枚举
 

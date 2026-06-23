@@ -9,8 +9,19 @@ from src.extractors.deepseek_extractor import DeepSeekClient
 from src.semantic.intent_models import IntentExtractionResult, SemanticIntent
 
 
+RESELECTED_SUBJECTS = ["化学", "生物", "政治", "地理"]
+SUBJECT_BUNDLES = {
+    "物化生": ("物理", ["化学", "生物"]),
+    "物化地": ("物理", ["化学", "地理"]),
+    "物政地": ("物理", ["政治", "地理"]),
+    "物生地": ("物理", ["生物", "地理"]),
+    "史政地": ("历史", ["政治", "地理"]),
+    "史化生": ("历史", ["化学", "生物"]),
+}
+
+
 class JSONChatClient(Protocol):
-    def chat_json(self, system_prompt: str, user_prompt: str) -> Any:
+    def chat_json(self, *args: Any, **kwargs: Any) -> Any:
         """返回带 payload 和 usage 的 JSON 响应。"""
 
 
@@ -127,7 +138,7 @@ def _user_prompt(
 
 def _normalize_payload(payload: dict[str, Any], *, original_text: str) -> dict[str, Any]:
     user_context = dict(payload.get("user_context") or {})
-    if _has_rank_text(original_text) and user_context.get("user_rank") is None:
+    if user_context.get("user_rank") is None:
         parsed = _parse_rank_text(original_text)
         if parsed is not None:
             user_context["user_rank"] = parsed
@@ -143,6 +154,14 @@ def _normalize_payload(payload: dict[str, Any], *, original_text: str) -> dict[s
         user_context["subject_type"]
     ):
         user_context["subject_type"] = "历史"
+    else:
+        subject_type = _parse_subject_type_text(original_text)
+        if subject_type is not None:
+            user_context["subject_type"] = subject_type
+    if not user_context.get("reselected_subjects"):
+        subjects = _parse_reselected_subjects_text(original_text)
+        if subjects:
+            user_context["reselected_subjects"] = subjects
     return {
         "query_type": payload.get("query_type") or "unknown",
         "user_context": user_context,
@@ -163,6 +182,11 @@ def _parse_rank_text(text: str) -> int | None:
         r"(\d{1,3}(?:[,，]\d{3})+|\d+(?:\.\d+)?)\s*(万|w|W|名|左右)?",
         text,
     )
+    if not match and _allows_bare_rank_text(text):
+        match = re.search(
+            r"(\d{1,3}(?:[,，]\d{3})+|\d{3,}(?:\.\d+)?)\s*(万|w|W|名)",
+            text,
+        )
     if not match:
         return None
     number = match.group(1).replace(",", "").replace("，", "")
@@ -171,3 +195,44 @@ def _parse_rank_text(text: str) -> int | None:
     if unit in {"万", "w", "W"}:
         value *= 10000
     return int(value)
+
+
+def _allows_bare_rank_text(text: str) -> bool:
+    return "冲稳保" in text or any(
+        token in text
+        for token in ["最低录取排名", "最低录取位次", "专业最低位次", "省排"]
+    )
+
+
+def _parse_subject_type_text(text: str) -> str | None:
+    normalized = _normalize_subject_text(text)
+    for bundle, (subject_type, _) in SUBJECT_BUNDLES.items():
+        if bundle in normalized:
+            return subject_type
+    if "物理" in normalized or "物理类" in normalized or "首选物理" in normalized:
+        return "物理"
+    if "历史" in normalized or "历史类" in normalized or "首选历史" in normalized:
+        return "历史"
+    return None
+
+
+def _parse_reselected_subjects_text(text: str) -> list[str]:
+    normalized = _normalize_subject_text(text)
+    selected: list[str] = []
+    for bundle, (_, subjects) in SUBJECT_BUNDLES.items():
+        if bundle in normalized:
+            selected.extend(subjects)
+    if not selected:
+        selected.extend(
+            subject for subject in RESELECTED_SUBJECTS if subject in normalized
+        )
+    output: list[str] = []
+    for subject in selected:
+        if subject not in output:
+            output.append(subject)
+    return output[:2]
+
+
+def _normalize_subject_text(value: Any) -> str:
+    text = "" if value is None else str(value).strip()
+    return text.replace("思想政治", "政治").replace("生物学", "生物")

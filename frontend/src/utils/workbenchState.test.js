@@ -131,6 +131,7 @@ test('splitCandidateConfirmationState keeps id-only candidates warning-only', ()
 test('normalizeWorkbenchOptions prefers API payload and falls back per group', () => {
   const options = normalizeWorkbenchOptions({
     extractors: [{ value: 'hybrid', label: '规则优先，LLM 补槽' }],
+    planner_modes: [{ value: 'auto', label: 'uploaded dataset 优先 LLM SemanticIntent' }],
     generators: [{ value: 'template_evidence', label: '模板证据回答' }],
     models: [{ value: 'deepseek-v4-flash', label: 'LLM 快速模型' }],
     rank_windows: [{ value: 'steady', label: '稳一点', rank_window_upper_percent: 15 }],
@@ -139,6 +140,7 @@ test('normalizeWorkbenchOptions prefers API payload and falls back per group', (
 
   assert.equal(options.source, 'api');
   assert.equal(options.extractors[0].value, 'hybrid');
+  assert.equal(options.planner_modes[0].value, 'auto');
   assert.equal(options.rank_windows[0].description, '');
 });
 
@@ -147,12 +149,14 @@ test('normalizeWorkbenchOptions uses complete fallback when API payload is empty
 
   assert.equal(options.source, 'fallback');
   assert.deepEqual(options.extractors, FALLBACK_WORKBENCH_OPTIONS.extractors);
+  assert.deepEqual(options.planner_modes, FALLBACK_WORKBENCH_OPTIONS.planner_modes);
   assert.equal(options.rank_windows.length, 3);
 });
 
 test('normalizeWorkbenchOptions marks missing API option groups as partial fallback', () => {
   const options = normalizeWorkbenchOptions({
     extractors: [{ value: 'hybrid', label: '规则优先，LLM 补槽' }],
+    planner_modes: [],
     generators: [],
     models: [{ value: 'deepseek-v4-flash', label: 'LLM 快速模型' }],
     rank_windows: [{ value: 'steady', label: '稳一点', rank_window_upper_percent: 15 }],
@@ -160,6 +164,7 @@ test('normalizeWorkbenchOptions marks missing API option groups as partial fallb
   });
 
   assert.equal(options.source, 'partial_fallback');
+  assert.deepEqual(options.planner_modes, FALLBACK_WORKBENCH_OPTIONS.planner_modes);
   assert.deepEqual(options.generators, FALLBACK_WORKBENCH_OPTIONS.generators);
 });
 
@@ -194,6 +199,7 @@ test('buildWorkbenchRequest includes dataset id only for uploaded sources', () =
       soft_preferences: { prompt: '想学计算机' },
     },
     extractor: 'hybrid',
+    plannerMode: 'legacy',
     generator: 'template_evidence',
     model: 'deepseek-v4-flash',
   });
@@ -201,6 +207,7 @@ test('buildWorkbenchRequest includes dataset id only for uploaded sources', () =
   assert.equal(request.dataset_id, 'dataset_1');
   assert.equal(request.domain_name, 'admissions');
   assert.equal(request.extractor, 'hybrid');
+  assert.equal(request.planner_mode, 'legacy');
   assert.deepEqual(request.confirmed_candidates, []);
 });
 

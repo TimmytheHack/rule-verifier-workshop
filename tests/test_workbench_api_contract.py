@@ -439,8 +439,13 @@ class WorkbenchApiContractTest(unittest.TestCase):
 
         options = available_options()
 
+        self.assertIn("planner_modes", options)
         self.assertIn("rank_windows", options)
         self.assertIn("sort_modes", options)
+        self.assertEqual(
+            [item["value"] for item in options["planner_modes"]],
+            ["auto", "legacy", "llm_semantic"],
+        )
         self.assertEqual(
             [item["value"] for item in options["rank_windows"]],
             ["reach", "steady", "safe"],
