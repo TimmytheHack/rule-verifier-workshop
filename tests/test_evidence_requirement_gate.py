@@ -94,6 +94,30 @@ class EvidenceRequirementGateTest(unittest.TestCase):
             ],
         )
         self.assertEqual(
+            [item["match_type"] for item in result.excluded_preferences],
+            [
+                "evidence_requirement_gate",
+                "evidence_requirement_gate",
+                "evidence_requirement_gate",
+            ],
+        )
+        self.assertEqual(
+            [item["source_text"] for item in result.unanswerable_intents],
+            ["好就业", "学校好一点", "稳一点"],
+        )
+        self.assertEqual(
+            [item["answerable"] for item in result.unanswerable_intents],
+            [False, False, False],
+        )
+        self.assertEqual(
+            [item["requirement_type"] for item in result.unanswerable_intents],
+            [
+                "knowledge_base_or_reviewed_field",
+                "reviewed_ranking_policy",
+                "user_boundary",
+            ],
+        )
+        self.assertEqual(
             result.planner["excluded_preferences"][0]["executable"],
             False,
         )
@@ -125,6 +149,86 @@ class EvidenceRequirementGateTest(unittest.TestCase):
             ["major_name"],
         )
         self.assertEqual(result.excluded_preferences, [])
+        self.assertEqual(
+            result.planner["requirements"][0]["requirement_type"],
+            "knowledge_base_or_reviewed_field",
+        )
+
+    def test_unique_normalized_containment_match_excludes_preference(self) -> None:
+        intent = _intent(
+            [
+                _pref("想 留在 广东省", "school_province"),
+                _pref("想读人工智能", "major_name"),
+            ]
+        )
+        classifier = _FakeClassifier(
+            EvidenceRequirementResult(
+                requirements=[
+                    _requirement(
+                        "留在广东省",
+                        "knowledge_base_or_reviewed_field",
+                        "school_province",
+                    )
+                ]
+            )
+        )
+
+        result = EvidenceRequirementGate(classifier).apply(
+            text="想留在广东省，想读人工智能",
+            intent=intent,
+            schema_context=[],
+            query_options={},
+        )
+
+        self.assertEqual(
+            [preference.semantic for preference in result.filtered_intent.preferences],
+            ["major_name"],
+        )
+        self.assertEqual(
+            [item["source_text"] for item in result.excluded_preferences],
+            ["想 留在 广东省"],
+        )
+        self.assertEqual(
+            result.excluded_preferences[0]["match_type"],
+            "evidence_requirement_gate",
+        )
+
+    def test_ambiguous_normalized_containment_preserves_preferences(self) -> None:
+        intent = _intent(
+            [
+                _pref("想留在广东省", "school_province"),
+                _pref("广东高校优先", "school_region_preference"),
+            ]
+        )
+        classifier = _FakeClassifier(
+            EvidenceRequirementResult(
+                requirements=[
+                    _requirement(
+                        "广东",
+                        "knowledge_base_or_reviewed_field",
+                        "location_preference",
+                    )
+                ]
+            )
+        )
+
+        result = EvidenceRequirementGate(classifier).apply(
+            text="广东",
+            intent=intent,
+            schema_context=[],
+            query_options={},
+        )
+
+        self.assertEqual(
+            [preference.semantic for preference in result.filtered_intent.preferences],
+            ["school_province", "school_region_preference"],
+        )
+        self.assertEqual(result.excluded_preferences, [])
+        self.assertEqual(result.unanswerable_intents, [])
+        self.assertEqual(
+            result.planner["requirements"][0]["source_text"],
+            "广东",
+        )
         self.assertEqual(
             result.planner["requirements"][0]["requirement_type"],
             "knowledge_base_or_reviewed_field",
@@ -163,6 +267,50 @@ class EvidenceRequirementGateTest(unittest.TestCase):
         self.assertEqual(
             [item["semantic"] for item in result.excluded_preferences],
             ["school_quality_exact"],
+        )
+
+    def test_unsupported_requirement_is_excluded_and_unanswerable(self) -> None:
+        intent = _intent([_pref("要月球校区", "campus_location")])
+        classifier = _FakeClassifier(
+            EvidenceRequirementResult(
+                requirements=[
+                    _requirement(
+                        "要月球校区",
+                        "unsupported",
+                        "campus_location",
+                    )
+                ]
+            )
+        )
+
+        result = EvidenceRequirementGate(classifier).apply(
+            text="要月球校区",
+            intent=intent,
+            schema_context=[],
+            query_options={},
+        )
+
+        self.assertEqual(result.filtered_intent.preferences, [])
+        self.assertEqual(
+            result.excluded_preferences[0]["requirement_type"],
+            "unsupported",
+        )
+        self.assertEqual(
+            result.excluded_preferences[0]["match_type"],
+            "evidence_requirement_gate",
+        )
+        self.assertEqual(
+            result.unanswerable_intents,
+            [
+                {
+                    "field_id": "campus_location",
+                    "intent": "campus_location",
+                    "source_text": "要月球校区",
+                    "answerable": False,
+                    "reason": "要月球校区 需要 unsupported 证据。",
+                    "requirement_type": "unsupported",
+                }
+            ],
         )
 
     def test_rejected_requirements_are_preserved_in_planner_trace(self) -> None:

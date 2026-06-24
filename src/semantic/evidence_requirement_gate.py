@@ -126,12 +126,15 @@ def _matching_preference_index(
         if preference.source_text == requirement.source_text:
             return index
     source = _normalized_text(requirement.source_text)
+    containment_matches: list[int] = []
     for index, preference in enumerate(preferences):
         preference_text = _normalized_text(preference.source_text)
         if source and preference_text and (
             source in preference_text or preference_text in source
         ):
-            return index
+            containment_matches.append(index)
+    if len(containment_matches) == 1:
+        return containment_matches[0]
     return None
 
 
