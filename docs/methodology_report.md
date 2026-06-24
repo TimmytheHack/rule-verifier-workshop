@@ -104,6 +104,8 @@ SQL executes.
 EvidencePack constrains answer.
 ```
 
+legacy admissions Workbench 现在在 `AttributeGrounder` 之后运行 reviewed value entity linker。它只读取 `SchemaRegistry` 和 `SchemaValueIndex`，用已审查 value evidence 处理完整实体与子串的歧义：例如“我想进深圳大学”会提出 `university_name = 深圳大学`，并抑制其中的 `city = 深圳`；“我想去深圳的大学”仍可执行城市筛选；“深圳大学附近”、否定、距离或身份上下文会进入 `entity_linking.not_executed_links`。accepted entity links 仍必须先通过 `RuleVerifier.audit_proposed_rules`，再由 Workbench merge guard 进入执行层；suppressed/boundary evidence 只会阻止不安全 hard filter，不能绕过 verifier 或直接生成 SQL。`EvidencePack.entity_linking` 和 `debug_trace.entity_linking` 保存这些决策，answer layer 只能基于该 evidence 解释哪些实体被执行、哪些子串或边界没有执行。
+
 当上传 admissions 分数/位次表只包含 `专业`、`最低位次`、`最低分数`、`学校所在` 等字段时，
 系统可以在 `capability_graph` 和 `semantic_query_options` 支持下生成专业最低位次的
 `冲`、`稳`、`保` 结果。缺失字段例如 `学费`、`城市`、`专业组最低位次` 必须进入

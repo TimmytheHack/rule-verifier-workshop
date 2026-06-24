@@ -82,6 +82,8 @@ python scripts/build_data_warehouse.py
 
 生成物默认写入 `outputs/data/`，包括 DuckDB warehouse、schema/value index 和 ingestion summary。这些本地数据产物默认不提交。
 
+内置 admissions Workbench 会使用 reviewed value entity linker 处理已审查 value index 中的显式实体。比如“我想进深圳大学”会优先识别为 `院校名称 = 深圳大学`，并抑制其中的 `深圳` 城市子串；“我想去深圳的大学”仍可识别为 `城市 in_contains 深圳`。如果用户说“深圳大学附近”或使用否定、距离、身份边界等表达，相关实体会写入 `EvidencePack.entity_linking.not_executed_links`，不会变成 SQL filter。这个 linker 只读取 schema/value index，不读原始 Excel，不调用 LLM，也不能绕过 `RuleVerifier`。
+
 ## 上传自己的表格
 
 1. 启动后端和前端。
