@@ -201,13 +201,76 @@ class ReviewedValueEntityLinkerTest(unittest.TestCase):
         self.assertEqual(result.proposed_rules[0]["operator"], "in_contains")
         self.assertEqual(result.proposed_rules[0]["value"], ["广州", "深圳"])
 
+    def test_trailing_negated_university_entity_does_not_execute(self) -> None:
+        for text in ("深圳大学不要", "深圳大学不考虑"):
+            with self.subTest(text=text):
+                result = _link(text)
+
+                self.assertEqual(result.accepted_links, [])
+                self.assertEqual(result.proposed_rules, [])
+                self.assertEqual(result.not_executed_links[0]["field_id"], "university_name")
+                self.assertEqual(
+                    result.not_executed_links[0]["reason"],
+                    "否定/排除上下文不能直接执行为正向实体筛选。",
+                )
+
+    def test_common_negation_terms_do_not_execute_entities(self) -> None:
+        cases = [
+            ("不是深圳的高校", "city"),
+            ("除了深圳大学", "university_name"),
+        ]
+        for text, field_id in cases:
+            with self.subTest(text=text):
+                result = _link(text)
+
+                self.assertEqual(result.accepted_links, [])
+                self.assertEqual(result.proposed_rules, [])
+                self.assertEqual(result.not_executed_links[0]["field_id"], field_id)
+                self.assertEqual(
+                    result.not_executed_links[0]["reason"],
+                    "否定/排除上下文不能直接执行为正向实体筛选。",
+                )
+
+    def test_distance_context_blocks_university_entity(self) -> None:
+        result = _link("离深圳大学近一点")
+
+        self.assertEqual(result.accepted_links, [])
+        self.assertEqual(result.proposed_rules, [])
+        self.assertEqual(result.not_executed_links[0]["field_id"], "university_name")
+        self.assertEqual(
+            result.not_executed_links[0]["reason"],
+            "距离/模糊地理边界需要地理距离或用户确认边界，不能直接执行为院校或城市筛选。",
+        )
+
+    def test_malformed_lookup_complete_fails_closed(self) -> None:
+        result = _link("我想进深圳大学", university_lookup_complete="false")
+
+        self.assertEqual(result.accepted_links, [])
+        self.assertEqual(result.proposed_rules, [])
+        self.assertEqual(result.not_executed_links[0]["field_id"], "university_name")
+        self.assertEqual(
+            result.not_executed_links[0]["reason"],
+            "字段值索引不完整，不能直接执行实体筛选。",
+        )
+
+    def test_recent_word_does_not_block_clear_city_expression(self) -> None:
+        result = _link("最近想去深圳的大学")
+
+        self.assertEqual(
+            [(link["field_id"], link["value"]) for link in result.accepted_links],
+            [("city", "深圳")],
+        )
+        self.assertEqual(len(result.proposed_rules), 1)
+        self.assertEqual(result.proposed_rules[0]["field_id"], "city")
+        self.assertEqual(result.proposed_rules[0]["value"], ["深圳"])
+
 
 def _link(
     text: str,
     *,
     university_values: list[str] | None = None,
     city_values: list[str] | None = None,
-    university_lookup_complete: bool = True,
+    university_lookup_complete: object = True,
     extra_registry_fields: dict[str, dict[str, object]] | None = None,
     extra_index_fields: dict[str, dict[str, object]] | None = None,
 ):

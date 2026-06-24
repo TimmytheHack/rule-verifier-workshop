@@ -17,13 +17,15 @@ DEFAULT_LINKABLE_FIELDS: dict[str, dict[str, str]] = {
 }
 NEARBY_TERMS = ("附近", "周边", "旁边", "那边")
 LOCATION_PATTERNS = ("的大学", "市高校", "高校", "读大学", "上大学")
-NEGATION_TERMS = ("不要", "不想", "排除", "别", "不去")
-DISTANCE_TERMS = ("离", "近", "远", "太远", "附近", "周边", "旁边")
+NEGATION_TERMS = ("不要", "不想", "排除", "别", "不去", "不是", "不考虑", "除了")
+DISTANCE_AFTER_TERMS = ("近", "远", "太远")
+BOUNDARY_AFTER_TERMS = ("附近", "周边", "旁边")
 IDENTITY_TERMS = ("户籍", "考生", "生源", "籍贯")
 INCOMPLETE_LOOKUP_REASON = "字段值索引不完整，不能直接执行实体筛选。"
 NEARBY_REASON = "附近/周边表达需要地理距离或用户确认边界，不能直接执行为院校或城市筛选。"
 NEGATED_ENTITY_REASON = "否定/排除上下文不能直接执行为正向实体筛选。"
 DISTANCE_REASON = "距离/模糊地理边界需要地理距离或用户确认边界，不能直接执行为城市筛选。"
+ENTITY_DISTANCE_REASON = "距离/模糊地理边界需要地理距离或用户确认边界，不能直接执行为院校或城市筛选。"
 IDENTITY_REASON = "身份/户籍上下文不能直接执行为城市筛选。"
 
 
@@ -101,7 +103,7 @@ class ReviewedValueEntityLinker:
             values = [str(value) for value in indexed_field.get("lookup_values") or []]
             if not values:
                 continue
-            lookup_complete = bool(indexed_field.get("lookup_complete"))
+            lookup_complete = indexed_field.get("lookup_complete") is True
             for value in values:
                 for span in _find_spans(text, value):
                     candidates.append(
@@ -362,11 +364,13 @@ def _looks_like_location_expression(candidate: dict[str, Any]) -> bool:
 
 
 def _non_executable_context_reason(candidate: dict[str, Any]) -> str | None:
+    if _has_distance_context(candidate):
+        if candidate.get("mode") == "location":
+            return DISTANCE_REASON
+        return ENTITY_DISTANCE_REASON
     if candidate.get("mode") == "location":
         if _has_identity_context(candidate):
             return IDENTITY_REASON
-        if _has_distance_context(candidate):
-            return DISTANCE_REASON
         if _has_negation_context(candidate):
             return NEGATED_ENTITY_REASON
         return None
@@ -377,17 +381,20 @@ def _non_executable_context_reason(candidate: dict[str, Any]) -> str | None:
 
 def _has_negation_context(candidate: dict[str, Any]) -> bool:
     before = str(candidate.get("context_before") or "")
-    return any(term in before for term in NEGATION_TERMS)
+    after = str(candidate.get("context_after") or "")
+    return any(term in before or term in after for term in NEGATION_TERMS)
 
 
 def _has_distance_context(candidate: dict[str, Any]) -> bool:
-    text = str(candidate.get("input_text") or "")
-    span = candidate.get("span")
-    if not _valid_span(span):
-        return False
-    start, end = int(span[0]), int(span[1])
-    local_context = text[max(0, start - 4):min(len(text), end + 4)]
-    return any(term in local_context for term in DISTANCE_TERMS)
+    before = str(candidate.get("context_before") or "")
+    after = str(candidate.get("context_after") or "")
+    near_before = before[-4:]
+    near_after = after[:4]
+    if any(term in near_after for term in BOUNDARY_AFTER_TERMS):
+        return True
+    if "太远" in near_after:
+        return True
+    return "离" in near_before and any(term in near_after for term in DISTANCE_AFTER_TERMS)
 
 
 def _has_identity_context(candidate: dict[str, Any]) -> bool:
