@@ -98,6 +98,31 @@ class WorkbenchValueEntityLinkingTest(unittest.TestCase):
             ],
         )
 
+    def test_non_executable_entity_context_blocks_regex_city_filter(self) -> None:
+        cases = [
+            ("不要深圳大学，目前排位15000", "否定/排除"),
+            ("离深圳大学近一点，目前排位15000", "距离/模糊地理边界"),
+            ("深圳户籍考生，目前排位15000", "身份/户籍"),
+        ]
+        for prompt, reason_fragment in cases:
+            with self.subTest(prompt=prompt):
+                response = _run(prompt)
+
+                assert_workbench_contract(self, response)
+                self.assertNotIn(
+                    ("城市", "in_contains", ["深圳"]),
+                    _filter_tuples(response),
+                )
+                linking = response["evidence_pack"]["entity_linking"]
+                self.assertTrue(
+                    any(
+                        link.get("field_id") == "city"
+                        and link.get("value") == "深圳"
+                        and reason_fragment in link.get("reason", "")
+                        for link in linking["not_executed_links"]
+                    )
+                )
+
 
 def _run(prompt: str) -> dict[str, object]:
     return run_workbench_with_test_warehouse(

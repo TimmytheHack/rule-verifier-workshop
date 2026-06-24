@@ -2012,6 +2012,7 @@ def _planned_query_payload(
         "policy_references": policy_references,
         "decision_guidance": decision_guidance,
         "decision_option_suggestions": decision_option_suggestions,
+        "entity_linking": {"status": "not_applicable"},
     }
     if semantic_fallback is not None:
         evidence_pack["planner"] = semantic_fallback.planner
@@ -2059,6 +2060,7 @@ def _planned_query_payload(
             "unconfirmed_candidates": planned_result.candidates_to_confirm,
             "no_schema_field_preferences": combined_no_schema_preferences,
         },
+        "entity_linking": {"status": "not_applicable"},
         "proposed_rules": [],
         "deterministic_rules": [_display_rule(rule) for rule in hard_rules],
         "candidate_rules": planned_result.candidates_to_confirm,
@@ -4014,12 +4016,18 @@ def _apply_entity_linking_hard_filter_guard(
 def _entity_linking_blocked_values(
     entity_linking: EntityLinkingResult,
 ) -> dict[str, Any]:
+    non_executed_values = {
+        (str(link.get("source_column") or ""), str(link.get("value") or ""))
+        for link in entity_linking.not_executed_links
+        if link.get("source_column") and link.get("value")
+    }
     return {
         "field_values": {
             (str(link.get("source_column") or ""), str(link.get("value") or ""))
             for link in entity_linking.suppressed_links
             if link.get("source_column") and link.get("value")
-        },
+        }
+        | non_executed_values,
         "boundary_texts": [
             str(link.get("source_text") or "")
             for link in entity_linking.not_executed_links
