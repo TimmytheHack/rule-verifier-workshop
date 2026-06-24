@@ -711,26 +711,39 @@ print(json.dumps({
     ) -> None:
         query = "假设我今年的高考分数是630分，想读人工智能，计算机，而且不想去国外，想留在广东省，请给出推荐"
         fake_client = FakeSemanticIntentClient(
-            {
-                "query_type": "semantic_recommendation",
-                "user_context": {
-                    "user_rank": None,
-                    "user_score": 630,
-                    "source_province": "广东",
-                    "subject_type": None,
-                    "reselected_subjects": [],
+            [
+                {
+                    "query_type": "semantic_recommendation",
+                    "user_context": {
+                        "user_rank": None,
+                        "user_score": 630,
+                        "source_province": "广东",
+                        "subject_type": None,
+                        "reselected_subjects": [],
+                    },
+                    "preferences": [
+                        {
+                            "source_text": "人工智能，计算机",
+                            "semantic": "major_name",
+                            "op": "contains_any",
+                            "value": ["人工智能", "计算机"],
+                            "reason": "用户明确专业方向。",
+                        }
+                    ],
+                    "requested_output": ["recommendations"],
                 },
-                "preferences": [
-                    {
-                        "source_text": "人工智能，计算机",
-                        "semantic": "major_name",
-                        "op": "contains_any",
-                        "value": ["人工智能", "计算机"],
-                        "reason": "用户明确专业方向。",
-                    }
-                ],
-                "requested_output": ["recommendations"],
-            }
+                {
+                    "requirements": [
+                        {
+                            "source_text": "人工智能，计算机",
+                            "requirement_type": "table_field",
+                            "candidate_semantic": "major_name",
+                            "rationale": "需要专业字段。",
+                        }
+                    ]
+                },
+                {"criteria": []},
+            ]
         )
         with TemporaryDirectory() as directory:
             service, dataset_id = _queryable_uploaded_admissions(
@@ -753,12 +766,16 @@ print(json.dumps({
                     )
 
         assert_workbench_contract(self, response)
+        self.assertEqual(len(fake_client.calls), 3)
         self.assertEqual(response["status"], "needs_confirmation")
         _assert_llm_planner_used(
             self,
             response,
             query_type="semantic_recommendation",
         )
+        gate = response["evidence_pack"]["planner"]["evidence_requirements"]
+        self.assertEqual(gate["status"], "classified")
+        self.assertEqual(gate["rejected_requirements"], [])
         self.assertIn("请补充广东省排位", response["answer"])
         self.assertEqual(response["result_count"], 0)
 
