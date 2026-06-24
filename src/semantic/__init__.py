@@ -42,6 +42,14 @@ _LAZY_EXPORTS = {
         "src.semantic.evidence_requirements",
         "EvidenceRequirementResult",
     ),
+    "EvidenceRequirementGate": (
+        "src.semantic.evidence_requirement_gate",
+        "EvidenceRequirementGate",
+    ),
+    "EvidenceRequirementGateResult": (
+        "src.semantic.evidence_requirement_gate",
+        "EvidenceRequirementGateResult",
+    ),
 }
 
 
@@ -59,6 +67,8 @@ __all__ = [
     "DeepSeekSemanticIntentExtractor",
     "DeepSeekSemanticCandidateGenerator",
     "EvidenceRequirement",
+    "EvidenceRequirementGate",
+    "EvidenceRequirementGateResult",
     "EvidenceRequirementResult",
     "QueryAST",
     "QueryFilter",
