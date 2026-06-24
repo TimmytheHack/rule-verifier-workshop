@@ -202,7 +202,12 @@ class ReviewedValueEntityLinkerTest(unittest.TestCase):
         self.assertEqual(result.proposed_rules[0]["value"], ["广州", "深圳"])
 
     def test_trailing_negated_university_entity_does_not_execute(self) -> None:
-        for text in ("深圳大学不要", "深圳大学不考虑"):
+        for text in (
+            "深圳大学不要",
+            "深圳大学不考虑",
+            "深圳大学，不考虑",
+            "深圳大学 不考虑",
+        ):
             with self.subTest(text=text):
                 result = _link(text)
 

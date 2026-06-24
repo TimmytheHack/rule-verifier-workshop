@@ -34,6 +34,7 @@ NEGATION_TERMS = (
 DISTANCE_AFTER_TERMS = ("近", "远", "太远")
 BOUNDARY_AFTER_TERMS = ("附近", "周边", "旁边")
 IDENTITY_TERMS = ("户籍", "考生", "生源", "籍贯")
+AFTER_CONTEXT_PREFIX_CHARS = " \t\r\n，,。.;；、：:"
 INCOMPLETE_LOOKUP_REASON = "字段值索引不完整，不能直接执行实体筛选。"
 NEARBY_REASON = "附近/周边表达需要地理距离或用户确认边界，不能直接执行为院校或城市筛选。"
 NEGATED_ENTITY_REASON = "否定/排除上下文不能直接执行为正向实体筛选。"
@@ -403,8 +404,9 @@ def _non_executable_context_reason(candidate: dict[str, Any]) -> str | None:
 def _has_negation_context(candidate: dict[str, Any]) -> bool:
     before = str(candidate.get("context_before") or "")
     after = str(candidate.get("context_after") or "")
+    normalized_after = after.lstrip(AFTER_CONTEXT_PREFIX_CHARS)
     return any(term in before for term in NEGATION_TERMS) or any(
-        after.startswith(term) for term in NEGATION_TERMS
+        normalized_after.startswith(term) for term in NEGATION_TERMS
     )
 
 
