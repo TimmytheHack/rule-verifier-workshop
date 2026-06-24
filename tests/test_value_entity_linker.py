@@ -359,10 +359,14 @@ class ReviewedValueEntityLinkerTest(unittest.TestCase):
     def test_preposed_single_character_negation_does_not_execute(self) -> None:
         cases = [
             ("别去深圳大学", "university_name"),
+            ("别去读深圳大学", "university_name"),
             ("别报深圳大学", "university_name"),
+            ("别报考深圳大学", "university_name"),
             ("别选深圳大学", "university_name"),
+            ("别选报深圳大学", "university_name"),
             ("别考虑深圳大学", "university_name"),
             ("别去深圳的大学", "city"),
+            ("别考虑去深圳的大学", "city"),
         ]
         for text, field_id in cases:
             with self.subTest(text=text):
@@ -382,6 +386,22 @@ class ReviewedValueEntityLinkerTest(unittest.TestCase):
             ("想去深圳大学不想学费太高", "university_name", "深圳大学"),
             ("想去深圳的大学，不要学费太贵", "city", "深圳"),
             ("想去深圳的大学不想学费太高", "city", "深圳"),
+        ]
+        for text, field_id, value in cases:
+            with self.subTest(text=text):
+                result = _link(text)
+
+                self.assertEqual(
+                    [(link["field_id"], link["value"]) for link in result.accepted_links],
+                    [(field_id, value)],
+                )
+                self.assertEqual(len(result.proposed_rules), 1)
+                self.assertEqual(result.proposed_rules[0]["field_id"], field_id)
+
+    def test_preposed_fee_negation_does_not_block_entity_preference(self) -> None:
+        cases = [
+            ("不想学费太高，深圳大学可以", "university_name", "深圳大学"),
+            ("不要学费太贵，深圳的大学可以", "city", "深圳"),
         ]
         for text, field_id, value in cases:
             with self.subTest(text=text):

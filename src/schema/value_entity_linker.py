@@ -32,7 +32,16 @@ NEGATION_TERMS = (
     "不在",
 )
 SINGLE_CHARACTER_NEGATION_TERMS = ("别",)
-SINGLE_CHARACTER_NEGATION_VERBS = ("去", "报", "选", "考虑")
+SINGLE_CHARACTER_NEGATION_VERBS = (
+    "去",
+    "去读",
+    "报",
+    "报考",
+    "选",
+    "选报",
+    "考虑",
+    "考虑去",
+)
 COST_NEGATION_PREFIXES = (
     "不要太贵",
     "不要太高",
@@ -421,6 +430,9 @@ def _has_negation_context(candidate: dict[str, Any]) -> bool:
 
 
 def _has_before_negation(before: str) -> bool:
+    stripped = before.rstrip(AFTER_CONTEXT_PREFIX_CHARS)
+    if _is_cost_negation_clause(stripped):
+        return False
     phrase_terms = [
         term
         for term in NEGATION_TERMS
@@ -428,7 +440,6 @@ def _has_before_negation(before: str) -> bool:
     ]
     if any(term in before for term in phrase_terms):
         return True
-    stripped = before.rstrip(AFTER_CONTEXT_PREFIX_CHARS)
     if any(stripped.endswith(term) for term in SINGLE_CHARACTER_NEGATION_TERMS):
         return True
     return any(
@@ -439,9 +450,13 @@ def _has_before_negation(before: str) -> bool:
 
 
 def _has_after_negation(normalized_after: str) -> bool:
-    if any(normalized_after.startswith(term) for term in COST_NEGATION_PREFIXES):
+    if _is_cost_negation_clause(normalized_after):
         return False
     return any(normalized_after.startswith(term) for term in NEGATION_TERMS)
+
+
+def _is_cost_negation_clause(text: str) -> bool:
+    return any(text.startswith(term) for term in COST_NEGATION_PREFIXES)
 
 
 def _has_distance_context(candidate: dict[str, Any]) -> bool:
