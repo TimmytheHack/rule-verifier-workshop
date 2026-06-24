@@ -792,11 +792,13 @@ def _run_semantic_capability_query(
                     return _semantic_planner_blocked_run(config, planner_attempt)
 
     user_request = _compose_user_request(config)
-    major_rank_result = AdmissionsMajorRankPlanner(
-        domain_config=domain_config,
-        database_path=_warehouse_database_path(domain_config),
-        table_name=domain_config.table_name,
-    ).run(user_request)
+    major_rank_result = None
+    if not _major_rank_text_has_external_preference(user_request):
+        major_rank_result = AdmissionsMajorRankPlanner(
+            domain_config=domain_config,
+            database_path=_warehouse_database_path(domain_config),
+            table_name=domain_config.table_name,
+        ).run(user_request)
     if major_rank_result is not None:
         return SemanticCapabilityRun(
             result=major_rank_result,
@@ -897,11 +899,30 @@ def _llm_major_rank_intent_not_supported_by_text(
 
 
 def _llm_major_rank_text_supports_intent(text: str) -> bool:
+    if _major_rank_text_has_external_preference(text):
+        return False
     if admissions_major_rank_query_matches(text):
         return True
     return "冲稳保" in text and any(
         term in text for term in ("列出", "次序", "排序", "按历史")
     )
+
+
+def _major_rank_text_has_external_preference(text: str) -> bool:
+    external_terms = (
+        "好就业",
+        "就业",
+        "前景",
+        "学校好一点",
+        "学校好",
+        "院校好",
+        "城市发展",
+        "宿舍",
+        "氛围",
+        "保研",
+        "考研",
+    )
+    return any(term in text for term in external_terms)
 
 
 def _semantic_ranking_plan_attempt(

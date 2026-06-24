@@ -511,6 +511,9 @@ class UploadedDatasetFlowTest(unittest.TestCase):
             planner["evidence_requirements"]["status"],
             "classification_failed",
         )
+        serialized = json.dumps(response, ensure_ascii=False)
+        self.assertNotIn("classifier unavailable", serialized)
+        self.assertEqual(response["execution"]["sql"], "")
         self.assertEqual(response["debug_trace"]["execution"]["sql"], "")
 
     def test_evidence_gate_failure_falls_back_in_auto_mode(self) -> None:
@@ -550,6 +553,45 @@ class UploadedDatasetFlowTest(unittest.TestCase):
         self.assertEqual(
             planner["prior_planner"]["evidence_requirements"]["status"],
             "classification_failed",
+        )
+        serialized = json.dumps(response, ensure_ascii=False)
+        self.assertNotIn("classifier unavailable", serialized)
+
+    def test_mixed_major_rank_intent_with_external_preference_does_not_execute(
+        self,
+    ) -> None:
+        query = "广东物化生，10000名，列出冲稳保，好就业"
+        fake_client = FakeSemanticIntentClient(_major_rank_semantic_intent())
+        with TemporaryDirectory() as directory:
+            service, dataset_id = _queryable_uploaded_admissions(
+                Path(directory),
+                use_excel=False,
+            )
+
+            with patch(
+                "src.api.workbench.deepseek_slot_adapter_enabled",
+                return_value=True,
+            ):
+                with patch(
+                    "src.api.workbench._interactive_deepseek_client",
+                    return_value=fake_client,
+                ):
+                    response = service.query(
+                        dataset_id,
+                        user_input=query,
+                        soft_preferences={"prompt": query},
+                    )
+
+        assert_workbench_contract(self, response)
+        self.assertTrue(fake_client.calls)
+        self.assertNotEqual(
+            (response["status"], response["query_type"]),
+            ("ok", "admissions_major_rank"),
+        )
+        warning_messages = [warning["message"] for warning in response["warnings"]]
+        self.assertTrue(
+            any("好就业" in message for message in warning_messages),
+            warning_messages,
         )
 
     def test_admissions_major_rank_does_not_call_evidence_gate(self) -> None:
