@@ -17,8 +17,14 @@ DEFAULT_LINKABLE_FIELDS: dict[str, dict[str, str]] = {
 }
 NEARBY_TERMS = ("附近", "周边", "旁边", "那边")
 LOCATION_PATTERNS = ("的大学", "市高校", "高校", "读大学", "上大学")
+NEGATION_TERMS = ("不要", "不想", "排除", "别", "不去")
+DISTANCE_TERMS = ("离", "近", "远", "太远", "附近", "周边", "旁边")
+IDENTITY_TERMS = ("户籍", "考生", "生源", "籍贯")
 INCOMPLETE_LOOKUP_REASON = "字段值索引不完整，不能直接执行实体筛选。"
 NEARBY_REASON = "附近/周边表达需要地理距离或用户确认边界，不能直接执行为院校或城市筛选。"
+NEGATED_ENTITY_REASON = "否定/排除上下文不能直接执行为正向实体筛选。"
+DISTANCE_REASON = "距离/模糊地理边界需要地理距离或用户确认边界，不能直接执行为城市筛选。"
+IDENTITY_REASON = "身份/户籍上下文不能直接执行为城市筛选。"
 
 
 @dataclass(frozen=True)
@@ -67,10 +73,7 @@ class ReviewedValueEntityLinker:
 
         candidates = self._candidates(text)
         accepted, suppressed, ambiguous, not_executed = _resolve_candidates(candidates)
-        proposed_rules = [
-            _proposed_rule(index, link)
-            for index, link in enumerate(accepted, start=1)
-        ]
+        proposed_rules = _proposed_rules(accepted)
         return EntityLinkingResult(
             status="applied",
             accepted_links=accepted,
@@ -93,7 +96,7 @@ class ReviewedValueEntityLinker:
             if str(field.get("type") or "") not in TEXT_FIELD_TYPES:
                 continue
             indexed_field = (self.value_index.fields or {}).get(field_id) or {}
-            if not indexed_field.get("active", True):
+            if indexed_field.get("active") is not True:
                 continue
             values = [str(value) for value in indexed_field.get("lookup_values") or []]
             if not values:
@@ -147,9 +150,13 @@ def _candidate_record(
     span: tuple[int, int],
     lookup_complete: bool,
 ) -> dict[str, Any]:
+    context_window = 8
     return {
         "source_text": text[span[0]:span[1]],
         "span": span,
+        "context_before": text[max(0, span[0] - context_window):span[0]],
+        "context_after": text[span[1]:span[1] + context_window],
+        "input_text": text,
         "field_id": field_id,
         "source_column": field.get("source_column"),
         "value": value,
@@ -204,23 +211,41 @@ def _resolve_candidates(
     list[dict[str, Any]],
     list[dict[str, Any]],
 ]:
+    ambiguous = _ambiguous_exact_span_links(candidates)
+    ambiguous_keys = {_link_key(link) for link in ambiguous}
+    non_ambiguous = [
+        candidate
+        for candidate in candidates
+        if _link_key(candidate) not in ambiguous_keys
+    ]
+    context_blocked = [
+        {
+            **candidate,
+            "executable": False,
+            "reason": reason,
+        }
+        for candidate in non_ambiguous
+        for reason in [_non_executable_context_reason(candidate)]
+        if reason is not None
+    ]
+    context_blocked_keys = {_link_key(link) for link in context_blocked}
     not_executed = [
         {
             **candidate,
             "executable": False,
             "reason": INCOMPLETE_LOOKUP_REASON,
         }
-        for candidate in candidates
+        for candidate in non_ambiguous
         if not candidate.get("value_evidence", {}).get("lookup_complete")
+        and _link_key(candidate) not in context_blocked_keys
     ]
     executable = [
         candidate
-        for candidate in candidates
+        for candidate in non_ambiguous
         if candidate.get("value_evidence", {}).get("lookup_complete")
+        and _link_key(candidate) not in context_blocked_keys
     ]
-    ambiguous = _ambiguous_exact_span_links(executable)
-    ambiguous_keys = {_link_key(link) for link in ambiguous}
-    remaining = [link for link in executable if _link_key(link) not in ambiguous_keys]
+    remaining = executable
 
     accepted_entities: list[dict[str, Any]] = []
     for entity in sorted(_non_location_links(remaining), key=_candidate_sort_key):
@@ -230,8 +255,8 @@ def _resolve_candidates(
 
     accepted: list[dict[str, Any]] = list(accepted_entities)
     suppressed: list[dict[str, Any]] = []
-    blocker_entities = accepted_entities + _non_location_links(not_executed)
-    for location in _location_links(remaining):
+    blocker_entities = accepted_entities + _non_location_links(not_executed + context_blocked)
+    for location in sorted(_location_links(remaining), key=_span_start):
         suppressor = _containing_link(location, blocker_entities)
         if suppressor is not None:
             suppressed.append(
@@ -246,6 +271,7 @@ def _resolve_candidates(
         if _looks_like_location_expression(location):
             accepted.append({**location, "resolution": "accepted_location_expression"})
 
+    not_executed.extend(context_blocked)
     return _dedupe_links(accepted), _dedupe_links(suppressed), ambiguous, not_executed
 
 
@@ -267,6 +293,13 @@ def _ambiguous_exact_span_links(candidates: list[dict[str, Any]]) -> list[dict[s
 def _candidate_sort_key(candidate: dict[str, Any]) -> tuple[int, int]:
     span = candidate.get("span") or (0, 0)
     return (-(int(span[1]) - int(span[0])), int(span[0]))
+
+
+def _span_start(candidate: dict[str, Any]) -> int:
+    span = candidate.get("span")
+    if not _valid_span(span):
+        return 0
+    return int(span[0])
 
 
 def _location_links(candidates: list[dict[str, Any]]) -> list[dict[str, Any]]:
@@ -316,8 +349,50 @@ def _containing_link(
 
 
 def _looks_like_location_expression(candidate: dict[str, Any]) -> bool:
+    text = str(candidate.get("input_text") or "")
     source_text = str(candidate.get("source_text") or "")
-    return any(pattern in source_text for pattern in LOCATION_PATTERNS) or bool(source_text)
+    span = candidate.get("span")
+    if not _valid_span(span):
+        return False
+    if text.strip() == source_text:
+        return True
+    after = text[int(span[1]):]
+    local_after = after[:8]
+    return any(pattern in local_after for pattern in LOCATION_PATTERNS)
+
+
+def _non_executable_context_reason(candidate: dict[str, Any]) -> str | None:
+    if candidate.get("mode") == "location":
+        if _has_identity_context(candidate):
+            return IDENTITY_REASON
+        if _has_distance_context(candidate):
+            return DISTANCE_REASON
+        if _has_negation_context(candidate):
+            return NEGATED_ENTITY_REASON
+        return None
+    if _has_negation_context(candidate):
+        return NEGATED_ENTITY_REASON
+    return None
+
+
+def _has_negation_context(candidate: dict[str, Any]) -> bool:
+    before = str(candidate.get("context_before") or "")
+    return any(term in before for term in NEGATION_TERMS)
+
+
+def _has_distance_context(candidate: dict[str, Any]) -> bool:
+    text = str(candidate.get("input_text") or "")
+    span = candidate.get("span")
+    if not _valid_span(span):
+        return False
+    start, end = int(span[0]), int(span[1])
+    local_context = text[max(0, start - 4):min(len(text), end + 4)]
+    return any(term in local_context for term in DISTANCE_TERMS)
+
+
+def _has_identity_context(candidate: dict[str, Any]) -> bool:
+    after = str(candidate.get("context_after") or "")
+    return any(term in after for term in IDENTITY_TERMS)
 
 
 def _dedupe_links(links: list[dict[str, Any]]) -> list[dict[str, Any]]:
@@ -351,9 +426,42 @@ def _valid_span(span: Any) -> bool:
     )
 
 
+def _proposed_rules(accepted_links: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    grouped: dict[tuple[str, str], list[dict[str, Any]]] = {}
+    passthrough: list[dict[str, Any]] = []
+    for link in accepted_links:
+        op = str(link.get("op") or "")
+        if op not in {"in_contains", "contains_any"}:
+            passthrough.append(link)
+            continue
+        grouped.setdefault((str(link.get("field_id")), op), []).append(link)
+
+    rule_links: list[dict[str, Any]] = list(passthrough)
+    for group in grouped.values():
+        ordered = sorted(group, key=_span_start)
+        if len(ordered) == 1:
+            rule_links.append(ordered[0])
+            continue
+        first = ordered[0]
+        merged_values = [link.get("value") for link in ordered]
+        rule_links.append(
+            {
+                **first,
+                "source_text": "、".join(str(link.get("source_text")) for link in ordered),
+                "value": merged_values,
+                "merged_links": ordered,
+            }
+        )
+
+    return [
+        _proposed_rule(index, link)
+        for index, link in enumerate(sorted(rule_links, key=_span_start), start=1)
+    ]
+
+
 def _proposed_rule(index: int, link: dict[str, Any]) -> dict[str, Any]:
     value: Any = link.get("value")
-    if link.get("op") in {"in_contains", "contains_any"}:
+    if link.get("op") in {"in_contains", "contains_any"} and not isinstance(value, list):
         value = [value]
     return {
         "rule_id": f"value_entity_{index:03d}",

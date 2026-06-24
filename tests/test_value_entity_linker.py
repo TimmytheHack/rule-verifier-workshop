@@ -110,11 +110,103 @@ class ReviewedValueEntityLinkerTest(unittest.TestCase):
         self.assertEqual(result.not_executed_links, [])
         self.assertEqual(result.proposed_rules, [])
 
+    def test_negated_university_entity_does_not_become_positive_rule(self) -> None:
+        result = _link("不要深圳大学")
+
+        self.assertEqual(result.accepted_links, [])
+        self.assertEqual(result.proposed_rules, [])
+        self.assertEqual(result.not_executed_links[0]["field_id"], "university_name")
+        self.assertEqual(
+            result.not_executed_links[0]["reason"],
+            "否定/排除上下文不能直接执行为正向实体筛选。",
+        )
+
+    def test_distance_context_does_not_become_city_filter(self) -> None:
+        for text in ("离深圳近一点", "不要离深圳太远"):
+            with self.subTest(text=text):
+                result = _link(text)
+
+                self.assertEqual(result.accepted_links, [])
+                self.assertEqual(result.proposed_rules, [])
+                self.assertEqual(result.not_executed_links[0]["field_id"], "city")
+                self.assertEqual(
+                    result.not_executed_links[0]["reason"],
+                    "距离/模糊地理边界需要地理距离或用户确认边界，不能直接执行为城市筛选。",
+                )
+
+    def test_household_registration_context_does_not_become_city_filter(self) -> None:
+        result = _link("深圳户籍考生")
+
+        self.assertEqual(result.accepted_links, [])
+        self.assertEqual(result.proposed_rules, [])
+        self.assertEqual(result.not_executed_links[0]["field_id"], "city")
+        self.assertEqual(
+            result.not_executed_links[0]["reason"],
+            "身份/户籍上下文不能直接执行为城市筛选。",
+        )
+
+    def test_index_field_without_explicit_active_flag_fails_closed(self) -> None:
+        result = _link(
+            "深圳的大学",
+            extra_index_fields={
+                "city": {
+                    "source_column": "城市",
+                    "type": "string",
+                    "allowed_ops": ["contains", "in_contains"],
+                    "lookup_complete": True,
+                    "lookup_values": ["深圳"],
+                }
+            },
+        )
+
+        self.assertEqual(result.accepted_links, [])
+        self.assertEqual(result.proposed_rules, [])
+
+    def test_cross_field_same_span_with_incomplete_lookup_does_not_execute(self) -> None:
+        result = _link(
+            "想去南方学院",
+            university_values=["南方学院"],
+            university_lookup_complete=False,
+            extra_registry_fields={
+                "college_name": {
+                    "source_column": "学院名称",
+                    "active": True,
+                    "type": "string",
+                    "allowed_ops": ["eq"],
+                }
+            },
+            extra_index_fields={
+                "college_name": {
+                    "source_column": "学院名称",
+                    "active": True,
+                    "type": "string",
+                    "allowed_ops": ["eq"],
+                    "lookup_complete": True,
+                    "lookup_values": ["南方学院"],
+                }
+            },
+        )
+
+        self.assertEqual(result.accepted_links, [])
+        self.assertEqual(result.proposed_rules, [])
+
+    def test_multiple_city_values_merge_into_one_rule_in_source_order(self) -> None:
+        result = _link(
+            "我想去广州或者深圳的大学",
+            city_values=["深圳", "广州"],
+        )
+
+        self.assertEqual(len(result.proposed_rules), 1)
+        self.assertEqual(result.proposed_rules[0]["field_id"], "city")
+        self.assertEqual(result.proposed_rules[0]["operator"], "in_contains")
+        self.assertEqual(result.proposed_rules[0]["value"], ["广州", "深圳"])
+
 
 def _link(
     text: str,
     *,
     university_values: list[str] | None = None,
+    city_values: list[str] | None = None,
     university_lookup_complete: bool = True,
     extra_registry_fields: dict[str, dict[str, object]] | None = None,
     extra_index_fields: dict[str, dict[str, object]] | None = None,
@@ -123,6 +215,7 @@ def _link(
     value_index = SchemaValueIndex(
         _value_index_payload(
             university_values=university_values or ["深圳大学"],
+            city_values=city_values or ["深圳", "广州"],
             university_lookup_complete=university_lookup_complete,
             extra_fields=extra_index_fields,
         )
@@ -157,6 +250,7 @@ def _registry(
 def _value_index_payload(
     *,
     university_values: list[str],
+    city_values: list[str],
     university_lookup_complete: bool,
     extra_fields: dict[str, dict[str, object]] | None = None,
 ) -> dict[str, object]:
@@ -175,7 +269,7 @@ def _value_index_payload(
             "type": "string",
             "allowed_ops": ["contains", "in_contains"],
             "lookup_complete": True,
-            "lookup_values": ["深圳", "广州"],
+            "lookup_values": city_values,
         },
     }
     for field_id, spec in (extra_fields or {}).items():
