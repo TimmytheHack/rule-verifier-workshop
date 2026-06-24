@@ -327,6 +327,28 @@ class EvidenceRequirementTest(unittest.TestCase):
         self.assertIn("user_text", client.user_prompt)
         self.assertIn("schema_context", client.user_prompt)
         self.assertIn("query_options", client.user_prompt)
+        self.assertIn("llm_extracted_preferences", client.user_prompt)
+
+    def test_prompt_includes_llm_extracted_preferences(self) -> None:
+        _result, client = self._classify({"requirements": []})
+
+        result = DeepSeekEvidenceRequirementClassifier(client).classify(
+            text="想读计算机",
+            schema_context=[],
+            query_options={},
+            preferences=[
+                {
+                    "source_text": "想读计算机",
+                    "semantic": "major_name",
+                    "op": "contains_any",
+                    "value": ["计算机"],
+                }
+            ],
+        )
+
+        self.assertEqual(result.requirements, [])
+        self.assertIn('"semantic": "major_name"', client.user_prompt)
+        self.assertIn('"source_text": "想读计算机"', client.user_prompt)
 
 
 if __name__ == "__main__":

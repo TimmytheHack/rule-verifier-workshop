@@ -26,6 +26,7 @@ class EvidenceRequirementClassifierProtocol(Protocol):
         text: str,
         schema_context: list[dict[str, Any]],
         query_options: dict[str, Any],
+        preferences: list[dict[str, Any]] | None = None,
     ) -> EvidenceRequirementResult:
         """返回 evidence requirement 分类结果。"""
 
@@ -62,6 +63,7 @@ class EvidenceRequirementGate:
             text=text,
             schema_context=schema_context,
             query_options=query_options,
+            preferences=_preference_context(intent.preferences),
         )
         return apply_evidence_requirement_result(intent, classification)
 
@@ -178,6 +180,18 @@ def _reason(requirement: EvidenceRequirement) -> str:
 
 def _normalized_text(value: str | None) -> str:
     return "".join(str(value or "").split())
+
+
+def _preference_context(preferences: list[SemanticPreference]) -> list[dict[str, Any]]:
+    return [
+        {
+            "source_text": preference.source_text,
+            "semantic": preference.semantic,
+            "op": preference.op,
+            "value": preference.value,
+        }
+        for preference in preferences
+    ]
 
 
 __all__ = [

@@ -26,12 +26,14 @@ class _FakeClassifier:
         text: str,
         schema_context: list[dict[str, Any]],
         query_options: dict[str, Any],
+        preferences: list[dict[str, Any]] | None = None,
     ) -> EvidenceRequirementResult:
         self.calls.append(
             {
                 "text": text,
                 "schema_context": schema_context,
                 "query_options": query_options,
+                "preferences": preferences,
             }
         )
         return self.result
@@ -77,6 +79,16 @@ class EvidenceRequirementGateTest(unittest.TestCase):
         )
 
         self.assertEqual(len(classifier.calls), 1)
+        self.assertEqual(
+            [item["semantic"] for item in classifier.calls[0]["preferences"]],
+            [
+                "major_name",
+                "school_province",
+                "employment_outlook",
+                "school_quality",
+                "risk_preference",
+            ],
+        )
         self.assertEqual(
             [preference.semantic for preference in result.filtered_intent.preferences],
             ["major_name", "school_province"],
