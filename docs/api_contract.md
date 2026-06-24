@@ -139,9 +139,10 @@ query types 和 unsupported fields。自然语言推荐请求可以由 DeepSeek 
 为 `evidence_requirement_classification_failed`，
 `planner.evidence_requirements.status=classification_failed`。`planner_mode=auto`
 可以降级到 legacy verified planner，并把失败记录放入
-`planner.prior_planner.evidence_requirements`。公开 metadata 只能暴露 `error_type`、
-`fallback_reason`、净化后的 `rejected_requirements` 和 `token_usage`，不能包含 raw exception
-text、stack trace、绝对路径、secret 或 prompt 原文。
+`planner.prior_planner.evidence_requirements`。失败时的 error details 只能暴露 `error_type`、
+`fallback_reason`、净化后的 `rejected_requirements` 和 `token_usage`；基础 trace 字段仍保留
+`status`、`provider`、`called` 和 `fallback_used`。公开 metadata 不能包含 raw exception text、
+stack trace、绝对路径、secret 或 prompt 原文。
 
 推荐请求只有分数没有省排位时必须返回 `status=needs_confirmation`，
 `execution_summary.sql` 为空，不能返回 provisional recommendation rows。可选 LLM rerank 只能在

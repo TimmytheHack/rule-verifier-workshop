@@ -126,7 +126,7 @@ DeepSeekSemanticIntentExtractor
 -> EvidencePack
 ```
 
-第一版 gate 只覆盖 uploaded admissions 的 `semantic_recommendation`，且只在 LLM semantic planner 路径上运行；它不覆盖 `admissions_major_rank`、legacy planner、supplied debug intent、template answer generation、raw SQL planner、reviewed KB ingestion 或 ranking policy registry。
+第一版 gate 只覆盖 uploaded admissions 的 `semantic_recommendation`，且只在 LLM semantic planner 路径上运行；它不改变 `admissions_major_rank`、legacy planner、supplied debug intent 或 template answer generation，也不提供 raw SQL planner、reviewed KB ingestion 或 ranking policy registry 能力。
 
 对 uploaded admissions 数据集，Workbench 的 `planner_mode=auto` 会先尝试
 `DeepSeekSemanticIntentExtractor`，让 LLM 提出 `SemanticIntent.query_type` 和候选偏好；若 query type
