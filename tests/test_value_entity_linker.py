@@ -356,6 +356,44 @@ class ReviewedValueEntityLinkerTest(unittest.TestCase):
                 self.assertEqual(result.proposed_rules[0]["operator"], "eq")
                 self.assertEqual(result.proposed_rules[0]["value"], "深圳大学")
 
+    def test_preposed_single_character_negation_does_not_execute(self) -> None:
+        cases = [
+            ("别去深圳大学", "university_name"),
+            ("别报深圳大学", "university_name"),
+            ("别选深圳大学", "university_name"),
+            ("别考虑深圳大学", "university_name"),
+            ("别去深圳的大学", "city"),
+        ]
+        for text, field_id in cases:
+            with self.subTest(text=text):
+                result = _link(text)
+
+                self.assertEqual(result.accepted_links, [])
+                self.assertEqual(result.proposed_rules, [])
+                self.assertEqual(result.not_executed_links[0]["field_id"], field_id)
+                self.assertEqual(
+                    result.not_executed_links[0]["reason"],
+                    "否定/排除上下文不能直接执行为正向实体筛选。",
+                )
+
+    def test_trailing_fee_negation_does_not_block_entity_preference(self) -> None:
+        cases = [
+            ("想去深圳大学，不要学费太贵", "university_name", "深圳大学"),
+            ("想去深圳大学不想学费太高", "university_name", "深圳大学"),
+            ("想去深圳的大学，不要学费太贵", "city", "深圳"),
+            ("想去深圳的大学不想学费太高", "city", "深圳"),
+        ]
+        for text, field_id, value in cases:
+            with self.subTest(text=text):
+                result = _link(text)
+
+                self.assertEqual(
+                    [(link["field_id"], link["value"]) for link in result.accepted_links],
+                    [(field_id, value)],
+                )
+                self.assertEqual(len(result.proposed_rules), 1)
+                self.assertEqual(result.proposed_rules[0]["field_id"], field_id)
+
 
 def _link(
     text: str,

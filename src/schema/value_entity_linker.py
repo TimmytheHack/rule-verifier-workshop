@@ -32,7 +32,17 @@ NEGATION_TERMS = (
     "不在",
 )
 SINGLE_CHARACTER_NEGATION_TERMS = ("别",)
-COST_NEGATION_PREFIXES = ("不要太贵", "不要太高", "不想太贵", "不想太高")
+SINGLE_CHARACTER_NEGATION_VERBS = ("去", "报", "选", "考虑")
+COST_NEGATION_PREFIXES = (
+    "不要太贵",
+    "不要太高",
+    "不想太贵",
+    "不想太高",
+    "不要学费太贵",
+    "不要学费太高",
+    "不想学费太贵",
+    "不想学费太高",
+)
 DISTANCE_AFTER_TERMS = ("近", "远", "太远")
 BOUNDARY_AFTER_TERMS = ("附近", "周边", "旁边")
 IDENTITY_TERMS = ("户籍", "考生", "生源", "籍贯")
@@ -419,7 +429,13 @@ def _has_before_negation(before: str) -> bool:
     if any(term in before for term in phrase_terms):
         return True
     stripped = before.rstrip(AFTER_CONTEXT_PREFIX_CHARS)
-    return any(stripped.endswith(term) for term in SINGLE_CHARACTER_NEGATION_TERMS)
+    if any(stripped.endswith(term) for term in SINGLE_CHARACTER_NEGATION_TERMS):
+        return True
+    return any(
+        stripped.endswith(f"{term}{verb}")
+        for term in SINGLE_CHARACTER_NEGATION_TERMS
+        for verb in SINGLE_CHARACTER_NEGATION_VERBS
+    )
 
 
 def _has_after_negation(normalized_after: str) -> bool:
