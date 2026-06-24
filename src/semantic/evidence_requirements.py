@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import inspect
 import json
 import re
 from typing import Any, Literal, Protocol
@@ -89,16 +90,16 @@ class DeepSeekEvidenceRequirementClassifier:
         schema_context: list[dict[str, Any]],
         query_options: dict[str, Any],
     ) -> EvidenceRequirementResult:
-        response = self.client.chat_json(
-            system_prompt=_system_prompt(),
-            user_prompt=_user_prompt(
+        response = _chat_json(
+            self.client,
+            _system_prompt(),
+            _user_prompt(
                 text=text,
                 schema_context=schema_context,
                 query_options=query_options,
             ),
         )
-        payload = getattr(response, "payload", {})
-        usage = getattr(response, "usage", {})
+        payload, usage = _response_payload_and_usage(response)
         requirements: list[EvidenceRequirement] = []
         rejected_requirements: list[dict[str, Any]] = []
 
@@ -218,6 +219,30 @@ def _usage_dict(value: Any) -> dict[str, int]:
         for key, item in value.items()
         if isinstance(key, str) and isinstance(item, int)
     }
+
+
+def _chat_json(client: JSONChatClient, system_prompt: str, user_prompt: str) -> Any:
+    signature = inspect.signature(client.chat_json)
+    if (
+        "messages" in signature.parameters
+        and "system_prompt" not in signature.parameters
+    ):
+        return client.chat_json(
+            messages=[
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": user_prompt},
+            ],
+            temperature=0.0,
+        )
+    return client.chat_json(system_prompt=system_prompt, user_prompt=user_prompt)
+
+
+def _response_payload_and_usage(response: Any) -> tuple[Any, Any]:
+    if isinstance(response, dict):
+        usage = response.get("usage") or {}
+        payload = {str(key): value for key, value in response.items() if key != "usage"}
+        return payload, usage
+    return getattr(response, "payload", {}), getattr(response, "usage", {})
 
 
 def _rejection(

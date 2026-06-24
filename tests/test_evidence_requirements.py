@@ -258,6 +258,50 @@ class EvidenceRequirementTest(unittest.TestCase):
 
         self.assertEqual({}, result.usage)
 
+    def test_messages_style_client_response_is_supported(self) -> None:
+        class _MessagesClient:
+            def __init__(self) -> None:
+                self.calls: list[dict[str, object]] = []
+
+            def chat_json(
+                self,
+                messages: list[dict[str, object]],
+                temperature: float = 0.0,
+            ) -> dict[str, object]:
+                self.calls.append(
+                    {"messages": messages, "temperature": temperature}
+                )
+                return {
+                    "requirements": [
+                        {
+                            "source_text": "想读计算机",
+                            "requirement_type": "table_field",
+                            "candidate_semantic": "major_name",
+                            "rationale": "需要专业字段。",
+                        }
+                    ],
+                    "usage": {
+                        "prompt_tokens": 5,
+                        "completion_tokens": 3,
+                        "total_tokens": 8,
+                    },
+                }
+
+        client = _MessagesClient()
+        result = DeepSeekEvidenceRequirementClassifier(client).classify(
+            text="想读计算机",
+            schema_context=[{"field_id": "major_name"}],
+            query_options={"query_types": ["semantic_recommendation"]},
+        )
+
+        self.assertEqual(len(client.calls), 1)
+        self.assertEqual(client.calls[0]["temperature"], 0.0)
+        self.assertEqual(
+            result.requirements[0].candidate_semantic,
+            "major_name",
+        )
+        self.assertEqual(result.usage["total_tokens"], 8)
+
     def test_blank_candidate_semantic_becomes_none(self) -> None:
         result, _client = self._classify(
             {
