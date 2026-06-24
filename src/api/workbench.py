@@ -306,6 +306,20 @@ class EvidenceRequirementGateAttempt:
     unanswerable_intents: list[dict[str, Any]] = field(default_factory=list)
 
 
+class EvidenceRequirementClassificationError(RuntimeError):
+    """evidence requirement classifier 返回拒绝记录时使用。"""
+
+    def __init__(
+        self,
+        *,
+        rejected_requirements: list[dict[str, Any]],
+        usage: dict[str, int],
+    ) -> None:
+        super().__init__("evidence requirement classification rejected records")
+        self.rejected_requirements = list(rejected_requirements)
+        self.usage = dict(usage)
+
+
 @dataclass(frozen=True)
 class SemanticPlannerBlockedResult:
     """强制 LLM semantic planner 失败时的 contract-ready 结果。"""
@@ -729,19 +743,9 @@ def _run_semantic_capability_query(
                     planner_attempt.planner,
                 )
             except Exception as exc:  # noqa: BLE001 - gate 失败不能执行 LLM semantic SQL。
-                planner_attempt = _with_planner_fallback(
+                planner_attempt = _with_evidence_requirement_failure(
                     planner_attempt,
-                    reason="evidence_requirement_classification_failed",
-                    evidence_requirements={
-                        "status": "classification_failed",
-                        "provider": "deepseek",
-                        "called": True,
-                        "fallback_used": True,
-                        "fallback_reason": (
-                            "evidence_requirement_classification_failed"
-                        ),
-                        "error_type": type(exc).__name__,
-                    },
+                    exc,
                 )
                 if config.planner_mode == "llm_semantic":
                     return _semantic_planner_blocked_run(config, planner_attempt)
@@ -823,17 +827,9 @@ def _run_semantic_capability_query(
             intent_attempt.planner,
         )
     except Exception as exc:  # noqa: BLE001 - gate 失败不能执行 LLM semantic SQL。
-        intent_attempt = _with_planner_fallback(
+        intent_attempt = _with_evidence_requirement_failure(
             intent_attempt,
-            reason="evidence_requirement_classification_failed",
-            evidence_requirements={
-                "status": "classification_failed",
-                "provider": "deepseek",
-                "called": True,
-                "fallback_used": True,
-                "fallback_reason": "evidence_requirement_classification_failed",
-                "error_type": type(exc).__name__,
-            },
+            exc,
         )
         if config.planner_mode == "llm_semantic":
             return _semantic_planner_blocked_run(config, intent_attempt)
@@ -1007,6 +1003,11 @@ def _semantic_evidence_requirement_gate_attempt(
         schema_context=schema_context,
         query_options=query_options,
     )
+    if gate.rejected_requirements:
+        raise EvidenceRequirementClassificationError(
+            rejected_requirements=gate.rejected_requirements,
+            usage=gate.usage,
+        )
     return EvidenceRequirementGateAttempt(
         intent=gate.filtered_intent,
         planner=gate.planner,
@@ -1026,6 +1027,28 @@ def _should_run_evidence_requirement_gate(
         and intent.query_type == "semantic_recommendation"
         and planner.get("mode") == "llm_semantic"
         and not planner.get("fallback_used")
+    )
+
+
+def _with_evidence_requirement_failure(
+    attempt: SemanticPlannerAttempt,
+    exc: Exception,
+) -> SemanticPlannerAttempt:
+    evidence_requirements = {
+        "status": "classification_failed",
+        "provider": "deepseek",
+        "called": True,
+        "fallback_used": True,
+        "fallback_reason": "evidence_requirement_classification_failed",
+        "error_type": type(exc).__name__,
+    }
+    if isinstance(exc, EvidenceRequirementClassificationError):
+        evidence_requirements["rejected_requirements"] = exc.rejected_requirements
+        evidence_requirements["token_usage"] = exc.usage
+    return _with_planner_fallback(
+        attempt,
+        reason="evidence_requirement_classification_failed",
+        evidence_requirements=evidence_requirements,
     )
 
 

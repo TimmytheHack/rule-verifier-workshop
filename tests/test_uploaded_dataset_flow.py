@@ -1022,6 +1022,67 @@ print(json.dumps({
         self.assertEqual(planner["fallback_reason"], "intent_extraction_failed")
         self.assertEqual(planner["error_type"], "RuntimeError")
 
+    def test_llm_semantic_blocks_when_evidence_gate_payload_is_invalid(
+        self,
+    ) -> None:
+        query = "我的排位是15000，想读人工智能，计算机，而且想留在广东省，请给出推荐"
+        fake_client = FakeSemanticIntentClient(
+            [
+                _semantic_recommendation_intent(),
+                {"bad": "shape"},
+                {
+                    "criteria": [
+                        {
+                            "criterion_id": "should_not_be_called",
+                            "source_text": "我的排位是15000",
+                            "required_field": "major_min_rank",
+                            "operation": "numeric_distance_to_user_value",
+                            "value": 15000,
+                            "priority": 1,
+                            "direction": "desc",
+                            "rationale": "gate 失败后不应生成排序计划。",
+                        }
+                    ],
+                },
+            ]
+        )
+        with TemporaryDirectory() as directory:
+            service, dataset_id = _queryable_uploaded_admissions(
+                Path(directory),
+                use_excel=False,
+            )
+
+            with patch(
+                "src.api.workbench.deepseek_slot_adapter_enabled",
+                return_value=True,
+            ):
+                with patch(
+                    "src.api.workbench._interactive_deepseek_client",
+                    return_value=fake_client,
+                ):
+                    response = service.query(
+                        dataset_id,
+                        user_input=query,
+                        soft_preferences={"prompt": query},
+                        planner_mode="llm_semantic",
+                    )
+
+        assert_workbench_contract(self, response)
+        self.assertEqual(len(fake_client.calls), 2)
+        self.assertEqual(response["status"], "blocked")
+        self.assertEqual(response["result_count"], 0)
+        self.assertEqual(response["debug_trace"]["execution"].get("sql", ""), "")
+        planner = response["evidence_pack"]["planner"]
+        self.assertTrue(planner["fallback_used"])
+        self.assertEqual(
+            planner["fallback_reason"],
+            "evidence_requirement_classification_failed",
+        )
+        gate = planner["evidence_requirements"]
+        self.assertEqual(gate["status"], "classification_failed")
+        self.assertTrue(gate["rejected_requirements"])
+        self.assertNotIn("ranking_plan", planner)
+
     def test_uploaded_major_rank_intent_missing_rank_is_normalized_from_text(
         self,
     ) -> None:
