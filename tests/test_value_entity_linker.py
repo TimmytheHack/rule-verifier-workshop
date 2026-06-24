@@ -319,6 +319,43 @@ class ReviewedValueEntityLinkerTest(unittest.TestCase):
             ],
         )
 
+    def test_special_adverb_does_not_trigger_single_character_negation(self) -> None:
+        university_result = _link("特别想去深圳大学")
+
+        self.assertEqual(
+            [(link["field_id"], link["value"]) for link in university_result.accepted_links],
+            [("university_name", "深圳大学")],
+        )
+        self.assertEqual(len(university_result.proposed_rules), 1)
+        self.assertEqual(university_result.proposed_rules[0]["field_id"], "university_name")
+        self.assertEqual(university_result.proposed_rules[0]["operator"], "eq")
+        self.assertEqual(university_result.proposed_rules[0]["value"], "深圳大学")
+
+        city_result = _link("特别想去深圳的大学")
+
+        self.assertEqual(
+            [(link["field_id"], link["value"]) for link in city_result.accepted_links],
+            [("city", "深圳")],
+        )
+        self.assertEqual(len(city_result.proposed_rules), 1)
+        self.assertEqual(city_result.proposed_rules[0]["field_id"], "city")
+        self.assertEqual(city_result.proposed_rules[0]["operator"], "in_contains")
+        self.assertEqual(city_result.proposed_rules[0]["value"], ["深圳"])
+
+    def test_trailing_cost_negation_does_not_block_university_preference(self) -> None:
+        for text in ("想去深圳大学，不要太贵", "想去深圳大学不要太贵"):
+            with self.subTest(text=text):
+                result = _link(text)
+
+                self.assertEqual(
+                    [(link["field_id"], link["value"]) for link in result.accepted_links],
+                    [("university_name", "深圳大学")],
+                )
+                self.assertEqual(len(result.proposed_rules), 1)
+                self.assertEqual(result.proposed_rules[0]["field_id"], "university_name")
+                self.assertEqual(result.proposed_rules[0]["operator"], "eq")
+                self.assertEqual(result.proposed_rules[0]["value"], "深圳大学")
+
 
 def _link(
     text: str,

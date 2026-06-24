@@ -31,6 +31,8 @@ NEGATION_TERMS = (
     "避免",
     "不在",
 )
+SINGLE_CHARACTER_NEGATION_TERMS = ("别",)
+COST_NEGATION_PREFIXES = ("不要太贵", "不要太高", "不想太贵", "不想太高")
 DISTANCE_AFTER_TERMS = ("近", "远", "太远")
 BOUNDARY_AFTER_TERMS = ("附近", "周边", "旁边")
 IDENTITY_TERMS = ("户籍", "考生", "生源", "籍贯")
@@ -405,9 +407,25 @@ def _has_negation_context(candidate: dict[str, Any]) -> bool:
     before = str(candidate.get("context_before") or "")
     after = str(candidate.get("context_after") or "")
     normalized_after = after.lstrip(AFTER_CONTEXT_PREFIX_CHARS)
-    return any(term in before for term in NEGATION_TERMS) or any(
-        normalized_after.startswith(term) for term in NEGATION_TERMS
-    )
+    return _has_before_negation(before) or _has_after_negation(normalized_after)
+
+
+def _has_before_negation(before: str) -> bool:
+    phrase_terms = [
+        term
+        for term in NEGATION_TERMS
+        if term not in SINGLE_CHARACTER_NEGATION_TERMS
+    ]
+    if any(term in before for term in phrase_terms):
+        return True
+    stripped = before.rstrip(AFTER_CONTEXT_PREFIX_CHARS)
+    return any(stripped.endswith(term) for term in SINGLE_CHARACTER_NEGATION_TERMS)
+
+
+def _has_after_negation(normalized_after: str) -> bool:
+    if any(normalized_after.startswith(term) for term in COST_NEGATION_PREFIXES):
+        return False
+    return any(normalized_after.startswith(term) for term in NEGATION_TERMS)
 
 
 def _has_distance_context(candidate: dict[str, Any]) -> bool:
