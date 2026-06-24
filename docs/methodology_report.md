@@ -114,25 +114,26 @@ EvidencePack constrains answer.
 uploaded admissions recommendation 现在使用 reviewed semantic capability path：
 
 ```text
-用户问题
--> DeepSeekSemanticIntentExtractor 或已注入 SemanticIntent
+DeepSeekSemanticIntentExtractor
+-> EvidenceRequirementClassifier
 -> PreferenceGrounder
 -> SemanticQueryVerifier
 -> SemanticSQLBuilder
--> DuckDB bounded candidates
+-> DuckDBExecutor
 -> RankingPlan
 -> RankingVerifier
 -> GenericRankingEngine
--> criterion_evidence
 -> EvidencePack
--> AnswerGenerator
 ```
 
+第一版 gate 只覆盖 uploaded admissions 的 `semantic_recommendation`，且只在 LLM semantic planner 路径上运行；它不覆盖 `admissions_major_rank`、legacy planner、supplied debug intent、template answer generation、raw SQL planner、reviewed KB ingestion 或 ranking policy registry。
+
 对 uploaded admissions 数据集，Workbench 的 `planner_mode=auto` 会先尝试
-`DeepSeekSemanticIntentExtractor`，让 LLM 提出 `SemanticIntent.query_type` 和候选偏好，再把
-`admissions_major_rank` 或 `semantic_recommendation` 交给系统 planner 验证并执行。LLM 不可用
-或抽取失败时，`auto` 可降级到 legacy verified planner；`EvidencePack.planner` 必须记录
-`mode`、`provider`、`called`、`fallback_used`、`fallback_reason`、`token_usage` 和必要的错误类型摘要。
+`DeepSeekSemanticIntentExtractor`，让 LLM 提出 `SemanticIntent.query_type` 和候选偏好；若 query type
+是 `semantic_recommendation`，系统先用 `EvidenceRequirementClassifier` 分流证据需求，再把剩余
+`table_field` preference 交给系统 planner 验证并执行。LLM 不可用、抽取失败，或适用的
+`EvidenceRequirementClassifier` 失败时，`auto` 可降级到 legacy verified planner；`EvidencePack.planner` 必须记录
+`mode`、`provider`、`called`、`fallback_used`、`fallback_reason`、`token_usage` 和必要的 `error_type`。
 显式 `planner_mode=legacy` 会跳过 LLM semantic planner。判断 DeepSeek 是否参与，应看
 `token_usage.extractor` 和 `EvidencePack.planner`，不能只根据回答是否可用推断。
 
@@ -141,17 +142,18 @@ row。`RankingPlan` 是 LLM 生成的可验证计划，不是 recommendation fun
 operation：`text_match`、`equals_preferred_value`、`in_preferred_set`、
 `numeric_distance_to_user_value`、`numeric_higher_is_better`、`numeric_lower_is_better`、
 `boolean_preferred_value`、`missing_value_penalty`。所有自然语言说服力来自系统生成的
-`criterion_evidence`，不是自由 CoT。`PreferenceGrounder` 会把 `major_name contains_any`、
-`school_province in` 等 reviewed
-字段变成可执行 filter，把 `school_country_or_region` 这类缺字段偏好保留到
-`not_executed_preferences`。只有分数没有省排位时，`recommendation` 必须返回
+`criterion_evidence`，不是自由 CoT。`EvidenceRequirementClassifier` 会先把需要 reviewed KB、
+reviewed ranking policy、用户边界或 unsupported 的 preference 排除到
+`not_executed_preferences` / `unanswerable_intents`；`PreferenceGrounder` 只接收 gate 后的
+`table_field` preference，把 `major_name contains_any`、`school_province in` 等 reviewed 字段变成可执行 filter。
+只有分数没有省排位时，`recommendation` 必须返回
 `needs_confirmation`，`execution_summary.sql` 为空。历史 `EvidenceBoundedReranker` 只能作为
 受限候选集内的辅助实验，不是语义排序权威；它不能绕过 verified `RankingPlan`、`RankingVerifier`
 或 EvidencePack 中的 `ranking.status`、`excluded_criteria`、`criterion_evidence` 语义。
 
-在 `semantic_recommendation` 且 LLM semantic planner 成功时，Workbench 会自动调用
-`DeepSeekRankingPlanGenerator` 生成候选 `RankingPlan`，并把这一层的状态写入
-`EvidencePack.planner.ranking_plan`。该候选计划仍必须经过 `RankingVerifier`：例如
+在 `semantic_recommendation` 且 LLM semantic planner 与 evidence gate 成功时，Workbench 才会调用
+`DeepSeekRankingPlanGenerator`，并且候选 `RankingPlan` prompt 只能看到 gate 后的 intent。
+这一层状态会写入 `EvidencePack.planner.ranking_plan`。该候选计划仍必须经过 `RankingVerifier`：例如
 `numeric_distance_to_user_value` 只有在 value 和用户输入的省排位一致时，才会获得可信
 value evidence；专业、省份等已用于 SQL filter 的 preference 不会自动升级成排序证据。
 验证失败或生成失败时，系统保留 verified SQL 候选集并标记为候选列表，不声称已完成推荐排序。

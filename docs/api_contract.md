@@ -132,6 +132,17 @@ query types 和 unsupported fields。自然语言推荐请求可以由 DeepSeek 
   `school_country_or_region` 时，“不想去国外”不能执行。
 - `unanswerable_intents`：缺字段、unsupported op 或缺少位次等不可回答原因。
 
+`evidence_pack.planner.evidence_requirements` 记录 LLM semantic recommendation 的 evidence gate：`status`、`provider`、`called`、`fallback_used`、`token_usage`、`requirements`、`excluded_preferences` 和 `rejected_requirements`。该节点只说明证据需求分流，不代表字段可执行；最终可执行性仍由 `PreferenceGrounder`、`SemanticQueryVerifier` 和 `RankingVerifier` 决定。
+
+`EvidenceRequirementClassifier` 失败时，显式 `planner_mode=llm_semantic` 必须返回
+`status=blocked`，不执行 SQL，也不能生成 `ranking_plan`；`planner.fallback_reason`
+为 `evidence_requirement_classification_failed`，
+`planner.evidence_requirements.status=classification_failed`。`planner_mode=auto`
+可以降级到 legacy verified planner，并把失败记录放入
+`planner.prior_planner.evidence_requirements`。公开 metadata 只能暴露 `error_type`、
+`fallback_reason`、净化后的 `rejected_requirements` 和 `token_usage`，不能包含 raw exception
+text、stack trace、绝对路径、secret 或 prompt 原文。
+
 推荐请求只有分数没有省排位时必须返回 `status=needs_confirmation`，
 `execution_summary.sql` 为空，不能返回 provisional recommendation rows。可选 LLM rerank 只能在
 bounded candidates 的 `row_id` 内排序；`rerank_validation.fallback_used=true` 时，回答只能说明已回退到确定性排序。
@@ -400,11 +411,13 @@ NL -> candidate QueryAST -> FieldGrounder -> OperationVerifier -> AnswerabilityG
 缺字段或 unsupported operation 的偏好。
 
 uploaded admissions 的 `planner_mode=llm_semantic` 或可用的 `auto` 路径中，
-`semantic_recommendation` 会先让 DeepSeek 生成候选 `SemanticIntent`，再让 DeepSeek 生成候选
-`RankingPlan`。第二步只会写入 `evidence_pack.planner.ranking_plan`，状态可能是
+`semantic_recommendation` 会先让 DeepSeek 生成候选 `SemanticIntent`，再运行
+`EvidenceRequirementClassifier`。只有 gate 后剩余的 `table_field` preference 可以进入
+`PreferenceGrounder`、`SemanticQueryVerifier` 和 verified SQL；随后 DeepSeek 才能基于 gate
+后的 intent 生成候选 `RankingPlan`。`evidence_pack.planner.ranking_plan` 状态可能是
 `generated`、`empty`、`generation_failed` 或 `deepseek_disabled`；排序是否执行仍只看
-`evidence_pack.ranking.status`。`token_usage.extractor` 会合并 intent 抽取和 RankingPlan 生成的
-用量。
+`evidence_pack.ranking.status`。`token_usage.extractor` 会合并 intent 抽取、evidence gate
+和 RankingPlan 生成的用量。
 
 ## EvidencePack reference-only 资料
 
