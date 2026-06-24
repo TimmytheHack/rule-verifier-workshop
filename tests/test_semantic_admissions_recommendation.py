@@ -235,7 +235,7 @@ class SemanticAdmissionsRecommendationPlannerTest(unittest.TestCase):
         self.assertEqual(result.status, "needs_confirmation")
         warning_codes = [warning["code"] for warning in result.warnings]
         self.assertEqual(
-            warning_codes[:2],
+            warning_codes,
             ["score_without_rank", "preference_not_executed"],
         )
         self.assertIn(
@@ -255,7 +255,7 @@ class SemanticAdmissionsRecommendationPlannerTest(unittest.TestCase):
         self.assertEqual(result.status, "blocked")
         warning_codes = [warning["code"] for warning in result.warnings]
         self.assertEqual(
-            warning_codes[:2],
+            warning_codes,
             ["missing_recipe_fields", "preference_not_executed"],
         )
         self.assertIn(
@@ -263,6 +263,33 @@ class SemanticAdmissionsRecommendationPlannerTest(unittest.TestCase):
             [warning.get("source_text") for warning in result.warnings],
         )
         self.assertEqual(result.not_executed_preferences[0]["source_text"], "好就业")
+        self.assertEqual(
+            [item["field_id"] for item in result.unanswerable_intents],
+            ["field_absent_from_reviewed_schema", "employment_outlook"],
+        )
+
+    def test_verification_blocked_preserves_preclassified_evidence(self) -> None:
+        result = self._run(
+            _recommendation_intent(),
+            pre_not_executed_preferences=_pre_not_executed_employment(),
+            pre_unanswerable_intents=_pre_unanswerable_employment(),
+            reviewed_mapping_ops={"major_min_rank": ["sort"]},
+        )
+
+        self.assertEqual(result.status, "blocked")
+        self.assertEqual(
+            result.execution_summary["verification_issues"][0]["code"],
+            "unsupported_op",
+        )
+        self.assertEqual(result.not_executed_preferences[0]["source_text"], "好就业")
+        self.assertEqual(
+            result.execution_summary["not_executed_preferences"][0]["source_text"],
+            "好就业",
+        )
+        self.assertIn(
+            "好就业",
+            [warning.get("source_text") for warning in result.warnings],
+        )
 
     def test_ranking_plan_does_not_trust_grounded_filter_values(self) -> None:
         result = self._run(
@@ -388,6 +415,7 @@ class SemanticAdmissionsRecommendationPlannerTest(unittest.TestCase):
         pre_not_executed_preferences=None,
         pre_unanswerable_intents=None,
         required_recipe_field_ids=None,
+        reviewed_mapping_ops=None,
     ):
         with TemporaryDirectory() as directory:
             rows = [dict(row) for row in NEW_ADMISSIONS_ROWS]
@@ -402,6 +430,11 @@ class SemanticAdmissionsRecommendationPlannerTest(unittest.TestCase):
                 domain_config = _domain_with_required_recipe_fields(
                     domain_config,
                     required_recipe_field_ids,
+                )
+            if reviewed_mapping_ops is not None:
+                domain_config = _domain_with_reviewed_mapping_ops(
+                    domain_config,
+                    reviewed_mapping_ops,
                 )
             build_structured_store_from_dataset(
                 dataset=dataset,
@@ -548,17 +581,36 @@ def _domain_with_required_recipe_fields(
     domain_config: DomainConfig,
     field_ids: list[str],
 ) -> DomainConfig:
-    output = DomainConfig(
-        domain_id=domain_config.domain_id,
-        root=domain_config.root,
-        payload=dict(domain_config.payload),
-    )
+    output = _domain_with_semantic_capabilities_copy(domain_config)
     semantic_capabilities = deepcopy(domain_config.semantic_capabilities)
     recipes = semantic_capabilities.setdefault("query_recipes", {})
     recipe = recipes.setdefault("semantic_recommendation", {})
     recipe["required_field_ids"] = list(field_ids)
     output._semantic_capabilities_payload = semantic_capabilities
     return output
+
+
+def _domain_with_reviewed_mapping_ops(
+    domain_config: DomainConfig,
+    field_ops: dict[str, list[str]],
+) -> DomainConfig:
+    output = _domain_with_semantic_capabilities_copy(domain_config)
+    semantic_capabilities = deepcopy(domain_config.semantic_capabilities)
+    mappings = semantic_capabilities.setdefault("reviewed_mappings", {})
+    for field_id, allowed_ops in field_ops.items():
+        mappings[field_id]["allowed_ops"] = list(allowed_ops)
+    output._semantic_capabilities_payload = semantic_capabilities
+    return output
+
+
+def _domain_with_semantic_capabilities_copy(
+    domain_config: DomainConfig,
+) -> DomainConfig:
+    return DomainConfig(
+        domain_id=domain_config.domain_id,
+        root=domain_config.root,
+        payload=dict(domain_config.payload),
+    )
 
 
 def _ranking_plan(criteria: list[dict[str, object]]) -> RankingPlan:

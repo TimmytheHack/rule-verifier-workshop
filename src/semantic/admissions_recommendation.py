@@ -337,7 +337,10 @@ def _rank_confirmation_result(
         }
     ]
     if pre_not_executed:
-        warnings = [*warnings, *_context_warnings(intent, pre_not_executed)]
+        warnings = [
+            *warnings,
+            *_preference_not_executed_warnings(pre_not_executed),
+        ]
     return SemanticAdmissionsRecommendationResult(
         query_type=PUBLIC_QUERY_TYPE,
         status="needs_confirmation",
@@ -899,16 +902,7 @@ def _context_warnings(
     intent: SemanticIntent,
     not_executed_preferences: list[dict[str, Any]],
 ) -> list[dict[str, Any]]:
-    warnings = [
-        {
-            "code": "preference_not_executed",
-            "severity": "warning",
-            "field_id": item.get("field_id"),
-            "message": item.get("reason") or "偏好未执行。",
-            "source_text": item.get("source_text"),
-        }
-        for item in not_executed_preferences
-    ]
+    warnings = _preference_not_executed_warnings(not_executed_preferences)
     if not intent.user_context.subject_type:
         warnings.append(
             {
@@ -926,6 +920,21 @@ def _context_warnings(
             }
         )
     return warnings
+
+
+def _preference_not_executed_warnings(
+    not_executed_preferences: list[dict[str, Any]],
+) -> list[dict[str, Any]]:
+    return [
+        {
+            "code": "preference_not_executed",
+            "severity": "warning",
+            "field_id": item.get("field_id"),
+            "message": item.get("reason") or "偏好未执行。",
+            "source_text": item.get("source_text"),
+        }
+        for item in not_executed_preferences
+    ]
 
 
 def _blocked_missing_fields(
@@ -947,7 +956,10 @@ def _blocked_missing_fields(
         }
     ]
     if pre_not_executed:
-        warnings = [*warnings, *_context_warnings(intent, pre_not_executed)]
+        warnings = [
+            *warnings,
+            *_preference_not_executed_warnings(pre_not_executed),
+        ]
     return SemanticAdmissionsRecommendationResult(
         query_type=PUBLIC_QUERY_TYPE,
         status="blocked",
@@ -955,7 +967,6 @@ def _blocked_missing_fields(
         result_sections=_empty_sections(),
         answerable_intents=[],
         unanswerable_intents=[
-            *pre_unanswerable,
             *[
                 {
                     "field_id": field_id,
@@ -965,6 +976,7 @@ def _blocked_missing_fields(
                 }
                 for field_id in missing_fields
             ],
+            *pre_unanswerable,
         ],
         not_executed_preferences=pre_not_executed,
         execution_summary={
