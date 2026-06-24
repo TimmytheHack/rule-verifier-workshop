@@ -284,6 +284,20 @@ class ReviewedValueEntityLinkerTest(unittest.TestCase):
         self.assertEqual(result.accepted_links, [])
         self.assertEqual(result.proposed_rules, [])
 
+    def test_arbitrary_index_value_can_link_without_code_change(self) -> None:
+        result = _link("我想进测试理工大学", university_values=["测试理工大学"])
+
+        self.assertEqual(result.accepted_links[0]["field_id"], "university_name")
+        self.assertEqual(result.accepted_links[0]["value"], "测试理工大学")
+
+    def test_city_and_university_can_both_apply_when_spans_do_not_overlap(self) -> None:
+        result = _link("想在深圳读中山大学", university_values=["中山大学"])
+
+        self.assertEqual(
+            sorted((link["field_id"], link["value"]) for link in result.accepted_links),
+            [("city", "深圳"), ("university_name", "中山大学")],
+        )
+
     def test_recent_word_does_not_block_clear_city_expression(self) -> None:
         result = _link("最近想去深圳的大学")
 

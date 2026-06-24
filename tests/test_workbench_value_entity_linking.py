@@ -36,6 +36,9 @@ class WorkbenchValueEntityLinkingTest(unittest.TestCase):
             response["debug_trace"]["entity_linking"]["accepted_links"][0]["value"],
             "深圳大学",
         )
+        warning_messages = [warning["message"] for warning in response["warnings"]]
+        self.assertTrue(any("缺少科类" in message for message in warning_messages))
+        self.assertTrue(any("再选科目" in message for message in warning_messages))
 
     def test_shenzhen_city_prompt_filters_city_not_university(self) -> None:
         prompt = "我想去深圳的大学，目前排位15000，帮我看看有什么专业可以选"
@@ -72,6 +75,28 @@ class WorkbenchValueEntityLinkingTest(unittest.TestCase):
             "entity_linking_boundary_required",
         )
         self.assertEqual(linking["not_executed_links"][0]["source_text"], "深圳大学附近")
+
+    def test_nearby_boundary_preserves_other_city_value_in_same_rule(self) -> None:
+        prompt = "想找深圳大学附近的学校，也可以广州的大学，目前排位15000"
+        response = _run(prompt)
+
+        assert_workbench_contract(self, response)
+        filters = _filter_tuples(response)
+        self.assertIn(("城市", "in_contains", ["广州"]), filters)
+        self.assertNotIn(("城市", "in_contains", ["深圳"]), filters)
+
+        linking = response["evidence_pack"]["entity_linking"]
+        self.assertEqual(
+            [(link["field_id"], link["value"]) for link in linking["accepted_links"]],
+            [("city", "广州")],
+        )
+        self.assertIn(
+            ("深圳大学附近", "entity_linking_boundary_required"),
+            [
+                (link["source_text"], link["match_type"])
+                for link in linking["not_executed_links"]
+            ],
+        )
 
 
 def _run(prompt: str) -> dict[str, object]:

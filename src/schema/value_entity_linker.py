@@ -17,6 +17,7 @@ DEFAULT_LINKABLE_FIELDS: dict[str, dict[str, str]] = {
 }
 NEARBY_TERMS = ("附近", "周边", "旁边", "那边")
 LOCATION_PATTERNS = ("的大学", "市高校", "高校", "读大学", "上大学")
+LOCATION_BEFORE_PATTERNS = ("在", "去", "留在")
 NEGATION_TERMS = (
     "不要",
     "不想",
@@ -416,7 +417,12 @@ def _looks_like_location_expression(candidate: dict[str, Any]) -> bool:
         return True
     after = text[int(span[1]):]
     local_after = after[:8]
-    return any(pattern in local_after for pattern in LOCATION_PATTERNS)
+    before = str(candidate.get("context_before") or "")
+    local_before = before.rstrip(AFTER_CONTEXT_PREFIX_CHARS)
+    return (
+        any(pattern in local_after for pattern in LOCATION_PATTERNS)
+        or any(local_before.endswith(pattern) for pattern in LOCATION_BEFORE_PATTERNS)
+    )
 
 
 def _non_executable_context_reason(candidate: dict[str, Any]) -> str | None:
