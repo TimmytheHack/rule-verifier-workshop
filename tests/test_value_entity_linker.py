@@ -1,0 +1,169 @@
+from __future__ import annotations
+
+import unittest
+
+from src.adapters.data_warehouse import SchemaValueIndex
+from src.schema.schema_registry import SchemaRegistry
+from src.schema.value_entity_linker import ReviewedValueEntityLinker
+
+
+class ReviewedValueEntityLinkerTest(unittest.TestCase):
+    def test_university_exact_span_suppresses_city_substring(self) -> None:
+        result = _link("我想进深圳大学，目前排位15000")
+
+        self.assertEqual(
+            [(link["field_id"], link["value"]) for link in result.accepted_links],
+            [("university_name", "深圳大学")],
+        )
+        self.assertEqual(
+            [(link["field_id"], link["value"]) for link in result.suppressed_links],
+            [("city", "深圳")],
+        )
+        self.assertEqual(result.ambiguous_links, [])
+        self.assertEqual(result.not_executed_links, [])
+        self.assertEqual(result.proposed_rules[0]["field_id"], "university_name")
+        self.assertEqual(result.proposed_rules[0]["operator"], "eq")
+        self.assertEqual(result.proposed_rules[0]["value"], "深圳大学")
+        self.assertEqual(result.proposed_rules[0]["semantic_type"], "explicit_user_fact")
+
+    def test_city_expression_executes_city_not_university(self) -> None:
+        result = _link("我想去深圳的大学，目前排位15000")
+
+        self.assertEqual(
+            [(link["field_id"], link["value"]) for link in result.accepted_links],
+            [("city", "深圳")],
+        )
+        self.assertEqual(result.suppressed_links, [])
+        self.assertEqual(result.ambiguous_links, [])
+        self.assertEqual(result.proposed_rules[0]["field_id"], "city")
+        self.assertEqual(result.proposed_rules[0]["operator"], "in_contains")
+        self.assertEqual(result.proposed_rules[0]["value"], ["深圳"])
+
+    def test_nearby_expression_is_not_executed(self) -> None:
+        result = _link("想找深圳大学附近的学校")
+
+        self.assertEqual(result.accepted_links, [])
+        self.assertEqual(result.proposed_rules, [])
+        self.assertEqual(result.not_executed_links[0]["source_text"], "深圳大学附近")
+        self.assertEqual(
+            result.not_executed_links[0]["reason"],
+            "附近/周边表达需要地理距离或用户确认边界，不能直接执行为院校或城市筛选。",
+        )
+
+    def test_same_span_exact_match_on_two_fields_is_ambiguous(self) -> None:
+        result = _link(
+            "想去南方学院",
+            extra_fields={
+                "college_name": {
+                    "source_column": "学院名称",
+                    "active": True,
+                    "type": "string",
+                    "allowed_ops": ["eq"],
+                    "lookup_complete": True,
+                    "lookup_values": ["南方学院"],
+                }
+            },
+            university_values=["南方学院"],
+        )
+
+        self.assertEqual(result.accepted_links, [])
+        self.assertEqual(len(result.ambiguous_links), 2)
+        self.assertEqual(result.proposed_rules, [])
+
+    def test_incomplete_lookup_does_not_execute_by_default(self) -> None:
+        result = _link("我想进深圳大学", university_lookup_complete=False)
+
+        self.assertEqual(result.accepted_links, [])
+        self.assertEqual(result.proposed_rules, [])
+        self.assertEqual(result.not_executed_links[0]["field_id"], "university_name")
+        self.assertEqual(
+            result.not_executed_links[0]["reason"],
+            "字段值索引不完整，不能直接执行实体筛选。",
+        )
+
+    def test_missing_value_index_fails_closed(self) -> None:
+        registry = _registry()
+        result = ReviewedValueEntityLinker(registry, None).link("我想进深圳大学")
+
+        self.assertEqual(result.status, "value_index_unavailable")
+        self.assertEqual(result.accepted_links, [])
+        self.assertEqual(result.proposed_rules, [])
+
+
+def _link(
+    text: str,
+    *,
+    university_values: list[str] | None = None,
+    university_lookup_complete: bool = True,
+    extra_fields: dict[str, dict[str, object]] | None = None,
+):
+    registry = _registry(extra_fields=extra_fields)
+    value_index = SchemaValueIndex(
+        _value_index_payload(
+            university_values=university_values or ["深圳大学"],
+            university_lookup_complete=university_lookup_complete,
+            extra_fields=extra_fields,
+        )
+    )
+    return ReviewedValueEntityLinker(registry, value_index).link(text)
+
+
+def _registry(
+    extra_fields: dict[str, dict[str, object]] | None = None,
+) -> SchemaRegistry:
+    configured = {
+        "university_name": {
+            "source_column": "院校名称",
+            "type": "string",
+            "allowed_ops": ["contains", "eq"],
+        },
+        "city": {
+            "source_column": "城市",
+            "type": "string",
+            "allowed_ops": ["contains", "in_contains"],
+        },
+        **(extra_fields or {}),
+    }
+    active = {
+        field_id: spec
+        for field_id, spec in configured.items()
+        if spec.get("active", True)
+    }
+    return SchemaRegistry(active_fields=active, configured_fields=configured)
+
+
+def _value_index_payload(
+    *,
+    university_values: list[str],
+    university_lookup_complete: bool,
+    extra_fields: dict[str, dict[str, object]] | None = None,
+) -> dict[str, object]:
+    fields = {
+        "university_name": {
+            "source_column": "院校名称",
+            "active": True,
+            "type": "string",
+            "allowed_ops": ["contains", "eq"],
+            "lookup_complete": university_lookup_complete,
+            "lookup_values": university_values,
+        },
+        "city": {
+            "source_column": "城市",
+            "active": True,
+            "type": "string",
+            "allowed_ops": ["contains", "in_contains"],
+            "lookup_complete": True,
+            "lookup_values": ["深圳", "广州"],
+        },
+    }
+    for field_id, spec in (extra_fields or {}).items():
+        fields[field_id] = dict(spec)
+    return {
+        "source": {"fingerprint": "fixture-index"},
+        "warehouse": {"row_count": 3},
+        "fields": fields,
+    }
+
+
+if __name__ == "__main__":
+    unittest.main()
