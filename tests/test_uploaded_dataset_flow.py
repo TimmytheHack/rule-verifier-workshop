@@ -473,6 +473,140 @@ class UploadedDatasetFlowTest(unittest.TestCase):
         self.assertEqual(response["token_usage"]["extractor"]["total_tokens"], 49)
         self.assertIn("未执行偏好", response["answer"])
 
+    def test_evidence_gate_failure_blocks_forced_llm_semantic(self) -> None:
+        query = "我的排位是15000，想读人工智能，计算机，好就业，请给出推荐"
+        fake_client = FailingAfterFirstSemanticClient(
+            _semantic_recommendation_intent(),
+            RuntimeError("classifier unavailable"),
+        )
+        with TemporaryDirectory() as directory:
+            service, dataset_id = _queryable_uploaded_admissions(
+                Path(directory),
+                use_excel=False,
+            )
+
+            with patch(
+                "src.api.workbench.deepseek_slot_adapter_enabled",
+                return_value=True,
+            ):
+                with patch(
+                    "src.api.workbench._interactive_deepseek_client",
+                    return_value=fake_client,
+                ):
+                    response = service.query(
+                        dataset_id,
+                        user_input=query,
+                        planner_mode="llm_semantic",
+                        soft_preferences={"prompt": query},
+                    )
+
+        assert_workbench_contract(self, response)
+        self.assertEqual(response["status"], "blocked")
+        planner = response["evidence_pack"]["planner"]
+        self.assertEqual(
+            planner["fallback_reason"],
+            "evidence_requirement_classification_failed",
+        )
+        self.assertEqual(
+            planner["evidence_requirements"]["status"],
+            "classification_failed",
+        )
+        self.assertEqual(response["debug_trace"]["execution"]["sql"], "")
+
+    def test_evidence_gate_failure_falls_back_in_auto_mode(self) -> None:
+        query = "我的排位是15000，想读人工智能，计算机，好就业，请给出推荐"
+        fake_client = FailingAfterFirstSemanticClient(
+            _semantic_recommendation_intent(),
+            RuntimeError("classifier unavailable"),
+        )
+        with TemporaryDirectory() as directory:
+            service, dataset_id = _queryable_uploaded_admissions(
+                Path(directory),
+                use_excel=False,
+            )
+
+            with patch(
+                "src.api.workbench.deepseek_slot_adapter_enabled",
+                return_value=True,
+            ):
+                with patch(
+                    "src.api.workbench._interactive_deepseek_client",
+                    return_value=fake_client,
+                ):
+                    response = service.query(
+                        dataset_id,
+                        user_input=query,
+                        soft_preferences={"prompt": query},
+                    )
+
+        assert_workbench_contract(self, response)
+        planner = response["evidence_pack"]["planner"]
+        self.assertEqual(planner["mode"], "legacy")
+        self.assertTrue(planner["fallback_used"])
+        self.assertEqual(
+            planner["prior_planner"]["fallback_reason"],
+            "evidence_requirement_classification_failed",
+        )
+        self.assertEqual(
+            planner["prior_planner"]["evidence_requirements"]["status"],
+            "classification_failed",
+        )
+
+    def test_admissions_major_rank_does_not_call_evidence_gate(self) -> None:
+        query = "广东物化生，10000名，列出冲稳保"
+        fake_client = FakeSemanticIntentClient(_major_rank_semantic_intent())
+        with TemporaryDirectory() as directory:
+            service, dataset_id = _queryable_uploaded_admissions(
+                Path(directory),
+                use_excel=False,
+            )
+
+            with patch(
+                "src.api.workbench.deepseek_slot_adapter_enabled",
+                return_value=True,
+            ):
+                with patch(
+                    "src.api.workbench._interactive_deepseek_client",
+                    return_value=fake_client,
+                ):
+                    response = service.query(
+                        dataset_id,
+                        user_input=query,
+                        soft_preferences={"prompt": query},
+                    )
+
+        assert_workbench_contract(self, response)
+        self.assertEqual(response["query_type"], "admissions_major_rank")
+        self.assertEqual(len(fake_client.calls), 1)
+        self.assertNotIn(
+            "evidence_requirements",
+            response["evidence_pack"]["planner"],
+        )
+
+    def test_supplied_semantic_intent_does_not_call_evidence_gate(self) -> None:
+        query = "我的排位是15000，想读人工智能，计算机，请给出推荐"
+        with TemporaryDirectory() as directory:
+            service, dataset_id = _queryable_uploaded_admissions(
+                Path(directory),
+                use_excel=False,
+            )
+
+            response = service.query(
+                dataset_id,
+                user_input=query,
+                soft_preferences={
+                    "prompt": query,
+                    "semantic_intent": _semantic_recommendation_intent(),
+                },
+            )
+
+        assert_workbench_contract(self, response)
+        self.assertEqual(response["status"], "ok")
+        self.assertNotIn(
+            "evidence_requirements",
+            response["evidence_pack"]["planner"],
+        )
+
 
 class UploadedSemanticAdmissionsFlowTest(unittest.TestCase):
     def test_semantic_probe_import_does_not_load_deepseek_modules(self) -> None:
@@ -2201,6 +2335,37 @@ class FailingSemanticIntentClient:
                 **kwargs,
             }
         )
+        raise self.exc
+
+
+class FailingAfterFirstSemanticClient:
+    def __init__(self, first_payload: dict[str, object], exc: Exception) -> None:
+        self.first_payload = first_payload
+        self.exc = exc
+        self.calls: list[dict[str, object]] = []
+
+    def chat_json(
+        self,
+        messages: list[dict[str, object]],
+        temperature: float = 0.0,
+        **kwargs: object,
+    ) -> dict[str, object]:
+        self.calls.append(
+            {
+                "messages": messages,
+                "temperature": temperature,
+                **kwargs,
+            }
+        )
+        if len(self.calls) == 1:
+            return {
+                **self.first_payload,
+                "usage": {
+                    "prompt_tokens": 21,
+                    "completion_tokens": 9,
+                    "total_tokens": 30,
+                },
+            }
         raise self.exc
 
 

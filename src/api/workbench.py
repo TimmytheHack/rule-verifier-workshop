@@ -892,7 +892,15 @@ def _llm_major_rank_intent_not_supported_by_text(
 ) -> bool:
     return (
         intent.query_type == "admissions_major_rank"
-        and not admissions_major_rank_query_matches(_compose_user_request(config))
+        and not _llm_major_rank_text_supports_intent(_compose_user_request(config))
+    )
+
+
+def _llm_major_rank_text_supports_intent(text: str) -> bool:
+    if admissions_major_rank_query_matches(text):
+        return True
+    return "冲稳保" in text and any(
+        term in text for term in ("列出", "次序", "排序", "按历史")
     )
 
 
@@ -1117,6 +1125,7 @@ def _semantic_planner_blocked_run(
             execution_summary={
                 "executor": None,
                 "query_type": "llm_semantic_planner",
+                "sql": "",
                 "input_row_count": 0,
                 "filtered_row_count": 0,
                 "verified_query_plan": None,
@@ -1426,6 +1435,7 @@ def _semantic_capability_payload(
         semantic_run=semantic_run,
         result_sections=result_sections,
     )
+    execution_summary = _semantic_public_execution_summary(semantic_result)
     answer = _semantic_answer(evidence_pack)
     generator_usage = None
     token_total = _sum_usage([semantic_run.extractor_usage, generator_usage])
@@ -1458,7 +1468,7 @@ def _semantic_capability_payload(
         "not_executed_preferences": not_executed_preferences,
         "simulated_confirmations": {},
         "executable_rules": executed_filters,
-        "execution": _public_execution_summary(semantic_result.execution_summary),
+        "execution": execution_summary,
         "result_count": len(semantic_result.rows),
         "items": items,
         "top_results": top_results,
@@ -1509,7 +1519,7 @@ def _semantic_capability_payload(
         ),
         evidence_pack=evidence_pack,
         debug_trace={
-            "execution": _public_execution_summary(semantic_result.execution_summary),
+            "execution": execution_summary,
             "data_warehouse": warehouse_audit,
             "planner": {
                 "metadata": semantic_run.planner,
@@ -1518,6 +1528,13 @@ def _semantic_capability_payload(
         },
     ).to_dict()
     return {**legacy_payload, **response, "token_usage": legacy_payload["token_usage"]}
+
+
+def _semantic_public_execution_summary(semantic_result: Any) -> dict[str, Any]:
+    execution_summary = _public_execution_summary(semantic_result.execution_summary)
+    if semantic_result.status == "blocked" and "sql" not in execution_summary:
+        return {**execution_summary, "sql": ""}
+    return execution_summary
 
 
 def _is_no_schema_field_preference(item: dict[str, Any]) -> bool:
