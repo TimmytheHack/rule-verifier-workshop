@@ -21,6 +21,7 @@ class ReviewedValueEntityLinkerTest(unittest.TestCase):
         )
         self.assertEqual(result.ambiguous_links, [])
         self.assertEqual(result.not_executed_links, [])
+        self.assertEqual(len(result.proposed_rules), 1)
         self.assertEqual(result.proposed_rules[0]["field_id"], "university_name")
         self.assertEqual(result.proposed_rules[0]["operator"], "eq")
         self.assertEqual(result.proposed_rules[0]["value"], "深圳大学")
@@ -35,6 +36,7 @@ class ReviewedValueEntityLinkerTest(unittest.TestCase):
         )
         self.assertEqual(result.suppressed_links, [])
         self.assertEqual(result.ambiguous_links, [])
+        self.assertEqual(len(result.proposed_rules), 1)
         self.assertEqual(result.proposed_rules[0]["field_id"], "city")
         self.assertEqual(result.proposed_rules[0]["operator"], "in_contains")
         self.assertEqual(result.proposed_rules[0]["value"], ["深圳"])
@@ -53,7 +55,15 @@ class ReviewedValueEntityLinkerTest(unittest.TestCase):
     def test_same_span_exact_match_on_two_fields_is_ambiguous(self) -> None:
         result = _link(
             "想去南方学院",
-            extra_fields={
+            extra_registry_fields={
+                "college_name": {
+                    "source_column": "学院名称",
+                    "active": True,
+                    "type": "string",
+                    "allowed_ops": ["eq"],
+                }
+            },
+            extra_index_fields={
                 "college_name": {
                     "source_column": "学院名称",
                     "active": True,
@@ -68,6 +78,14 @@ class ReviewedValueEntityLinkerTest(unittest.TestCase):
 
         self.assertEqual(result.accepted_links, [])
         self.assertEqual(len(result.ambiguous_links), 2)
+        self.assertEqual(
+            sorted((link["field_id"], link["value"]) for link in result.ambiguous_links),
+            [("college_name", "南方学院"), ("university_name", "南方学院")],
+        )
+        self.assertEqual(
+            len({link["span"] for link in result.ambiguous_links}),
+            1,
+        )
         self.assertEqual(result.proposed_rules, [])
 
     def test_incomplete_lookup_does_not_execute_by_default(self) -> None:
@@ -87,6 +105,9 @@ class ReviewedValueEntityLinkerTest(unittest.TestCase):
 
         self.assertEqual(result.status, "value_index_unavailable")
         self.assertEqual(result.accepted_links, [])
+        self.assertEqual(result.suppressed_links, [])
+        self.assertEqual(result.ambiguous_links, [])
+        self.assertEqual(result.not_executed_links, [])
         self.assertEqual(result.proposed_rules, [])
 
 
@@ -95,14 +116,15 @@ def _link(
     *,
     university_values: list[str] | None = None,
     university_lookup_complete: bool = True,
-    extra_fields: dict[str, dict[str, object]] | None = None,
+    extra_registry_fields: dict[str, dict[str, object]] | None = None,
+    extra_index_fields: dict[str, dict[str, object]] | None = None,
 ):
-    registry = _registry(extra_fields=extra_fields)
+    registry = _registry(extra_fields=extra_registry_fields)
     value_index = SchemaValueIndex(
         _value_index_payload(
             university_values=university_values or ["深圳大学"],
             university_lookup_complete=university_lookup_complete,
-            extra_fields=extra_fields,
+            extra_fields=extra_index_fields,
         )
     )
     return ReviewedValueEntityLinker(registry, value_index).link(text)
