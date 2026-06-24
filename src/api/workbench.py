@@ -296,6 +296,17 @@ class RankingPlanAttempt:
 
 
 @dataclass(frozen=True)
+class EvidenceRequirementGateAttempt:
+    """evidence requirement gate 过滤后的意图和调用证据。"""
+
+    intent: SemanticIntent
+    planner: dict[str, Any] | None = None
+    usage: dict[str, int] | None = None
+    not_executed_preferences: list[dict[str, Any]] = field(default_factory=list)
+    unanswerable_intents: list[dict[str, Any]] = field(default_factory=list)
+
+
+@dataclass(frozen=True)
 class SemanticPlannerBlockedResult:
     """强制 LLM semantic planner 失败时的 contract-ready 结果。"""
 
@@ -710,37 +721,71 @@ def _run_semantic_capability_query(
             if config.planner_mode == "llm_semantic":
                 return _semantic_planner_blocked_run(config, planner_attempt)
         else:
-            ranking_attempt = _semantic_ranking_plan_attempt(
-                config,
-                domain_config,
-                planner_attempt.intent,
-                planner_attempt.planner,
-            )
-            semantic_result = _run_semantic_intent_query(
-                planner_attempt.intent,
-                config=config,
-                domain_config=domain_config,
-                ranking_plan=ranking_attempt.plan,
-            )
-            if semantic_result is not None:
-                return SemanticCapabilityRun(
-                    result=semantic_result,
-                    planner=_with_ranking_plan_trace(
-                        planner_attempt.planner,
-                        ranking_attempt,
-                    ),
-                    semantic_intent=planner_attempt.intent.model_dump(),
-                    extractor_usage=_combined_usage(
-                        planner_attempt.usage,
-                        ranking_attempt.usage,
-                    ),
+            try:
+                gate_attempt = _semantic_evidence_requirement_gate_attempt(
+                    config,
+                    domain_config,
+                    planner_attempt.intent,
+                    planner_attempt.planner,
                 )
-            planner_attempt = _with_planner_fallback(
-                planner_attempt,
-                reason="unsupported_semantic_intent",
-            )
-            if config.planner_mode == "llm_semantic":
-                return _semantic_planner_blocked_run(config, planner_attempt)
+            except Exception as exc:  # noqa: BLE001 - gate 失败不能执行 LLM semantic SQL。
+                planner_attempt = _with_planner_fallback(
+                    planner_attempt,
+                    reason="evidence_requirement_classification_failed",
+                    evidence_requirements={
+                        "status": "classification_failed",
+                        "provider": "deepseek",
+                        "called": True,
+                        "fallback_used": True,
+                        "fallback_reason": (
+                            "evidence_requirement_classification_failed"
+                        ),
+                        "error_type": type(exc).__name__,
+                    },
+                )
+                if config.planner_mode == "llm_semantic":
+                    return _semantic_planner_blocked_run(config, planner_attempt)
+            else:
+                gated_planner = _with_evidence_requirement_trace(
+                    planner_attempt.planner,
+                    gate_attempt,
+                )
+                ranking_attempt = _semantic_ranking_plan_attempt(
+                    config,
+                    domain_config,
+                    gate_attempt.intent,
+                    gated_planner,
+                )
+                semantic_result = _run_semantic_intent_query(
+                    gate_attempt.intent,
+                    config=config,
+                    domain_config=domain_config,
+                    ranking_plan=ranking_attempt.plan,
+                    pre_not_executed_preferences=(
+                        gate_attempt.not_executed_preferences
+                    ),
+                    pre_unanswerable_intents=gate_attempt.unanswerable_intents,
+                )
+                if semantic_result is not None:
+                    return SemanticCapabilityRun(
+                        result=semantic_result,
+                        planner=_with_ranking_plan_trace(
+                            gated_planner,
+                            ranking_attempt,
+                        ),
+                        semantic_intent=gate_attempt.intent.model_dump(),
+                        extractor_usage=_combined_usage(
+                            planner_attempt.usage,
+                            gate_attempt.usage,
+                            ranking_attempt.usage,
+                        ),
+                    )
+                planner_attempt = _with_planner_fallback(
+                    planner_attempt,
+                    reason="unsupported_semantic_intent",
+                )
+                if config.planner_mode == "llm_semantic":
+                    return _semantic_planner_blocked_run(config, planner_attempt)
 
     user_request = _compose_user_request(config)
     major_rank_result = AdmissionsMajorRankPlanner(
@@ -770,17 +815,54 @@ def _run_semantic_capability_query(
                 extractor_usage=planner_attempt.usage,
             )
         return None
+    try:
+        gate_attempt = _semantic_evidence_requirement_gate_attempt(
+            config,
+            domain_config,
+            intent_attempt.intent,
+            intent_attempt.planner,
+        )
+    except Exception as exc:  # noqa: BLE001 - gate 失败不能执行 LLM semantic SQL。
+        intent_attempt = _with_planner_fallback(
+            intent_attempt,
+            reason="evidence_requirement_classification_failed",
+            evidence_requirements={
+                "status": "classification_failed",
+                "provider": "deepseek",
+                "called": True,
+                "fallback_used": True,
+                "fallback_reason": "evidence_requirement_classification_failed",
+                "error_type": type(exc).__name__,
+            },
+        )
+        if config.planner_mode == "llm_semantic":
+            return _semantic_planner_blocked_run(config, intent_attempt)
+        if _should_preserve_semantic_fallback(config, intent_attempt):
+            return SemanticCapabilityFallback(
+                planner=_legacy_planner_trace(
+                    fallback_attempt=intent_attempt,
+                    route="planned_query",
+                ),
+                extractor_usage=intent_attempt.usage,
+            )
+        return None
+    gated_planner = _with_evidence_requirement_trace(
+        intent_attempt.planner,
+        gate_attempt,
+    )
     ranking_attempt = _semantic_ranking_plan_attempt(
         config,
         domain_config,
-        intent_attempt.intent,
-        intent_attempt.planner,
+        gate_attempt.intent,
+        gated_planner,
     )
     semantic_result = _run_semantic_intent_query(
-        intent_attempt.intent,
+        gate_attempt.intent,
         config=config,
         domain_config=domain_config,
         ranking_plan=ranking_attempt.plan,
+        pre_not_executed_preferences=gate_attempt.not_executed_preferences,
+        pre_unanswerable_intents=gate_attempt.unanswerable_intents,
     )
     if semantic_result is None:
         if _should_preserve_semantic_fallback(config, intent_attempt):
@@ -798,9 +880,13 @@ def _run_semantic_capability_query(
         return None
     return SemanticCapabilityRun(
         result=semantic_result,
-        planner=_with_ranking_plan_trace(intent_attempt.planner, ranking_attempt),
-        semantic_intent=intent_attempt.intent.model_dump(),
-        extractor_usage=_combined_usage(intent_attempt.usage, ranking_attempt.usage),
+        planner=_with_ranking_plan_trace(gated_planner, ranking_attempt),
+        semantic_intent=gate_attempt.intent.model_dump(),
+        extractor_usage=_combined_usage(
+            intent_attempt.usage,
+            gate_attempt.usage,
+            ranking_attempt.usage,
+        ),
     )
 
 
@@ -897,6 +983,64 @@ def _semantic_ranking_plan_attempt(
     )
 
 
+def _semantic_evidence_requirement_gate_attempt(
+    config: WorkbenchConfig,
+    domain_config: DomainConfig,
+    intent: SemanticIntent,
+    planner: dict[str, Any],
+) -> EvidenceRequirementGateAttempt:
+    if not _should_run_evidence_requirement_gate(config, intent, planner):
+        return EvidenceRequirementGateAttempt(intent=intent)
+    from src.semantic.evidence_requirement_gate import EvidenceRequirementGate
+    from src.semantic.evidence_requirements import (
+        DeepSeekEvidenceRequirementClassifier,
+    )
+
+    schema_context, query_options = _semantic_llm_context(domain_config)
+    gate = EvidenceRequirementGate(
+        DeepSeekEvidenceRequirementClassifier(
+            _interactive_deepseek_client(config.model)
+        )
+    ).apply(
+        text=_compose_user_request(config),
+        intent=intent,
+        schema_context=schema_context,
+        query_options=query_options,
+    )
+    return EvidenceRequirementGateAttempt(
+        intent=gate.filtered_intent,
+        planner=gate.planner,
+        usage=gate.usage,
+        not_executed_preferences=gate.excluded_preferences,
+        unanswerable_intents=gate.unanswerable_intents,
+    )
+
+
+def _should_run_evidence_requirement_gate(
+    config: WorkbenchConfig,
+    intent: SemanticIntent,
+    planner: dict[str, Any],
+) -> bool:
+    return (
+        bool(config.dataset_id)
+        and intent.query_type == "semantic_recommendation"
+        and planner.get("mode") == "llm_semantic"
+        and not planner.get("fallback_used")
+    )
+
+
+def _with_evidence_requirement_trace(
+    planner: dict[str, Any],
+    gate_attempt: EvidenceRequirementGateAttempt,
+) -> dict[str, Any]:
+    if gate_attempt.planner is None:
+        return planner
+    return {
+        **planner,
+        "evidence_requirements": gate_attempt.planner,
+    }
+
+
 def _with_ranking_plan_trace(
     planner: dict[str, Any],
     ranking_attempt: RankingPlanAttempt,
@@ -980,6 +1124,8 @@ def _run_semantic_intent_query(
     config: WorkbenchConfig,
     domain_config: DomainConfig,
     ranking_plan: RankingPlan | None = None,
+    pre_not_executed_preferences: list[dict[str, Any]] | None = None,
+    pre_unanswerable_intents: list[dict[str, Any]] | None = None,
 ) -> Any | None:
     if intent.query_type == "admissions_major_rank":
         return AdmissionsMajorRankPlanner(
@@ -994,6 +1140,8 @@ def _run_semantic_intent_query(
             table_name=domain_config.table_name,
             reranker=_semantic_reranker(config),
             ranking_plan=ranking_plan,
+            pre_not_executed_preferences=pre_not_executed_preferences,
+            pre_unanswerable_intents=pre_unanswerable_intents,
         ).run(intent)
     return None
 
@@ -1128,12 +1276,14 @@ def _with_planner_fallback(
     attempt: SemanticPlannerAttempt,
     *,
     reason: str,
+    **extra: Any,
 ) -> SemanticPlannerAttempt:
     return SemanticPlannerAttempt(
         intent=None,
         usage=attempt.usage,
         planner={
             **attempt.planner,
+            **extra,
             "fallback_used": True,
             "fallback_reason": reason,
         },
@@ -1243,7 +1393,7 @@ def _semantic_capability_payload(
     no_schema_field_preferences = [
         item
         for item in not_executed_preferences
-        if item.get("match_type") == "no_schema_field"
+        if _is_no_schema_field_preference(item)
     ]
     executed_filters = _semantic_executed_filters(semantic_result)
     evidence_pack = _semantic_evidence_pack(
@@ -1347,6 +1497,15 @@ def _semantic_capability_payload(
     return {**legacy_payload, **response, "token_usage": legacy_payload["token_usage"]}
 
 
+def _is_no_schema_field_preference(item: dict[str, Any]) -> bool:
+    if item.get("match_type") == "no_schema_field":
+        return True
+    return (
+        item.get("match_type") == "evidence_requirement_gate"
+        and item.get("requirement_type") == "knowledge_base_or_reviewed_field"
+    )
+
+
 def _semantic_evidence_pack(
     *,
     config: WorkbenchConfig,
@@ -1362,7 +1521,7 @@ def _semantic_evidence_pack(
     no_schema_field_preferences = [
         item
         for item in not_executed_preferences
-        if item.get("match_type") == "no_schema_field"
+        if _is_no_schema_field_preference(item)
     ]
     return {
         "user_request": _compose_user_request(config),

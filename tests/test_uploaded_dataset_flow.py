@@ -366,6 +366,113 @@ class UploadedDatasetFlowTest(unittest.TestCase):
         self.assertEqual(set(response["result_sections"]), {"reach", "match", "safety"})
         self.assertNotIn("score_without_rank", [w["code"] for w in response["warnings"]])
 
+    def test_llm_semantic_recommendation_gate_filters_external_preferences(
+        self,
+    ) -> None:
+        query = "我的排位是15000，想读人工智能，计算机，想留在广东省，好就业，学校好一点，请给出推荐"
+        intent = _semantic_recommendation_intent()
+        intent["preferences"] = [
+            *intent["preferences"][:2],
+            {
+                "source_text": "好就业",
+                "semantic": "employment_outlook",
+                "op": "equals",
+                "value": "好",
+                "confidence": 0.9,
+                "reason": "需要就业结果。",
+            },
+            {
+                "source_text": "学校好一点",
+                "semantic": "school_quality",
+                "op": "rank_by",
+                "value": "better",
+                "confidence": 0.9,
+                "reason": "需要学校质量排序政策。",
+            },
+        ]
+        fake_client = FakeSemanticIntentClient(
+            [
+                intent,
+                {
+                    "requirements": [
+                        {
+                            "source_text": "想读人工智能，计算机",
+                            "requirement_type": "table_field",
+                            "candidate_semantic": "major_name",
+                            "rationale": "需要专业字段。",
+                        },
+                        {
+                            "source_text": "想留在广东省",
+                            "requirement_type": "table_field",
+                            "candidate_semantic": "school_province",
+                            "rationale": "需要省份字段。",
+                        },
+                        {
+                            "source_text": "好就业",
+                            "requirement_type": "knowledge_base_or_reviewed_field",
+                            "candidate_semantic": "employment_outlook",
+                            "rationale": "需要 reviewed KB 或就业结果字段。",
+                        },
+                        {
+                            "source_text": "学校好一点",
+                            "requirement_type": "reviewed_ranking_policy",
+                            "candidate_semantic": "school_quality",
+                            "rationale": "需要 reviewed ranking policy。",
+                        },
+                    ]
+                },
+                {"criteria": []},
+            ],
+            usage=[
+                {"prompt_tokens": 21, "completion_tokens": 9, "total_tokens": 30},
+                {"prompt_tokens": 8, "completion_tokens": 4, "total_tokens": 12},
+                {"prompt_tokens": 5, "completion_tokens": 2, "total_tokens": 7},
+            ],
+        )
+        with TemporaryDirectory() as directory:
+            service, dataset_id = _queryable_uploaded_admissions(
+                Path(directory),
+                use_excel=False,
+            )
+
+            with patch(
+                "src.api.workbench.deepseek_slot_adapter_enabled",
+                return_value=True,
+            ):
+                with patch(
+                    "src.api.workbench._interactive_deepseek_client",
+                    return_value=fake_client,
+                ):
+                    response = service.query(
+                        dataset_id,
+                        user_input=query,
+                        soft_preferences={"prompt": query},
+                    )
+
+        assert_workbench_contract(self, response)
+        self.assertEqual(response["status"], "ok")
+        self.assertEqual(len(fake_client.calls), 3)
+        gate = response["evidence_pack"]["planner"]["evidence_requirements"]
+        self.assertEqual(gate["status"], "classified")
+        self.assertEqual(
+            [item["source_text"] for item in gate["excluded_preferences"]],
+            ["好就业", "学校好一点"],
+        )
+        verified_plan = json.dumps(
+            response["evidence_pack"]["verified_query_plan"],
+            ensure_ascii=False,
+        )
+        self.assertIn("major_name", verified_plan)
+        self.assertIn("school_province", verified_plan)
+        self.assertNotIn("employment_outlook", verified_plan)
+        self.assertNotIn("school_quality", verified_plan)
+        self.assertEqual(
+            [item["source_text"] for item in response["unexecuted_preferences"][:2]],
+            ["好就业", "学校好一点"],
+        )
+        self.assertEqual(response["token_usage"]["extractor"]["total_tokens"], 49)
+        self.assertIn("未执行偏好", response["answer"])
+
 
 class UploadedSemanticAdmissionsFlowTest(unittest.TestCase):
     def test_semantic_probe_import_does_not_load_deepseek_modules(self) -> None:
@@ -553,7 +660,13 @@ print(json.dumps({
         self,
     ) -> None:
         query = "我的排位是15000，想读人工智能，计算机，而且不想去国外，想留在广东省，请给出推荐"
-        fake_client = FakeSemanticIntentClient(_semantic_recommendation_intent())
+        fake_client = FakeSemanticIntentClient(
+            [
+                _semantic_recommendation_intent(),
+                _evidence_requirements_for_basic_recommendation(),
+                {"criteria": []},
+            ]
+        )
         with TemporaryDirectory() as directory:
             service, dataset_id = _queryable_uploaded_admissions(
                 Path(directory),
@@ -1157,6 +1270,7 @@ print(json.dumps({
         fake_client = FakeSemanticIntentClient(
             [
                 _semantic_recommendation_intent(),
+                _evidence_requirements_for_basic_recommendation(),
                 {
                     "criteria": [
                         {
@@ -1178,6 +1292,11 @@ print(json.dumps({
                     "prompt_tokens": 21,
                     "completion_tokens": 9,
                     "total_tokens": 30,
+                },
+                {
+                    "prompt_tokens": 8,
+                    "completion_tokens": 4,
+                    "total_tokens": 12,
                 },
                 {
                     "prompt_tokens": 17,
@@ -1207,7 +1326,7 @@ print(json.dumps({
                     )
 
         assert_workbench_contract(self, response)
-        self.assertEqual(len(fake_client.calls), 2)
+        self.assertEqual(len(fake_client.calls), 3)
         self.assertEqual(response["status"], "ok")
         self.assertEqual(response["query_type"], "recommendation")
         ranking = response["evidence_pack"]["ranking"]
@@ -1223,7 +1342,11 @@ print(json.dumps({
         )
         self.assertEqual(
             response["token_usage"]["extractor"]["total_tokens"],
-            58,
+            70,
+        )
+        self.assertEqual(
+            response["evidence_pack"]["planner"]["evidence_requirements"]["status"],
+            "classified",
         )
         first_distance = ranking["criterion_evidence"][0]["criteria"][0][
             "derived"
@@ -2078,6 +2201,31 @@ def _semantic_recommendation_intent() -> dict[str, object]:
         ],
         "requested_output": ["recommendation_sections", "minimum_rank"],
         "source_language": "zh-CN",
+    }
+
+
+def _evidence_requirements_for_basic_recommendation() -> dict[str, object]:
+    return {
+        "requirements": [
+            {
+                "source_text": "想读人工智能，计算机",
+                "requirement_type": "table_field",
+                "candidate_semantic": "major_name",
+                "rationale": "需要专业字段。",
+            },
+            {
+                "source_text": "想留在广东省",
+                "requirement_type": "table_field",
+                "candidate_semantic": "school_province",
+                "rationale": "需要省份字段。",
+            },
+            {
+                "source_text": "不想去国外",
+                "requirement_type": "knowledge_base_or_reviewed_field",
+                "candidate_semantic": "school_country_or_region",
+                "rationale": "当前没有已审核境外/国家地区字段。",
+            },
+        ]
     }
 
 
