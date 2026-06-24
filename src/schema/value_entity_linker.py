@@ -17,7 +17,20 @@ DEFAULT_LINKABLE_FIELDS: dict[str, dict[str, str]] = {
 }
 NEARBY_TERMS = ("附近", "周边", "旁边", "那边")
 LOCATION_PATTERNS = ("的大学", "市高校", "高校", "读大学", "上大学")
-NEGATION_TERMS = ("不要", "不想", "排除", "别", "不去", "不是", "不考虑", "除了")
+NEGATION_TERMS = (
+    "不要",
+    "不想",
+    "排除",
+    "别",
+    "不去",
+    "不是",
+    "不考虑",
+    "除了",
+    "不报",
+    "不选",
+    "避免",
+    "不在",
+)
 DISTANCE_AFTER_TERMS = ("近", "远", "太远")
 BOUNDARY_AFTER_TERMS = ("附近", "周边", "旁边")
 IDENTITY_TERMS = ("户籍", "考生", "生源", "籍贯")
@@ -66,15 +79,13 @@ class ReviewedValueEntityLinker:
         if self.value_index is None:
             return EntityLinkingResult(status="value_index_unavailable")
 
-        nearby_link = _nearby_not_executed(text)
-        if nearby_link is not None:
-            return EntityLinkingResult(
-                status="applied",
-                not_executed_links=[nearby_link],
-            )
-
+        nearby_links = _nearby_not_executed_links(text)
         candidates = self._candidates(text)
-        accepted, suppressed, ambiguous, not_executed = _resolve_candidates(candidates)
+        accepted, suppressed, ambiguous, not_executed = _resolve_candidates(
+            candidates,
+            boundary_links=nearby_links,
+        )
+        not_executed = nearby_links + not_executed
         proposed_rules = _proposed_rules(accepted)
         return EntityLinkingResult(
             status="applied",
@@ -188,37 +199,47 @@ def _find_spans(text: str, value: str) -> list[tuple[int, int]]:
         start = index + 1
 
 
-def _nearby_not_executed(text: str) -> dict[str, Any] | None:
+def _nearby_not_executed_links(text: str) -> list[dict[str, Any]]:
+    links: list[dict[str, Any]] = []
     for term in NEARBY_TERMS:
-        index = text.find(term)
-        if index < 0:
-            continue
-        start = max(0, index - 4)
-        return {
-            "source_text": text[start:index + len(term)],
-            "span": (start, index + len(term)),
-            "field_id": None,
-            "match_type": "entity_linking_boundary_required",
-            "executable": False,
-            "reason": NEARBY_REASON,
-        }
-    return None
+        start_index = 0
+        while True:
+            index = text.find(term, start_index)
+            if index < 0:
+                break
+            start = max(0, index - 4)
+            links.append(
+                {
+                    "source_text": text[start:index + len(term)],
+                    "span": (start, index + len(term)),
+                    "field_id": None,
+                    "match_type": "entity_linking_boundary_required",
+                    "executable": False,
+                    "reason": NEARBY_REASON,
+                }
+            )
+            start_index = index + len(term)
+    return _dedupe_links(links)
 
 
 def _resolve_candidates(
     candidates: list[dict[str, Any]],
+    *,
+    boundary_links: list[dict[str, Any]] | None = None,
 ) -> tuple[
     list[dict[str, Any]],
     list[dict[str, Any]],
     list[dict[str, Any]],
     list[dict[str, Any]],
 ]:
+    boundary_links = boundary_links or []
     ambiguous = _ambiguous_exact_span_links(candidates)
     ambiguous_keys = {_link_key(link) for link in ambiguous}
     non_ambiguous = [
         candidate
         for candidate in candidates
         if _link_key(candidate) not in ambiguous_keys
+        and not _is_inside_boundary(candidate, boundary_links)
     ]
     context_blocked = [
         {
@@ -382,7 +403,9 @@ def _non_executable_context_reason(candidate: dict[str, Any]) -> str | None:
 def _has_negation_context(candidate: dict[str, Any]) -> bool:
     before = str(candidate.get("context_before") or "")
     after = str(candidate.get("context_after") or "")
-    return any(term in before or term in after for term in NEGATION_TERMS)
+    return any(term in before for term in NEGATION_TERMS) or any(
+        after.startswith(term) for term in NEGATION_TERMS
+    )
 
 
 def _has_distance_context(candidate: dict[str, Any]) -> bool:
@@ -412,6 +435,23 @@ def _dedupe_links(links: list[dict[str, Any]]) -> list[dict[str, Any]]:
         output.append(link)
         seen.add(key)
     return output
+
+
+def _is_inside_boundary(
+    candidate: dict[str, Any],
+    boundary_links: list[dict[str, Any]],
+) -> bool:
+    span = candidate.get("span")
+    if not _valid_span(span):
+        return False
+    start, end = int(span[0]), int(span[1])
+    for boundary in boundary_links:
+        boundary_span = boundary.get("span")
+        if not _valid_span(boundary_span):
+            continue
+        if int(boundary_span[0]) <= start and end <= int(boundary_span[1]):
+            return True
+    return False
 
 
 def _link_key(link: dict[str, Any]) -> tuple[str, str, str, tuple[int, int]]:

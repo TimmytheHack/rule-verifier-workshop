@@ -264,6 +264,56 @@ class ReviewedValueEntityLinkerTest(unittest.TestCase):
         self.assertEqual(result.proposed_rules[0]["field_id"], "city")
         self.assertEqual(result.proposed_rules[0]["value"], ["深圳"])
 
+    def test_common_exclusion_terms_do_not_execute_positive_rules(self) -> None:
+        cases = [
+            ("不报深圳大学", "university_name"),
+            ("不选深圳大学", "university_name"),
+            ("避免深圳大学", "university_name"),
+            ("不在深圳读大学", "city"),
+        ]
+        for text, field_id in cases:
+            with self.subTest(text=text):
+                result = _link(text)
+
+                self.assertEqual(result.accepted_links, [])
+                self.assertEqual(result.proposed_rules, [])
+                self.assertEqual(result.not_executed_links[0]["field_id"], field_id)
+                self.assertEqual(
+                    result.not_executed_links[0]["reason"],
+                    "否定/排除上下文不能直接执行为正向实体筛选。",
+                )
+
+    def test_trailing_cost_negation_does_not_block_city_preference(self) -> None:
+        for text in ("想去深圳的大学，不要太贵", "想去深圳的大学不要太贵"):
+            with self.subTest(text=text):
+                result = _link(text)
+
+                self.assertEqual(
+                    [(link["field_id"], link["value"]) for link in result.accepted_links],
+                    [("city", "深圳")],
+                )
+                self.assertEqual(len(result.proposed_rules), 1)
+                self.assertEqual(result.proposed_rules[0]["field_id"], "city")
+                self.assertEqual(result.proposed_rules[0]["value"], ["深圳"])
+
+    def test_nearby_boundary_does_not_swallow_other_valid_city_preference(self) -> None:
+        result = _link("想找深圳大学附近的学校，也可以广州的大学")
+
+        self.assertEqual(
+            [(link["field_id"], link["value"]) for link in result.accepted_links],
+            [("city", "广州")],
+        )
+        self.assertEqual(len(result.proposed_rules), 1)
+        self.assertEqual(result.proposed_rules[0]["field_id"], "city")
+        self.assertEqual(result.proposed_rules[0]["value"], ["广州"])
+        self.assertIn(
+            ("深圳大学附近", "附近/周边表达需要地理距离或用户确认边界，不能直接执行为院校或城市筛选。"),
+            [
+                (link["source_text"], link["reason"])
+                for link in result.not_executed_links
+            ],
+        )
+
 
 def _link(
     text: str,
