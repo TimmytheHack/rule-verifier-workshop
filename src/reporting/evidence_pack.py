@@ -53,6 +53,7 @@ class EvidencePack:
     unanswerable_intents: list[dict[str, Any]] = field(default_factory=list)
     verified_query_plan: dict[str, Any] = field(default_factory=dict)
     capability_graph_summary: dict[str, Any] = field(default_factory=dict)
+    entity_linking: dict[str, Any] = field(default_factory=dict)
 
     @classmethod
     def from_verified_pipeline(
@@ -70,6 +71,7 @@ class EvidencePack:
         domain_config: DomainConfig | None = None,
         policy_references: list[dict[str, Any]] | None = None,
         decision_guidance: dict[str, Any] | None = None,
+        entity_linking: dict[str, Any] | None = None,
     ) -> "EvidencePack":
         """Build an answer-safe evidence pack from post-execution artifacts."""
 
@@ -153,6 +155,7 @@ class EvidencePack:
             unanswerable_intents=[],
             verified_query_plan={},
             capability_graph_summary={},
+            entity_linking=entity_linking or {"status": "not_applicable"},
         )
 
     def to_dict(self) -> dict[str, Any]:

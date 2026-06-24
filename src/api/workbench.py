@@ -40,6 +40,10 @@ from src.rules.rule_promoter import RulePromoter
 from src.rules.rule_verifier import RuleVerifier
 from src.schema.attribute_grounder import AttributeGrounder
 from src.schema.schema_registry import SchemaRegistry
+from src.schema.value_entity_linker import (
+    EntityLinkingResult,
+    ReviewedValueEntityLinker,
+)
 from src.semantic.admissions_recommendation import (
     SemanticAdmissionsRecommendationPlanner,
 )
@@ -527,6 +531,12 @@ def _run_workbench(config: WorkbenchConfig) -> dict[str, Any]:
         value_index=value_index,
         domain_config=domain_config,
     ).ground(slots)
+    entity_linking = _run_value_entity_linker(
+        user_request=_soft_prompt(config),
+        schema_registry=schema_registry,
+        value_index=value_index,
+        domain_config=domain_config,
+    )
     confirmation_candidates = _build_confirmation_candidates(
         user_request=_compose_user_request(config),
         attribute_grounding=attribute_grounding,
@@ -547,7 +557,12 @@ def _run_workbench(config: WorkbenchConfig) -> dict[str, Any]:
             confirmation_candidates=confirmation_candidates,
             confirmation_state=confirmation_state,
         )
-    proposed_rules = verifier.audit_proposed_rules(slots.get("proposed_rules", []))
+    proposed_rules = verifier.audit_proposed_rules(
+        [
+            *slots.get("proposed_rules", []),
+            *entity_linking.proposed_rules,
+        ]
+    )
     classified_rules = RuleClassifier(
         domain_config.rule_taxonomy_path,
         verifier,
@@ -561,6 +576,7 @@ def _run_workbench(config: WorkbenchConfig) -> dict[str, Any]:
     )
     classified_rules["attribute_grounding"] = attribute_grounding
     classified_rules["proposed_rules"] = proposed_rules
+    classified_rules["entity_linking"] = entity_linking.to_dict()
     classified_rules["confirmation_state"] = confirmation_state
     classified_rules = _apply_soft_confirmations(
         classified_rules,
@@ -574,6 +590,15 @@ def _run_workbench(config: WorkbenchConfig) -> dict[str, Any]:
         domain_config=domain_config,
     ).final_executable_rules(classified_rules)
     final_rules.extend(confirmation_state["confirmed_rules"])
+    final_rules = _merge_verified_proposed_rules(
+        final_rules,
+        proposed_rules,
+        domain_config=domain_config,
+    )
+    final_rules = _apply_entity_linking_hard_filter_guard(
+        final_rules,
+        entity_linking,
+    )
     final_rules = _apply_value_index_hard_filter_guard(
         final_rules,
         attribute_grounding,
@@ -634,6 +659,7 @@ def _run_workbench(config: WorkbenchConfig) -> dict[str, Any]:
         domain_config=domain_config,
         policy_references=policy_references,
         decision_guidance=decision_guidance,
+        entity_linking=entity_linking.to_dict(),
     )
     evidence_pack = evidence.to_dict()
     evidence_pack["decision_option_suggestions"] = decision_option_suggestions
@@ -643,6 +669,13 @@ def _run_workbench(config: WorkbenchConfig) -> dict[str, Any]:
         schema_registry=schema_registry,
         domain_config=domain_config,
     )
+    report = {
+        **report,
+        "warnings": [
+            *report.get("warnings", []),
+            *_entity_linking_warnings(entity_linking),
+        ],
+    }
 
     legacy_payload = {
         "mode": "api",
@@ -663,6 +696,7 @@ def _run_workbench(config: WorkbenchConfig) -> dict[str, Any]:
         ),
         "confirmation_candidates": confirmation_candidates,
         "confirmation_state": _display_confirmation_state(confirmation_state),
+        "entity_linking": entity_linking.to_dict(),
         "proposed_rules": _display_proposed_rules(proposed_rules),
         "deterministic_rules": [_display_rule(rule) for rule in classified_rules["deterministic_rules"]],
         "candidate_rules": _candidate_rules(classified_rules),
@@ -2496,6 +2530,7 @@ def _debug_trace(payload: dict[str, Any]) -> dict[str, Any]:
         "attribute_grounding",
         "confirmation_candidates",
         "confirmation_state",
+        "entity_linking",
         "proposed_rules",
         "deterministic_rules",
         "candidate_rules",
@@ -3028,6 +3063,21 @@ def _load_value_index_cached(
 ) -> SchemaValueIndex:
     _ = (modified_ns, file_size)
     return SchemaValueIndex.from_file(index_path)
+
+
+def _run_value_entity_linker(
+    *,
+    user_request: str,
+    schema_registry: SchemaRegistry,
+    value_index: SchemaValueIndex | None,
+    domain_config: DomainConfig,
+) -> EntityLinkingResult:
+    if domain_config.domain_id != ADMISSIONS_DOMAIN.domain_id:
+        return EntityLinkingResult(status="not_applicable")
+    try:
+        return ReviewedValueEntityLinker(schema_registry, value_index).link(user_request)
+    except Exception:  # noqa: BLE001 - entity linking 失败必须 fail closed。
+        return EntityLinkingResult(status="failed")
 
 
 def _validate_config(config: WorkbenchConfig) -> None:
@@ -3928,10 +3978,94 @@ def _rule_value_key(rule: dict[str, Any]) -> tuple[str, str]:
     return str(rule.get("field")), _stable_value(rule.get("value"))
 
 
+def _apply_entity_linking_hard_filter_guard(
+    final_rules: list[dict[str, Any]],
+    entity_linking: EntityLinkingResult,
+) -> list[dict[str, Any]]:
+    blocked = _entity_linking_blocked_values(entity_linking)
+    if not blocked["field_values"] and not blocked["boundary_texts"]:
+        return final_rules
+    guarded = []
+    for rule in final_rules:
+        updated = dict(rule)
+        kept_values, removed_values = _entity_linking_guarded_rule_values(
+            rule,
+            blocked,
+        )
+        if not removed_values:
+            guarded.append(updated)
+            continue
+        updated["entity_linking_removed_values"] = removed_values
+        if kept_values:
+            updated["value"] = (
+                kept_values
+                if isinstance(rule.get("value"), list)
+                else kept_values[0]
+            )
+        else:
+            updated["hard_filter_allowed"] = False
+            updated["hard_filter_block_reason"] = (
+                "该字段值命中被完整实体链接抑制或需要边界确认，不能作为 hard filter 执行。"
+            )
+        guarded.append(updated)
+    return guarded
+
+
+def _entity_linking_blocked_values(
+    entity_linking: EntityLinkingResult,
+) -> dict[str, Any]:
+    return {
+        "field_values": {
+            (str(link.get("source_column") or ""), str(link.get("value") or ""))
+            for link in entity_linking.suppressed_links
+            if link.get("source_column") and link.get("value")
+        },
+        "boundary_texts": [
+            str(link.get("source_text") or "")
+            for link in entity_linking.not_executed_links
+            if link.get("match_type") == "entity_linking_boundary_required"
+            and link.get("source_text")
+        ],
+    }
+
+
+def _entity_linking_guarded_rule_values(
+    rule: dict[str, Any],
+    blocked: dict[str, Any],
+) -> tuple[list[Any], list[str]]:
+    field = str(rule.get("field") or "")
+    values = _rule_values_for_entity_guard(rule.get("value"))
+    kept = []
+    removed = []
+    for value in values:
+        text_value = str(value)
+        if (
+            (field, text_value) in blocked["field_values"]
+            or any(
+                text_value and text_value in text
+                for text in blocked["boundary_texts"]
+            )
+        ):
+            removed.append(text_value)
+            continue
+        kept.append(value)
+    return kept, removed
+
+
+def _rule_values_for_entity_guard(value: Any) -> list[Any]:
+    if isinstance(value, list):
+        return [item for item in value if str(item)]
+    if value in (None, ""):
+        return []
+    return [value]
+
+
 def _merge_verified_proposed_rules(
     final_rules: list[dict[str, Any]],
     proposed_rules: list[dict[str, Any]],
+    domain_config: DomainConfig | None = None,
 ) -> list[dict[str, Any]]:
+    domain_config = domain_config or DomainConfig.load()
     merged = list(final_rules)
     seen = {_rule_identity(rule) for rule in merged}
     for proposed in proposed_rules:
@@ -3946,6 +4080,7 @@ def _merge_verified_proposed_rules(
             "operator": proposed.get("operator"),
             "value": verification.get("normalized_value", proposed.get("value")),
             "verification_origin": "verified_proposed_rule",
+            "proposed_by": proposed.get("proposed_by"),
         }
         identity = _rule_identity(executable_rule)
         if identity in seen:
@@ -3955,7 +4090,7 @@ def _merge_verified_proposed_rules(
         merge_block_reason = _proposed_rule_merge_block_reason(
             proposed=proposed,
             existing_rules=merged,
-            domain_config=DomainConfig.load(),
+            domain_config=domain_config,
         )
         if merge_block_reason:
             proposed["execution_merge_status"] = "not_merged"
@@ -5281,6 +5416,22 @@ def _with_context_warnings(
     report = dict(report)
     report["warnings"] = warnings
     return report
+
+
+def _entity_linking_warnings(
+    entity_linking: EntityLinkingResult,
+) -> list[dict[str, Any]]:
+    return [
+        {
+            "code": "entity_substring_suppressed",
+            "severity": "info",
+            "message": (
+                f"未把“{link.get('source_text')}”作为城市筛选，"
+                "因为它位于已识别的完整实体中。"
+            ),
+        }
+        for link in entity_linking.suppressed_links
+    ]
 
 
 def _sum_usage(usages: list[dict[str, int] | None]) -> dict[str, int]:

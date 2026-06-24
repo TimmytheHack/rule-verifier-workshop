@@ -168,6 +168,8 @@ class ReviewedValueEntityLinker:
             field_type = str(field.get("type") or indexed_field.get("type") or "")
             if field_type not in TEXT_FIELD_TYPES:
                 continue
+            if not _auto_entity_field_is_name_like(field_id, field, indexed_field):
+                continue
             allowed_ops = field.get("allowed_ops") or indexed_field.get("allowed_ops") or []
             if "eq" not in allowed_ops:
                 continue
@@ -206,6 +208,17 @@ def _candidate_record(
             "matched_values": [value],
         },
     }
+
+
+def _auto_entity_field_is_name_like(
+    field_id: str,
+    field: dict[str, Any],
+    indexed_field: dict[str, Any],
+) -> bool:
+    source_column = str(
+        field.get("source_column") or indexed_field.get("source_column") or ""
+    )
+    return field_id.endswith("_name") or "名称" in source_column
 
 
 def _find_spans(text: str, value: str) -> list[tuple[int, int]]:

@@ -258,6 +258,32 @@ class ReviewedValueEntityLinkerTest(unittest.TestCase):
             "字段值索引不完整，不能直接执行实体筛选。",
         )
 
+    def test_extra_code_fields_are_not_auto_linked_as_entities(self) -> None:
+        result = _link(
+            "目前排位15000",
+            extra_registry_fields={
+                "major_code": {
+                    "source_column": "专业代码",
+                    "active": True,
+                    "type": "string",
+                    "allowed_ops": ["eq"],
+                }
+            },
+            extra_index_fields={
+                "major_code": {
+                    "source_column": "专业代码",
+                    "active": True,
+                    "type": "string",
+                    "allowed_ops": ["eq"],
+                    "lookup_complete": True,
+                    "lookup_values": ["150"],
+                }
+            },
+        )
+
+        self.assertEqual(result.accepted_links, [])
+        self.assertEqual(result.proposed_rules, [])
+
     def test_recent_word_does_not_block_clear_city_expression(self) -> None:
         result = _link("最近想去深圳的大学")
 

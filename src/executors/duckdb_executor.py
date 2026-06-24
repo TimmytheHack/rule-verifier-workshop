@@ -147,9 +147,16 @@ def hard_filter_rules(
 
 
 def _should_skip_hard_filter(rule: dict[str, Any]) -> bool:
+    verified_entity_link = (
+        rule.get("verification_origin") == "verified_proposed_rule"
+        and rule.get("proposed_by") == "reviewed_value_entity_linker"
+    )
     return bool(
         rule.get("hard_filter_allowed") is False
-        or rule.get("verification_origin") == "verified_proposed_rule"
+        or (
+            rule.get("verification_origin") == "verified_proposed_rule"
+            and not verified_entity_link
+        )
     )
 
 
