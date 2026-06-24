@@ -473,6 +473,54 @@ class UploadedDatasetFlowTest(unittest.TestCase):
         self.assertEqual(response["token_usage"]["extractor"]["total_tokens"], 49)
         self.assertIn("未执行偏好", response["answer"])
 
+    def test_evidence_gate_rejected_sql_payload_is_redacted(self) -> None:
+        query = "我的排位是15000，想读人工智能，计算机，请给出推荐"
+        fake_client = FakeSemanticIntentClient(
+            [
+                _semantic_recommendation_intent(),
+                {
+                    "requirements": [
+                        {
+                            "source_text": "按 SQL 排序",
+                            "requirement_type": "table_field",
+                            "candidate_semantic": "major_name",
+                            "rationale": "x",
+                            "raw_sql": "SELECT * FROM admissions",
+                        }
+                    ]
+                },
+                {"criteria": []},
+            ]
+        )
+        with TemporaryDirectory() as directory:
+            service, dataset_id = _queryable_uploaded_admissions(
+                Path(directory),
+                use_excel=False,
+            )
+
+            with patch(
+                "src.api.workbench.deepseek_slot_adapter_enabled",
+                return_value=True,
+            ):
+                with patch(
+                    "src.api.workbench._interactive_deepseek_client",
+                    return_value=fake_client,
+                ):
+                    response = service.query(
+                        dataset_id,
+                        user_input=query,
+                        planner_mode="llm_semantic",
+                        soft_preferences={"prompt": query},
+                    )
+
+        assert_workbench_contract(self, response)
+        serialized = json.dumps(response, ensure_ascii=False)
+        self.assertNotIn("SELECT * FROM admissions", serialized)
+        rejected = response["evidence_pack"]["planner"]["evidence_requirements"][
+            "rejected_requirements"
+        ]
+        self.assertEqual(rejected[0]["reason"], "raw_sql_forbidden")
+
     def test_evidence_gate_failure_blocks_forced_llm_semantic(self) -> None:
         query = "我的排位是15000，想读人工智能，计算机，好就业，请给出推荐"
         fake_client = FailingAfterFirstSemanticClient(
