@@ -125,6 +125,50 @@ class SemanticAdmissionsRecommendationPlannerTest(unittest.TestCase):
             ["candidate_001", "candidate_002"],
         )
 
+    def test_preclassified_preferences_are_preserved_as_not_executed(self) -> None:
+        pre_not_executed = [
+            {
+                "source_text": "好就业",
+                "field_id": "employment_outlook",
+                "semantic": "employment_outlook",
+                "requirement_type": "knowledge_base_or_reviewed_field",
+                "match_type": "evidence_requirement_gate",
+                "executable": False,
+                "reason": "需要 reviewed KB 或就业结果字段。",
+            }
+        ]
+        pre_unanswerable = [
+            {
+                "field_id": "employment_outlook",
+                "intent": "employment_outlook",
+                "source_text": "好就业",
+                "answerable": False,
+                "reason": "需要 reviewed KB 或就业结果字段。",
+                "requirement_type": "knowledge_base_or_reviewed_field",
+            }
+        ]
+
+        result = self._run(
+            _recommendation_intent(),
+            pre_not_executed_preferences=pre_not_executed,
+            pre_unanswerable_intents=pre_unanswerable,
+        )
+
+        self.assertEqual(result.status, "ok")
+        self.assertEqual(
+            result.not_executed_preferences[0]["source_text"],
+            "好就业",
+        )
+        self.assertEqual(
+            result.unanswerable_intents[0]["requirement_type"],
+            "knowledge_base_or_reviewed_field",
+        )
+        self.assertEqual(
+            result.execution_summary["not_executed_preferences"][0]["match_type"],
+            "evidence_requirement_gate",
+        )
+        self.assertIn("好就业", result.warnings[0]["source_text"])
+
     def test_invalid_rerank_falls_back_to_deterministic_order(self) -> None:
         result = self._run(
             _recommendation_intent(),
@@ -297,6 +341,8 @@ class SemanticAdmissionsRecommendationPlannerTest(unittest.TestCase):
         reranker=None,
         ranking_plan=None,
         ranking_verifier=None,
+        pre_not_executed_preferences=None,
+        pre_unanswerable_intents=None,
     ):
         with TemporaryDirectory() as directory:
             rows = [dict(row) for row in NEW_ADMISSIONS_ROWS]
@@ -323,6 +369,8 @@ class SemanticAdmissionsRecommendationPlannerTest(unittest.TestCase):
                 reranker=reranker,
                 ranking_plan=ranking_plan,
                 ranking_verifier=ranking_verifier,
+                pre_not_executed_preferences=pre_not_executed_preferences,
+                pre_unanswerable_intents=pre_unanswerable_intents,
             ).run(intent)
 
 

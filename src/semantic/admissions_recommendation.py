@@ -100,6 +100,8 @@ class SemanticAdmissionsRecommendationPlanner:
         ranking_plan: Any | None = None,
         ranking_verifier: Any | None = None,
         ranking_engine: Any | None = None,
+        pre_not_executed_preferences: list[dict[str, Any]] | None = None,
+        pre_unanswerable_intents: list[dict[str, Any]] | None = None,
     ) -> None:
         self.domain_config = domain_config
         self.database_path = Path(database_path)
@@ -109,6 +111,10 @@ class SemanticAdmissionsRecommendationPlanner:
         self.ranking_plan = ranking_plan
         self.ranking_verifier = ranking_verifier
         self.ranking_engine = ranking_engine
+        self.pre_not_executed_preferences = list(
+            pre_not_executed_preferences or []
+        )
+        self.pre_unanswerable_intents = list(pre_unanswerable_intents or [])
 
     def run(
         self,
@@ -117,9 +123,15 @@ class SemanticAdmissionsRecommendationPlanner:
         if intent.query_type != SEMANTIC_QUERY_TYPE:
             return None
 
+        pre_not_executed = list(self.pre_not_executed_preferences)
+        pre_unanswerable = list(self.pre_unanswerable_intents)
         rank = intent.user_context.user_rank
         if rank is None:
-            return _rank_confirmation_result(intent)
+            return _rank_confirmation_result(
+                intent,
+                pre_not_executed_preferences=pre_not_executed,
+                pre_unanswerable_intents=pre_unanswerable,
+            )
 
         dataset = load_structured_dataset(
             self.database_path,
@@ -130,11 +142,24 @@ class SemanticAdmissionsRecommendationPlanner:
         registry = ReviewedMappingRegistry.from_domain(self.domain_config, graph)
         missing_fields = _missing_recipe_fields(self.domain_config, registry)
         if missing_fields:
-            return _blocked_missing_fields(missing_fields, registry)
+            return _blocked_missing_fields(
+                missing_fields,
+                registry,
+                pre_not_executed_preferences=pre_not_executed,
+                pre_unanswerable_intents=pre_unanswerable,
+            )
 
         rank_basis = _rank_basis(self.domain_config, registry)
         year_value = _latest_year(graph, registry)
         grounded = PreferenceGrounder(registry).ground(intent.preferences)
+        combined_not_executed = [
+            *pre_not_executed,
+            *grounded.not_executed_preferences,
+        ]
+        combined_unanswerable = [
+            *pre_unanswerable,
+            *grounded.unanswerable_intents,
+        ]
         ast = _query_ast(
             intent=intent,
             rank=rank,
@@ -158,15 +183,16 @@ class SemanticAdmissionsRecommendationPlanner:
                     *verification.answerable_intents,
                 ],
                 unanswerable_intents=[
-                    *grounded.unanswerable_intents,
+                    *combined_unanswerable,
                     *verification.unanswerable_intents,
                 ],
-                not_executed_preferences=grounded.not_executed_preferences,
+                not_executed_preferences=combined_not_executed,
                 execution_summary={
                     **_empty_execution_summary(rank=rank, rank_basis=rank_basis),
                     "verification_issues": [
                         issue.to_dict() for issue in verification.issues
                     ],
+                    "not_executed_preferences": combined_not_executed,
                     "verified_query_plan": verification.plan.model_dump(),
                 },
                 warnings=[
@@ -174,7 +200,8 @@ class SemanticAdmissionsRecommendationPlanner:
                         "code": "query_plan_not_verified",
                         "severity": "error",
                         "message": "候选 QueryAST 未通过字段或操作校验。",
-                    }
+                    },
+                    *_context_warnings(intent, combined_not_executed),
                 ],
             )
 
@@ -251,10 +278,10 @@ class SemanticAdmissionsRecommendationPlanner:
                 },
             ],
             unanswerable_intents=[
-                *grounded.unanswerable_intents,
+                *combined_unanswerable,
                 *_missing_context_intents(registry),
             ],
-            not_executed_preferences=grounded.not_executed_preferences,
+            not_executed_preferences=combined_not_executed,
             selection_evidence=selection_evidence,
             execution_summary={
                 "executor": "duckdb",
@@ -280,16 +307,21 @@ class SemanticAdmissionsRecommendationPlanner:
                 "ranking": ranking_summary,
                 "selection_evidence": selection_evidence,
                 "excluded_rows": excluded_rows,
-                "not_executed_preferences": grounded.not_executed_preferences,
+                "not_executed_preferences": combined_not_executed,
                 "verified_query_plan": verification.plan.model_dump(),
             },
-            warnings=_context_warnings(intent, grounded.not_executed_preferences),
+            warnings=_context_warnings(intent, combined_not_executed),
         )
 
 
 def _rank_confirmation_result(
     intent: SemanticIntent,
+    *,
+    pre_not_executed_preferences: list[dict[str, Any]] | None = None,
+    pre_unanswerable_intents: list[dict[str, Any]] | None = None,
 ) -> SemanticAdmissionsRecommendationResult:
+    pre_not_executed = list(pre_not_executed_preferences or [])
+    pre_unanswerable = list(pre_unanswerable_intents or [])
     warnings = [
         {
             "code": "score_without_rank",
@@ -317,9 +349,14 @@ def _rank_confirmation_result(
                 if intent.user_context.user_score is not None
                 else "missing_rank",
                 "message": warnings[0]["message"],
-            }
+            },
+            *pre_unanswerable,
         ],
-        execution_summary=_empty_execution_summary(rank_basis="major_min_rank"),
+        not_executed_preferences=pre_not_executed,
+        execution_summary={
+            **_empty_execution_summary(rank_basis="major_min_rank"),
+            "not_executed_preferences": pre_not_executed,
+        },
         warnings=warnings,
     )
 
@@ -891,7 +928,12 @@ def _context_warnings(
 def _blocked_missing_fields(
     missing_fields: list[str],
     registry: ReviewedMappingRegistry,
+    *,
+    pre_not_executed_preferences: list[dict[str, Any]] | None = None,
+    pre_unanswerable_intents: list[dict[str, Any]] | None = None,
 ) -> SemanticAdmissionsRecommendationResult:
+    pre_not_executed = list(pre_not_executed_preferences or [])
+    pre_unanswerable = list(pre_unanswerable_intents or [])
     return SemanticAdmissionsRecommendationResult(
         query_type=PUBLIC_QUERY_TYPE,
         status="blocked",
@@ -899,15 +941,22 @@ def _blocked_missing_fields(
         result_sections=_empty_sections(),
         answerable_intents=[],
         unanswerable_intents=[
-            {
-                "field_id": field_id,
-                "answerable": False,
-                "reason": registry.unsupported_reason(field_id)
-                or "当前数据缺少 semantic_recommendation 必需字段。",
-            }
-            for field_id in missing_fields
+            *pre_unanswerable,
+            *[
+                {
+                    "field_id": field_id,
+                    "answerable": False,
+                    "reason": registry.unsupported_reason(field_id)
+                    or "当前数据缺少 semantic_recommendation 必需字段。",
+                }
+                for field_id in missing_fields
+            ],
         ],
-        execution_summary=_empty_execution_summary(),
+        not_executed_preferences=pre_not_executed,
+        execution_summary={
+            **_empty_execution_summary(),
+            "not_executed_preferences": pre_not_executed,
+        },
         warnings=[
             {
                 "code": "missing_recipe_fields",
