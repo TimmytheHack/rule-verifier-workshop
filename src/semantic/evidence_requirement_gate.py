@@ -122,10 +122,10 @@ def _matching_preference_index(
     requirement: EvidenceRequirement,
     preferences: list[SemanticPreference],
 ) -> int | None:
-    source = _normalized_text(requirement.source_text)
     for index, preference in enumerate(preferences):
-        if _normalized_text(preference.source_text) == source:
+        if preference.source_text == requirement.source_text:
             return index
+    source = _normalized_text(requirement.source_text)
     for index, preference in enumerate(preferences):
         preference_text = _normalized_text(preference.source_text)
         if source and preference_text and (

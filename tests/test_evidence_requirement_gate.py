@@ -130,6 +130,41 @@ class EvidenceRequirementGateTest(unittest.TestCase):
             "knowledge_base_or_reviewed_field",
         )
 
+    def test_raw_exact_source_text_wins_before_normalized_match(self) -> None:
+        intent = _intent(
+            [
+                _pref("学校 好一点", "school_quality_with_space"),
+                _pref("学校好一点", "school_quality_exact"),
+            ]
+        )
+        classifier = _FakeClassifier(
+            EvidenceRequirementResult(
+                requirements=[
+                    _requirement(
+                        "学校好一点",
+                        "reviewed_ranking_policy",
+                        "school_quality_exact",
+                    )
+                ]
+            )
+        )
+
+        result = EvidenceRequirementGate(classifier).apply(
+            text="学校好一点",
+            intent=intent,
+            schema_context=[],
+            query_options={},
+        )
+
+        self.assertEqual(
+            [preference.semantic for preference in result.filtered_intent.preferences],
+            ["school_quality_with_space"],
+        )
+        self.assertEqual(
+            [item["semantic"] for item in result.excluded_preferences],
+            ["school_quality_exact"],
+        )
+
     def test_rejected_requirements_are_preserved_in_planner_trace(self) -> None:
         classifier = _FakeClassifier(
             EvidenceRequirementResult(
