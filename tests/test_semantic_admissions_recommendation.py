@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from copy import deepcopy
 import unittest
 from pathlib import Path
 from tempfile import TemporaryDirectory
@@ -220,6 +221,49 @@ class SemanticAdmissionsRecommendationPlannerTest(unittest.TestCase):
             "user_rank",
         )
 
+    def test_score_without_rank_surfaces_preclassified_warning(self) -> None:
+        result = self._run(
+            SemanticIntent(
+                query_type="semantic_recommendation",
+                user_context=SemanticUserContext(user_score=630),
+                preferences=[],
+            ),
+            pre_not_executed_preferences=_pre_not_executed_employment(),
+            pre_unanswerable_intents=_pre_unanswerable_employment(),
+        )
+
+        self.assertEqual(result.status, "needs_confirmation")
+        warning_codes = [warning["code"] for warning in result.warnings]
+        self.assertEqual(
+            warning_codes[:2],
+            ["score_without_rank", "preference_not_executed"],
+        )
+        self.assertIn(
+            "好就业",
+            [warning.get("source_text") for warning in result.warnings],
+        )
+        self.assertEqual(result.not_executed_preferences[0]["source_text"], "好就业")
+
+    def test_missing_recipe_fields_surfaces_preclassified_warning(self) -> None:
+        result = self._run(
+            _recommendation_intent(),
+            pre_not_executed_preferences=_pre_not_executed_employment(),
+            pre_unanswerable_intents=_pre_unanswerable_employment(),
+            required_recipe_field_ids=["field_absent_from_reviewed_schema"],
+        )
+
+        self.assertEqual(result.status, "blocked")
+        warning_codes = [warning["code"] for warning in result.warnings]
+        self.assertEqual(
+            warning_codes[:2],
+            ["missing_recipe_fields", "preference_not_executed"],
+        )
+        self.assertIn(
+            "好就业",
+            [warning.get("source_text") for warning in result.warnings],
+        )
+        self.assertEqual(result.not_executed_preferences[0]["source_text"], "好就业")
+
     def test_ranking_plan_does_not_trust_grounded_filter_values(self) -> None:
         result = self._run(
             _recommendation_intent(),
@@ -343,6 +387,7 @@ class SemanticAdmissionsRecommendationPlannerTest(unittest.TestCase):
         ranking_verifier=None,
         pre_not_executed_preferences=None,
         pre_unanswerable_intents=None,
+        required_recipe_field_ids=None,
     ):
         with TemporaryDirectory() as directory:
             rows = [dict(row) for row in NEW_ADMISSIONS_ROWS]
@@ -353,6 +398,11 @@ class SemanticAdmissionsRecommendationPlannerTest(unittest.TestCase):
             database_path = Path(directory) / "admissions.duckdb"
             index_path = Path(directory) / "schema_value_index.json"
             domain_config = DomainConfig.load("admissions")
+            if required_recipe_field_ids is not None:
+                domain_config = _domain_with_required_recipe_fields(
+                    domain_config,
+                    required_recipe_field_ids,
+                )
             build_structured_store_from_dataset(
                 dataset=dataset,
                 schema_path=domain_config.schema_path,
@@ -465,6 +515,50 @@ def _recommendation_intent() -> SemanticIntent:
         ],
         requested_output=["recommendation_sections", "minimum_rank"],
     )
+
+
+def _pre_not_executed_employment() -> list[dict[str, object]]:
+    return [
+        {
+            "source_text": "好就业",
+            "field_id": "employment_outlook",
+            "semantic": "employment_outlook",
+            "requirement_type": "knowledge_base_or_reviewed_field",
+            "match_type": "evidence_requirement_gate",
+            "executable": False,
+            "reason": "需要 reviewed KB 或就业结果字段。",
+        }
+    ]
+
+
+def _pre_unanswerable_employment() -> list[dict[str, object]]:
+    return [
+        {
+            "field_id": "employment_outlook",
+            "intent": "employment_outlook",
+            "source_text": "好就业",
+            "answerable": False,
+            "reason": "需要 reviewed KB 或就业结果字段。",
+            "requirement_type": "knowledge_base_or_reviewed_field",
+        }
+    ]
+
+
+def _domain_with_required_recipe_fields(
+    domain_config: DomainConfig,
+    field_ids: list[str],
+) -> DomainConfig:
+    output = DomainConfig(
+        domain_id=domain_config.domain_id,
+        root=domain_config.root,
+        payload=dict(domain_config.payload),
+    )
+    semantic_capabilities = deepcopy(domain_config.semantic_capabilities)
+    recipes = semantic_capabilities.setdefault("query_recipes", {})
+    recipe = recipes.setdefault("semantic_recommendation", {})
+    recipe["required_field_ids"] = list(field_ids)
+    output._semantic_capabilities_payload = semantic_capabilities
+    return output
 
 
 def _ranking_plan(criteria: list[dict[str, object]]) -> RankingPlan:

@@ -145,6 +145,7 @@ class SemanticAdmissionsRecommendationPlanner:
             return _blocked_missing_fields(
                 missing_fields,
                 registry,
+                intent=intent,
                 pre_not_executed_preferences=pre_not_executed,
                 pre_unanswerable_intents=pre_unanswerable,
             )
@@ -335,6 +336,8 @@ def _rank_confirmation_result(
             "message": "缺少广东省排位，不能执行推荐 SQL。",
         }
     ]
+    if pre_not_executed:
+        warnings = [*warnings, *_context_warnings(intent, pre_not_executed)]
     return SemanticAdmissionsRecommendationResult(
         query_type=PUBLIC_QUERY_TYPE,
         status="needs_confirmation",
@@ -929,11 +932,22 @@ def _blocked_missing_fields(
     missing_fields: list[str],
     registry: ReviewedMappingRegistry,
     *,
+    intent: SemanticIntent,
     pre_not_executed_preferences: list[dict[str, Any]] | None = None,
     pre_unanswerable_intents: list[dict[str, Any]] | None = None,
 ) -> SemanticAdmissionsRecommendationResult:
     pre_not_executed = list(pre_not_executed_preferences or [])
     pre_unanswerable = list(pre_unanswerable_intents or [])
+    warnings = [
+        {
+            "code": "missing_recipe_fields",
+            "severity": "error",
+            "message": "当前数据缺少 semantic_recommendation 必需字段。",
+            "missing_fields": missing_fields,
+        }
+    ]
+    if pre_not_executed:
+        warnings = [*warnings, *_context_warnings(intent, pre_not_executed)]
     return SemanticAdmissionsRecommendationResult(
         query_type=PUBLIC_QUERY_TYPE,
         status="blocked",
@@ -957,14 +971,7 @@ def _blocked_missing_fields(
             **_empty_execution_summary(),
             "not_executed_preferences": pre_not_executed,
         },
-        warnings=[
-            {
-                "code": "missing_recipe_fields",
-                "severity": "error",
-                "message": "当前数据缺少 semantic_recommendation 必需字段。",
-                "missing_fields": missing_fields,
-            }
-        ],
+        warnings=warnings,
     )
 
 
