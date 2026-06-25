@@ -100,7 +100,7 @@ python scripts/build_data_warehouse.py
 
 上传招生 Excel/CSV 后，系统会基于表格字段生成 `capability_graph` 和 `semantic_query_options`，用来描述当前数据集实际支持哪些字段、值、操作和查询类型。自然语言只会提出候选 `SemanticIntent` / `QueryAST`；只有经过已审查字段、已允许操作和值解析校验后，才会进入参数化 SQL。
 
-例如一张新的 admissions 分数/位次表只包含 `专业`、`最低位次`、`最低分数`、`学校所在` 等字段时，系统可以生成按专业最低位次计算的 `冲`、`稳`、`保` 结果，并在 EvidencePack 中明确记录 `学费`、`城市`、`专业组最低位次` 等缺失字段没有执行。缺失字段不能从自然语言里补出来，也不能被回答层暗示为已经筛选。
+例如一张新的 admissions 分数/位次表只包含 `专业`、`所属专业组`、`最低位次`、`最低分数`、`学校所在` 等字段时，`admissions_schema_v1` 会按已审查列名别名映射到 canonical 字段。系统可以生成按专业最低位次计算的 `冲`、`稳`、`保` 结果；也可以回答专业组明细查询，但如果源表没有独立的专业组最低分字段，专业组排序会明确记录为按组内专业最低分最高值计算。缺失字段不能从自然语言里补出来，也不能被回答层暗示为已经筛选。
 
 uploaded admissions 推荐现在走 reviewed semantic 链路：DeepSeek 先提出候选 `SemanticIntent`，系统随后运行 `EvidenceRequirementClassifier`，把每个 LLM 抽取出的 preference 先分成 `table_field`、`knowledge_base_or_reviewed_field`、`reviewed_ranking_policy`、`user_boundary` 或 `unsupported`。只有 `table_field` preference 会继续进入 `PreferenceGrounder`、`SemanticQueryVerifier` 和 verified `QueryAST`；需要 reviewed KB、reviewed ranking policy、用户边界或 unsupported 的偏好会进入 `not_executed_preferences` / `unanswerable_intents`，不会进入 SQL filter、候选 `RankingPlan` prompt 或答案结论。
 

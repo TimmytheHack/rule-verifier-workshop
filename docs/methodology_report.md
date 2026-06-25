@@ -106,9 +106,12 @@ EvidencePack constrains answer.
 
 legacy admissions Workbench 现在在 `AttributeGrounder` 之后运行 reviewed value entity linker。它只读取 `SchemaRegistry` 和 `SchemaValueIndex`，用已审查 value evidence 处理完整实体与子串的歧义：例如“我想进深圳大学”会提出 `university_name = 深圳大学`，并抑制其中的 `city = 深圳`；“我想去深圳的大学”仍可执行城市筛选；“深圳大学附近”、否定、距离或身份上下文会进入 `entity_linking.not_executed_links`。accepted entity links 仍必须先通过 `RuleVerifier.audit_proposed_rules`，再由 Workbench merge guard 进入执行层；suppressed/boundary evidence 只会阻止不安全 hard filter，不能绕过 verifier 或直接生成 SQL。`EvidencePack.entity_linking` 和 `debug_trace.entity_linking` 保存这些决策，answer layer 只能基于该 evidence 解释哪些实体被执行、哪些子串或边界没有执行。
 
-当上传 admissions 分数/位次表只包含 `专业`、`最低位次`、`最低分数`、`学校所在` 等字段时，
+当上传 admissions 分数/位次表只包含 `专业`、`所属专业组`、`最低位次`、`最低分数`、`学校所在` 等字段时，
+`admissions_schema_v1` 会先用已审查列名别名把这些源列映射到 admissions canonical 字段。
 系统可以在 `capability_graph` 和 `semantic_query_options` 支持下生成专业最低位次的
-`冲`、`稳`、`保` 结果。缺失字段例如 `学费`、`城市`、`专业组最低位次` 必须进入
+`冲`、`稳`、`保` 结果。对“录取最高专业组”这类明细查询，如果源表没有独立专业组最低分字段，
+planner 会用 `group_metric_from_major_score_column` warning 说明专业组排序按组内专业最低分最高值计算。
+缺失字段例如 `学费`、`城市`、`专业组最低位次` 必须进入
 `unanswerable_intents`，不能被暗示为已经执行，也不能在回答层被描述成已经参与筛选。
 `verified_query_plan` 只能包含通过 `PreferenceGrounder`、`SemanticQueryVerifier` 和
 `AnswerabilityGate` 后的结构，最终 SQL 必须是 parameterized SQL。
@@ -583,7 +586,8 @@ Workbench API 返回固定的 `WorkbenchResponse` contract：
   EvidencePack 内部继续保留中文原始字段用于 trace。
 - admissions 新增 `AdmissionsQueryPlanner`，只在招生 domain 内识别
   `group_detail_report` 和 `recommendation`。前者按 domain pack 配置的默认
-  `group_min_score_2024` 指标生成专业组聚合和组内专业明细；后者基于历史最低分/
+  `group_min_score_2024` 指标生成专业组聚合和组内专业明细；如果上传表只有专业级
+  `最低分数` 列，会在 warning 中说明按组内专业最低分最高值排序；后者基于历史最低分/
   最低位次生成 `reach`、`match`、`safety`（冲/稳/保）分组。如果用户只有分数没有
   位次，`recommendation` 必须返回 `status=needs_confirmation` 和
   `score_without_rank` warning，`execution_summary.sql` 为空，`result_count=0`。

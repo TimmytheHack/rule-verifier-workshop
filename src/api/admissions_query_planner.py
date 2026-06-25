@@ -158,9 +158,18 @@ class AdmissionsQueryPlanner:
         group_rank_col = self._source(fields["group_rank"])
         major_rank_col = self._source(fields["major_rank"])
         major_score_col = self._source(fields["major_score"])
-        max_score_col = self._source(fields["major_max_score"])
+        max_score_col = self._table_source_or_none(fields.get("major_max_score"))
         plan_count_col = self._source(fields["plan_count"])
         metric_col = self._source(metric_field_id)
+        if metric_col == major_score_col:
+            warnings.append(
+                _warning(
+                    "group_metric_from_major_score_column",
+                    "当前上传表没有独立专业组最低分字段，专业组排序按组内专业最低分最高值计算。",
+                    metric=metric_field_id,
+                    source_column=metric_col,
+                )
+            )
 
         with duckdb.connect(str(self.database_path), read_only=True) as connection:
             input_count = _input_row_count(connection, self.domain_config.table_name)
@@ -801,7 +810,12 @@ class AdmissionsQueryPlanner:
         query_config: dict[str, Any],
     ) -> list[dict[str, Any]]:
         fields = query_config.get("fields") or {}
-        optional = {"cooperation_type", "school_country_or_region", "special_plan_type"}
+        optional = {
+            "cooperation_type",
+            "major_max_score_2024",
+            "school_country_or_region",
+            "special_plan_type",
+        }
         field_ids = [
             field_id
             for field_id in fields.values()
@@ -859,8 +873,33 @@ class AdmissionsQueryPlanner:
                     }
                 )
         if score_fields and not has_group_min_score:
+            if self._reviewed_score_columns_available(query_type):
+                return []
             return score_fields
         return []
+
+    def _reviewed_score_columns_available(self, query_type: str) -> bool:
+        query_config = self.config.get(query_type) or {}
+        fields = query_config.get("fields") or {}
+        field_ids = []
+        if query_type == QUERY_TYPE_GROUP_DETAIL:
+            metric = query_config.get("default_metric") or {}
+            if metric.get("field_id"):
+                field_ids.append(str(metric["field_id"]))
+            if fields.get("major_score"):
+                field_ids.append(str(fields["major_score"]))
+        elif query_type == QUERY_TYPE_RECOMMENDATION:
+            for key in ("group_score", "major_score"):
+                if fields.get(key):
+                    field_ids.append(str(fields[key]))
+        if not field_ids:
+            return False
+        table_columns = self._table_columns()
+        for field_id in _unique(field_ids):
+            source_column = self.domain_config.source_column_or_none(field_id)
+            if not source_column or source_column not in table_columns:
+                return False
+        return True
 
     def _blocked_planned_result(
         self,
@@ -935,7 +974,7 @@ SELECT
   CAST({_quote(kwargs["full_major_col"])} AS VARCHAR) AS full_major_name,
   {_numeric_expr(kwargs["major_score_col"])} AS min_score,
   {_numeric_expr(kwargs["major_rank_col"])} AS min_rank,
-  {_numeric_expr(kwargs["max_score_col"])} AS max_score,
+  {_numeric_expr_or_null(kwargs["max_score_col"])} AS max_score,
   {_numeric_expr(kwargs["plan_count_col"])} AS plan_count
 FROM {table}
 WHERE {_numeric_expr(kwargs["year_col"])} = ?
@@ -1064,6 +1103,12 @@ LIMIT ?
 
     def _source(self, field_id: str) -> str:
         return self.domain_config.source_column(field_id)
+
+    def _table_source_or_none(self, field_id: str | None) -> str | None:
+        source_column = self.domain_config.source_column_or_none(field_id)
+        if source_column and source_column in self._table_columns():
+            return source_column
+        return None
 
 
 def _recommendation_sort(
@@ -1543,6 +1588,12 @@ def _numeric_expr(column: str) -> str:
         "TRY_CAST(regexp_extract(REPLACE(CAST("
         f"{_quote(column)} AS VARCHAR), ',', ''), '{NUMBER_PATTERN}') AS DOUBLE)"
     )
+
+
+def _numeric_expr_or_null(column: str | None) -> str:
+    if not column:
+        return "NULL"
+    return _numeric_expr(column)
 
 
 def _quote(identifier: str) -> str:

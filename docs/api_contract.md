@@ -120,6 +120,8 @@ endpoint：
 `admissions_schema_v1` 只复制 admissions 字段、规则、语义能力和展示映射模板，并把
 `workbook_path` 改写为上传文件的托管路径。旧 `base_domain=admissions` 仅为兼容入口；
 前端和新工具调用不应再要求用户填写 `base_domain`。
+模板应用时会做已审查列名别名适配，例如 `专业`、`所属专业组`、`最低分数`、`最低位次`
+可映射到 admissions canonical 字段；这只改字段映射，不读取内置 admissions 数据行。
 
 前端主查询页选择 uploaded admissions 数据源时，必须先调用
 `POST /workbench/preflight`。该接口固定返回 `workbench_preflight.v1`，包含
@@ -389,6 +391,8 @@ DuckDB hard filter，并记录在 `executed_filters`、
   `detail_sql`、`detail_params`、`group_by`、`metric`、`sort` 和
   `nested_result_count`。`result_sections.groups[]` 包含 `group_code`、
   `group_title`、`group_metric_score` 和 `majors[]`。
+  如果上传表没有独立专业组最低分字段、但已审核映射可用同一 `最低分数` 列生成组内专业明细，
+  planner 会返回 `group_metric_from_major_score_column` warning，说明专业组排序按组内专业最低分最高值计算。
 - `recommendation`：用于基于历史最低分/最低位次的 admissions 推荐分组。前端传入的
   deterministic fields 优先于自然语言；自然语言只补充 preferences/candidates。输出
   `result_sections.reach`、`result_sections.match`、`result_sections.safety`，展示标签为

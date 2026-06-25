@@ -192,6 +192,81 @@ class RealDatasetPilotTest(unittest.TestCase):
         self.assertIn("ambiguous_admissions_score_fields", _warning_codes(response))
         self.assertEqual(response["debug_trace"]["execution"]["sql"], "")
 
+    def test_extra_ambiguous_score_column_does_not_block_reviewed_score_fields(self) -> None:
+        rows = [
+            {
+                **row,
+                "最低分数": row.get("最低分1"),
+            }
+            for row in _admissions_rows()
+        ]
+        with TemporaryDirectory() as directory:
+            service, dataset_id = _queryable_uploaded_admissions(
+                Path(directory),
+                rows=rows,
+            )
+
+            response = service.query(
+                dataset_id,
+                user_input=GROUP_DETAIL_QUERY,
+                soft_preferences={"prompt": GROUP_DETAIL_QUERY},
+                planner_mode="legacy",
+            )
+
+        assert_workbench_contract(self, response)
+        self.assertEqual(response["status"], "ok")
+        self.assertNotIn("ambiguous_admissions_score_fields", _warning_codes(response))
+        self.assertEqual(
+            response["evidence_pack"]["execution_summary"]["metric"]["field_id"],
+            "group_min_score_2024",
+        )
+
+    def test_profile_score_hint_does_not_override_reviewed_score_columns(self) -> None:
+        with TemporaryDirectory() as directory:
+            root = Path(directory)
+            service, dataset_id = _queryable_uploaded_admissions(
+                root,
+                rows=_admissions_rows(),
+            )
+            profile_path = (
+                root
+                / "managed"
+                / dataset_id
+                / "domain_packs"
+                / "admissions"
+                / "schema_profile.json"
+            )
+            profile = json.loads(profile_path.read_text(encoding="utf-8"))
+            for column in profile.get("columns") or []:
+                if column.get("source_column") in {"专业组最低分1", "最低分1"}:
+                    column.pop("admissions_semantics", None)
+            profile.setdefault("columns", []).append(
+                {
+                    "field_id": "field_ambiguous_min_score",
+                    "source_column": "最低分数",
+                    "admissions_semantics": {"score_kind": "min_score"},
+                }
+            )
+            profile_path.write_text(
+                json.dumps(profile, ensure_ascii=False, indent=2) + "\n",
+                encoding="utf-8",
+            )
+
+            response = service.query(
+                dataset_id,
+                user_input=GROUP_DETAIL_QUERY,
+                soft_preferences={"prompt": GROUP_DETAIL_QUERY},
+                planner_mode="legacy",
+            )
+
+        assert_workbench_contract(self, response)
+        self.assertEqual(response["status"], "ok")
+        self.assertNotIn("ambiguous_admissions_score_fields", _warning_codes(response))
+        self.assertEqual(
+            response["evidence_pack"]["execution_summary"]["metric"]["field_id"],
+            "group_min_score_2024",
+        )
+
     def test_uploaded_real_like_fixture_runs_group_detail_report(self) -> None:
         with TemporaryDirectory() as directory:
             service, dataset_id = _queryable_real_like_dataset(Path(directory))

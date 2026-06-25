@@ -1660,6 +1660,42 @@ print(json.dumps({
             ],
         )
 
+    def test_uploaded_new_admissions_group_detail_query(self) -> None:
+        with TemporaryDirectory() as directory:
+            source = write_new_admissions_excel(Path(directory) / "new_admissions.xlsx")
+            service = DatasetService(Path(directory) / "managed")
+            service.upload(
+                filename=source.name,
+                content=source.read_bytes(),
+                dataset_id="ds_new_admissions_group_detail",
+            )
+            service.generate_domain_pack(
+                "ds_new_admissions_group_detail",
+                domain_name="admissions",
+                template_id="admissions_schema_v1",
+            )
+            approved = service.approve_domain("ds_new_admissions_group_detail")
+            self.assertTrue(approved["ok"])
+            built = service.build_warehouse("ds_new_admissions_group_detail")
+            self.assertEqual(built["status"], "queryable")
+
+            response = service.query(
+                "ds_new_admissions_group_detail",
+                user_input=GROUP_DETAIL_QUERY,
+                soft_preferences={"prompt": GROUP_DETAIL_QUERY},
+                planner_mode="legacy",
+            )
+
+        assert_workbench_contract(self, response)
+        self.assertEqual(response["status"], "ok")
+        self.assertEqual(response["query_type"], "group_detail_report")
+        warning_codes = {item["code"] for item in response["warnings"]}
+        self.assertNotIn("ambiguous_admissions_score_fields", warning_codes)
+        self.assertIn("group_metric_from_major_score_column", warning_codes)
+        self.assertTrue(response["result_sections"]["groups"])
+        self.assertEqual(response["result_sections"]["groups"][0]["group_code"], "（230）")
+        self.assertTrue(response["result_sections"]["groups"][0]["majors"])
+
     def test_uploaded_new_admissions_projects_available_context_fields(self) -> None:
         query = "广东物化生，10000名，列出冲稳保的次序，以及每个专业的最低录取排名"
         with TemporaryDirectory() as directory:

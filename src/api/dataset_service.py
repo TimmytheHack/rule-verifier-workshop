@@ -71,6 +71,18 @@ LEGACY_ADMISSIONS_BASE_DOMAIN = "admissions"
 SUPPORTED_UPLOAD_EXTENSIONS = {".csv", ".xlsx", ".xlsm", ".xls"}
 RESERVED_DATASET_IDS = {"admissions", "housing", "products"}
 DATASET_ID_PATTERN = re.compile(r"^[A-Za-z0-9][A-Za-z0-9_-]{2,79}$")
+ADMISSIONS_UPLOAD_SOURCE_COLUMN_ALIASES = {
+    "group_code": ["院校专业组代码", "所属专业组"],
+    "group_name": ["专业组名称", "所属专业组"],
+    "major_name": ["专业名称", "专业"],
+    "full_major_name": ["专业全称", "专业"],
+    "school_province": ["所在省", "学校所在"],
+    "plan_count": ["计划人数", "录取人数"],
+    "major_min_rank_2024": ["最低位次1", "最低位次"],
+    "group_min_rank_2024": ["专业组最低位次1", "最低位次"],
+    "major_min_score_2024": ["最低分1", "最低分数"],
+    "group_min_score_2024": ["专业组最低分1", "最低分数"],
+}
 
 
 def _upload_max_bytes() -> int:
@@ -793,7 +805,43 @@ class DatasetService:
         )
         payload["data"]["table_name"] = "admissions"
         _write_json(domain_path, payload)
+        self._adapt_admissions_template_source_columns(domain_dir)
         self._seed_template_review(domain_dir)
+
+    def _adapt_admissions_template_source_columns(self, domain_dir: Path) -> None:
+        profile = _load_json(domain_dir / "schema_profile.json")
+        available_columns = {
+            str(column.get("source_column"))
+            for column in profile.get("columns") or []
+            if column.get("source_column")
+        }
+        if not available_columns:
+            return
+        schema_path = domain_dir / "schema_registry.json"
+        schema = _load_json(schema_path)
+        fields = schema.get("fields") or {}
+        changed = False
+        for field_id, candidates in ADMISSIONS_UPLOAD_SOURCE_COLUMN_ALIASES.items():
+            spec = fields.get(field_id)
+            if not spec:
+                continue
+            current = spec.get("source_column")
+            if current in available_columns:
+                continue
+            replacement = next(
+                (candidate for candidate in candidates if candidate in available_columns),
+                None,
+            )
+            if not replacement:
+                continue
+            spec["source_column"] = replacement
+            spec["label"] = replacement
+            note = str(spec.get("notes") or "")
+            suffix = f"上传表列名适配：{current or '未配置'} -> {replacement}。"
+            spec["notes"] = f"{note} {suffix}".strip()
+            changed = True
+        if changed:
+            _write_json(schema_path, schema)
 
     def _seed_template_review(self, domain_dir: Path) -> None:
         domain = _load_json(domain_dir / "domain.json")
