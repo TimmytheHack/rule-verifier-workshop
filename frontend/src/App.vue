@@ -16,7 +16,20 @@ import EvidenceReport from './components/EvidenceReport.vue';
 import EvalSummary from './components/EvalSummary.vue';
 import TokenUsagePanel from './components/TokenUsagePanel.vue';
 import BeginnerDecisionPanel from './components/BeginnerDecisionPanel.vue';
+import {
+  BUILTIN_ADMISSIONS_SOURCE,
+  createUploadedAdmissionsSource,
+  shouldUseUploadedAdmissionsPreflight,
+} from './domain/admissionsAdapter';
 import { formatApiError } from './utils/apiError';
+import {
+  browserStorage,
+  loadSelectedDataSourceId,
+  loadUploadedDataSources,
+  mergeUploadedDataSource,
+  persistSelectedDataSourceId,
+  persistUploadedDataSources,
+} from './utils/dataSourceRegistry';
 import {
   buildConfirmedWorkbenchRequest,
   buildPreflightConfirmedWorkbenchRequest,
@@ -66,22 +79,13 @@ const defaultSoftPreferences = {
 };
 const workbenchOptions = ref(normalizeWorkbenchOptions(null));
 const optionsLoadError = ref('');
-const BUILTIN_DATA_SOURCE = {
-  id: 'builtin_admissions',
-  type: 'builtin',
-  datasetId: null,
-  domainName: 'admissions',
-  label: '内置招生数据',
-  description: '使用仓库内置 admissions 数据。',
-};
-const DATA_SOURCES_STORAGE_KEY = 'szu_uploaded_data_sources';
-const SELECTED_SOURCE_STORAGE_KEY = 'szu_selected_data_source';
+const BUILTIN_DATA_SOURCE = BUILTIN_ADMISSIONS_SOURCE;
 const DEFAULT_DEV_ACTOR_TOKEN = import.meta.env.DEV ? 'operator-token' : '';
 const EXTRACTOR_ALIASES = {
   deepseek_slots: 'deepseek',
 };
 const initialUploadedDataSources = loadUploadedDataSources();
-const initialDataSourceId = loadSelectedDataSourceId(initialUploadedDataSources);
+const initialDataSourceId = loadSelectedDataSourceId({ sources: initialUploadedDataSources });
 
 const runData = ref(createEmptyWorkbenchState({
   selected_options: {
@@ -157,11 +161,7 @@ const canConfirmCandidates = computed(() => (
   )
   && Boolean(lastRequestContext.value?.requestBody)
 ));
-const shouldUsePreflight = computed(() => (
-  mode.value === 'api'
-  && selectedDataSource.value?.type === 'uploaded'
-  && selectedDataSource.value?.domainName === 'admissions'
-));
+const shouldUsePreflight = computed(() => shouldUseUploadedPreflightForSource(selectedDataSource.value));
 const currentPreflightReady = computed(() => isCurrentPreflight({
   preflightState: preflightState.value,
   inputSignature: inputDraftSignature.value,
@@ -189,8 +189,8 @@ const primaryRunLabel = computed(() => {
   return currentPreflightReady.value ? '重新预检' : '先做预检';
 });
 
-watch(uploadedDataSources, persistUploadedDataSources, { deep: true });
-watch(selectedDataSourceId, persistSelectedDataSourceId);
+watch(uploadedDataSources, (value) => persistUploadedDataSources(undefined, value), { deep: true });
+watch(selectedDataSourceId, (value) => persistSelectedDataSourceId(undefined, value));
 watch(mode, handleModeChange, { immediate: true });
 
 function runDemo(runRequest = lastRunRequest.value, selectedOptions = {}) {
@@ -490,9 +490,7 @@ function normalizedExtractor() {
 }
 
 function shouldUseUploadedPreflightForSource(source) {
-  return mode.value === 'api'
-    && source?.type === 'uploaded'
-    && source?.domainName === 'admissions';
+  return shouldUseUploadedAdmissionsPreflight(source, mode.value);
 }
 
 function hasRunnableCurrentPreflight(inputSignature) {
@@ -545,14 +543,11 @@ function goToUpload() {
 }
 
 function activateUploadedSource(payload) {
-  const source = normalizeUploadedDataSource(payload);
+  const source = createUploadedAdmissionsSource(payload);
   if (!source) {
     return;
   }
-  uploadedDataSources.value = [
-    source,
-    ...uploadedDataSources.value.filter((item) => item.id !== source.id),
-  ].slice(0, 5);
+  uploadedDataSources.value = mergeUploadedDataSource(uploadedDataSources.value, source);
   clearLastRequestContext();
   clearPreflightState();
   selectedDataSourceId.value = source.id;
@@ -563,7 +558,12 @@ function activateUploadedSource(payload) {
 }
 
 function authHeaders() {
-  const token = localStorageSafe()?.getItem('actor_token') || DEFAULT_DEV_ACTOR_TOKEN;
+  let token = DEFAULT_DEV_ACTOR_TOKEN;
+  try {
+    token = browserStorage()?.getItem('actor_token') || DEFAULT_DEV_ACTOR_TOKEN;
+  } catch {
+    token = DEFAULT_DEV_ACTOR_TOKEN;
+  }
   return token ? { 'X-Actor-Token': token } : {};
 }
 
@@ -628,70 +628,6 @@ function ensureSelectedRuntimeOptions() {
   if (!workbenchOptions.value.models.some((option) => option.value === model.value)) {
     model.value = firstOptionValue(workbenchOptions.value.models, 'deepseek-v4-flash');
   }
-}
-
-function loadUploadedDataSources() {
-  try {
-    const raw = localStorageSafe()?.getItem(DATA_SOURCES_STORAGE_KEY);
-    const parsed = raw ? JSON.parse(raw) : [];
-    return Array.isArray(parsed)
-      ? parsed.filter((source) => source?.id && source?.datasetId && source?.domainName)
-      : [];
-  } catch {
-    return [];
-  }
-}
-
-function loadSelectedDataSourceId(sources = []) {
-  const saved = localStorageSafe()?.getItem(SELECTED_SOURCE_STORAGE_KEY);
-  if (
-    saved === BUILTIN_DATA_SOURCE.id
-    || sources.some((source) => source.id === saved)
-  ) {
-    return saved;
-  }
-  return BUILTIN_DATA_SOURCE.id;
-}
-
-function persistUploadedDataSources(value) {
-  localStorageSafe()?.setItem(DATA_SOURCES_STORAGE_KEY, JSON.stringify(value));
-}
-
-function persistSelectedDataSourceId(value) {
-  localStorageSafe()?.setItem(SELECTED_SOURCE_STORAGE_KEY, value || BUILTIN_DATA_SOURCE.id);
-}
-
-function normalizeUploadedDataSource(payload) {
-  const datasetId = payload?.dataset_id;
-  if (!datasetId) {
-    return null;
-  }
-  const rowCount = payload?.warehouse?.row_count || payload?.row_count || null;
-  const columnCount = payload?.warehouse?.column_count || payload?.column_count || null;
-  const fileName = payload?.file_name || payload?.source_name || datasetId;
-  const sizeText = rowCount && columnCount
-    ? `${formatNumber(rowCount)} 行，${formatNumber(columnCount)} 列`
-    : '已生成可查询数据';
-  return {
-    id: `uploaded:${datasetId}`,
-    type: 'uploaded',
-    datasetId,
-    domainName: payload?.domain_name || 'admissions',
-    label: `上传：${fileName}`,
-    description: `${sizeText}，使用上传表格查询。`,
-    rowCount,
-    columnCount,
-    updatedAt: payload?.updated_at || new Date().toISOString(),
-  };
-}
-
-function formatNumber(value) {
-  const number = Number(value);
-  return Number.isNaN(number) ? value : number.toLocaleString('zh-CN');
-}
-
-function localStorageSafe() {
-  return typeof window === 'undefined' ? null : window.localStorage;
 }
 
 function statusLabel(status) {
