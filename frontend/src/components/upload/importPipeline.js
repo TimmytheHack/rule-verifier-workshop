@@ -91,7 +91,13 @@ export async function runAdmissionsImportPipeline({ file, requestJson, onStep })
 
   dataset = await runStep(
     'build_warehouse',
-    () => requestJson(`/datasets/${datasetId}/build-warehouse`, { method: 'POST' }),
+    async () => {
+      const warehouseDataset = await requestJson(`/datasets/${datasetId}/build-warehouse`, {
+        method: 'POST',
+      });
+      assertQueryableWarehouseBuild(warehouseDataset);
+      return warehouseDataset;
+    },
     (warehouseDataset) => ({
       row_count: warehouseDataset?.warehouse?.row_count ?? warehouseDataset?.row_count ?? null,
     }),
@@ -102,4 +108,20 @@ export async function runAdmissionsImportPipeline({ file, requestJson, onStep })
 
 function errorMessage(error) {
   return error instanceof Error ? error.message : String(error || '导入失败');
+}
+
+function assertQueryableWarehouseBuild(dataset) {
+  if (dataset?.status !== 'queryable' || dataset?.warehouse_audit?.ok === false) {
+    throw new Error(warehouseBuildFailureMessage(dataset));
+  }
+}
+
+function warehouseBuildFailureMessage(dataset) {
+  const warningCodes = (dataset?.warehouse_audit?.warnings || [])
+    .map((warning) => warning?.code)
+    .filter(Boolean);
+  const suffix = warningCodes.length > 0
+    ? `：${warningCodes.join('、')}`
+    : '';
+  return `生成可查询数据未通过校验${suffix}`;
 }

@@ -77,6 +77,45 @@ test('runAdmissionsImportPipeline stops when approve-domain reports business fai
   assert.equal(visited.some((url) => url.endsWith('/build-warehouse')), false);
 });
 
+test('runAdmissionsImportPipeline rejects blocked warehouse builds', async () => {
+  const stepEvents = [];
+  const requestJson = async (url) => {
+    if (url.startsWith('/datasets/upload')) return { dataset_id: 'ds_1' };
+    if (url.endsWith('/generate-domain-pack')) return { dataset_id: 'ds_1' };
+    if (url.endsWith('/profile')) return { fields: [] };
+    if (url.endsWith('/review-summary')) return { reviewable_fields: [] };
+    if (url.endsWith('/approve-domain')) {
+      return { ok: true, payload: { domain_pack_status: 'approved' } };
+    }
+    if (url.endsWith('/build-warehouse')) {
+      return {
+        dataset_id: 'ds_1',
+        status: 'blocked',
+        warehouse_audit: {
+          ok: false,
+          warnings: [{ code: 'ambiguous_admissions_score_fields' }],
+        },
+      };
+    }
+    throw new Error(`unexpected url ${url}`);
+  };
+
+  await assert.rejects(
+    () => runAdmissionsImportPipeline({
+      file: fakeFile(),
+      requestJson,
+      onStep: (event) => stepEvents.push(event),
+    }),
+    /生成可查询数据未通过校验/,
+  );
+
+  assert.deepEqual(stepEvents.at(-1), {
+    key: 'build_warehouse',
+    status: 'error',
+    details: { message: '生成可查询数据未通过校验：ambiguous_admissions_score_fields' },
+  });
+});
+
 test('runAdmissionsImportPipeline marks failed API step and stops later steps', async () => {
   const visited = [];
   const stepEvents = [];
