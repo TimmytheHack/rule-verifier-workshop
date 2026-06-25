@@ -15,7 +15,11 @@ import {
   candidateIdentifier,
   splitCandidateConfirmationState,
 } from '../utils/workbenchState';
-import { mergeApprovedDatasetState } from '../utils/uploadDatasetState';
+import {
+  admissionsTemplateMismatchMessage,
+  approvalFailureMessage,
+  mergeApprovedDatasetState,
+} from '../utils/uploadDatasetState';
 
 const file = ref(null);
 const domainName = ref('admissions');
@@ -100,6 +104,14 @@ const queryStatusMessage = computed(() => {
   };
   return messages[queryResult.value.status] || '未知状态，请检查证据。';
 });
+const templateMismatchMessage = computed(() => admissionsTemplateMismatchMessage(
+  dataset.value,
+  domainName.value,
+  ADMISSIONS_SCHEMA_TEMPLATE_ID,
+));
+const approvalIssueMessage = computed(() => approvalFailureMessage(
+  dataset.value?.last_review_result,
+));
 const datasetSteps = computed(() => {
   const hasDataset = Boolean(dataset.value);
   const hasDatasetId = Boolean(datasetId.value);
@@ -334,6 +346,10 @@ async function approveDomain() {
     });
     dataset.value = mergeApprovedDatasetState(dataset.value, approval);
     await refreshReviewSummary();
+    const approvalMessage = approvalFailureMessage(approval);
+    if (approvalMessage) {
+      throw new Error(approvalMessage);
+    }
   });
 }
 
@@ -654,7 +670,7 @@ function stageLabel(value) {
           <el-button
             :icon="Check"
             type="success"
-            :disabled="!reviewSummary"
+            :disabled="!reviewSummary || Boolean(templateMismatchMessage)"
             :loading="loading"
             @click="approveDomain"
           >
@@ -668,6 +684,22 @@ function stageLabel(value) {
             生成可查询数据
           </el-button>
         </div>
+        <el-alert
+          v-if="templateMismatchMessage"
+          class="inline-alert"
+          type="warning"
+          :closable="false"
+          show-icon
+          :title="templateMismatchMessage"
+        />
+        <el-alert
+          v-if="approvalIssueMessage"
+          class="inline-alert"
+          type="error"
+          :closable="false"
+          show-icon
+          :title="approvalIssueMessage"
+        />
         <el-collapse class="advanced-review-collapse">
           <el-collapse-item title="高级字段操作（字段映射不对时使用）" name="advanced-review">
             <div class="compact-controls review-controls">
