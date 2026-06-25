@@ -1,4 +1,18 @@
 <script setup>
+import { ref } from 'vue';
+
+import BeginnerDecisionPanel from '../BeginnerDecisionPanel.vue';
+import CandidateRerunPanel from '../CandidateRerunPanel.vue';
+import EvalSummary from '../EvalSummary.vue';
+import EvidenceReport from '../EvidenceReport.vue';
+import PreflightPanel from '../PreflightPanel.vue';
+import ResultTable from '../ResultTable.vue';
+import TokenUsagePanel from '../TokenUsagePanel.vue';
+import UserInputPanel from '../UserInputPanel.vue';
+import WorkbenchRunBar from '../WorkbenchRunBar.vue';
+import { createEmptyEvidenceReport } from '../../utils/workbenchState.js';
+import { shouldShowOptionsLoadError } from '../../utils/workbenchPresentation.js';
+
 const props = defineProps({
   runData: { type: Object, required: true },
   preflightState: { type: Object, required: true },
@@ -30,7 +44,6 @@ const emit = defineEmits([
   'update:generator',
   'update:model',
   'update:selected-data-source-id',
-  'run-current-form',
   'show-demo',
   'go-import',
   'draft-change',
@@ -40,59 +53,125 @@ const emit = defineEmits([
   'view-trace',
 ]);
 
-const emitUpdateMode = (value) => emit('update:mode', value);
-const emitUpdateExtractor = (value) => emit('update:extractor', value);
-const emitUpdateGenerator = (value) => emit('update:generator', value);
-const emitUpdateModel = (value) => emit('update:model', value);
-const emitUpdateSelectedDataSourceId = (value) => emit('update:selected-data-source-id', value);
-const runCurrentForm = () => emit('run-current-form');
-const showDemo = () => emit('show-demo');
-const goImport = () => emit('go-import');
-const draftChange = (payload) => emit('draft-change', payload);
-const runWorkbench = (payload) => emit('run-workbench', payload);
-const updatePreflightSelection = (payload) => emit('update-preflight-selection', payload);
-const confirmCandidates = (payload) => emit('confirm-candidates', payload);
-const viewTrace = (payload) => emit('view-trace', payload);
+const inputPanelRef = ref(null);
+
+function submitCurrentForm() {
+  inputPanelRef.value?.submitRun?.();
+}
 </script>
 
 <template>
-  <section class="workspace-panel query-workspace c-lite-query">
-    <slot
-      :run-data="props.runData"
-      :preflight-state="props.preflightState"
-      :workbench-options="props.workbenchOptions"
-      :mode="props.mode"
-      :extractor="props.extractor"
-      :generator="props.generator"
-      :model="props.model"
-      :loading="props.loading"
-      :last-run-failed="props.lastRunFailed"
-      :api-error="props.apiError"
-      :selected-data-source-id="props.selectedDataSourceId"
-      :data-source-options="props.dataSourceOptions"
-      :data-source-tag="props.dataSourceTag"
-      :data-source-description="props.dataSourceDescription"
-      :options-load-error="props.optionsLoadError"
-      :run-status="props.runStatus"
-      :primary-run-label="props.primaryRunLabel"
-      :quick-stats="props.quickStats"
-      :result-rows="props.resultRows"
-      :can-confirm-candidates="props.canConfirmCandidates"
-      :default-hard-filters="props.defaultHardFilters"
-      :default-soft-preferences="props.defaultSoftPreferences"
-      :emit-update-mode="emitUpdateMode"
-      :emit-update-extractor="emitUpdateExtractor"
-      :emit-update-generator="emitUpdateGenerator"
-      :emit-update-model="emitUpdateModel"
-      :emit-update-selected-data-source-id="emitUpdateSelectedDataSourceId"
-      :run-current-form="runCurrentForm"
-      :show-demo="showDemo"
-      :go-import="goImport"
-      :draft-change="draftChange"
-      :run-workbench="runWorkbench"
-      :update-preflight-selection="updatePreflightSelection"
-      :confirm-candidates="confirmCandidates"
-      :view-trace="viewTrace"
+  <section class="workspace-panel c-lite-query">
+    <WorkbenchRunBar
+      :mode="mode"
+      :extractor="extractor"
+      :generator="generator"
+      :model="model"
+      :selected-data-source-id="selectedDataSourceId"
+      :data-source-options="dataSourceOptions"
+      :data-source-tag="dataSourceTag"
+      :data-source-description="dataSourceDescription"
+      :extractor-options="workbenchOptions.extractors"
+      :generator-options="workbenchOptions.generators"
+      :model-options="workbenchOptions.models"
+      :options-source="workbenchOptions.source"
+      :options-error="optionsLoadError"
+      :run-status="runStatus"
+      :loading="loading"
+      :primary-action-label="primaryRunLabel"
+      @update:mode="emit('update:mode', $event)"
+      @update:extractor="emit('update:extractor', $event)"
+      @update:generator="emit('update:generator', $event)"
+      @update:model="emit('update:model', $event)"
+      @update:selected-data-source-id="emit('update:selected-data-source-id', $event)"
+      @run="submitCurrentForm"
+      @demo="emit('show-demo')"
+      @upload="emit('go-import')"
     />
+
+    <div class="c-lite-query-grid">
+      <aside class="query-input-panel">
+        <UserInputPanel
+          ref="inputPanelRef"
+          :default-hard-filters="defaultHardFilters"
+          :default-soft-preferences="defaultSoftPreferences"
+          :mode="mode"
+          :loading="loading"
+          :show-panel-actions="false"
+          :rank-window-options="workbenchOptions.rank_windows"
+          :sort-mode-options="workbenchOptions.sort_modes"
+          @draft-change="emit('draft-change', $event)"
+          @run="emit('run-workbench', $event)"
+        />
+        <el-alert
+          v-if="shouldShowOptionsLoadError(mode, optionsLoadError)"
+          class="inline-alert"
+          type="warning"
+          :closable="false"
+          show-icon
+          :title="optionsLoadError"
+        />
+        <el-alert
+          v-if="apiError"
+          class="inline-alert"
+          type="error"
+          :closable="false"
+          show-icon
+          :title="apiError"
+        />
+      </aside>
+
+      <section class="query-output-panel">
+        <template v-if="!lastRunFailed">
+          <PreflightPanel
+            :preflight="preflightState.response"
+            :selections="preflightState.selections"
+            @update-selection="emit('update-preflight-selection', $event)"
+          />
+
+          <div class="quick-stats">
+            <article v-for="item in quickStats" :key="item.label" :class="['quick-stat', `tone-${item.tone}`]">
+              <span>{{ item.label }}</span>
+              <strong>{{ item.value }}</strong>
+            </article>
+          </div>
+
+          <CandidateRerunPanel
+            :run-data="runData"
+            :loading="loading"
+            :can-confirm="canConfirmCandidates"
+            @confirm="emit('confirm-candidates', $event)"
+          />
+
+          <ResultTable
+            :results="resultRows"
+            :total="runData?.result_count || 0"
+            @view-trace="emit('view-trace', $event)"
+          />
+
+          <BeginnerDecisionPanel :run-data="runData" />
+
+          <el-collapse class="query-evidence-collapse">
+            <el-collapse-item title="筛选依据" name="evidence">
+              <EvidenceReport :report="runData?.natural_language_report || createEmptyEvidenceReport()" />
+            </el-collapse-item>
+            <el-collapse-item title="运行摘要" name="audit">
+              <EvalSummary :run-data="runData" />
+              <TokenUsagePanel
+                :token-usage="runData?.token_usage"
+                :mode="mode"
+                :selected-options="runData?.selected_options"
+              />
+            </el-collapse-item>
+          </el-collapse>
+        </template>
+
+        <el-card v-else class="workbench-card empty-run" shadow="never">
+          <el-empty description="这次没查成功">
+            <p class="beginner-empty">{{ apiError }}</p>
+          </el-empty>
+        </el-card>
+      </section>
+    </div>
   </section>
 </template>

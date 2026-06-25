@@ -151,6 +151,39 @@ input {
   display: grid;
   grid-template-rows: auto minmax(0, 1fr);
   gap: 12px;
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.c-lite-query-grid {
+  display: grid;
+  grid-template-columns: minmax(300px, 380px) minmax(0, 1fr);
+  gap: 14px;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.query-input-panel,
+.query-output-panel {
+  min-width: 0;
+  min-height: 0;
+  display: grid;
+  align-content: start;
+  gap: 12px;
+  overflow: auto;
+  scrollbar-width: thin;
+}
+
+.query-output-panel {
+  grid-auto-rows: max-content;
+}
+
+.query-evidence-collapse {
+  border: 1px solid #d8e4df;
+  border-radius: 8px;
+  background: #ffffff;
 }
 
 .query-main-grid {
@@ -204,6 +237,8 @@ input {
 
 .query-workspace .workbench-card,
 .query-workspace .summary-section,
+.c-lite-query .workbench-card,
+.c-lite-query .summary-section,
 .single-scroll .workbench-card,
 .detail-workspace .workbench-card {
   margin-top: 0;
@@ -1719,11 +1754,17 @@ input {
     grid-template-rows: auto;
   }
 
+  .c-lite-query {
+    grid-template-rows: auto;
+    overflow: visible;
+  }
+
   .query-main-grid,
   .detail-workspace {
     grid-template-columns: 1fr;
   }
 
+  .c-lite-query-grid,
   .query-main-grid {
     overflow: visible;
   }
@@ -1740,6 +1781,8 @@ input {
   .control-column,
   .result-column,
   .evidence-column,
+  .query-input-panel,
+  .query-output-panel,
   .single-scroll,
   .detail-workspace,
   .side-tabs > .el-tabs__content {
@@ -1757,6 +1800,10 @@ input {
 @media (max-width: 980px) {
   .app-shell {
     width: min(100% - 16px, 720px);
+  }
+
+  .c-lite-query-grid {
+    grid-template-columns: 1fr;
   }
 }
 

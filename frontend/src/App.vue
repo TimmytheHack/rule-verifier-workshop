@@ -1,17 +1,8 @@
 <script setup>
 import { computed, ref, watch } from 'vue';
 
-import UserInputPanel from './components/UserInputPanel.vue';
-import WorkbenchRunBar from './components/WorkbenchRunBar.vue';
-import PreflightPanel from './components/PreflightPanel.vue';
 import DatasetIngestionPanel from './components/DatasetIngestionPanel.vue';
-import CandidateRerunPanel from './components/CandidateRerunPanel.vue';
-import ResultTable from './components/ResultTable.vue';
 import TraceDrawer from './components/TraceDrawer.vue';
-import EvidenceReport from './components/EvidenceReport.vue';
-import EvalSummary from './components/EvalSummary.vue';
-import TokenUsagePanel from './components/TokenUsagePanel.vue';
-import BeginnerDecisionPanel from './components/BeginnerDecisionPanel.vue';
 import QueryWorkspace from './components/workspaces/QueryWorkspace.vue';
 import ImportWorkspace from './components/workspaces/ImportWorkspace.vue';
 import ReviewWorkspace from './components/workspaces/ReviewWorkspace.vue';
@@ -39,7 +30,6 @@ import {
 import {
   boundarySelectionsFromPreflight,
   createEmptyPreflightState,
-  createEmptyEvidenceReport,
   createEmptyWorkbenchState,
   isCurrentPreflight,
   mergeDemoRun,
@@ -101,7 +91,6 @@ const activeWorkbenchRequestId = ref(0);
 const activeResult = ref(null);
 const traceVisible = ref(false);
 const activeWorkspace = ref('query');
-const inputPanelRef = ref(null);
 const inputDraftSignature = ref('');
 const mode = ref(defaultWorkbenchMode());
 const extractor = ref('hybrid');
@@ -516,10 +505,6 @@ function handleDataSourceChange(value) {
   lastRunFailed.value = false;
 }
 
-function submitCurrentForm() {
-  inputPanelRef.value?.submitRun?.();
-}
-
 function handleInputDraftChange(signature) {
   if ((signature || '') !== inputDraftSignature.value) {
     clearPreflightState();
@@ -657,50 +642,13 @@ function statusLabel(status) {
     <el-tabs v-model="activeWorkspace" class="workspace-tabs">
       <el-tab-pane label="查询" name="query">
         <QueryWorkspace
-          v-slot="{
-            runData: workspaceRunData,
-            preflightState: workspacePreflightState,
-            workbenchOptions: workspaceOptions,
-            mode: workspaceMode,
-            extractor: workspaceExtractor,
-            generator: workspaceGenerator,
-            model: workspaceModel,
-            loading: workspaceLoading,
-            lastRunFailed: workspaceLastRunFailed,
-            apiError: workspaceApiError,
-            selectedDataSourceId: workspaceSelectedDataSourceId,
-            dataSourceOptions: workspaceDataSourceOptions,
-            dataSourceTag: workspaceDataSourceTag,
-            dataSourceDescription: workspaceDataSourceDescription,
-            optionsLoadError: workspaceOptionsLoadError,
-            runStatus: workspaceRunStatus,
-            primaryRunLabel: workspacePrimaryRunLabel,
-            quickStats: workspaceQuickStats,
-            resultRows: workspaceResultRows,
-            canConfirmCandidates: workspaceCanConfirmCandidates,
-            defaultHardFilters: workspaceDefaultHardFilters,
-            defaultSoftPreferences: workspaceDefaultSoftPreferences,
-            emitUpdateMode,
-            emitUpdateExtractor,
-            emitUpdateGenerator,
-            emitUpdateModel,
-            emitUpdateSelectedDataSourceId,
-            runCurrentForm: emitRunCurrentForm,
-            showDemo: emitShowDemo,
-            goImport: emitGoImport,
-            draftChange: emitDraftChange,
-            runWorkbench: emitRunWorkbench,
-            updatePreflightSelection: emitUpdatePreflightSelection,
-            confirmCandidates: emitConfirmCandidates,
-            viewTrace: emitViewTrace,
-          }"
+          v-model:mode="mode"
+          v-model:extractor="extractor"
+          v-model:generator="generator"
+          v-model:model="model"
           :run-data="runData"
           :preflight-state="preflightState"
           :workbench-options="workbenchOptions"
-          :mode="mode"
-          :extractor="extractor"
-          :generator="generator"
-          :model="model"
           :loading="loading"
           :last-run-failed="lastRunFailed"
           :api-error="apiError"
@@ -708,7 +656,7 @@ function statusLabel(status) {
           :data-source-options="dataSourceOptions"
           :data-source-tag="dataSourceTag"
           :data-source-description="dataSourceDescription"
-          :options-load-error="optionsLoadError"
+          :options-load-error="shouldShowOptionsLoadError(mode, optionsLoadError) ? optionsLoadError : ''"
           :run-status="displayedRunBarStatus"
           :primary-run-label="primaryRunLabel"
           :quick-stats="quickStats"
@@ -716,12 +664,7 @@ function statusLabel(status) {
           :can-confirm-candidates="canConfirmCandidates"
           :default-hard-filters="defaultHardFilters"
           :default-soft-preferences="defaultSoftPreferences"
-          @update:mode="mode = $event"
-          @update:extractor="extractor = $event"
-          @update:generator="generator = $event"
-          @update:model="model = $event"
           @update:selected-data-source-id="handleDataSourceChange"
-          @run-current-form="submitCurrentForm"
           @show-demo="showDemoRun"
           @go-import="goToUpload"
           @draft-change="handleInputDraftChange"
@@ -729,123 +672,7 @@ function statusLabel(status) {
           @update-preflight-selection="updatePreflightSelection"
           @confirm-candidates="rerunWithConfirmedCandidates"
           @view-trace="openTrace"
-        >
-          <WorkbenchRunBar
-            :mode="workspaceMode"
-            :extractor="workspaceExtractor"
-            :generator="workspaceGenerator"
-            :model="workspaceModel"
-            :selected-data-source-id="workspaceSelectedDataSourceId"
-            :data-source-options="workspaceDataSourceOptions"
-            :data-source-tag="workspaceDataSourceTag"
-            :data-source-description="workspaceDataSourceDescription"
-            :extractor-options="workspaceOptions.extractors"
-            :generator-options="workspaceOptions.generators"
-            :model-options="workspaceOptions.models"
-            :options-source="workspaceOptions.source"
-            :options-error="shouldShowOptionsLoadError(workspaceMode, workspaceOptionsLoadError) ? workspaceOptionsLoadError : ''"
-            :run-status="workspaceRunStatus"
-            :loading="workspaceLoading"
-            :primary-action-label="workspacePrimaryRunLabel"
-            @update:mode="emitUpdateMode"
-            @update:extractor="emitUpdateExtractor"
-            @update:generator="emitUpdateGenerator"
-            @update:model="emitUpdateModel"
-            @update:selected-data-source-id="emitUpdateSelectedDataSourceId"
-            @run="emitRunCurrentForm"
-            @demo="emitShowDemo"
-            @upload="emitGoImport"
-          />
-          <div class="query-main-grid">
-            <aside class="control-column">
-              <UserInputPanel
-                ref="inputPanelRef"
-                :default-hard-filters="workspaceDefaultHardFilters"
-                :default-soft-preferences="workspaceDefaultSoftPreferences"
-                :mode="workspaceMode"
-                :loading="workspaceLoading"
-                :show-panel-actions="false"
-                :rank-window-options="workspaceOptions.rank_windows"
-                :sort-mode-options="workspaceOptions.sort_modes"
-                @draft-change="emitDraftChange"
-                @run="emitRunWorkbench"
-              />
-              <el-alert
-                v-if="shouldShowOptionsLoadError(workspaceMode, workspaceOptionsLoadError)"
-                class="inline-alert"
-                type="warning"
-                :closable="false"
-                show-icon
-                :title="workspaceOptionsLoadError"
-              />
-              <el-alert
-                v-if="workspaceApiError"
-                class="inline-alert"
-                type="error"
-                :closable="false"
-                show-icon
-                :title="workspaceApiError"
-              />
-            </aside>
-
-            <section class="result-column">
-              <template v-if="!workspaceLastRunFailed">
-                <PreflightPanel
-                  :preflight="workspacePreflightState.response"
-                  :selections="workspacePreflightState.selections"
-                  @update-selection="emitUpdatePreflightSelection"
-                />
-
-                <div class="quick-stats">
-                  <article v-for="item in workspaceQuickStats" :key="item.label" :class="['quick-stat', `tone-${item.tone}`]">
-                    <span>{{ item.label }}</span>
-                    <strong>{{ item.value }}</strong>
-                  </article>
-                </div>
-
-                <CandidateRerunPanel
-                  :run-data="workspaceRunData"
-                  :loading="workspaceLoading"
-                  :can-confirm="workspaceCanConfirmCandidates"
-                  @confirm="emitConfirmCandidates"
-                />
-
-                <ResultTable
-                  :results="workspaceResultRows"
-                  :total="workspaceRunData?.result_count || 0"
-                  @view-trace="emitViewTrace"
-                />
-              </template>
-              <el-card v-else class="workbench-card empty-run" shadow="never">
-                <el-empty description="这次没查成功">
-                  <p class="beginner-empty">{{ workspaceApiError }}</p>
-                </el-empty>
-              </el-card>
-            </section>
-
-            <aside class="evidence-column">
-              <template v-if="!workspaceLastRunFailed">
-                <BeginnerDecisionPanel :run-data="workspaceRunData" />
-                <el-collapse class="detail-collapse">
-                  <el-collapse-item title="为什么这样筛" name="evidence">
-                    <EvidenceReport :report="workspaceRunData?.natural_language_report || createEmptyEvidenceReport()" />
-                  </el-collapse-item>
-                  <el-collapse-item title="检查详情" name="audit">
-                    <EvalSummary :run-data="workspaceRunData" />
-                    <TokenUsagePanel
-                      :token-usage="workspaceRunData?.token_usage"
-                      :mode="workspaceMode"
-                      :selected-options="workspaceRunData?.selected_options"
-                    />
-                  </el-collapse-item>
-                </el-collapse>
-              </template>
-              <el-card v-else class="workbench-card" shadow="never">
-                <p class="beginner-empty">本次没有生成筛选依据。处理好左侧提示后再查一次。</p>
-              </el-card>
-            </aside>
-          </div>
-        </QueryWorkspace>
+        />
       </el-tab-pane>
 
       <el-tab-pane label="导入数据" name="dataset">
