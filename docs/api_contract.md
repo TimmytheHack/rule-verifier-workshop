@@ -233,8 +233,8 @@ outputs/tool_manifest/tool_manifest.json
 - `draft` / `needs_review` pack 必须返回 `blocked`，不执行 SQL。
 - `warehouse` metadata、schema/value index metadata 和源文件 fingerprint 不一致时返回 `blocked`。
 - `POST /workbench/query` 仍走 `DomainConfig`、`RuleVerifier`、confirmation loop 和参数化 DuckDB SQL；前端自然语言不能直接生成 hard filter。
-- uploaded admissions 数据集可以复用已审查 `admissions` domain pack，但仍必须先 `approve-domain` 并重建 warehouse。
-- 上传页 build 成功并进入 `queryable` 后，前端可以把该 `dataset_id` 注册为主查询页数据源；如果本地 `DATA_ROOT` 被清理，主查询页必须切回内置 admissions 或重新上传。
+- 普通 C-lite 前端中，uploaded admissions 数据集必须先通过“导入数据”一键导入流水线完成字段模板确认并生成可查询数据；该流水线内部可以完成 `approve-domain` 和 warehouse 重建。
+- 手动 `approve-domain` 或手动重建 warehouse 属于“字段审查”或 operator/admin 高级流程，不是普通上传页路径。一键导入成功并进入 `queryable` 后，前端可以把该 `dataset_id` 注册为主查询页数据源；如果本地 `DATA_ROOT` 被清理，主查询页必须切回内置 admissions 或在“导入数据”重新上传。
 
 ## Functional Tool Layer
 

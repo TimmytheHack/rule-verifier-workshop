@@ -47,7 +47,7 @@
 
 现象：
 
-- 上传页已经 build 成功，但主查询页选择 uploaded admissions 后返回 `blocked` 或 `dataset_not_found`；
+- “导入数据”已经生成可查询数据，但主查询页选择 uploaded admissions 后返回 `blocked` 或 `dataset_not_found`；
 - 清理本地 artifacts 后，浏览器仍默认选择旧的 uploaded 数据源；
 - `/workbench/query` payload 中带有旧 `dataset_id`。
 
@@ -61,8 +61,8 @@
 处理：
 
 1. 在主查询页切回内置 admissions，再确认查询能正常返回。
-2. 如果要继续使用上传表格，重新上传、review、approve 并 build warehouse。
-3. 查看 `/datasets/<dataset_id>/profile` 和 `/datasets/<dataset_id>/review-summary`，确认状态和 warnings。
+2. 如果要继续使用上传数据，在“导入数据”重新上传并点击一键导入。
+3. 只有一键导入报告字段模板不匹配或导入失败时，才进入“字段审查”查看 `/datasets/<dataset_id>/profile` 和 `/datasets/<dataset_id>/review-summary`，确认状态和 warnings。
 4. 不要手工复制旧 DuckDB 或 schema/value index 到新的 `DATA_ROOT`。
 
 ## missing required fields

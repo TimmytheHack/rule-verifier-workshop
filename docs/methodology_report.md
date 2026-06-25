@@ -65,11 +65,13 @@ workflow 并写审计记录；`build-warehouse` 仍复用 DuckDB ingestion 和 f
 `draft` / `needs_review` pack、stale warehouse fingerprint、非法 `dataset_id` 或缺失
 warehouse 都必须返回 `blocked`，不能执行 SQL。Excel ingestion 现在会显式返回 sheet
 list、detected header row、重复列安全映射、空行空列清理、合并单元格/隐藏行列/公式单元格
-warning，以及行列规模 warning/error。前端上传页面只展示 profile、review summary、
-required/missing/risky fields、`items`、`top_results`、`result_sections`、`EvidencePack`
-和 warnings，不生成推荐规则。上传页 build 成功并进入 `queryable` 后，主查询页可以把该
-`dataset_id` 作为 admissions 数据源调用同一个 `/workbench/query`；这只是后端数据源选择，
-不改变规则抽取、schema grounding、RuleVerifier 或 EvidencePack 边界。operator UI 现在会把
+warning，以及行列规模 warning/error。前端 C-lite 普通路径把上传拆成“导入数据”：只展示上传、
+一键导入和步骤状态；字段模板不匹配或导入失败时，再进入“字段审查”查看 profile、review
+summary、required/missing/risky fields、approve/block 操作和原始 JSON。“证据调试”展示
+`items`、`top_results`、`result_sections`、`EvidencePack`、warnings 和 trace，但不生成推荐规则。
+一键导入成功并进入 `queryable` 后，主查询页会把该 `dataset_id` 作为 admissions 数据源，并在正式
+`/workbench/query` 前先运行 `/workbench/preflight`；这只是后端数据源选择和查询前检查门禁，
+不改变规则抽取、schema grounding、RuleVerifier 或 EvidencePack 边界。主查询结果把
 `items` 与 `result_sections` 放在主展示层，把 `top_results` 保留为兼容 JSON；
 `needs_confirmation` 带 `candidate_id` 时只允许选择上一轮系统返回的 `candidate_id` 重跑；缺少位次等必要信息时必须补充输入；`blocked`、
 `no_results`、warnings 和前端操作审计记录单独展示。

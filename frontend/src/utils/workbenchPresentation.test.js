@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 
+import * as presentation from './workbenchPresentation.js';
 import {
   canRerunConfirmedRequest,
   defaultWorkbenchMode,
@@ -175,4 +176,119 @@ test('canRerunConfirmedRequest rejects stale or non-api confirmation context', (
     }),
     false,
   );
+});
+
+test('resultRowsForDisplay enriches group detail item rows with nested majors', () => {
+  assert.equal(typeof presentation.resultRowsForDisplay, 'function');
+
+  const major = {
+    major_code: '0809',
+    major_name: '计算机类',
+    min_score: 0,
+  };
+  const runData = {
+    query_type: 'group_detail_report',
+    items: [
+      {
+        item_id: 'group_001',
+        title: '深圳大学',
+        raw: {
+          group_code: ' 10590221 ',
+        },
+      },
+    ],
+    result_sections: {
+      groups: [
+        {
+          group_code: '10590221 ',
+          group_title: '221组',
+          majors: [major],
+        },
+      ],
+    },
+  };
+
+  const rows = presentation.resultRowsForDisplay(runData);
+
+  assert.equal(rows.length, 1);
+  assert.equal(rows[0].title, '深圳大学');
+  assert.equal(rows[0].group_detail, true);
+  assert.deepEqual(rows[0].majors, [major]);
+  assert.equal(runData.items[0].majors, undefined);
+});
+
+test('groupMajorSections ignores unrelated items arrays', () => {
+  assert.equal(typeof presentation.groupMajorSections, 'function');
+
+  const sections = presentation.groupMajorSections({
+    item_id: 'generic_001',
+    title: '普通结果',
+    items: [
+      {
+        item_id: 'note_001',
+        title: '普通子项',
+      },
+    ],
+  });
+
+  assert.deepEqual(sections, []);
+});
+
+test('groupMajorSections requires a parent group marker before using items as majors', () => {
+  const sections = presentation.groupMajorSections({
+    item_id: 'generic_002',
+    title: '普通结果',
+    items: [
+      {
+        major_name: '计算机类',
+        min_score: 620,
+      },
+    ],
+  });
+
+  assert.deepEqual(sections, []);
+});
+
+test('groupMajorTitle prefers full names when repeated short names differ', () => {
+  const majors = [
+    {
+      major_name: '计算机类',
+      full_major_name: '计算机类(软件工程方向)',
+    },
+    {
+      major_name: '计算机类',
+      full_major_name: '计算机类(人工智能方向)',
+    },
+  ];
+
+  assert.deepEqual(
+    majors.map((major) => presentation.groupMajorTitle(major)),
+    ['计算机类(软件工程方向)', '计算机类(人工智能方向)'],
+  );
+});
+
+test('group major helpers preserve zero scores from item-shaped major rows', () => {
+  assert.equal(typeof presentation.formatGroupMajorScore, 'function');
+
+  const major = {
+    item_id: 'major_001',
+    title: '计算机类',
+    primary_attributes: [
+      {
+        label: '最低分',
+        value: 0,
+      },
+    ],
+  };
+
+  assert.deepEqual(
+    presentation.groupMajorSections({
+      group_detail: true,
+      items: [major],
+    }),
+    [major],
+  );
+  assert.equal(presentation.groupMajorTitle(major), '计算机类');
+  assert.equal(presentation.groupMajorScore(major), 0);
+  assert.equal(presentation.formatGroupMajorScore(major), 0);
 });

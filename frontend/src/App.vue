@@ -1,22 +1,25 @@
 <script setup>
 import { computed, ref, watch } from 'vue';
 
-import UserInputPanel from './components/UserInputPanel.vue';
-import WorkbenchRunBar from './components/WorkbenchRunBar.vue';
-import PreflightPanel from './components/PreflightPanel.vue';
-import DatasetIngestionPanel from './components/DatasetIngestionPanel.vue';
-import ExtractedPreferences from './components/ExtractedPreferences.vue';
-import VerificationAudit from './components/VerificationAudit.vue';
-import RuleSummaryCards from './components/RuleSummaryCards.vue';
-import CandidateConfirmation from './components/CandidateConfirmation.vue';
-import CandidateRerunPanel from './components/CandidateRerunPanel.vue';
-import ResultTable from './components/ResultTable.vue';
 import TraceDrawer from './components/TraceDrawer.vue';
-import EvidenceReport from './components/EvidenceReport.vue';
-import EvalSummary from './components/EvalSummary.vue';
-import TokenUsagePanel from './components/TokenUsagePanel.vue';
-import BeginnerDecisionPanel from './components/BeginnerDecisionPanel.vue';
+import QueryWorkspace from './components/workspaces/QueryWorkspace.vue';
+import ImportWorkspace from './components/workspaces/ImportWorkspace.vue';
+import ReviewWorkspace from './components/workspaces/ReviewWorkspace.vue';
+import EvidenceDebugWorkspace from './components/workspaces/EvidenceDebugWorkspace.vue';
+import {
+  BUILTIN_ADMISSIONS_SOURCE,
+  createUploadedAdmissionsSource,
+  shouldUseUploadedAdmissionsPreflight,
+} from './domain/admissionsAdapter';
 import { formatApiError } from './utils/apiError';
+import {
+  browserStorage,
+  loadSelectedDataSourceId,
+  loadUploadedDataSources,
+  mergeUploadedDataSource,
+  persistSelectedDataSourceId,
+  persistUploadedDataSources,
+} from './utils/dataSourceRegistry';
 import {
   buildConfirmedWorkbenchRequest,
   buildPreflightConfirmedWorkbenchRequest,
@@ -26,7 +29,6 @@ import {
 import {
   boundarySelectionsFromPreflight,
   createEmptyPreflightState,
-  createEmptyEvidenceReport,
   createEmptyWorkbenchState,
   isCurrentPreflight,
   mergeDemoRun,
@@ -42,6 +44,7 @@ import {
   defaultWorkbenchMode,
   describeDataSourceState,
   isActiveWorkbenchResponse,
+  resultRowsForDisplay,
   shouldShowOptionsLoadError,
 } from './utils/workbenchPresentation';
 import demoRun from './mock/demo_run.json';
@@ -66,22 +69,13 @@ const defaultSoftPreferences = {
 };
 const workbenchOptions = ref(normalizeWorkbenchOptions(null));
 const optionsLoadError = ref('');
-const BUILTIN_DATA_SOURCE = {
-  id: 'builtin_admissions',
-  type: 'builtin',
-  datasetId: null,
-  domainName: 'admissions',
-  label: '内置招生数据',
-  description: '使用仓库内置 admissions 数据。',
-};
-const DATA_SOURCES_STORAGE_KEY = 'szu_uploaded_data_sources';
-const SELECTED_SOURCE_STORAGE_KEY = 'szu_selected_data_source';
+const BUILTIN_DATA_SOURCE = BUILTIN_ADMISSIONS_SOURCE;
 const DEFAULT_DEV_ACTOR_TOKEN = import.meta.env.DEV ? 'operator-token' : '';
 const EXTRACTOR_ALIASES = {
   deepseek_slots: 'deepseek',
 };
 const initialUploadedDataSources = loadUploadedDataSources();
-const initialDataSourceId = loadSelectedDataSourceId(initialUploadedDataSources);
+const initialDataSourceId = loadSelectedDataSourceId({ sources: initialUploadedDataSources });
 
 const runData = ref(createEmptyWorkbenchState({
   selected_options: {
@@ -97,7 +91,6 @@ const activeWorkbenchRequestId = ref(0);
 const activeResult = ref(null);
 const traceVisible = ref(false);
 const activeWorkspace = ref('query');
-const inputPanelRef = ref(null);
 const inputDraftSignature = ref('');
 const mode = ref(defaultWorkbenchMode());
 const extractor = ref('hybrid');
@@ -109,9 +102,7 @@ const lastRunFailed = ref(false);
 const uploadedDataSources = ref(initialUploadedDataSources);
 const selectedDataSourceId = ref(initialDataSourceId);
 
-const resultRows = computed(() => (
-  runData.value?.items?.length ? runData.value.items : runData.value?.top_results || []
-));
+const resultRows = computed(() => resultRowsForDisplay(runData.value));
 const dataSourceOptions = computed(() => [
   BUILTIN_DATA_SOURCE,
   ...uploadedDataSources.value,
@@ -157,11 +148,7 @@ const canConfirmCandidates = computed(() => (
   )
   && Boolean(lastRequestContext.value?.requestBody)
 ));
-const shouldUsePreflight = computed(() => (
-  mode.value === 'api'
-  && selectedDataSource.value?.type === 'uploaded'
-  && selectedDataSource.value?.domainName === 'admissions'
-));
+const shouldUsePreflight = computed(() => shouldUseUploadedPreflightForSource(selectedDataSource.value));
 const currentPreflightReady = computed(() => isCurrentPreflight({
   preflightState: preflightState.value,
   inputSignature: inputDraftSignature.value,
@@ -189,8 +176,8 @@ const primaryRunLabel = computed(() => {
   return currentPreflightReady.value ? '重新预检' : '先做预检';
 });
 
-watch(uploadedDataSources, persistUploadedDataSources, { deep: true });
-watch(selectedDataSourceId, persistSelectedDataSourceId);
+watch(uploadedDataSources, (value) => persistUploadedDataSources(undefined, value), { deep: true });
+watch(selectedDataSourceId, (value) => persistSelectedDataSourceId(undefined, value));
 watch(mode, handleModeChange, { immediate: true });
 
 function runDemo(runRequest = lastRunRequest.value, selectedOptions = {}) {
@@ -490,9 +477,7 @@ function normalizedExtractor() {
 }
 
 function shouldUseUploadedPreflightForSource(source) {
-  return mode.value === 'api'
-    && source?.type === 'uploaded'
-    && source?.domainName === 'admissions';
+  return shouldUseUploadedAdmissionsPreflight(source, mode.value);
 }
 
 function hasRunnableCurrentPreflight(inputSignature) {
@@ -518,10 +503,6 @@ function handleDataSourceChange(value) {
   lastRunFailed.value = false;
 }
 
-function submitCurrentForm() {
-  inputPanelRef.value?.submitRun?.();
-}
-
 function handleInputDraftChange(signature) {
   if ((signature || '') !== inputDraftSignature.value) {
     clearPreflightState();
@@ -545,14 +526,11 @@ function goToUpload() {
 }
 
 function activateUploadedSource(payload) {
-  const source = normalizeUploadedDataSource(payload);
+  const source = createUploadedAdmissionsSource(payload);
   if (!source) {
     return;
   }
-  uploadedDataSources.value = [
-    source,
-    ...uploadedDataSources.value.filter((item) => item.id !== source.id),
-  ].slice(0, 5);
+  uploadedDataSources.value = mergeUploadedDataSource(uploadedDataSources.value, source);
   clearLastRequestContext();
   clearPreflightState();
   selectedDataSourceId.value = source.id;
@@ -563,7 +541,12 @@ function activateUploadedSource(payload) {
 }
 
 function authHeaders() {
-  const token = localStorageSafe()?.getItem('actor_token') || DEFAULT_DEV_ACTOR_TOKEN;
+  let token = DEFAULT_DEV_ACTOR_TOKEN;
+  try {
+    token = browserStorage()?.getItem('actor_token') || DEFAULT_DEV_ACTOR_TOKEN;
+  } catch {
+    token = DEFAULT_DEV_ACTOR_TOKEN;
+  }
   return token ? { 'X-Actor-Token': token } : {};
 }
 
@@ -630,70 +613,6 @@ function ensureSelectedRuntimeOptions() {
   }
 }
 
-function loadUploadedDataSources() {
-  try {
-    const raw = localStorageSafe()?.getItem(DATA_SOURCES_STORAGE_KEY);
-    const parsed = raw ? JSON.parse(raw) : [];
-    return Array.isArray(parsed)
-      ? parsed.filter((source) => source?.id && source?.datasetId && source?.domainName)
-      : [];
-  } catch {
-    return [];
-  }
-}
-
-function loadSelectedDataSourceId(sources = []) {
-  const saved = localStorageSafe()?.getItem(SELECTED_SOURCE_STORAGE_KEY);
-  if (
-    saved === BUILTIN_DATA_SOURCE.id
-    || sources.some((source) => source.id === saved)
-  ) {
-    return saved;
-  }
-  return BUILTIN_DATA_SOURCE.id;
-}
-
-function persistUploadedDataSources(value) {
-  localStorageSafe()?.setItem(DATA_SOURCES_STORAGE_KEY, JSON.stringify(value));
-}
-
-function persistSelectedDataSourceId(value) {
-  localStorageSafe()?.setItem(SELECTED_SOURCE_STORAGE_KEY, value || BUILTIN_DATA_SOURCE.id);
-}
-
-function normalizeUploadedDataSource(payload) {
-  const datasetId = payload?.dataset_id;
-  if (!datasetId) {
-    return null;
-  }
-  const rowCount = payload?.warehouse?.row_count || payload?.row_count || null;
-  const columnCount = payload?.warehouse?.column_count || payload?.column_count || null;
-  const fileName = payload?.file_name || payload?.source_name || datasetId;
-  const sizeText = rowCount && columnCount
-    ? `${formatNumber(rowCount)} 行，${formatNumber(columnCount)} 列`
-    : '已生成可查询数据';
-  return {
-    id: `uploaded:${datasetId}`,
-    type: 'uploaded',
-    datasetId,
-    domainName: payload?.domain_name || 'admissions',
-    label: `上传：${fileName}`,
-    description: `${sizeText}，使用上传表格查询。`,
-    rowCount,
-    columnCount,
-    updatedAt: payload?.updated_at || new Date().toISOString(),
-  };
-}
-
-function formatNumber(value) {
-  const number = Number(value);
-  return Number.isNaN(number) ? value : number.toLocaleString('zh-CN');
-}
-
-function localStorageSafe() {
-  return typeof window === 'undefined' ? null : window.localStorage;
-}
-
 function statusLabel(status) {
   const labels = {
     idle: '待查询',
@@ -719,146 +638,59 @@ function statusLabel(status) {
     </header>
 
     <el-tabs v-model="activeWorkspace" class="workspace-tabs">
-      <el-tab-pane label="我要查询" name="query">
-        <section class="workspace-panel query-workspace">
-          <WorkbenchRunBar
-            v-model:mode="mode"
-            v-model:extractor="extractor"
-            v-model:generator="generator"
-            v-model:model="model"
-            :selected-data-source-id="selectedDataSourceId"
-            :data-source-options="dataSourceOptions"
-            :data-source-tag="dataSourceTag"
-            :data-source-description="dataSourceDescription"
-            :extractor-options="workbenchOptions.extractors"
-            :generator-options="workbenchOptions.generators"
-            :model-options="workbenchOptions.models"
-            :options-source="workbenchOptions.source"
-            :options-error="shouldShowOptionsLoadError(mode, optionsLoadError) ? optionsLoadError : ''"
-            :run-status="displayedRunBarStatus"
-            :loading="loading"
-            :primary-action-label="primaryRunLabel"
-            @update:selected-data-source-id="handleDataSourceChange"
-            @run="submitCurrentForm"
-            @demo="showDemoRun"
-            @upload="goToUpload"
-          />
-          <div class="query-main-grid">
-            <aside class="control-column">
-              <UserInputPanel
-                ref="inputPanelRef"
-                :default-hard-filters="defaultHardFilters"
-                :default-soft-preferences="defaultSoftPreferences"
-                :mode="mode"
-                :loading="loading"
-                :show-panel-actions="false"
-                :rank-window-options="workbenchOptions.rank_windows"
-                :sort-mode-options="workbenchOptions.sort_modes"
-                @draft-change="handleInputDraftChange"
-                @run="runWorkbench"
-              />
-              <el-alert
-                v-if="shouldShowOptionsLoadError(mode, optionsLoadError)"
-                class="inline-alert"
-                type="warning"
-                :closable="false"
-                show-icon
-                :title="optionsLoadError"
-              />
-              <el-alert
-                v-if="apiError"
-                class="inline-alert"
-                type="error"
-                :closable="false"
-                show-icon
-                :title="apiError"
-              />
-            </aside>
-
-            <section class="result-column">
-              <template v-if="!lastRunFailed">
-                <PreflightPanel
-                  :preflight="preflightState.response"
-                  :selections="preflightState.selections"
-                  @update-selection="updatePreflightSelection"
-                />
-
-                <div class="quick-stats">
-                  <article v-for="item in quickStats" :key="item.label" :class="['quick-stat', `tone-${item.tone}`]">
-                    <span>{{ item.label }}</span>
-                    <strong>{{ item.value }}</strong>
-                  </article>
-                </div>
-
-                <CandidateRerunPanel
-                  :run-data="runData"
-                  :loading="loading"
-                  :can-confirm="canConfirmCandidates"
-                  @confirm="rerunWithConfirmedCandidates"
-                />
-
-                <ResultTable
-                  :results="resultRows"
-                  :total="runData?.result_count || 0"
-                  @view-trace="openTrace"
-                />
-              </template>
-              <el-card v-else class="workbench-card empty-run" shadow="never">
-                <el-empty description="这次没查成功">
-                  <p class="beginner-empty">{{ apiError }}</p>
-                </el-empty>
-              </el-card>
-            </section>
-
-            <aside class="evidence-column">
-              <template v-if="!lastRunFailed">
-                <BeginnerDecisionPanel :run-data="runData" />
-                <el-collapse class="detail-collapse">
-                  <el-collapse-item title="为什么这样筛" name="evidence">
-                    <EvidenceReport :report="runData?.natural_language_report || createEmptyEvidenceReport()" />
-                  </el-collapse-item>
-                  <el-collapse-item title="检查详情" name="audit">
-                    <EvalSummary :run-data="runData" />
-                    <TokenUsagePanel
-                      :token-usage="runData?.token_usage"
-                      :mode="mode"
-                      :selected-options="runData?.selected_options"
-                    />
-                  </el-collapse-item>
-                </el-collapse>
-              </template>
-              <el-card v-else class="workbench-card" shadow="never">
-                <p class="beginner-empty">本次没有生成筛选依据。处理好左侧提示后再查一次。</p>
-              </el-card>
-            </aside>
-          </div>
-        </section>
+      <el-tab-pane label="查询" name="query">
+        <QueryWorkspace
+          v-model:mode="mode"
+          v-model:extractor="extractor"
+          v-model:generator="generator"
+          v-model:model="model"
+          :run-data="runData"
+          :preflight-state="preflightState"
+          :workbench-options="workbenchOptions"
+          :loading="loading"
+          :last-run-failed="lastRunFailed"
+          :api-error="apiError"
+          :selected-data-source-id="selectedDataSourceId"
+          :data-source-options="dataSourceOptions"
+          :data-source-tag="dataSourceTag"
+          :data-source-description="dataSourceDescription"
+          :options-load-error="shouldShowOptionsLoadError(mode, optionsLoadError) ? optionsLoadError : ''"
+          :run-status="displayedRunBarStatus"
+          :primary-run-label="primaryRunLabel"
+          :quick-stats="quickStats"
+          :result-rows="resultRows"
+          :can-confirm-candidates="canConfirmCandidates"
+          :default-hard-filters="defaultHardFilters"
+          :default-soft-preferences="defaultSoftPreferences"
+          @update:selected-data-source-id="handleDataSourceChange"
+          @show-demo="showDemoRun"
+          @go-import="goToUpload"
+          @draft-change="handleInputDraftChange"
+          @run-workbench="runWorkbench"
+          @update-preflight-selection="updatePreflightSelection"
+          @confirm-candidates="rerunWithConfirmedCandidates"
+          @view-trace="openTrace"
+        />
       </el-tab-pane>
 
-      <el-tab-pane label="上传表格" name="dataset">
-        <section class="workspace-panel single-scroll">
-          <DatasetIngestionPanel @source-ready="activateUploadedSource" />
-        </section>
+      <el-tab-pane label="导入数据" name="dataset">
+        <ImportWorkspace
+          :active-source="selectedDataSource"
+          :auth-headers="authHeaders"
+          @source-ready="activateUploadedSource"
+          @open-review="activeWorkspace = 'review'"
+        />
       </el-tab-pane>
 
-      <el-tab-pane label="筛选依据" name="details">
-        <section class="workspace-panel detail-workspace">
-          <RuleSummaryCards
-            :deterministic-rules="runData?.deterministic_rules || []"
-            :candidate-rules="runData?.candidate_rules || []"
-            :not-executed-preferences="runData?.not_executed_preferences || []"
-            :executable-rules="runData?.executable_rules || []"
-          />
-          <CandidateConfirmation
-            :candidate-rules="runData?.candidate_rules || []"
-            :confirmations="runData?.simulated_confirmations || {}"
-          />
-          <ExtractedPreferences :preferences="runData?.extracted_preferences || []" />
-          <VerificationAudit
-            :grounding="runData?.attribute_grounding || {}"
-            :proposed-rules="runData?.proposed_rules || []"
-          />
-        </section>
+      <el-tab-pane label="字段审查" name="review">
+        <ReviewWorkspace
+          :selected-data-source="selectedDataSource"
+          @source-ready="activateUploadedSource"
+        />
+      </el-tab-pane>
+
+      <el-tab-pane label="证据调试" name="details">
+        <EvidenceDebugWorkspace :run-data="runData" />
       </el-tab-pane>
     </el-tabs>
 

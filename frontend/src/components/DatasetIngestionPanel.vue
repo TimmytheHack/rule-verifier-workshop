@@ -20,6 +20,7 @@ import {
   approvalFailureMessage,
   mergeApprovedDatasetState,
 } from '../utils/uploadDatasetState';
+import { browserStorage } from '../utils/dataSourceRegistry';
 
 const file = ref(null);
 const domainName = ref('admissions');
@@ -516,7 +517,12 @@ function clearUploadedQueryContext() {
 }
 
 function authHeaders() {
-  const token = window.localStorage.getItem('actor_token') || DEFAULT_DEV_ACTOR_TOKEN;
+  let token = DEFAULT_DEV_ACTOR_TOKEN;
+  try {
+    token = browserStorage()?.getItem('actor_token') || DEFAULT_DEV_ACTOR_TOKEN;
+  } catch {
+    token = DEFAULT_DEV_ACTOR_TOKEN;
+  }
   return token ? { 'X-Actor-Token': token } : {};
 }
 
