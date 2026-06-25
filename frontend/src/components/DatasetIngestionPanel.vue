@@ -15,6 +15,7 @@ import {
   candidateIdentifier,
   splitCandidateConfirmationState,
 } from '../utils/workbenchState';
+import { mergeApprovedDatasetState } from '../utils/uploadDatasetState';
 
 const file = ref(null);
 const domainName = ref('admissions');
@@ -320,7 +321,7 @@ async function approveOp() {
 async function approveDomain() {
   await runStep('approve_domain', async () => {
     clearUploadedQueryContext();
-    dataset.value = await requestJson(`/datasets/${datasetId.value}/approve-domain`, {
+    const approval = await requestJson(`/datasets/${datasetId.value}/approve-domain`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -331,6 +332,7 @@ async function approveDomain() {
         default_safe_sort: true,
       }),
     });
+    dataset.value = mergeApprovedDatasetState(dataset.value, approval);
     await refreshReviewSummary();
   });
 }
