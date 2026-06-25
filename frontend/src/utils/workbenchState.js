@@ -55,6 +55,60 @@ export function createEmptyEvidenceReport() {
   };
 }
 
+export function createEmptyPreflightState(overrides = {}) {
+  return {
+    response: null,
+    inputSignature: '',
+    selections: {},
+    ...overrides,
+  };
+}
+
+export function boundarySelectionsFromPreflight(preflight) {
+  return (preflight?.boundary_confirmations || []).reduce((selections, boundary) => {
+    const confirmationId = boundary?.confirmation_id;
+    if (!confirmationId) return selections;
+    const defaultOptionId = boundary?.default_option_id
+      || boundary?.options?.[0]?.option_id
+      || 'do_not_use';
+    return {
+      ...selections,
+      [confirmationId]: defaultOptionId,
+    };
+  }, {});
+}
+
+export function splitPreflightBoundarySelections(preflight, selections = {}) {
+  const result = {
+    confirmed_boundaries: [],
+    disabled_boundaries: [],
+  };
+  for (const boundary of preflight?.boundary_confirmations || []) {
+    const confirmationId = boundary?.confirmation_id;
+    if (!confirmationId) continue;
+    const optionId = selections[confirmationId] || boundary?.default_option_id || 'do_not_use';
+    const option = (boundary?.options || []).find((item) => item?.option_id === optionId);
+    const entry = {
+      confirmation_id: confirmationId,
+      option_id: optionId,
+    };
+    if (option?.disabled_boundary || optionId === 'do_not_use') {
+      result.disabled_boundaries.push(entry);
+    } else {
+      result.confirmed_boundaries.push(entry);
+    }
+  }
+  return result;
+}
+
+export function isCurrentPreflight({ preflightState, inputSignature }) {
+  return Boolean(
+    preflightState?.response?.preflight_id
+    && preflightState.inputSignature
+    && preflightState.inputSignature === inputSignature
+  );
+}
+
 export function isEmptyWorkbenchState(data) {
   return !data || data.status === 'idle' || data.frontend_state?.source === 'empty';
 }

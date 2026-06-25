@@ -2,10 +2,12 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 
 import {
+  boundarySelectionsFromPreflight,
   confirmableCandidates,
   createEmptyWorkbenchState,
   isEmptyWorkbenchState,
   mergeDemoRun,
+  splitPreflightBoundarySelections,
   splitCandidateConfirmationState,
 } from './workbenchState.js';
 import {
@@ -15,6 +17,8 @@ import {
 } from './workbenchOptions.js';
 import {
   buildConfirmedWorkbenchRequest,
+  buildPreflightConfirmedWorkbenchRequest,
+  buildWorkbenchPreflightRequest,
   buildWorkbenchRequest,
 } from './workbenchRequests.js';
 
@@ -130,8 +134,8 @@ test('splitCandidateConfirmationState keeps id-only candidates warning-only', ()
 
 test('normalizeWorkbenchOptions prefers API payload and falls back per group', () => {
   const options = normalizeWorkbenchOptions({
-    extractors: [{ value: 'hybrid', label: '规则优先，LLM 补槽' }],
-    planner_modes: [{ value: 'auto', label: 'uploaded dataset 优先 LLM SemanticIntent' }],
+    extractors: [{ value: 'hybrid', label: '规则优先，大模型补槽' }],
+    planner_modes: [{ value: 'auto', label: '上传数据集优先语义意图规划' }],
     generators: [{ value: 'template_evidence', label: '模板证据回答' }],
     models: [{ value: 'deepseek-v4-flash', label: 'LLM 快速模型' }],
     rank_windows: [{ value: 'steady', label: '稳一点', rank_window_upper_percent: 15 }],
@@ -155,7 +159,7 @@ test('normalizeWorkbenchOptions uses complete fallback when API payload is empty
 
 test('normalizeWorkbenchOptions marks missing API option groups as partial fallback', () => {
   const options = normalizeWorkbenchOptions({
-    extractors: [{ value: 'hybrid', label: '规则优先，LLM 补槽' }],
+    extractors: [{ value: 'hybrid', label: '规则优先，大模型补槽' }],
     planner_modes: [],
     generators: [],
     models: [{ value: 'deepseek-v4-flash', label: 'LLM 快速模型' }],
@@ -173,7 +177,7 @@ test('normalizeWorkbenchOptions isolates fallback options from mutation', () => 
 
   options.extractors[0].label = '被修改的标签';
 
-  assert.equal(FALLBACK_WORKBENCH_OPTIONS.extractors[0].label, '规则优先，LLM 补槽');
+  assert.equal(FALLBACK_WORKBENCH_OPTIONS.extractors[0].label, '规则优先，大模型补槽');
 });
 
 test('firstOptionValue returns the first value or provided fallback', () => {
@@ -264,4 +268,93 @@ test('buildConfirmedWorkbenchRequest preserves existing confirmed candidate ids'
 
   assert.deepEqual(request.confirmed_candidates, ['c_city', 'c_major']);
   assert.notEqual(request.confirmed_candidates, previous.confirmed_candidates);
+});
+
+test('buildWorkbenchPreflightRequest only targets uploaded admissions sources', () => {
+  const runRequest = {
+    user_input: '我的排位是15000，想读人工智能。',
+    hard_filters: { user_rank: 15000 },
+    soft_preferences: { prompt: '我的排位是15000，想读人工智能。' },
+  };
+
+  const uploaded = buildWorkbenchPreflightRequest({
+    source: {
+      type: 'uploaded',
+      datasetId: 'dataset_1',
+      domainName: 'admissions',
+    },
+    runRequest,
+    model: 'deepseek-v4-flash',
+  });
+  const builtin = buildWorkbenchPreflightRequest({
+    source: {
+      type: 'builtin',
+      domainName: 'admissions',
+    },
+    runRequest,
+    model: 'deepseek-v4-flash',
+  });
+
+  assert.equal(uploaded.dataset_id, 'dataset_1');
+  assert.equal(uploaded.domain_name, 'admissions');
+  assert.equal(uploaded.planner_mode, 'llm_semantic');
+  assert.equal(builtin, null);
+});
+
+test('preflight boundary selections split confirmed and disabled choices', () => {
+  const preflight = {
+    boundary_confirmations: [
+      {
+        confirmation_id: 'pfc_1',
+        default_option_id: 'rank_window_steady',
+        options: [
+          { option_id: 'rank_window_steady', disabled_boundary: false },
+          { option_id: 'do_not_use', disabled_boundary: true },
+        ],
+      },
+      {
+        confirmation_id: 'pfc_2',
+        default_option_id: 'do_not_use',
+        options: [{ option_id: 'do_not_use', disabled_boundary: true }],
+      },
+    ],
+  };
+
+  const defaults = boundarySelectionsFromPreflight(preflight);
+  const split = splitPreflightBoundarySelections(preflight, defaults);
+
+  assert.deepEqual(defaults, {
+    pfc_1: 'rank_window_steady',
+    pfc_2: 'do_not_use',
+  });
+  assert.deepEqual(split.confirmed_boundaries, [
+    { confirmation_id: 'pfc_1', option_id: 'rank_window_steady' },
+  ]);
+  assert.deepEqual(split.disabled_boundaries, [
+    { confirmation_id: 'pfc_2', option_id: 'do_not_use' },
+  ]);
+});
+
+test('buildPreflightConfirmedWorkbenchRequest attaches preflight selections', () => {
+  const previous = {
+    domain_name: 'admissions',
+    user_input: '我的排位是15000。',
+    hard_filters: { user_rank: 15000 },
+    soft_preferences: { prompt: '我的排位是15000。' },
+  };
+
+  const request = buildPreflightConfirmedWorkbenchRequest(previous, {
+    preflightId: 'pf_1',
+    confirmedBoundaries: [{ confirmation_id: 'pfc_1', option_id: 'rank_window_steady' }],
+    disabledBoundaries: [{ confirmation_id: 'pfc_2', option_id: 'do_not_use' }],
+  });
+
+  assert.equal(request.preflight_id, 'pf_1');
+  assert.deepEqual(request.confirmed_boundaries, [
+    { confirmation_id: 'pfc_1', option_id: 'rank_window_steady' },
+  ]);
+  assert.deepEqual(request.disabled_boundaries, [
+    { confirmation_id: 'pfc_2', option_id: 'do_not_use' },
+  ]);
+  assert.notEqual(request, previous);
 });

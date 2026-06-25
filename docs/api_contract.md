@@ -113,12 +113,21 @@ endpoint：
 | `POST /datasets/{dataset_id}/block-field` | 调用 review workflow 阻断字段，并写入审计记录。 |
 | `POST /datasets/{dataset_id}/approve-domain` | required checks 通过后批准 domain pack。 |
 | `POST /datasets/{dataset_id}/build-warehouse` | 基于 approved pack 构建 DuckDB warehouse 和 value index。 |
+| `POST /workbench/preflight` | uploaded admissions 主查询的查询前检查；不执行 SQL，不返回候选行。 |
 | `POST /workbench/query` | 支持 `dataset_id` / `domain_name`，返回同一 `WorkbenchResponse` contract。 |
 
-前端主查询页选择 uploaded admissions 数据源时，仍调用同一个
-`POST /workbench/query`，只是在 payload 中携带该数据集的 `dataset_id` 和
-`domain_name=admissions`。这只切换后端数据源，不改变 schema grounding、
-RuleVerifier、confirmation loop、DuckDB executor 或 `WorkbenchResponse` 字段。
+前端主查询页选择 uploaded admissions 数据源时，必须先调用
+`POST /workbench/preflight`。该接口固定返回 `workbench_preflight.v1`，包含
+`preflight_id`、`input_signature`、`recognized_facts`、`boundary_confirmations`、
+`not_executable_preferences`、`missing_requirements` 和 `planner`。它只做查询前检查：
+不执行 SQL，不调用 DuckDB candidates，不生成 `RankingPlan`，不返回 `items` 或
+`top_results`。状态只能用于判断是否可以继续查询；它不是 `WorkbenchResponse`。
+
+正式查询仍调用同一个 `POST /workbench/query`，在 payload 中携带该数据集的
+`dataset_id`、`domain_name=admissions`、上一轮系统生成的 `preflight_id`，以及用户在
+`boundary_confirmations` 中选择的 `confirmed_boundaries` / `disabled_boundaries`。HTTP 层会
+校验 preflight 是否存在、是否属于当前输入和数据源、确认项是否来自上一轮系统生成列表；伪造、过期、输入已变化或未处理全部边界时返回
+`invalid_preflight`，不进入查询。内置 admissions 数据源不走这个 preflight store。
 
 uploaded admissions 额外暴露 reviewed semantic capability path。`GET /datasets/{dataset_id}/profile`
 会返回 `semantic_query_options`，用于说明当前表支持的 deterministic filters、sort fields、

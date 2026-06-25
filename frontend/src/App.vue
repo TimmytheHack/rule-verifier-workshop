@@ -3,6 +3,7 @@ import { computed, ref, watch } from 'vue';
 
 import UserInputPanel from './components/UserInputPanel.vue';
 import WorkbenchRunBar from './components/WorkbenchRunBar.vue';
+import PreflightPanel from './components/PreflightPanel.vue';
 import DatasetIngestionPanel from './components/DatasetIngestionPanel.vue';
 import ExtractedPreferences from './components/ExtractedPreferences.vue';
 import VerificationAudit from './components/VerificationAudit.vue';
@@ -18,12 +19,18 @@ import BeginnerDecisionPanel from './components/BeginnerDecisionPanel.vue';
 import { formatApiError } from './utils/apiError';
 import {
   buildConfirmedWorkbenchRequest,
+  buildPreflightConfirmedWorkbenchRequest,
+  buildWorkbenchPreflightRequest,
   buildWorkbenchRequest,
 } from './utils/workbenchRequests';
 import {
+  boundarySelectionsFromPreflight,
+  createEmptyPreflightState,
   createEmptyEvidenceReport,
   createEmptyWorkbenchState,
+  isCurrentPreflight,
   mergeDemoRun,
+  splitPreflightBoundarySelections,
 } from './utils/workbenchState';
 import {
   firstOptionValue,
@@ -83,6 +90,7 @@ const runData = ref(createEmptyWorkbenchState({
     model: 'deepseek-v4-flash',
   },
 }));
+const preflightState = ref(createEmptyPreflightState());
 const lastRunRequest = ref(null);
 const lastRequestContext = ref(null);
 const activeWorkbenchRequestId = ref(0);
@@ -149,6 +157,37 @@ const canConfirmCandidates = computed(() => (
   )
   && Boolean(lastRequestContext.value?.requestBody)
 ));
+const shouldUsePreflight = computed(() => (
+  mode.value === 'api'
+  && selectedDataSource.value?.type === 'uploaded'
+  && selectedDataSource.value?.domainName === 'admissions'
+));
+const currentPreflightReady = computed(() => isCurrentPreflight({
+  preflightState: preflightState.value,
+  inputSignature: inputDraftSignature.value,
+}));
+const currentPreflightCanQuery = computed(() => (
+  currentPreflightReady.value
+  && ['ready', 'needs_confirmation'].includes(preflightState.value.response?.status)
+));
+const displayedRunBarStatus = computed(() => {
+  if (loading.value && shouldUsePreflight.value && !currentPreflightCanQuery.value) {
+    return { type: 'warning', label: '预检中' };
+  }
+  return runBarStatus.value;
+});
+const primaryRunLabel = computed(() => {
+  if (loading.value) {
+    return currentPreflightCanQuery.value ? '正在查询' : '正在预检';
+  }
+  if (!shouldUsePreflight.value) {
+    return mode.value === 'api' ? '开始查询' : '演示结果';
+  }
+  if (currentPreflightCanQuery.value) {
+    return '确认后查询';
+  }
+  return currentPreflightReady.value ? '重新预检' : '先做预检';
+});
 
 watch(uploadedDataSources, persistUploadedDataSources, { deep: true });
 watch(selectedDataSourceId, persistSelectedDataSourceId);
@@ -156,6 +195,7 @@ watch(mode, handleModeChange, { immediate: true });
 
 function runDemo(runRequest = lastRunRequest.value, selectedOptions = {}) {
   clearLastRequestContext();
+  clearPreflightState();
   runData.value = mergeDemoRun(demoRun, {
     runRequest,
     selectedOptions: {
@@ -188,14 +228,41 @@ async function runWorkbench(runRequest) {
   const requestDataSourceId = selectedDataSourceId.value;
   const requestMode = mode.value;
   const source = selectedDataSource.value;
+  const inputSignature = runRequest.form_signature || inputDraftSignature.value;
   lastRequestContext.value = null;
-  const requestBody = buildWorkbenchRequest({
+  if (
+    shouldUseUploadedPreflightForSource(source)
+    && !hasRunnableCurrentPreflight(inputSignature)
+  ) {
+    await requestPreflight({
+      runRequest,
+      requestId,
+      requestDataSourceId,
+      requestMode,
+      source,
+      inputSignature,
+    });
+    return;
+  }
+
+  let requestBody = buildWorkbenchRequest({
     source,
     runRequest,
     extractor: normalizedExtractor(),
     generator: generator.value,
     model: model.value,
   });
+  if (shouldUseUploadedPreflightForSource(source)) {
+    const boundarySelections = splitPreflightBoundarySelections(
+      preflightState.value.response,
+      preflightState.value.selections,
+    );
+    requestBody = buildPreflightConfirmedWorkbenchRequest(requestBody, {
+      preflightId: preflightState.value.response?.preflight_id,
+      confirmedBoundaries: boundarySelections.confirmed_boundaries,
+      disabledBoundaries: boundarySelections.disabled_boundaries,
+    });
+  }
   try {
     const response = await fetch('/workbench/query', {
       method: 'POST',
@@ -223,8 +290,9 @@ async function runWorkbench(runRequest) {
       requestBody,
       dataSourceId: requestDataSourceId,
       mode: requestMode,
-      inputSignature: runRequest.form_signature || inputDraftSignature.value,
+      inputSignature,
     };
+    clearPreflightState();
     runData.value = {
       ...apiPayload,
       selected_options: {
@@ -249,6 +317,86 @@ async function runWorkbench(runRequest) {
       return;
     }
     apiError.value = error instanceof Error ? error.message : formatApiError(error, '后端运行失败');
+    lastRunFailed.value = true;
+  } finally {
+    if (requestId === activeWorkbenchRequestId.value) {
+      loading.value = false;
+    }
+  }
+}
+
+async function requestPreflight({
+  runRequest,
+  requestId,
+  requestDataSourceId,
+  requestMode,
+  source,
+  inputSignature,
+}) {
+  const requestBody = buildWorkbenchPreflightRequest({
+    source,
+    runRequest,
+    model: model.value,
+  });
+  if (!requestBody) {
+    apiError.value = '当前数据源不需要查询前检查。';
+    lastRunFailed.value = true;
+    loading.value = false;
+    return;
+  }
+  clearPreflightState();
+  try {
+    const response = await fetch('/workbench/preflight', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...authHeaders(),
+      },
+      body: JSON.stringify(requestBody),
+    });
+    const apiPayload = await response.json();
+    if (!response.ok) {
+      throw new Error(formatApiError(apiPayload, '查询前检查失败'));
+    }
+    if (!isActiveWorkbenchResponse({
+      requestId,
+      activeRequestId: activeWorkbenchRequestId.value,
+      requestDataSourceId,
+      selectedDataSourceId: selectedDataSourceId.value,
+      requestMode,
+      currentMode: mode.value,
+    })) {
+      return;
+    }
+    preflightState.value = createEmptyPreflightState({
+      response: apiPayload,
+      inputSignature,
+      selections: boundarySelectionsFromPreflight(apiPayload),
+    });
+    runData.value = createEmptyWorkbenchState({
+      status: apiPayload.status || 'needs_confirmation',
+      warnings: apiPayload.warnings || [],
+      selected_options: {
+        data_source: source.label,
+      },
+      frontend_state: {
+        source: 'preflight',
+        is_explicit_demo: false,
+        options_source: workbenchOptions.value.source,
+      },
+    });
+  } catch (error) {
+    if (!isActiveWorkbenchResponse({
+      requestId,
+      activeRequestId: activeWorkbenchRequestId.value,
+      requestDataSourceId,
+      selectedDataSourceId: selectedDataSourceId.value,
+      requestMode,
+      currentMode: mode.value,
+    })) {
+      return;
+    }
+    apiError.value = error instanceof Error ? error.message : formatApiError(error, '查询前检查失败');
     lastRunFailed.value = true;
   } finally {
     if (requestId === activeWorkbenchRequestId.value) {
@@ -341,6 +489,19 @@ function normalizedExtractor() {
   return EXTRACTOR_ALIASES[extractor.value] || extractor.value;
 }
 
+function shouldUseUploadedPreflightForSource(source) {
+  return mode.value === 'api'
+    && source?.type === 'uploaded'
+    && source?.domainName === 'admissions';
+}
+
+function hasRunnableCurrentPreflight(inputSignature) {
+  return isCurrentPreflight({
+    preflightState: preflightState.value,
+    inputSignature,
+  }) && ['ready', 'needs_confirmation'].includes(preflightState.value.response?.status);
+}
+
 function openTrace(result) {
   activeResult.value = result;
   traceVisible.value = true;
@@ -351,6 +512,7 @@ function handleDataSourceChange(value) {
     selectedDataSourceId.value = value;
   }
   clearLastRequestContext();
+  clearPreflightState();
   mode.value = 'api';
   apiError.value = '';
   lastRunFailed.value = false;
@@ -361,7 +523,21 @@ function submitCurrentForm() {
 }
 
 function handleInputDraftChange(signature) {
+  if ((signature || '') !== inputDraftSignature.value) {
+    clearPreflightState();
+  }
   inputDraftSignature.value = signature || '';
+}
+
+function updatePreflightSelection({ confirmationId, optionId }) {
+  if (!confirmationId) return;
+  preflightState.value = {
+    ...preflightState.value,
+    selections: {
+      ...preflightState.value.selections,
+      [confirmationId]: optionId,
+    },
+  };
 }
 
 function goToUpload() {
@@ -378,6 +554,7 @@ function activateUploadedSource(payload) {
     ...uploadedDataSources.value.filter((item) => item.id !== source.id),
   ].slice(0, 5);
   clearLastRequestContext();
+  clearPreflightState();
   selectedDataSourceId.value = source.id;
   mode.value = 'api';
   activeWorkspace.value = 'query';
@@ -420,9 +597,14 @@ async function fetchWorkbenchOptions() {
 function handleModeChange(value) {
   if (value === 'demo') {
     clearLastRequestContext();
+    clearPreflightState();
     optionsLoadError.value = '';
   }
   fetchWorkbenchOptions();
+}
+
+function clearPreflightState() {
+  preflightState.value = createEmptyPreflightState();
 }
 
 function clearLastRequestContext() {
@@ -515,6 +697,7 @@ function localStorageSafe() {
 function statusLabel(status) {
   const labels = {
     idle: '待查询',
+    ready: '可查询',
     ok: '通过',
     needs_confirmation: '待确认',
     no_results: '无结果',
@@ -552,8 +735,9 @@ function statusLabel(status) {
             :model-options="workbenchOptions.models"
             :options-source="workbenchOptions.source"
             :options-error="shouldShowOptionsLoadError(mode, optionsLoadError) ? optionsLoadError : ''"
-            :run-status="runBarStatus"
+            :run-status="displayedRunBarStatus"
             :loading="loading"
+            :primary-action-label="primaryRunLabel"
             @update:selected-data-source-id="handleDataSourceChange"
             @run="submitCurrentForm"
             @demo="showDemoRun"
@@ -593,6 +777,12 @@ function statusLabel(status) {
 
             <section class="result-column">
               <template v-if="!lastRunFailed">
+                <PreflightPanel
+                  :preflight="preflightState.response"
+                  :selections="preflightState.selections"
+                  @update-selection="updatePreflightSelection"
+                />
+
                 <div class="quick-stats">
                   <article v-for="item in quickStats" :key="item.label" :class="['quick-stat', `tone-${item.tone}`]">
                     <span>{{ item.label }}</span>

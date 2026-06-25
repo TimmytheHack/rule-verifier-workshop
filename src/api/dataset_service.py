@@ -36,6 +36,7 @@ from src.adapters.data_warehouse import (
     build_structured_store_from_dataset,
 )
 from src.api.workbench import WorkbenchConfig, run_workbench
+from src.api.workbench_preflight import WorkbenchPreflightConfig, run_workbench_preflight
 from src.domains import DomainConfig
 from src.semantic.capability_graph import DatasetCapabilityGraph
 from src.semantic.query_options import SemanticQueryOptionsBuilder
@@ -546,6 +547,43 @@ class DatasetService:
             dataset_id=dataset_id,
         )
         return run_workbench(config)
+
+    def preflight(
+        self,
+        dataset_id: str,
+        *,
+        user_input: str,
+        hard_filters: dict[str, Any] | None = None,
+        soft_preferences: dict[str, Any] | None = None,
+        model: str = "deepseek-v4-flash",
+        planner_mode: str = "llm_semantic",
+        domain_name: str | None = None,
+    ) -> dict[str, Any]:
+        """对 uploaded admissions 主查询做查询前检查。"""
+
+        metadata = self._load_metadata(dataset_id)
+        domain_name = domain_name or metadata.get("domain_name")
+        if not domain_name:
+            raise DatasetServiceError(
+                code="domain_pack_missing",
+                message="请先生成并审查 domain pack。",
+                status_code=409,
+            )
+        domain_dir = self._domain_dir(metadata)
+        config = WorkbenchPreflightConfig(
+            user_input=user_input,
+            hard_filters=hard_filters or {},
+            soft_preferences={"prompt": user_input, **(soft_preferences or {})},
+            model=model,
+            planner_mode=planner_mode,
+            domain_name=domain_name,
+            domain_path=str(domain_dir),
+            dataset_id=dataset_id,
+        )
+        return run_workbench_preflight(
+            config,
+            domain_config=DomainConfig.from_path(domain_dir, domain_name),
+        )
 
     def _load_metadata(self, dataset_id: str) -> dict[str, Any]:
         self._validate_dataset_id(dataset_id, allow_reserved=False)

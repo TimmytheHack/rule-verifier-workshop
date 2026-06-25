@@ -1,21 +1,21 @@
 export const FALLBACK_WORKBENCH_OPTIONS = {
   extractors: [
-    { value: 'hybrid', label: '规则优先，LLM 补槽' },
+    { value: 'hybrid', label: '规则优先，大模型补槽' },
     { value: 'regex', label: '规则解析软偏好' },
-    { value: 'deepseek', label: 'LLM 辅助解析软偏好' },
+    { value: 'deepseek', label: '大模型辅助解析软偏好' },
   ],
   planner_modes: [
-    { value: 'auto', label: 'uploaded dataset 优先 LLM SemanticIntent' },
-    { value: 'legacy', label: '跳过 LLM semantic planner' },
-    { value: 'llm_semantic', label: '强制 LLM SemanticIntent planner' },
+    { value: 'auto', label: '上传数据集优先语义意图规划' },
+    { value: 'legacy', label: '跳过语义意图规划' },
+    { value: 'llm_semantic', label: '强制语义意图规划' },
   ],
   generators: [
     { value: 'template_evidence', label: '模板证据回答' },
-    { value: 'deepseek_evidence', label: 'LLM 证据回答' },
+    { value: 'deepseek_evidence', label: '大模型证据回答' },
   ],
   models: [
-    { value: 'deepseek-v4-flash', label: 'LLM 快速模型' },
-    { value: 'deepseek-v4-pro', label: 'LLM 高质量模型' },
+    { value: 'deepseek-v4-flash', label: '大模型快速模式' },
+    { value: 'deepseek-v4-pro', label: '大模型高质量模式' },
   ],
   rank_windows: [
     {

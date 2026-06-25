@@ -20,6 +20,7 @@ from fastapi.testclient import TestClient
 
 from src.api import server as server_module
 from src.api.server import app
+from tests.test_uploaded_dataset_flow import _queryable_uploaded_admissions
 from tests.test_tool_contract import (
     _actor,
     _generated_generic_dataset,
@@ -60,10 +61,139 @@ class ToolServerEndpointsTest(unittest.TestCase):
             },
         )
         self.auth_patcher.start()
+        server_module.preflight_store.clear()
         self.client = TestClient(app)
 
     def tearDown(self) -> None:
         self.auth_patcher.stop()
+
+    def test_workbench_preflight_endpoint_returns_contract(self) -> None:
+        prompt = "我想进深圳大学，目前排位15000，帮我看看有什么专业可以选"
+        with TemporaryDirectory() as directory:
+            service, dataset_id = _queryable_uploaded_admissions(
+                Path(directory),
+                use_excel=False,
+            )
+
+            with patch.object(server_module, "dataset_service", service):
+                response = self.client.post(
+                    "/workbench/preflight",
+                    headers=_auth_headers("query-token"),
+                    json={
+                        "dataset_id": dataset_id,
+                        "domain_name": "admissions",
+                        "user_input": prompt,
+                        "hard_filters": {
+                            "source_province": "广东",
+                            "subject_type": "物理",
+                            "reselected_subjects": ["化学", "生物"],
+                            "user_rank": 15000,
+                        },
+                        "soft_preferences": {"prompt": prompt},
+                        "planner_mode": "llm_semantic",
+                    },
+                )
+
+        payload = response.json()
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(payload["schema_version"], "workbench_preflight.v1")
+        self.assertEqual(payload["dataset_id"], dataset_id)
+        self.assertEqual(payload["items"], [])
+        self.assertNotIn("sql", json.dumps(payload, ensure_ascii=False).lower())
+
+    def test_workbench_query_rejects_forged_preflight_confirmation(self) -> None:
+        prompt = "我的排位是15000，想读人工智能，稳一点"
+        with TemporaryDirectory() as directory:
+            service, dataset_id = _queryable_uploaded_admissions(
+                Path(directory),
+                use_excel=False,
+            )
+
+            with patch.object(server_module, "dataset_service", service):
+                response = self.client.post(
+                    "/workbench/query",
+                    headers=_auth_headers("query-token"),
+                    json={
+                        "dataset_id": dataset_id,
+                        "domain_name": "admissions",
+                        "user_input": prompt,
+                        "hard_filters": {
+                            "source_province": "广东",
+                            "subject_type": "物理",
+                            "reselected_subjects": ["化学", "生物"],
+                            "user_rank": 15000,
+                        },
+                        "soft_preferences": {"prompt": prompt},
+                        "planner_mode": "llm_semantic",
+                        "preflight_id": "pf_forged",
+                        "confirmed_boundaries": [
+                            {
+                                "confirmation_id": "pfc_forged",
+                                "option_id": "rank_window_steady",
+                            }
+                        ],
+                    },
+                )
+
+        payload = response.json()
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(payload["detail"]["code"], "invalid_preflight")
+
+    def test_workbench_query_accepts_current_preflight_reference(self) -> None:
+        prompt = "我想进深圳大学，目前排位15000，帮我看看有什么专业可以选"
+        with TemporaryDirectory() as directory:
+            service, dataset_id = _queryable_uploaded_admissions(
+                Path(directory),
+                use_excel=False,
+            )
+
+            with patch.object(server_module, "dataset_service", service):
+                preflight_response = self.client.post(
+                    "/workbench/preflight",
+                    headers=_auth_headers("query-token"),
+                    json={
+                        "dataset_id": dataset_id,
+                        "domain_name": "admissions",
+                        "user_input": prompt,
+                        "hard_filters": {
+                            "source_province": "广东",
+                            "subject_type": "物理",
+                            "reselected_subjects": ["化学", "生物"],
+                            "user_rank": 15000,
+                        },
+                        "soft_preferences": {"prompt": prompt},
+                        "planner_mode": "llm_semantic",
+                    },
+                )
+                preflight = preflight_response.json()
+                response = self.client.post(
+                    "/workbench/query",
+                    headers=_auth_headers("query-token"),
+                    json={
+                        "dataset_id": dataset_id,
+                        "domain_name": "admissions",
+                        "user_input": prompt,
+                        "hard_filters": {
+                            "source_province": "广东",
+                            "subject_type": "物理",
+                            "reselected_subjects": ["化学", "生物"],
+                            "user_rank": 15000,
+                        },
+                        "soft_preferences": {"prompt": prompt},
+                        "planner_mode": "llm_semantic",
+                        "preflight_id": preflight["preflight_id"],
+                        "confirmed_boundaries": [],
+                        "disabled_boundaries": [],
+                    },
+                )
+
+        payload = response.json()
+        self.assertEqual(response.status_code, 200)
+        assert_workbench_contract(self, payload)
+        self.assertIn(
+            payload["status"],
+            {"ok", "needs_confirmation", "no_results", "blocked"},
+        )
 
     def test_tools_list_filters_by_actor_permission(self) -> None:
         response = self.client.get(

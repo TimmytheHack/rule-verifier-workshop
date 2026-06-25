@@ -66,28 +66,28 @@ DEFAULT_USER_INPUT = (
 ADMISSIONS_DOMAIN = DomainConfig.load("admissions")
 
 EXTRACTOR_OPTIONS = {
-    "hybrid": "规则优先，LLM 补槽",
+    "hybrid": "规则优先，大模型补槽",
     "regex": "规则解析软偏好",
-    "deepseek": "LLM 辅助解析软偏好",
+    "deepseek": "大模型辅助解析软偏好",
 }
 EXTRACTOR_ALIASES = {
     "deepseek_slots": "deepseek",
 }
 
 PLANNER_MODE_OPTIONS = {
-    "auto": "uploaded dataset 优先 LLM SemanticIntent",
-    "legacy": "跳过 LLM semantic planner",
-    "llm_semantic": "强制 LLM SemanticIntent planner",
+    "auto": "上传数据集优先语义意图规划",
+    "legacy": "跳过语义意图规划",
+    "llm_semantic": "强制语义意图规划",
 }
 
 GENERATOR_OPTIONS = {
     "template_evidence": "模板证据回答",
-    "deepseek_evidence": "LLM 证据回答",
+    "deepseek_evidence": "大模型证据回答",
 }
 
 MODEL_OPTIONS = {
-    "deepseek-v4-flash": "LLM 快速模型",
-    "deepseek-v4-pro": "LLM 高质量模型",
+    "deepseek-v4-flash": "大模型快速模式",
+    "deepseek-v4-pro": "大模型高质量模式",
 }
 
 RANK_WINDOW_OPTIONS = [
@@ -3090,7 +3090,7 @@ def _validate_config(config: WorkbenchConfig) -> None:
     if config.generator not in GENERATOR_OPTIONS:
         raise ValueError(f"不支持的证据回答方式：{config.generator}")
     if config.model not in MODEL_OPTIONS:
-        raise ValueError(f"不支持的 LLM 模型：{config.model}")
+        raise ValueError(f"不支持的大模型模式：{config.model}")
 
 
 def _validate_controlled_options(

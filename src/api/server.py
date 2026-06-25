@@ -14,6 +14,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 
 from src.api.dataset_service import DatasetService, DatasetServiceError
+from src.api.preflight_store import PreflightStore, PreflightValidationError
 from src.api.tool_registry import (
     TOOL_CONTRACT_VERSION,
     ToolPermissionError,
@@ -28,6 +29,10 @@ from src.api.workbench import (
     WorkbenchConfig,
     available_options,
     run_workbench,
+)
+from src.api.workbench_preflight import (
+    WorkbenchPreflightConfig,
+    preflight_input_signature,
 )
 from src.domains import DomainConfig
 
@@ -98,6 +103,32 @@ class WorkbenchQueryRequest(BaseModel):
     model: str = "deepseek-v4-flash"
     planner_mode: str = "auto"
     confirmed_candidates: list[str] = Field(default_factory=list)
+    preflight_id: str | None = None
+    confirmed_boundaries: list["PreflightBoundarySelection"] = Field(
+        default_factory=list
+    )
+    disabled_boundaries: list["PreflightBoundarySelection"] = Field(
+        default_factory=list
+    )
+
+
+class WorkbenchPreflightRequest(BaseModel):
+    """uploaded admissions 查询前检查请求。"""
+
+    dataset_id: str
+    domain_name: str = "admissions"
+    user_input: str = Field(min_length=1)
+    hard_filters: dict[str, Any] = Field(default_factory=dict)
+    soft_preferences: dict[str, Any] = Field(default_factory=dict)
+    model: str = "deepseek-v4-flash"
+    planner_mode: str = "llm_semantic"
+
+
+class PreflightBoundarySelection(BaseModel):
+    """用户对查询前检查确认项的受控选择。"""
+
+    confirmation_id: str
+    option_id: str = "do_not_use"
 
 
 class ToolInvokeRequest(BaseModel):
@@ -127,6 +158,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 dataset_service = DatasetService(DATA_ROOT)
+preflight_store = PreflightStore()
 
 
 @app.get("/health")
@@ -337,6 +369,31 @@ def dataset_build_warehouse(dataset_id: str, request: Request) -> dict[str, obje
         raise _dataset_http_error(exc) from exc
 
 
+@app.post("/workbench/preflight")
+def preflight_workbench(
+    request: WorkbenchPreflightRequest,
+    http_request: Request,
+) -> dict[str, object]:
+    """uploaded admissions 查询前检查，不执行 SQL。"""
+
+    try:
+        _ensure_scope(_actor_context_from_request(http_request), "query")
+        response = dataset_service.preflight(
+            request.dataset_id,
+            user_input=request.user_input.strip(),
+            hard_filters=request.hard_filters,
+            soft_preferences=request.soft_preferences,
+            model=request.model,
+            planner_mode=request.planner_mode,
+            domain_name=request.domain_name,
+        )
+        if response.get("status") in {"ready", "needs_confirmation"}:
+            preflight_store.put(response)
+        return response
+    except DatasetServiceError as exc:
+        raise _dataset_http_error(exc) from exc
+
+
 @app.post("/workbench/query")
 def query_workbench(
     request: WorkbenchQueryRequest,
@@ -347,11 +404,12 @@ def query_workbench(
     try:
         _ensure_scope(_actor_context_from_request(http_request), "query")
         if request.dataset_id:
+            hard_filters, soft_preferences = _query_filters_after_preflight(request)
             return dataset_service.query(
                 request.dataset_id,
                 user_input=request.user_input.strip(),
-                hard_filters=request.hard_filters,
-                soft_preferences=request.soft_preferences,
+                hard_filters=hard_filters,
+                soft_preferences=soft_preferences,
                 extractor=request.extractor,
                 generator=request.generator,
                 model=request.model,
@@ -374,6 +432,70 @@ def query_workbench(
         )
     except DatasetServiceError as exc:
         raise _dataset_http_error(exc) from exc
+    except PreflightValidationError as exc:
+        raise _invalid_preflight_http_error(exc.message) from exc
+
+
+def _query_filters_after_preflight(
+    request: WorkbenchQueryRequest,
+) -> tuple[dict[str, Any], dict[str, Any]]:
+    hard_filters = dict(request.hard_filters)
+    soft_preferences = dict(request.soft_preferences)
+    has_selection = bool(request.confirmed_boundaries or request.disabled_boundaries)
+    if not request.preflight_id:
+        if has_selection:
+            raise PreflightValidationError("确认项必须引用系统生成的 preflight_id。")
+        return hard_filters, soft_preferences
+
+    patches = preflight_store.validate(
+        preflight_id=request.preflight_id,
+        input_signature=_query_preflight_signature(request),
+        dataset_id=str(request.dataset_id or ""),
+        domain_name=request.domain_name,
+        confirmed=_selection_dicts(request.confirmed_boundaries),
+        disabled=_selection_dicts(request.disabled_boundaries),
+    )
+    return _merge_preflight_patches(hard_filters, soft_preferences, patches)
+
+
+def _query_preflight_signature(request: WorkbenchQueryRequest) -> str:
+    return preflight_input_signature(
+        WorkbenchPreflightConfig(
+            user_input=request.user_input.strip(),
+            hard_filters=dict(request.hard_filters),
+            soft_preferences={
+                "prompt": request.user_input.strip(),
+                **dict(request.soft_preferences),
+            },
+            model=request.model,
+            planner_mode=request.planner_mode,
+            domain_name=request.domain_name,
+            dataset_id=request.dataset_id,
+        )
+    )
+
+
+def _selection_dicts(
+    selections: list[PreflightBoundarySelection],
+) -> list[dict[str, Any]]:
+    return [selection.model_dump() for selection in selections]
+
+
+def _merge_preflight_patches(
+    hard_filters: dict[str, Any],
+    soft_preferences: dict[str, Any],
+    patches: list[dict[str, Any]],
+) -> tuple[dict[str, Any], dict[str, Any]]:
+    merged_hard = dict(hard_filters)
+    merged_soft = dict(soft_preferences)
+    for patch in patches:
+        hard_patch = patch.get("hard_filters")
+        if isinstance(hard_patch, dict):
+            merged_hard.update(hard_patch)
+        soft_patch = patch.get("soft_preferences")
+        if isinstance(soft_patch, dict):
+            merged_soft.update(soft_patch)
+    return merged_hard, merged_soft
 
 
 @app.get("/tools/list")
@@ -430,6 +552,13 @@ def _dataset_http_error(exc: DatasetServiceError) -> HTTPException:
             "message": exc.message,
             "details": exc.details or {},
         },
+    )
+
+
+def _invalid_preflight_http_error(message: str) -> HTTPException:
+    return HTTPException(
+        status_code=400,
+        detail={"code": "invalid_preflight", "message": message},
     )
 
 

@@ -177,7 +177,7 @@ class WorkbenchGoldenE2ETest(unittest.TestCase):
             )
 
         self.assertNotEqual(result["status"], "error")
-        self.assertEqual(result["selected_options"]["extractor"], "LLM 辅助解析软偏好")
+        self.assertEqual(result["selected_options"]["extractor"], "大模型辅助解析软偏好")
 
     def test_hybrid_llm_adapter_only_fills_missing_slots(self) -> None:
         class FakeAdapter:

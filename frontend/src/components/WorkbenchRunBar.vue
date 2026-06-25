@@ -69,6 +69,10 @@ const props = defineProps({
     type: Object,
     default: () => ({ type: 'info', label: '待查询' }),
   },
+  primaryActionLabel: {
+    type: String,
+    default: '开始查询',
+  },
 });
 
 const emit = defineEmits([
@@ -146,7 +150,7 @@ const runStatusTag = computed(() => props.runStatus);
         :loading="loading"
         @click="emit('run')"
       >
-        {{ loading ? '正在查询' : '开始查询' }}
+        {{ primaryActionLabel }}
       </el-button>
     </div>
   </section>

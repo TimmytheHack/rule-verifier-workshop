@@ -699,6 +699,208 @@ class UploadedDatasetFlowTest(unittest.TestCase):
 
 
 class UploadedSemanticAdmissionsFlowTest(unittest.TestCase):
+    def test_uploaded_admissions_preflight_returns_contract(self) -> None:
+        query = "我想进深圳大学，目前排位15000，帮我看看有什么专业可以选"
+        with TemporaryDirectory() as directory:
+            service, dataset_id = _queryable_uploaded_admissions(
+                Path(directory),
+                use_excel=False,
+            )
+
+            response = service.preflight(
+                dataset_id,
+                user_input=query,
+                hard_filters={"user_rank": 15000},
+                soft_preferences={"prompt": query},
+                planner_mode="llm_semantic",
+                domain_name="admissions",
+            )
+
+        self.assertEqual(response["schema_version"], "workbench_preflight.v1")
+        self.assertEqual(response["dataset_id"], dataset_id)
+        self.assertEqual(response["domain_name"], "admissions")
+        self.assertIn(response["status"], {"ready", "needs_confirmation"})
+        self.assertIn("preflight_id", response)
+        self.assertIsInstance(response["recognized_facts"], list)
+        self.assertIsInstance(response["boundary_confirmations"], list)
+        self.assertIsInstance(response["not_executable_preferences"], list)
+        self.assertIsInstance(response["missing_requirements"], list)
+        self.assertIn("planner", response)
+        self.assertEqual(response["result_count"], 0)
+        self.assertEqual(response["items"], [])
+        self.assertEqual(response["top_results"], [])
+
+    def test_uploaded_admissions_preflight_excludes_external_preferences(
+        self,
+    ) -> None:
+        query = "我的排位是15000，想读人工智能，计算机，好就业，学校好一点，想留在广东省"
+        fake_client = FakeSemanticIntentClient(
+            [
+                {
+                    **_semantic_recommendation_intent(),
+                    "preferences": [
+                        {
+                            "source_text": "想读人工智能，计算机",
+                            "semantic": "major_name",
+                            "op": "contains_any",
+                            "value": ["人工智能", "计算机"],
+                        },
+                        {
+                            "source_text": "好就业",
+                            "semantic": "employment_outcome",
+                            "op": "prefer",
+                            "value": True,
+                        },
+                        {
+                            "source_text": "学校好一点",
+                            "semantic": "school_quality",
+                            "op": "prefer",
+                            "value": True,
+                        },
+                    ],
+                },
+                {
+                    "requirements": [
+                        {
+                            "source_text": "想读人工智能，计算机",
+                            "requirement_type": "table_field",
+                            "candidate_semantic": "major_name",
+                            "rationale": "专业名称字段可审核。",
+                        },
+                        {
+                            "source_text": "好就业",
+                            "requirement_type": "knowledge_base_or_reviewed_field",
+                            "candidate_semantic": "employment_outcome",
+                            "rationale": "就业需要已审核知识库或字段。",
+                        },
+                        {
+                            "source_text": "学校好一点",
+                            "requirement_type": "reviewed_ranking_policy",
+                            "candidate_semantic": "school_quality",
+                            "rationale": "学校质量需要已审核排序策略。",
+                        },
+                    ]
+                },
+            ],
+        )
+        with TemporaryDirectory() as directory:
+            service, dataset_id = _queryable_uploaded_admissions(
+                Path(directory),
+                use_excel=False,
+            )
+
+            with patch(
+                "src.api.workbench.deepseek_slot_adapter_enabled",
+                return_value=True,
+            ):
+                with patch(
+                    "src.api.workbench._interactive_deepseek_client",
+                    return_value=fake_client,
+                ):
+                    response = service.preflight(
+                        dataset_id,
+                        user_input=query,
+                        hard_filters={
+                            "source_province": "广东",
+                            "subject_type": "物理",
+                            "reselected_subjects": ["化学", "生物"],
+                            "user_rank": 15000,
+                        },
+                        soft_preferences={"prompt": query},
+                        planner_mode="llm_semantic",
+                        domain_name="admissions",
+                    )
+
+        self.assertEqual(response["status"], "ready")
+        self.assertEqual(len(fake_client.calls), 2)
+        blocked_text = [
+            item["source_text"] for item in response["not_executable_preferences"]
+        ]
+        self.assertIn("好就业", blocked_text)
+        self.assertIn("学校好一点", blocked_text)
+        self.assertEqual(
+            response["planner"]["evidence_requirements"]["status"],
+            "classified",
+        )
+        serialized = json.dumps(response, ensure_ascii=False)
+        self.assertNotIn('"sql"', serialized.lower())
+        self.assertEqual(response["items"], [])
+
+    def test_uploaded_admissions_preflight_requires_user_boundary_confirmation(
+        self,
+    ) -> None:
+        query = "我的排位是15000，想读人工智能，稳一点"
+        fake_client = FakeSemanticIntentClient(
+            [
+                {
+                    **_semantic_recommendation_intent(),
+                    "preferences": [
+                        {
+                            "source_text": "想读人工智能",
+                            "semantic": "major_name",
+                            "op": "contains_any",
+                            "value": ["人工智能"],
+                        },
+                        {
+                            "source_text": "稳一点",
+                            "semantic": "rank_window",
+                            "op": "prefer",
+                            "value": "steady",
+                        },
+                    ],
+                },
+                {
+                    "requirements": [
+                        {
+                            "source_text": "稳一点",
+                            "requirement_type": "user_boundary",
+                            "candidate_semantic": "rank_window",
+                            "rationale": "稳一点需要用户确认位次窗口。",
+                        }
+                    ]
+                },
+            ],
+        )
+        with TemporaryDirectory() as directory:
+            service, dataset_id = _queryable_uploaded_admissions(
+                Path(directory),
+                use_excel=False,
+            )
+
+            with patch(
+                "src.api.workbench.deepseek_slot_adapter_enabled",
+                return_value=True,
+            ):
+                with patch(
+                    "src.api.workbench._interactive_deepseek_client",
+                    return_value=fake_client,
+                ):
+                    response = service.preflight(
+                        dataset_id,
+                        user_input=query,
+                        hard_filters={
+                            "source_province": "广东",
+                            "subject_type": "物理",
+                            "reselected_subjects": ["化学", "生物"],
+                            "user_rank": 15000,
+                        },
+                        soft_preferences={"prompt": query},
+                        planner_mode="llm_semantic",
+                        domain_name="admissions",
+                    )
+
+        self.assertEqual(response["status"], "needs_confirmation")
+        self.assertEqual(
+            response["boundary_confirmations"][0]["source_text"],
+            "稳一点",
+        )
+        option_labels = [
+            option["label"]
+            for option in response["boundary_confirmations"][0]["options"]
+        ]
+        self.assertEqual(option_labels, ["冲一冲", "稳一点", "保底", "暂不使用"])
+        self.assertEqual(response["result_count"], 0)
+
     def test_semantic_probe_import_does_not_load_deepseek_modules(self) -> None:
         script = """
 import json
