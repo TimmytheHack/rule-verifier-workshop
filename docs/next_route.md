@@ -28,7 +28,7 @@ make quality
 
 1. Production Hardening 收尾：在现有 Docker、持久化目录、服务端 token 鉴权、audit log rotation、warehouse build lock / atomic publish 和生产文档基础上，继续补 rate-limit stub、反向代理 TLS/CORS 策略和生产观测。
 2. Operator Trial 真实数据收敛：`scripts/run_operator_trial.py` 已输出 `manual_checkpoints` 和常见失败处理，checklist / feedback 模板已补齐；下一步用真实招生 Excel 多跑几轮，记录具体 sheet/header/profile/review/approve/build/query 人工卡点。
-3. Frontend Operator UI 收敛：已支持 uploaded admissions 数据源在 build 成功后回到主查询页使用；后续继续强化 audit log、review required/risky/missing fields、warehouse status、EvidencePack 展示和 `needs_confirmation` 交互；继续要求前端只展示 `items`、`result_sections` 和 evidence，不生成推荐逻辑。
+3. Frontend C-lite 收敛：普通 uploaded admissions 入口已改为“导入数据”一键导入，成功生成可查询数据后自动成为“查询”数据源；后续继续强化字段审查、EvidencePack 展示、查询前检查和 `needs_confirmation` 交互；继续要求前端只展示 `items`、`result_sections` 和 evidence，不生成推荐逻辑。
 4. Release Readiness：稳定 `make bootstrap`、`make serve`、`make demo`、`make pilot`、`make quality`、`make clean-artifacts`；更新 release manifest、demo script 和 sample outputs，准备 release tag。
 5. Final Acceptance：覆盖内置 admissions、uploaded admissions、messy real-like Excel、housing/products、draft blocked、stale fingerprint blocked、needs_confirmation、no_schema_field not executed、agent cannot call admin tools、quality gate pass、frontend build pass。
 

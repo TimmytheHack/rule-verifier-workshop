@@ -163,7 +163,9 @@ http://127.0.0.1:5173
 讲解点：
 
 - 前端展示 API 输出，不发明推荐逻辑。
-- 上传招生表格完成 build 后，页面会回到“我要查询”，数据源选中这份 uploaded admissions 数据。
+- 上传招生表格走“导入数据”一键导入；成功生成可查询数据后，页面自动把这份 uploaded admissions 数据作为“查询”数据源。
+- 选择 uploaded admissions 数据源后，先验证“查询前检查”：页面调用 `/workbench/preflight`，只展示可执行事实、需确认边界、缺失信息和未执行偏好，不直接展示正式查询结果。
+- 用户确认或处理查询前检查里的边界后，再验证正式调用 `/workbench/query` 并展示结果。
 - 主列表优先读取 `items` 和 `result_sections`。
 - `top_results` 只做 admissions 兼容层。
 - warnings、blocked、no_results 和 no-schema preferences 必须清楚展示。

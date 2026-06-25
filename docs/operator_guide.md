@@ -163,9 +163,12 @@ curl -X POST \
   -d '{"payload":{"dataset_id":"<dataset_id>","domain":"admissions","natural_language":"我今年高考分数630，想读计算机，想留在广东省","deterministic_fields":{"user_score":630}}}'
 ```
 
-前端等价路径：上传表格页完成 approve 和 build 后，如果数据集进入 `queryable`，主查询页会把
-该 `dataset_id` 作为 admissions 数据源调用同一个 `/workbench/query`。如果本地
-`DATA_ROOT` 被清理，浏览器里保存的 uploaded 数据源会失效，需要切回内置 admissions 或重新上传。
+前端等价路径：普通用户进入“导入数据”，上传招生 Excel/CSV 后点击一键导入。前端会调用后端流水线完成
+`approve` 和 `build` 等内部步骤；导入成功并进入 `queryable` 后，主查询页会把该 `dataset_id`
+作为 uploaded admissions 数据源。正式查询前，前端必须先调用 `/workbench/preflight` 展示已识别事实、
+需要确认的边界、缺失信息和未执行偏好；只有用户确认或处理边界后，才调用 `/workbench/query`。
+只有字段模板不匹配或导入失败时，才进入“字段审查”查看高级审查信息。如果本地 `DATA_ROOT` 被清理，
+浏览器里保存的 uploaded 数据源会失效，需要切回内置 admissions 或在“导入数据”重新上传。
 
 前端和 agent 应优先读取 `items`、`result_sections`、`warnings` 和 `evidence_pack`。`top_results` 只作为 domain-specific 兼容层。
 
