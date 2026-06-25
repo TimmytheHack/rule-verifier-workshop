@@ -9,6 +9,7 @@ import {
   Warning,
 } from '@element-plus/icons-vue';
 import { formatApiError } from '../utils/apiError';
+import { selectedRawUploadFile } from '../utils/uploadFiles';
 import { buildConfirmedWorkbenchRequest } from '../utils/workbenchRequests';
 import {
   candidateIdentifier,
@@ -221,9 +222,24 @@ const OP_OPTIONS = [
   { value: '=', label: '等于' },
 ];
 
-function beforeUpload(selectedFile) {
-  file.value = selectedFile;
-  return false;
+function handleFileChange(uploadFile) {
+  const selectedFile = selectedRawUploadFile(uploadFile);
+  if (selectedFile) {
+    file.value = selectedFile;
+    errorText.value = '';
+  }
+}
+
+function handleFileRemove() {
+  file.value = null;
+}
+
+function handleFileExceed(selectedFiles) {
+  const selectedFile = selectedFiles?.[0] || null;
+  if (selectedFile) {
+    file.value = selectedFile;
+    errorText.value = '';
+  }
 }
 
 async function uploadDataset() {
@@ -576,7 +592,9 @@ function stageLabel(value) {
           drag
           :auto-upload="false"
           :limit="1"
-          :before-upload="beforeUpload"
+          :on-change="handleFileChange"
+          :on-remove="handleFileRemove"
+          :on-exceed="handleFileExceed"
           accept=".csv,.xlsx,.xls,.xlsm"
         >
           <el-icon class="upload-icon"><UploadFilled /></el-icon>
