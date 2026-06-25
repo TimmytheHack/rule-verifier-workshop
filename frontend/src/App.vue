@@ -684,7 +684,10 @@ function statusLabel(status) {
       </el-tab-pane>
 
       <el-tab-pane label="字段审查" name="review">
-        <ReviewWorkspace :selected-data-source="selectedDataSource" />
+        <ReviewWorkspace
+          :selected-data-source="selectedDataSource"
+          @source-ready="activateUploadedSource"
+        />
       </el-tab-pane>
 
       <el-tab-pane label="证据调试" name="details">

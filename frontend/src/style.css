@@ -624,6 +624,23 @@ input {
   gap: 14px;
 }
 
+.review-workspace,
+.evidence-debug-workspace {
+  display: grid;
+  gap: 12px;
+  align-content: start;
+}
+
+.developer-collapse {
+  border: 1px solid #d8e4df;
+  border-radius: 8px;
+  background: #ffffff;
+}
+
+.evidence-debug-header-card {
+  grid-column: 1 / -1;
+}
+
 .import-main-card {
   max-width: 920px;
 }
