@@ -33,6 +33,12 @@ function cssRule(source, selector) {
   return match[1];
 }
 
+function functionBlock(source, name) {
+  const match = source.match(new RegExp(`function ${name}\\([^)]*\\) \\{([\\s\\S]*?)\\n\\}`));
+  assert.ok(match, `missing function ${name}`);
+  return match[1];
+}
+
 test('App renders QueryWorkspace as the query shell without nested query markup', () => {
   const appSource = readSource('../App.vue');
   const block = componentBlock(appSource, 'QueryWorkspace');
@@ -122,16 +128,31 @@ test('C-lite query layout bounds desktop overflow and restores mobile page flow'
   assert.match(mobileBlock[0], /\.query-input-panel,\s*\.query-output-panel[\s\S]*?overflow:\s*visible;/);
 });
 
-test('ImportWorkspace routes upload actions through its slot contract', () => {
+test('ImportWorkspace owns the ordinary uploaded admissions import flow', () => {
   const source = readSource('./workspaces/ImportWorkspace.vue');
   const appSource = readSource('../App.vue');
 
   assert.ok(source.includes('const props = defineProps({'));
   assertIncludesAll(source, [
-    ':active-source="props.activeSource"',
-    ':emit-source-ready="emitSourceReady"',
-    ':open-review="openReview"',
+    'import { UploadFilled } from \'@element-plus/icons-vue\';',
+    'ADMISSIONS_DOMAIN, createUploadedAdmissionsSource',
+    'import { selectedRawUploadFile } from \'../../utils/uploadFiles.js\';',
+    'import ImportStepList from \'../upload/ImportStepList.vue\';',
+    'ADMISSIONS_IMPORT_STEPS, runAdmissionsImportPipeline',
+    'defineEmits([\'source-ready\', \'open-review\'])',
+    'runAdmissionsImportPipeline({',
+    'emit(\'source-ready\', datasetPayload)',
+    'const text = await response.text();',
+    'const payload = text ? JSON.parse(text) : {};',
+    'if (payload && typeof payload === \'object\')',
+    '`API 请求失败（HTTP ${response.status}）',
+    '<el-tag effect="plain">上传招生表</el-tag>',
+    '<ImportStepList :steps="steps" />',
   ]);
-  assert.ok(appSource.includes('v-slot="{ emitSourceReady }"'));
-  assert.ok(appSource.includes('<DatasetIngestionPanel @source-ready="emitSourceReady" />'));
+  assert.ok(functionBlock(source, 'handleFileChange').includes('importedSource.value = null;'));
+  assert.doesNotMatch(source, /<slot/);
+  assert.ok(appSource.includes(':auth-headers="authHeaders"'));
+  assert.ok(appSource.includes('@open-review="activeWorkspace = \'review\'"'));
+  assert.doesNotMatch(appSource, /DatasetIngestionPanel/);
+  assert.doesNotMatch(appSource, /v-slot/);
 });

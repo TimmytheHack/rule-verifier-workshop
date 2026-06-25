@@ -619,6 +619,59 @@ input {
   font-weight: 600;
 }
 
+.import-workspace {
+  display: grid;
+  gap: 14px;
+}
+
+.import-main-card {
+  max-width: 920px;
+}
+
+.import-step-list {
+  display: grid;
+  gap: 8px;
+  padding: 0;
+  margin: 16px 0 0;
+  list-style: none;
+}
+
+.import-step-item {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: 10px;
+  align-items: center;
+  padding: 10px 12px;
+  border: 1px solid #d8e4df;
+  border-radius: 8px;
+  background: #ffffff;
+}
+
+.import-step-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 999px;
+  background: #a7b2ba;
+}
+
+.import-step-dot.is-running {
+  background: #d9932f;
+}
+
+.import-step-dot.is-success {
+  background: #2f7d63;
+}
+
+.import-step-dot.is-error {
+  background: #c94343;
+}
+
+.import-step-item small {
+  display: block;
+  margin-top: 2px;
+  color: #66717c;
+}
+
 .empty-run {
   margin: 28px 0;
   border: 1px dashed #c9d6dd;

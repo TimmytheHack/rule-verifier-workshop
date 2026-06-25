@@ -1,7 +1,6 @@
 <script setup>
 import { computed, ref, watch } from 'vue';
 
-import DatasetIngestionPanel from './components/DatasetIngestionPanel.vue';
 import TraceDrawer from './components/TraceDrawer.vue';
 import QueryWorkspace from './components/workspaces/QueryWorkspace.vue';
 import ImportWorkspace from './components/workspaces/ImportWorkspace.vue';
@@ -677,13 +676,11 @@ function statusLabel(status) {
 
       <el-tab-pane label="导入数据" name="dataset">
         <ImportWorkspace
-          v-slot="{ emitSourceReady }"
           :active-source="selectedDataSource"
+          :auth-headers="authHeaders"
           @source-ready="activateUploadedSource"
           @open-review="activeWorkspace = 'review'"
-        >
-          <DatasetIngestionPanel @source-ready="emitSourceReady" />
-        </ImportWorkspace>
+        />
       </el-tab-pane>
 
       <el-tab-pane label="字段审查" name="review">
