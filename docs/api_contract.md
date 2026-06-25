@@ -105,7 +105,7 @@ endpoint：
 | endpoint | 含义 |
 |---|---|
 | `POST /datasets/upload?filename=...` | 上传 CSV/Excel 原始 body，保存到托管目录，返回 `dataset_id` 和 `source_fingerprint`。 |
-| `POST /datasets/{dataset_id}/generate-domain-pack` | 生成 draft domain pack、schema profile、schema/value index 和 ingestion summary。 |
+| `POST /datasets/{dataset_id}/generate-domain-pack` | 生成 draft domain pack、schema profile、schema/value index 和 ingestion summary；uploaded admissions 新流程使用 `template_id=admissions_schema_v1` 复用字段模板，不读取内置表格行。 |
 | `GET /datasets/{dataset_id}/profile` | 返回字段类型、空值率、唯一值数量、样例值、sheet list、detected header row、原始列映射和风险标记。 |
 | `GET /datasets/{dataset_id}/review-summary` | 返回可审查字段、seed ops、required/missing fields、PII / high-cardinality / text / special-plan 风险。 |
 | `POST /datasets/{dataset_id}/approve-field` | 调用 review workflow 批准字段，并写入审计记录。 |
@@ -115,6 +115,11 @@ endpoint：
 | `POST /datasets/{dataset_id}/build-warehouse` | 基于 approved pack 构建 DuckDB warehouse 和 value index。 |
 | `POST /workbench/preflight` | uploaded admissions 主查询的查询前检查；不执行 SQL，不返回候选行。 |
 | `POST /workbench/query` | 支持 `dataset_id` / `domain_name`，返回同一 `WorkbenchResponse` contract。 |
+
+`generate-domain-pack` 的 `template_id` 表示已审查领域模板，不是数据源。
+`admissions_schema_v1` 只复制 admissions 字段、规则、语义能力和展示映射模板，并把
+`workbook_path` 改写为上传文件的托管路径。旧 `base_domain=admissions` 仅为兼容入口；
+前端和新工具调用不应再要求用户填写 `base_domain`。
 
 前端主查询页选择 uploaded admissions 数据源时，必须先调用
 `POST /workbench/preflight`。该接口固定返回 `workbench_preflight.v1`，包含

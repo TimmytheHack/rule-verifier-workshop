@@ -66,6 +66,8 @@ DOMAIN_PACK_TEMPLATE_FILES = [
     "top_result_mapping.yaml",
     "semantic_capabilities.json",
 ]
+ADMISSIONS_SCHEMA_TEMPLATE_ID = "admissions_schema_v1"
+LEGACY_ADMISSIONS_BASE_DOMAIN = "admissions"
 SUPPORTED_UPLOAD_EXTENSIONS = {".csv", ".xlsx", ".xlsm", ".xls"}
 RESERVED_DATASET_IDS = {"admissions", "housing", "products"}
 DATASET_ID_PATTERN = re.compile(r"^[A-Za-z0-9][A-Za-z0-9_-]{2,79}$")
@@ -162,14 +164,21 @@ class DatasetService:
         *,
         domain_name: str | None = None,
         base_domain: str | None = None,
+        template_id: str | None = None,
         llm: str = "off",
     ) -> dict[str, Any]:
-        """生成 draft pack；base_domain=admissions 时复用已审查招生模板。"""
+        """生成 draft pack；template_id 可复用已审查字段模板。"""
 
         metadata = self._load_metadata(dataset_id)
         source_path = Path(metadata["source_path"])
         base_domain = base_domain or None
-        domain_name = domain_name or base_domain or f"uploaded_{dataset_id}"
+        template_id = _resolve_domain_template_id(template_id, base_domain)
+        domain_name = (
+            domain_name
+            or _domain_name_for_template(template_id)
+            or base_domain
+            or f"uploaded_{dataset_id}"
+        )
         domain_name = _safe_domain_name(domain_name)
         output_root = self._dataset_dir(dataset_id) / "domain_packs"
         result = generate_draft_domain_pack(
@@ -180,10 +189,10 @@ class DatasetService:
             sheet_name=metadata.get("sheet_name"),
         )
         _set_domain_status(result.domain_dir, "needs_review")
-        if base_domain:
-            self._apply_base_domain_template(
+        if template_id:
+            self._apply_domain_template(
                 domain_dir=result.domain_dir,
-                base_domain=base_domain,
+                template_id=template_id,
                 source_path=source_path,
             )
         profile = _load_json(result.schema_profile_path)
@@ -195,6 +204,7 @@ class DatasetService:
                 "status": "needs_review",
                 "domain_name": domain_name,
                 "base_domain": base_domain,
+                "domain_template_id": template_id,
                 "domain_dir": str(result.domain_dir),
                 "domain_pack_status": "needs_review",
                 "schema_profile_path": str(result.schema_profile_path),
@@ -421,7 +431,7 @@ class DatasetService:
     ) -> dict[str, Any]:
         metadata = self._load_metadata(dataset_id)
         domain_dir = self._domain_dir(metadata)
-        if metadata.get("base_domain") == "admissions":
+        if _uses_admissions_schema_template(metadata):
             result = self._approve_template_domain(
                 domain_dir=domain_dir,
                 title_field=title_field or "university_name",
@@ -753,17 +763,17 @@ class DatasetService:
             "warnings": warnings,
         }
 
-    def _apply_base_domain_template(
+    def _apply_domain_template(
         self,
         *,
         domain_dir: Path,
-        base_domain: str,
+        template_id: str,
         source_path: Path,
     ) -> None:
-        if base_domain != "admissions":
+        if template_id != ADMISSIONS_SCHEMA_TEMPLATE_ID:
             raise DatasetServiceError(
-                code="unsupported_base_domain",
-                message=f"暂不支持复用 base_domain：{base_domain}",
+                code="unsupported_domain_template",
+                message=f"暂不支持领域模板：{template_id}",
                 status_code=400,
             )
         source = Path("domains/admissions")
@@ -797,9 +807,9 @@ class DatasetService:
             reviewed_fields[field_id] = {
                 "status": "approved_template_seed",
                 "approved_ops": ops,
-                "reviewed_by": "built_in_admissions_template",
+                "reviewed_by": ADMISSIONS_SCHEMA_TEMPLATE_ID,
                 "reviewed_at": _utc_now(),
-                "note": "复用已审查 admissions domain pack；上传源仍需 approve-domain。",
+                "note": "复用已审查 admissions 字段模板；数据行只来自上传文件，上传源仍需 approve-domain。",
             }
             if ops:
                 approved_ops[field_id] = ops
@@ -809,21 +819,23 @@ class DatasetService:
                 "domain": "admissions",
                 "domain_version": str(domain.get("domain_version") or "1"),
                 "domain_pack_status": "needs_review",
+                "domain_template_id": ADMISSIONS_SCHEMA_TEMPLATE_ID,
                 "reviewed_fields": reviewed_fields,
                 "approved_ops": approved_ops,
                 "review_notes": [
-                    "该托管 pack 复用内置 admissions runtime 配置。",
+                    "该托管 pack 复用 admissions_schema_v1 字段模板。",
+                    "模板不读取内置 admissions 数据表行。",
                     "approve-domain 前仍不能执行 SQL。",
                 ],
                 "reviewed_at": _utc_now(),
-                "reviewed_by": "built_in_admissions_template",
+                "reviewed_by": ADMISSIONS_SCHEMA_TEMPLATE_ID,
             }
         )
         _append_review_history(
             review,
             "seed-template-review",
-            "built_in_admissions_template",
-            {"base_domain": "admissions"},
+            ADMISSIONS_SCHEMA_TEMPLATE_ID,
+            {"domain_template_id": ADMISSIONS_SCHEMA_TEMPLATE_ID},
         )
         _write_yaml(domain_dir / "review.yaml", review)
 
@@ -905,6 +917,7 @@ class DatasetService:
             "status",
             "domain_name",
             "base_domain",
+            "domain_template_id",
             "domain_pack_status",
             "source_fingerprint",
             "sheet_name",
@@ -974,12 +987,57 @@ def _review_result_payload(dataset_id: str, result: Any) -> dict[str, Any]:
     }
 
 
+def _resolve_domain_template_id(
+    template_id: str | None,
+    base_domain: str | None,
+) -> str | None:
+    template_id = template_id or None
+    base_domain = base_domain or None
+    if base_domain and base_domain != LEGACY_ADMISSIONS_BASE_DOMAIN:
+        raise DatasetServiceError(
+            code="unsupported_base_domain",
+            message=f"暂不支持复用 base_domain：{base_domain}",
+            status_code=400,
+        )
+    legacy_template_id = (
+        ADMISSIONS_SCHEMA_TEMPLATE_ID
+        if base_domain == LEGACY_ADMISSIONS_BASE_DOMAIN
+        else None
+    )
+    if template_id and template_id != ADMISSIONS_SCHEMA_TEMPLATE_ID:
+        raise DatasetServiceError(
+            code="unsupported_domain_template",
+            message=f"暂不支持领域模板：{template_id}",
+            status_code=400,
+        )
+    if template_id and legacy_template_id and template_id != legacy_template_id:
+        raise DatasetServiceError(
+            code="domain_template_conflict",
+            message="template_id 与 base_domain 不一致。",
+            status_code=400,
+        )
+    return template_id or legacy_template_id
+
+
+def _domain_name_for_template(template_id: str | None) -> str | None:
+    if template_id == ADMISSIONS_SCHEMA_TEMPLATE_ID:
+        return "admissions"
+    return None
+
+
+def _uses_admissions_schema_template(metadata: dict[str, Any]) -> bool:
+    return (
+        metadata.get("domain_template_id") == ADMISSIONS_SCHEMA_TEMPLATE_ID
+        or metadata.get("base_domain") == LEGACY_ADMISSIONS_BASE_DOMAIN
+    )
+
+
 def _required_field_status(
     metadata: dict[str, Any],
     summary: dict[str, Any],
     profile: dict[str, Any] | None = None,
 ) -> list[dict[str, Any]]:
-    if metadata.get("base_domain") != "admissions":
+    if not _uses_admissions_schema_template(metadata):
         return []
     domain_dir = metadata.get("domain_dir")
     if not domain_dir:

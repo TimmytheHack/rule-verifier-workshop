@@ -8,7 +8,8 @@
     "properties": {
       "dataset_id": {"type": "string", "minLength": 1},
       "domain_name": {"type": "string"},
-      "base_domain": {"type": "string"},
+      "template_id": {"type": "string", "enum": ["admissions_schema_v1"]},
+      "base_domain": {"type": "string", "description": "兼容旧入口；新调用应使用 template_id。"},
       "llm": {"type": "string", "enum": ["off", "deepseek"]}
     },
     "required": ["dataset_id"]
@@ -31,12 +32,13 @@
   "writes_files": true,
   "security_notes": [
     "Generated configs remain draft/needs_review.",
+    "template_id reuses reviewed field/rule templates only; uploaded rows remain the only data source.",
     "Seed ops are review inputs and cannot execute."
   ],
   "status_enum": ["profiled", "draft_domain_generated", "needs_review", "blocked", "error"],
   "examples": [
     {
-      "request": {"dataset_id": "ds_example", "domain_name": "admissions", "base_domain": "admissions", "llm": "off"},
+      "request": {"dataset_id": "ds_example", "domain_name": "admissions", "template_id": "admissions_schema_v1", "llm": "off"},
       "response": {"dataset_id": "ds_example", "status": "needs_review", "domain_pack_status": "needs_review"}
     }
   ]

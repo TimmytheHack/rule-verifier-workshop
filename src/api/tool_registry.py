@@ -204,6 +204,7 @@ def _dispatch_tool(
             str(payload["dataset_id"]),
             domain_name=payload.get("domain_name"),
             base_domain=payload.get("base_domain"),
+            template_id=payload.get("template_id"),
             llm=str(payload.get("llm") or "off"),
         )
     if tool_name == "dataset.review_summary":

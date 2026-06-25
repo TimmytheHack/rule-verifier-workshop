@@ -56,6 +56,39 @@ class UploadedDatasetFlowTest(unittest.TestCase):
         self.assertEqual(result["sheet_name"], "Sheet1")
         self.assertEqual(result["status"], "uploaded")
 
+    def test_admissions_template_id_does_not_expose_base_domain(self) -> None:
+        with TemporaryDirectory() as directory:
+            root = Path(directory)
+            source = _write_admissions_fixture(root, use_excel=False)
+            service = DatasetService(root / "managed")
+            service.upload(
+                filename=source.name,
+                content=source.read_bytes(),
+                dataset_id="ds_template_boundary",
+            )
+
+            result = service.generate_domain_pack(
+                "ds_template_boundary",
+                domain_name="admissions",
+                template_id="admissions_schema_v1",
+            )
+
+            metadata = _dataset_metadata(service, "ds_template_boundary")
+            domain = json.loads(
+                (Path(metadata["domain_dir"]) / "domain.json").read_text(
+                    encoding="utf-8"
+                )
+            )
+
+        self.assertEqual(result["domain_template_id"], "admissions_schema_v1")
+        self.assertIsNone(result["base_domain"])
+        self.assertEqual(metadata["domain_template_id"], "admissions_schema_v1")
+        self.assertIsNone(metadata["base_domain"])
+        self.assertEqual(
+            Path(domain["data"]["workbook_path"]).resolve(),
+            Path(metadata["source_path"]).resolve(),
+        )
+
     def test_draft_domain_query_is_blocked_before_sql(self) -> None:
         with TemporaryDirectory() as directory:
             service, dataset_id = _generated_generic_dataset(Path(directory))
@@ -2404,7 +2437,7 @@ def _queryable_uploaded_admissions(
     service.generate_domain_pack(
         dataset_id,
         domain_name="admissions",
-        base_domain="admissions",
+        template_id="admissions_schema_v1",
     )
     approved = service.approve_domain(dataset_id)
     if not approved["ok"]:

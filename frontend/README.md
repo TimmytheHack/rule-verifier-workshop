@@ -41,7 +41,7 @@ npm run build
 
 “上传与审查”工作区按 `上传文件 -> 生成草稿 -> 字段审查 -> 批准领域 -> 生成可查询数据 -> 试查` 展示现有后端能力。首屏优先展示步骤条、上传/审查/查询操作和试查状态；工作表、缺失字段、风险字段、审查摘要、操作审计记录和原始 JSON 默认折叠到“调试数据”。
 
-“上传与审查”工作区调用 `/datasets` 和 `/workbench/query`：上传 CSV/Excel、展示 schema profile、展示 review summary、执行 approve/block、构建 warehouse，并把 uploaded dataset 的 `WorkbenchResponse` 中的 `items`、`top_results`、`result_sections`、`EvidencePack` 和 warnings 展示出来。面板优先用 `items` 和 `result_sections` 展示结果；`top_results` 只作为兼容层。当 `status=needs_confirmation` 且 `candidates_to_confirm` 包含上一轮系统生成的 `candidate_id` 时，会允许 operator 选择后重跑；如果是缺少位次等必要信息，则只展示 warning 并等待补充输入。`blocked`、`no_results`、warnings 和前端操作审计记录会单独显示。该面板不在前端生成 hard filter。
+“上传与审查”工作区调用 `/datasets` 和 `/workbench/query`：上传 CSV/Excel、展示 schema profile、展示 review summary、执行 approve/block、构建 warehouse，并把 uploaded dataset 的 `WorkbenchResponse` 中的 `items`、`top_results`、`result_sections`、`EvidencePack` 和 warnings 展示出来。上传 admissions 表生成草稿时，前端提交 `template_id=admissions_schema_v1`，只复用招生字段模板，不读取内置招生表行，也不要求用户填写 `base_domain`。面板优先用 `items` 和 `result_sections` 展示结果；`top_results` 只作为兼容层。当 `status=needs_confirmation` 且 `candidates_to_confirm` 包含上一轮系统生成的 `candidate_id` 时，会允许 operator 选择后重跑；如果是缺少位次等必要信息，则只展示 warning 并等待补充输入。`blocked`、`no_results`、warnings 和前端操作审计记录会单独显示。该面板不在前端生成 hard filter。
 
 ## 后端查询模式
 

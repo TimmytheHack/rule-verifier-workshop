@@ -59,6 +59,7 @@ class GenerateDomainPackRequest(BaseModel):
 
     domain_name: str | None = None
     base_domain: str | None = None
+    template_id: str | None = None
     llm: str = "off"
 
 
@@ -246,6 +247,7 @@ def generate_dataset_domain_pack(
             dataset_id,
             domain_name=request.domain_name,
             base_domain=request.base_domain,
+            template_id=request.template_id,
             llm=request.llm,
         )
     except DatasetServiceError as exc:

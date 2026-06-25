@@ -71,7 +71,7 @@ class RealDatasetPilotTest(unittest.TestCase):
             generated = service.generate_domain_pack(
                 "ds_sheet_profile",
                 domain_name="admissions",
-                base_domain="admissions",
+                template_id="admissions_schema_v1",
             )
             profile = service.profile("ds_sheet_profile")
             review = service.review_summary("ds_sheet_profile")
@@ -315,7 +315,7 @@ def _queryable_uploaded_admissions(
     service.generate_domain_pack(
         dataset_id,
         domain_name="admissions",
-        base_domain="admissions",
+        template_id="admissions_schema_v1",
     )
     approved = service.approve_domain(dataset_id)
     if not approved["ok"]:

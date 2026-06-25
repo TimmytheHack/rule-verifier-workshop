@@ -658,6 +658,10 @@ input {
   flex: 1 1 160px;
 }
 
+.compact-controls .template-hint {
+  flex: 1 1 100%;
+}
+
 .wide-button {
   width: 100%;
   margin-top: 12px;

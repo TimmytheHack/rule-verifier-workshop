@@ -18,7 +18,6 @@ import {
 
 const file = ref(null);
 const domainName = ref('admissions');
-const baseDomain = ref('admissions');
 const fieldId = ref('city');
 const opFieldId = ref('city');
 const opName = ref('in');
@@ -33,6 +32,7 @@ const selectedCandidateIds = ref([]);
 const auditEvents = ref([]);
 const lastUploadedQueryContext = ref(null);
 const DEFAULT_DEV_ACTOR_TOKEN = import.meta.env.DEV ? 'operator-token' : '';
+const ADMISSIONS_SCHEMA_TEMPLATE_ID = 'admissions_schema_v1';
 
 const emit = defineEmits(['source-ready']);
 
@@ -270,7 +270,9 @@ async function generateDomainPack() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           domain_name: domainName.value || null,
-          base_domain: baseDomain.value || null,
+          template_id: domainName.value === 'admissions'
+            ? ADMISSIONS_SCHEMA_TEMPLATE_ID
+            : null,
           llm: 'off',
         }),
       },
@@ -602,8 +604,13 @@ function stageLabel(value) {
         </el-upload>
 
         <div class="compact-controls">
-          <el-input v-model="domainName" placeholder="领域名" />
-          <el-input v-model="baseDomain" placeholder="参考模板，可为空" />
+          <el-input v-model="domainName" placeholder="数据类型" />
+          <el-alert
+            class="template-hint"
+            type="info"
+            :closable="false"
+            title="使用 admissions_schema_v1 字段模板；只读取上传文件，不读取内置招生表行。"
+          />
         </div>
         <div class="button-row">
           <el-button :icon="UploadFilled" type="primary" :loading="loading" @click="uploadDataset">

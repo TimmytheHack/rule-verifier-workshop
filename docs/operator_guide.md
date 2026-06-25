@@ -66,10 +66,13 @@ curl -X POST \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer <operator-token>" \
   http://127.0.0.1:8001/datasets/<dataset_id>/generate-domain-pack \
-  -d '{"base_domain":"admissions","llm":"off"}'
+  -d '{"domain_name":"admissions","template_id":"admissions_schema_v1","llm":"off"}'
 ```
 
-生成结果仍是 `needs_review`。seed aliases、seed ops、seed templates 只能作为审查输入，不会自动成为可执行 hard filter。
+`template_id=admissions_schema_v1` 只复用已审查的招生字段模板、规则模板和展示映射；
+数据行仍然只来自上传文件，不读取内置 admissions 表格。旧 `base_domain=admissions`
+仅保留为兼容入口，新流程不再要求 operator 填写。生成结果仍是 `needs_review`。
+seed aliases、seed ops、seed templates 只能作为审查输入，不会自动成为可执行 hard filter。
 
 ## 审查 summary
 
