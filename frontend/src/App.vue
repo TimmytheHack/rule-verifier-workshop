@@ -44,6 +44,7 @@ import {
   defaultWorkbenchMode,
   describeDataSourceState,
   isActiveWorkbenchResponse,
+  resultRowsForDisplay,
   shouldShowOptionsLoadError,
 } from './utils/workbenchPresentation';
 import demoRun from './mock/demo_run.json';
@@ -101,9 +102,7 @@ const lastRunFailed = ref(false);
 const uploadedDataSources = ref(initialUploadedDataSources);
 const selectedDataSourceId = ref(initialDataSourceId);
 
-const resultRows = computed(() => (
-  runData.value?.items?.length ? runData.value.items : runData.value?.top_results || []
-));
+const resultRows = computed(() => resultRowsForDisplay(runData.value));
 const dataSourceOptions = computed(() => [
   BUILTIN_DATA_SOURCE,
   ...uploadedDataSources.value,

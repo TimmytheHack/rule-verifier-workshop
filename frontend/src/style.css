@@ -1636,6 +1636,28 @@ input {
   font-size: 13px;
 }
 
+.group-major-list {
+  display: grid;
+  gap: 6px;
+  padding: 8px 10px;
+  border: 1px solid #edf1f3;
+  border-radius: 8px;
+  background: #f8faf9;
+}
+
+.group-major-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 10px;
+  color: #3d4a52;
+  font-size: 13px;
+}
+
+.group-major-row span {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
 .compact-major {
   max-width: 520px;
   line-height: 1.5;

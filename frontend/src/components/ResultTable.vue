@@ -1,6 +1,12 @@
 <script setup>
 import { View } from '@element-plus/icons-vue';
 
+import {
+  formatGroupMajorScore,
+  groupMajorSections,
+  groupMajorTitle,
+} from '../utils/workbenchPresentation';
+
 defineProps({
   results: {
     type: Array,
@@ -35,7 +41,11 @@ function collectAttributes(row) {
       ...(row.primary_attributes || []),
       ...(row.secondary_attributes || []),
     ];
-    const byKey = Object.fromEntries(attributes.map((item) => [item.key, item.value]));
+    const byKey = Object.fromEntries(
+      attributes
+        .filter((item) => item?.key || item?.label)
+        .map((item) => [item.key || item.label, item.value]),
+    );
     return { ...(row.raw || {}), ...byKey };
   }
   return row || {};
@@ -180,6 +190,16 @@ function matchedCount(row) {
           >
             <span>{{ item.label }}</span>
             <strong>{{ item.value }}</strong>
+          </div>
+        </div>
+        <div v-if="groupMajorSections(row).length" class="group-major-list">
+          <div
+            v-for="major in groupMajorSections(row)"
+            :key="major.major_code || major.item_id || groupMajorTitle(major)"
+            class="group-major-row"
+          >
+            <span>{{ groupMajorTitle(major) }}</span>
+            <strong>{{ formatGroupMajorScore(major) }}</strong>
           </div>
         </div>
         <div class="result-item-actions">

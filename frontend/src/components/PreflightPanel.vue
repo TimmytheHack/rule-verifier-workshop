@@ -18,7 +18,7 @@ const facts = computed(() => props.preflight?.recognized_facts || []);
 const boundaries = computed(() => props.preflight?.boundary_confirmations || []);
 const notExecutable = computed(() => props.preflight?.not_executable_preferences || []);
 const missingRequirements = computed(() => props.preflight?.missing_requirements || []);
-const hasPreflight = computed(() => Boolean(props.preflight?.preflight_id));
+const hasPreflight = computed(() => Boolean(props.preflight));
 const statusTag = computed(() => {
   const status = props.preflight?.status || 'idle';
   const labels = {
@@ -68,7 +68,7 @@ function displayValue(value) {
     <header class="preflight-header">
       <div>
         <h2>查询前检查</h2>
-        <p>这些内容会决定哪些偏好可以进入筛选、排序和最终回答。</p>
+        <p>系统先判断哪些内容有证据可以执行，哪些需要你确认，哪些不会进入筛选。</p>
       </div>
       <el-tag :type="statusTag.type" effect="plain">{{ statusTag.label }}</el-tag>
     </header>
@@ -82,11 +82,54 @@ function displayValue(value) {
             <strong>{{ displayValue(fact.value) }}</strong>
           </li>
         </ul>
-        <p v-else class="preflight-empty">暂无可进入验证链路的事实。</p>
+        <p v-else class="preflight-empty">暂无已识别事实。</p>
+      </section>
+
+      <section class="preflight-section boundary-section">
+        <h3>需要你确认</h3>
+        <template v-if="boundaries.length">
+          <article
+            v-for="boundary in boundaries"
+            :key="boundary.confirmation_id"
+            class="boundary-item"
+          >
+            <div class="boundary-copy">
+              <strong>{{ boundary.label || boundary.source_text }}</strong>
+              <p>{{ boundary.reason }}</p>
+            </div>
+            <el-radio-group
+              :model-value="boundaryValue(boundary)"
+              @update:model-value="updateSelection(boundary, $event)"
+            >
+              <el-radio-button
+                v-for="option in boundary.options || []"
+                :key="option.option_id"
+                :label="option.option_id"
+              >
+                {{ option.label }}
+              </el-radio-button>
+            </el-radio-group>
+          </article>
+        </template>
+        <p v-else class="preflight-empty">没有需要确认的边界。</p>
       </section>
 
       <section class="preflight-section">
-        <h3>需要补充</h3>
+        <h3>不会参与筛选</h3>
+        <ul v-if="notExecutable.length" class="preflight-list blocked-list">
+          <li
+            v-for="preference in notExecutable"
+            :key="preference.preference_id || preference.source_text"
+          >
+            <span>{{ preference.source_text || preference.label }}</span>
+            <strong>{{ preference.reason }}</strong>
+          </li>
+        </ul>
+        <p v-else class="preflight-empty">没有被排除的偏好。</p>
+      </section>
+
+      <section class="preflight-section">
+        <h3>还缺少信息</h3>
         <ul v-if="missingRequirements.length" class="preflight-list warning-list">
           <li
             v-for="requirement in missingRequirements"
@@ -99,46 +142,6 @@ function displayValue(value) {
         <p v-else class="preflight-empty">没有阻断查询的缺失信息。</p>
       </section>
     </div>
-
-    <section v-if="boundaries.length" class="preflight-section boundary-section">
-      <h3>需要你确认的边界</h3>
-      <article
-        v-for="boundary in boundaries"
-        :key="boundary.confirmation_id"
-        class="boundary-item"
-      >
-        <div class="boundary-copy">
-          <strong>{{ boundary.label || boundary.source_text }}</strong>
-          <p>{{ boundary.reason }}</p>
-        </div>
-        <el-radio-group
-          :model-value="boundaryValue(boundary)"
-          @update:model-value="updateSelection(boundary, $event)"
-        >
-          <el-radio-button
-            v-for="option in boundary.options || []"
-            :key="option.option_id"
-            :label="option.option_id"
-          >
-            {{ option.label }}
-          </el-radio-button>
-        </el-radio-group>
-      </article>
-    </section>
-
-    <section class="preflight-section">
-      <h3>不会执行的偏好</h3>
-      <ul v-if="notExecutable.length" class="preflight-list blocked-list">
-        <li
-          v-for="preference in notExecutable"
-          :key="preference.preference_id || preference.source_text"
-        >
-          <span>{{ preference.source_text || preference.label }}</span>
-          <strong>{{ preference.reason }}</strong>
-        </li>
-      </ul>
-      <p v-else class="preflight-empty">没有被证据门禁排除的偏好。</p>
-    </section>
   </section>
 </template>
 
