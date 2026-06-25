@@ -624,17 +624,29 @@ function stageLabel(value) {
 
       <section class="dataset-panel">
         <h3>审查与批准</h3>
-        <div class="compact-controls">
-          <el-input v-model="fieldId" placeholder="字段名" />
-          <el-input v-model="opFieldId" placeholder="条件字段" />
-          <el-select v-model="opName" placeholder="选择条件">
-            <el-option
-              v-for="option in OP_OPTIONS"
-              :key="option.value"
-              :label="option.label"
-              :value="option.value"
-            />
-          </el-select>
+        <div class="compact-controls review-controls">
+          <label class="review-control">
+            <span class="review-control-label">字段审查对象</span>
+            <el-input v-model="fieldId" placeholder="例如 city / tuition" />
+          </label>
+          <label class="review-control">
+            <span class="review-control-label">条件授权字段</span>
+            <el-input v-model="opFieldId" placeholder="例如 city" />
+          </label>
+          <label class="review-control">
+            <span class="review-control-label">允许的条件</span>
+            <el-select v-model="opName" placeholder="选择条件">
+              <el-option
+                v-for="option in OP_OPTIONS"
+                :key="option.value"
+                :label="option.label"
+                :value="option.value"
+              />
+            </el-select>
+          </label>
+          <p class="review-helper">
+            “批准字段”和“阻断字段”使用左侧字段；“批准条件”使用中间字段和右侧条件。
+          </p>
         </div>
         <div class="button-row">
           <el-button :disabled="!datasetId" :loading="loading" @click="approveField">

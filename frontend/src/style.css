@@ -662,6 +662,39 @@ input {
   flex: 1 1 100%;
 }
 
+.review-controls {
+  align-items: flex-end;
+}
+
+.review-control {
+  min-width: 0;
+  flex: 1 1 170px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.review-control-label {
+  color: #526a75;
+  font-size: 12px;
+  font-weight: 650;
+  line-height: 1.35;
+}
+
+.review-control .el-input,
+.review-control .el-select {
+  width: 100%;
+  flex: none;
+}
+
+.review-helper {
+  flex: 1 1 100%;
+  margin: 0;
+  color: #6f828b;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
 .wide-button {
   width: 100%;
   margin-top: 12px;
