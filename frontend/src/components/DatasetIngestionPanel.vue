@@ -122,7 +122,7 @@ const datasetSteps = computed(() => {
     {
       key: 'draft',
       title: '生成草稿',
-      description: hasDatasetId ? '生成 domain pack 和 schema profile' : '上传后可生成',
+      description: hasDatasetId ? '生成可审查字段草稿' : '上传后可生成',
       status: hasProfileDraft ? 'success' : hasDatasetId ? 'process' : 'wait',
     },
     {
@@ -133,8 +133,8 @@ const datasetSteps = computed(() => {
     },
     {
       key: 'approve',
-      title: '批准领域',
-      description: domainPackStatus || '审查后批准',
+      title: '确认可查询',
+      description: isDomainApproved ? '已确认字段模板' : '审查后确认',
       status: isDomainApproved ? 'success' : hasReviewSummary ? 'process' : 'wait',
     },
     {
@@ -157,8 +157,11 @@ const activeDatasetStep = computed(() => {
 });
 
 const STATUS_LABELS = {
+  uploaded: '已上传',
   ok: '已完成',
   queryable: '可查询',
+  needs_review: '待审查',
+  warehouse_ready: '已建仓',
   needs_confirmation: '待确认',
   no_results: '无结果',
   blocked: '已阻断',
@@ -585,11 +588,26 @@ function stageLabel(value) {
           :status="step.status"
         />
       </el-steps>
+      <ol class="dataset-step-list">
+        <li
+          v-for="(step, index) in datasetSteps"
+          :key="step.key"
+          class="dataset-step-list-item"
+          :class="`is-${step.status}`"
+        >
+          <span class="dataset-step-number">{{ index + 1 }}</span>
+          <span class="dataset-step-copy">
+            <strong>{{ step.title }}</strong>
+            <small>{{ step.description }}</small>
+          </span>
+        </li>
+      </ol>
     </div>
 
     <div class="dataset-flow-grid">
       <section class="dataset-panel">
-        <h3>上传与生成</h3>
+        <h3>上传表格</h3>
+        <p class="panel-copy">选择招生 CSV / Excel 后，先生成可审查字段草稿。</p>
         <el-upload
           drag
           :auto-upload="false"
@@ -604,7 +622,10 @@ function stageLabel(value) {
         </el-upload>
 
         <div class="compact-controls">
-          <el-input v-model="domainName" placeholder="数据类型" />
+          <label class="review-control">
+            <span class="review-control-label">数据类型</span>
+            <el-input v-model="domainName" placeholder="admissions" />
+          </label>
           <el-alert
             class="template-hint"
             type="info"
@@ -624,51 +645,71 @@ function stageLabel(value) {
 
       <section class="dataset-panel">
         <h3>审查与批准</h3>
-        <div class="compact-controls review-controls">
-          <label class="review-control">
-            <span class="review-control-label">字段审查对象</span>
-            <el-input v-model="fieldId" placeholder="例如 city / tuition" />
-          </label>
-          <label class="review-control">
-            <span class="review-control-label">条件授权字段</span>
-            <el-input v-model="opFieldId" placeholder="例如 city" />
-          </label>
-          <label class="review-control">
-            <span class="review-control-label">允许的条件</span>
-            <el-select v-model="opName" placeholder="选择条件">
-              <el-option
-                v-for="option in OP_OPTIONS"
-                :key="option.value"
-                :label="option.label"
-                :value="option.value"
-              />
-            </el-select>
-          </label>
-          <p class="review-helper">
-            “批准字段”和“阻断字段”使用左侧字段；“批准条件”使用中间字段和右侧条件。
-          </p>
-        </div>
-        <div class="button-row">
-          <el-button :disabled="!datasetId" :loading="loading" @click="approveField">
-            批准字段
+        <p class="panel-copy">
+          普通 admissions 上传表先采用已审核字段模板；只有字段映射不对时再打开高级操作。
+        </p>
+        <div class="button-row primary-review-actions">
+          <el-button
+            :icon="Check"
+            type="success"
+            :disabled="!reviewSummary"
+            :loading="loading"
+            @click="approveDomain"
+          >
+            采用字段模板
           </el-button>
-          <el-button :disabled="!datasetId" :loading="loading" @click="approveOp">
-            批准条件
-          </el-button>
-          <el-button :icon="Warning" :disabled="!datasetId" :loading="loading" @click="blockField">
-            阻断字段
-          </el-button>
-          <el-button :icon="Check" type="success" :disabled="!datasetId" :loading="loading" @click="approveDomain">
-            批准领域
+          <el-button
+            :disabled="dataset?.domain_pack_status !== 'approved'"
+            :loading="loading"
+            @click="buildWarehouse"
+          >
+            生成可查询数据
           </el-button>
         </div>
-        <el-button class="wide-button" :disabled="!datasetId" :loading="loading" @click="buildWarehouse">
-          生成可查询数据
-        </el-button>
+        <el-collapse class="advanced-review-collapse">
+          <el-collapse-item title="高级字段操作（字段映射不对时使用）" name="advanced-review">
+            <div class="compact-controls review-controls">
+              <label class="review-control">
+                <span class="review-control-label">字段审查对象</span>
+                <el-input v-model="fieldId" placeholder="例如 city / tuition" />
+              </label>
+              <label class="review-control">
+                <span class="review-control-label">条件授权字段</span>
+                <el-input v-model="opFieldId" placeholder="例如 city" />
+              </label>
+              <label class="review-control">
+                <span class="review-control-label">允许的条件</span>
+                <el-select v-model="opName" placeholder="选择条件">
+                  <el-option
+                    v-for="option in OP_OPTIONS"
+                    :key="option.value"
+                    :label="option.label"
+                    :value="option.value"
+                  />
+                </el-select>
+              </label>
+              <p class="review-helper">
+                “批准字段”和“阻断字段”使用左侧字段；“批准条件”使用中间字段和右侧条件。
+              </p>
+            </div>
+            <div class="button-row">
+              <el-button :disabled="!datasetId" :loading="loading" @click="approveField">
+                批准字段
+              </el-button>
+              <el-button :disabled="!datasetId" :loading="loading" @click="approveOp">
+                批准条件
+              </el-button>
+              <el-button :icon="Warning" :disabled="!datasetId" :loading="loading" @click="blockField">
+                阻断字段
+              </el-button>
+            </div>
+          </el-collapse-item>
+        </el-collapse>
       </section>
 
       <section class="dataset-panel query-panel">
-        <h3>上传数据集查询</h3>
+        <h3>试查上传数据</h3>
+        <p class="panel-copy">建成可查询数据后，用一句话检查结果是否符合预期。</p>
         <el-input
           v-model="queryText"
           type="textarea"
@@ -679,7 +720,7 @@ function stageLabel(value) {
           class="wide-button"
           type="primary"
           :icon="Search"
-          :disabled="!datasetId"
+          :disabled="dataset?.status !== 'queryable'"
           :loading="loading"
           @click="runUploadedQuery()"
         >

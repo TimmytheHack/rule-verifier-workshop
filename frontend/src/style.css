@@ -608,6 +608,69 @@ input {
   line-height: 1.45;
 }
 
+.dataset-step-list {
+  display: none;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.dataset-step-list-item {
+  display: grid;
+  grid-template-columns: 28px minmax(0, 1fr);
+  gap: 10px;
+  align-items: flex-start;
+  padding: 9px 0;
+  border-bottom: 1px solid #e2eaee;
+}
+
+.dataset-step-list-item:last-child {
+  border-bottom: 0;
+}
+
+.dataset-step-number {
+  display: inline-flex;
+  width: 24px;
+  height: 24px;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #a8b5bd;
+  border-radius: 999px;
+  color: #607680;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.dataset-step-list-item.is-success .dataset-step-number {
+  border-color: #68a66e;
+  background: #eaf6e8;
+  color: #236b37;
+}
+
+.dataset-step-list-item.is-process .dataset-step-number {
+  border-color: #477ed8;
+  background: #eaf2ff;
+  color: #245fae;
+}
+
+.dataset-step-copy {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.dataset-step-copy strong {
+  color: #1e333d;
+  font-size: 13px;
+}
+
+.dataset-step-copy small {
+  color: #607680;
+  font-size: 12px;
+  line-height: 1.4;
+}
+
 .dataset-debug-collapse {
   margin-top: 16px;
 }
@@ -641,6 +704,14 @@ input {
   font-size: 15px;
 }
 
+.panel-copy {
+  max-width: 62ch;
+  margin: -4px 0 0;
+  color: #586f79;
+  font-size: 13px;
+  line-height: 1.55;
+}
+
 .query-panel {
   background: #fffdf8;
   border-color: #ead59b;
@@ -664,6 +735,13 @@ input {
 
 .review-controls {
   align-items: flex-end;
+}
+
+.primary-review-actions {
+  padding: 10px;
+  border: 1px solid #dce8df;
+  border-radius: 8px;
+  background: #f7fbf8;
 }
 
 .review-control {
@@ -693,6 +771,24 @@ input {
   color: #6f828b;
   font-size: 12px;
   line-height: 1.5;
+}
+
+.advanced-review-collapse {
+  margin-top: 12px;
+  border-top: 1px solid #e2eaee;
+  border-bottom: 1px solid #e2eaee;
+}
+
+.advanced-review-collapse .el-collapse-item__header {
+  height: auto;
+  min-height: 42px;
+  color: #425761;
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+.advanced-review-collapse .el-collapse-item__content {
+  padding-bottom: 12px;
 }
 
 .wide-button {
@@ -1693,6 +1789,18 @@ input {
 
   .custom-window-row {
     grid-template-columns: 1fr;
+  }
+
+  .dataset-steps {
+    overflow-x: visible;
+  }
+
+  .dataset-steps .el-steps {
+    display: none;
+  }
+
+  .dataset-step-list {
+    display: block;
   }
 
   .workbench-run-bar .run-bar-source-row {
