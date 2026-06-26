@@ -1,5 +1,5 @@
 <script setup>
-import { computed } from 'vue';
+import { computed, nextTick } from 'vue';
 
 const props = defineProps({
   mode: {
@@ -51,6 +51,10 @@ const emit = defineEmits([
 const availableExtractorOptions = computed(() => props.extractorOptions);
 const availableGeneratorOptions = computed(() => props.generatorOptions);
 const availableModelOptions = computed(() => props.modelOptions);
+const modeOptions = [
+  { value: 'demo', label: '演示' },
+  { value: 'api', label: '后端' },
+];
 
 const usesDeepSeek = computed(
   () =>
@@ -74,6 +78,42 @@ function updateMode(value) {
     }
   }
 }
+
+function handleModeKeydown(event) {
+  const currentValue = event.currentTarget?.dataset?.modeValue;
+  const currentIndex = modeOptions.findIndex((option) => option.value === currentValue);
+  if (currentIndex === -1) return;
+
+  const nextIndexByKey = {
+    ArrowRight: (currentIndex + 1) % modeOptions.length,
+    ArrowDown: (currentIndex + 1) % modeOptions.length,
+    ArrowLeft: (currentIndex - 1 + modeOptions.length) % modeOptions.length,
+    ArrowUp: (currentIndex - 1 + modeOptions.length) % modeOptions.length,
+    Home: 0,
+    End: modeOptions.length - 1,
+  };
+
+  if (event.key === 'Enter' || event.key === ' ') {
+    event.preventDefault();
+    updateMode(currentValue);
+    return;
+  }
+  if (!(event.key in nextIndexByKey)) return;
+
+  event.preventDefault();
+  const nextValue = modeOptions[nextIndexByKey[event.key]].value;
+  updateMode(nextValue);
+  focusModeButton(event.currentTarget, nextValue);
+}
+
+function focusModeButton(currentTarget, value) {
+  nextTick(() => {
+    currentTarget
+      ?.closest('[role="radiogroup"]')
+      ?.querySelector(`[data-mode-value="${value}"]`)
+      ?.focus();
+  });
+}
 </script>
 
 <template>
@@ -92,14 +132,22 @@ function updateMode(value) {
     <div class="mode-grid">
       <div class="control-block wide-control">
         <span class="control-label">模式</span>
-        <el-segmented
-          :model-value="mode"
-          :options="[
-            { value: 'demo', label: '演示' },
-            { value: 'api', label: '后端' },
-          ]"
-          @update:model-value="updateMode"
-        />
+        <div class="mode-segmented-control" role="radiogroup" aria-label="模式">
+          <button
+            v-for="option in modeOptions"
+            :key="option.value"
+            type="button"
+            :class="['mode-segment', { 'is-active': mode === option.value }]"
+            role="radio"
+            :aria-checked="mode === option.value"
+            :tabindex="mode === option.value ? 0 : -1"
+            :data-mode-value="option.value"
+            @click="updateMode(option.value)"
+            @keydown="handleModeKeydown"
+          >
+            {{ option.label }}
+          </button>
+        </div>
       </div>
 
       <div class="control-block">
@@ -154,3 +202,44 @@ function updateMode(value) {
 
   </el-card>
 </template>
+
+<style scoped>
+.mode-segmented-control {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 2px;
+  width: 100%;
+  min-height: 32px;
+  padding: 2px;
+  border: 1px solid #d5dde4;
+  border-radius: 6px;
+  background: #f3f6f8;
+}
+
+.mode-segment {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 0;
+  min-height: 28px;
+  padding: 4px 10px;
+  border: 0;
+  border-radius: 4px;
+  background: transparent;
+  color: #41525d;
+  line-height: 1.3;
+  cursor: pointer;
+}
+
+.mode-segment.is-active {
+  background: #ffffff;
+  color: #1f3440;
+  font-weight: 700;
+  box-shadow: 0 1px 3px rgb(31 52 64 / 14%);
+}
+
+.mode-segment:focus-visible {
+  outline: 2px solid #2f8065;
+  outline-offset: 2px;
+}
+</style>

@@ -272,13 +272,15 @@ Authorization: Bearer <operator-token>
 - 页面右侧显示 `Workbench 运行失败`；
 - `warnings` 或完整证据文本里出现 `workbench_error`；
 - 结果数为 0，SQL 为空。
+- 页面会提示可以稍后重试，但不会展示 traceback。
 
 处理：
 
 1. 展开“完整证据文本”，先看 warning message。
 2. 如果提示 `不支持的规则提取方式`，说明前端选项值和后端版本不一致；刷新前端并重启 `make serve`。
 3. 本地旧页面可能仍发送历史值 `deepseek_slots`；当前后端会兼容为 `deepseek`，但仍建议刷新页面。
-4. 如果 message 不是选项值问题，再查看后端终端日志；前端不会显示 traceback。
+4. 如果偶发失败后重试成功，优先保留后端终端日志用于排查 LLM 或数据服务瞬时错误。
+5. 如果 message 不是选项值问题且连续失败，再查看后端终端日志；前端不会显示 traceback。
 
 ## readiness 失败
 

@@ -89,6 +89,7 @@ const emit = defineEmits([
 const modeTag = computed(() => formatModeTag(props.mode));
 const optionsSourceTag = computed(() => formatOptionsSourceTag(props.optionsSource));
 const runStatusTag = computed(() => props.runStatus);
+const modePopoverWidth = computed(() => 'min(420px, calc(100vw - 24px))');
 </script>
 
 <template>
@@ -124,7 +125,7 @@ const runStatusTag = computed(() => props.runStatus);
     </div>
 
     <div class="run-bar-actions">
-      <el-popover placement="bottom-end" :width="420" trigger="click">
+      <el-popover placement="bottom-end" :width="modePopoverWidth" trigger="click">
         <template #reference>
           <el-button :icon="Setting">运行选项</el-button>
         </template>

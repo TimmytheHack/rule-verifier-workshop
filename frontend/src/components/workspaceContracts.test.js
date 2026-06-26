@@ -109,6 +109,30 @@ test('QueryWorkspace keeps beginner decision summary visible outside evidence co
   assert.doesNotMatch(collapse, /<BeginnerDecisionPanel/);
 });
 
+test('WorkbenchModePanel exposes mode choices as visible accessible radios', () => {
+  const source = readSource('./WorkbenchModePanel.vue');
+
+  assert.doesNotMatch(source, /<el-segmented/);
+  assertIncludesAll(source, [
+    'const modeOptions =',
+    'role="radiogroup"',
+    'role="radio"',
+    ':aria-checked="mode === option.value"',
+    '@click="updateMode(option.value)"',
+    '@keydown="handleModeKeydown"',
+  ]);
+});
+
+test('WorkbenchRunBar bounds the run options popover on mobile viewports', () => {
+  const source = readSource('./WorkbenchRunBar.vue');
+
+  assertIncludesAll(source, [
+    "const modePopoverWidth = computed(() => 'min(420px, calc(100vw - 24px))');",
+    ':width="modePopoverWidth"',
+  ]);
+  assert.doesNotMatch(source, /:width="420"/);
+});
+
 test('C-lite query layout bounds desktop overflow and restores mobile page flow', () => {
   const source = readSource('../style.css');
   const cLiteQuery = cssRule(source, '.c-lite-query');

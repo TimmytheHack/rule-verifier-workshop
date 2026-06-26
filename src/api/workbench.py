@@ -2937,8 +2937,8 @@ def _error_payload(config: WorkbenchConfig, exc: Exception) -> dict[str, Any]:
         "evidence_pack": {},
         "natural_language_report": {
             "title": "Workbench 运行失败",
-            "summary": "运行过程中出现非预期错误。",
-            "full_text": "Workbench 运行失败，未返回推荐结果。",
+            "summary": "运行过程中出现非预期错误，当前没有执行筛选；可以稍后重试。",
+            "full_text": "Workbench 运行失败，未返回推荐结果。可以稍后重试；如果连续失败，请查看后端日志。",
             "result_count_text": "当前未执行筛选，结果数为 0。",
             "executed_rules": [],
             "attribute_explanations": [],
@@ -2989,7 +2989,7 @@ def _public_error_message(config: WorkbenchConfig, exc: Exception) -> str:
         return "Workbench 输入包含不允许的 SQL payload，已拒绝执行。"
     if isinstance(exc, ValueError):
         return _sanitize_user_text(raw_message)
-    return "Workbench 运行失败，前端不应展示内部异常细节。"
+    return "Workbench 运行失败，未展示内部异常细节；可以稍后重试，连续失败时请查看后端日志。"
 
 
 def _load_dataset(domain_config: DomainConfig) -> ExcelDataSet:

@@ -345,6 +345,7 @@ class WorkbenchApiContractTest(unittest.TestCase):
         self.assertEqual(result["debug_trace"]["execution"]["sql"], "")
         self.assertNotIn("Traceback", result["answer"])
         self.assertNotIn("Traceback", str(result["warnings"]))
+        self.assertIn("可以稍后重试", result["answer"])
         self.assertIn("workbench_error", [w["code"] for w in result["warnings"]])
 
     def test_housing_returns_generic_items_and_domain_top_results(self) -> None:

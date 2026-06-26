@@ -2,6 +2,8 @@
 import { computed, reactive, ref, watch } from 'vue';
 import { MagicStick, Search } from '@element-plus/icons-vue';
 
+import { mergePromptText } from '../utils/workbenchUiState';
+
 const props = defineProps({
   defaultHardFilters: {
     type: Object,
@@ -184,9 +186,13 @@ function formDraftPayload() {
 
 function applyExample(example) {
   Object.assign(hard, example.hard || {});
-  Object.assign(soft, example.soft || {});
-  if (example.soft?.rank_window_preset) {
-    applyRankWindowPreset(example.soft.rank_window_preset);
+  const { prompt, rank_window_preset: rankWindowPreset, ...softPatch } = example.soft || {};
+  Object.assign(soft, softPatch);
+  if (prompt) {
+    soft.prompt = mergePromptText(soft.prompt, prompt);
+  }
+  if (rankWindowPreset) {
+    applyRankWindowPreset(rankWindowPreset);
   }
 }
 

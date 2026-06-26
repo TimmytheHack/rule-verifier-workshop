@@ -41,6 +41,7 @@ import {
   normalizeWorkbenchOptions,
 } from './utils/workbenchOptions';
 import { normalizeRunBarStatus } from './utils/workbenchRunBar';
+import { primaryWorkbenchRunLabel } from './utils/workbenchUiState';
 import {
   canRerunConfirmedRequest,
   defaultWorkbenchMode,
@@ -168,16 +169,13 @@ const displayedRunBarStatus = computed(() => {
   return runBarStatus.value;
 });
 const primaryRunLabel = computed(() => {
-  if (loading.value) {
-    return currentPreflightCanQuery.value ? '正在查询' : '正在预检';
-  }
-  if (!shouldUsePreflight.value) {
-    return mode.value === 'api' ? '开始查询' : '演示结果';
-  }
-  if (currentPreflightCanQuery.value) {
-    return '确认后查询';
-  }
-  return currentPreflightReady.value ? '重新预检' : '先做预检';
+  return primaryWorkbenchRunLabel({
+    loading: loading.value,
+    shouldUsePreflight: shouldUsePreflight.value,
+    currentPreflightCanQuery: currentPreflightCanQuery.value,
+    currentPreflightReady: currentPreflightReady.value,
+    mode: mode.value,
+  });
 });
 
 watch(uploadedDataSources, (value) => persistUploadedDataSources(undefined, value), { deep: true });
