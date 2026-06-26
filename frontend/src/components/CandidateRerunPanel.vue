@@ -29,9 +29,17 @@ const selectedCandidateIds = ref([]);
 const candidateState = computed(() => splitCandidateConfirmationState(props.runData));
 const selectableCandidates = computed(() => candidateState.value.confirmable);
 const blockedCandidates = computed(() => candidateState.value.blocked);
+const hasSelectableCandidates = computed(() => selectableCandidates.value.length > 0);
 const hasCandidates = computed(() => (
-  selectableCandidates.value.length > 0 || blockedCandidates.value.length > 0
+  hasSelectableCandidates.value || blockedCandidates.value.length > 0
 ));
+const panelTitle = computed(() => (hasSelectableCandidates.value ? '可确认条件' : '仅提示'));
+const panelCopy = computed(() => {
+  if (!hasSelectableCandidates.value) {
+    return '这些条件没有系统生成的 candidate_id，不会被前端提交确认。';
+  }
+  return props.canConfirm ? '只提交后端生成的 candidate_id。' : props.disabledReason;
+});
 const selectableCandidateIds = computed(() => new Set(
   selectableCandidates.value.map((candidate) => candidate.confirmationId),
 ));
@@ -91,13 +99,13 @@ function candidateSummary(candidate) {
     <template #header>
       <div class="card-header">
         <div>
-          <h2>可确认条件</h2>
+          <h2>{{ panelTitle }}</h2>
           <p class="candidate-rerun-copy">
-            {{ canConfirm ? '只提交后端生成的 candidate_id。' : disabledReason }}
+            {{ panelCopy }}
           </p>
         </div>
         <el-button
-          v-if="selectableCandidates.length"
+          v-if="hasSelectableCandidates"
           :icon="Refresh"
           type="warning"
           :disabled="!canConfirm || !selectedConfirmableIds.length"

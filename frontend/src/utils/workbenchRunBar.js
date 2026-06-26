@@ -1,3 +1,5 @@
+import { candidateConfirmationSummary } from './workbenchState.js';
+
 export function formatModeTag(mode) {
   return mode === 'api'
     ? { type: 'warning', label: '后端查询' }
@@ -37,8 +39,18 @@ export function normalizeRunBarStatus({ loading = false, lastRunFailed = false, 
     return { type: 'info', label: '待查询' };
   }
 
+  if (runData.status === 'needs_confirmation') {
+    const summary = candidateConfirmationSummary(runData);
+    if (summary.hasConfirmable) {
+      return { type: 'warning', label: '待确认' };
+    }
+    if (summary.hasWarningOnly) {
+      return { type: 'info', label: '有提示' };
+    }
+    return { type: 'success', label: '已完成' };
+  }
+
   const statusLabels = {
-    needs_confirmation: { type: 'warning', label: '待确认' },
     blocked: { type: 'danger', label: '已阻断' },
     no_results: { type: 'info', label: '无结果' },
     ok: { type: 'success', label: '已完成' },

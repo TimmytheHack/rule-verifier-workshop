@@ -1393,8 +1393,16 @@ input {
   background: #fbfdff;
 }
 
-.usage-block h3 {
-  margin: 0 0 10px;
+.usage-block-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.usage-block-header h3 {
+  margin: 0;
   color: #1e333d;
   font-size: 17px;
   letter-spacing: 0;

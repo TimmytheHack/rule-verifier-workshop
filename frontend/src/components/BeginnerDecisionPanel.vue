@@ -5,6 +5,10 @@ import {
   CircleCloseFilled,
   WarningFilled,
 } from '@element-plus/icons-vue';
+import {
+  splitCandidateConfirmationState,
+  uniqueUnusedPreferences,
+} from '../utils/workbenchState';
 
 const props = defineProps({
   runData: {
@@ -18,16 +22,16 @@ const usedRules = computed(() => listOrEmpty(
     ? props.runData.executed_filters
     : props.runData.executable_rules,
 ));
-const confirmItems = computed(() => listOrEmpty(
-  props.runData.candidates_to_confirm?.length
-    ? props.runData.candidates_to_confirm
-    : props.runData.candidate_rules,
-));
-const unusedItems = computed(() => [
-  ...listOrEmpty(props.runData.unexecuted_preferences),
-  ...listOrEmpty(props.runData.not_executed_preferences),
-  ...listOrEmpty(props.runData.no_schema_field_preferences),
-]);
+const candidateState = computed(() => splitCandidateConfirmationState(props.runData));
+const confirmItems = computed(() => candidateState.value.confirmable);
+const warningOnlyItems = computed(() => candidateState.value.blocked);
+const unusedItems = computed(() => uniqueUnusedPreferences({
+  ...(props.runData || {}),
+  no_schema_field_preferences: [
+    ...listOrEmpty(props.runData?.no_schema_field_preferences),
+    ...warningOnlyItems.value,
+  ],
+}));
 const informationRequests = computed(() => listOrEmpty(
   props.runData.evidence_pack?.decision_guidance?.information_requests,
 ));
@@ -159,7 +163,7 @@ function itemReason(item, fallback) {
           <p>{{ itemReason(item, '当前数据表没有可验证字段。') }}</p>
         </article>
         <p
-          v-if="!listOrEmpty(runData.not_executed_preferences).length"
+          v-if="!unusedItems.length"
           class="beginner-empty"
         >
           暂无未使用偏好

@@ -1,6 +1,11 @@
 <script setup>
 import { computed } from 'vue';
 
+import {
+  tokenUsageSectionState,
+  tokenUsageSummaryState,
+} from '../utils/workbenchState';
+
 const props = defineProps({
   tokenUsage: {
     type: Object,
@@ -25,13 +30,22 @@ const usageLabels = {
   reasoning_tokens: '推理用量',
 };
 
-const hasUsage = computed(() => {
-  if (!props.tokenUsage) return false;
-  return ['extractor', 'generator', 'total'].some((key) => {
-    const usage = props.tokenUsage[key];
-    return usage && Object.values(usage).some((value) => Number(value) > 0);
-  });
-});
+const usageSections = [
+  { key: 'extractor', label: '抽取调用' },
+  { key: 'generator', label: '回答生成调用' },
+  { key: 'total', label: '合计' },
+];
+
+const usageSectionStates = computed(() => usageSections.map((section) => ({
+  ...section,
+  usage: props.tokenUsage?.[section.key],
+  state: tokenUsageSectionState(props.tokenUsage, section.key),
+})));
+
+const hasUsage = computed(() => usageSectionStates.value.some((section) => (
+  section.state.status === 'has_usage'
+)));
+const usageSummary = computed(() => tokenUsageSummaryState(props.tokenUsage));
 
 function usageRows(usage) {
   if (!usage) return [];
@@ -40,6 +54,18 @@ function usageRows(usage) {
     label,
     value: Number(usage[key] || 0),
   }));
+}
+
+function sectionTagType(status) {
+  if (status === 'has_usage') return 'success';
+  if (status === 'zero_usage') return 'info';
+  return 'warning';
+}
+
+function sectionMessage(status) {
+  return status === 'zero_usage'
+    ? '本段未发生模型调用。'
+    : '本段没有返回 token usage。';
 }
 </script>
 
@@ -50,8 +76,8 @@ function usageRows(usage) {
         <div>
           <h2>模型用量</h2>
         </div>
-        <el-tag :type="hasUsage ? 'success' : 'info'" effect="plain">
-          {{ hasUsage ? '已返回用量' : '本次未调用模型' }}
+        <el-tag :type="usageSummary.type" effect="plain">
+          {{ usageSummary.label }}
         </el-tag>
       </div>
     </template>
@@ -69,26 +95,28 @@ function usageRows(usage) {
       type="info"
       :closable="false"
       show-icon
-      title="只有启用模型辅助时，后端才会返回用量。"
+      title="各阶段用量状态如下；未返回用量不代表前端执行了额外逻辑。"
     />
 
-    <div v-else class="usage-grid">
+    <div class="usage-grid">
       <section
-        v-for="section in [
-          ['extractor', '抽取调用'],
-          ['generator', '回答生成调用'],
-          ['total', '合计'],
-        ]"
-        :key="section[0]"
+        v-for="section in usageSectionStates"
+        :key="section.key"
         class="usage-block"
       >
-        <h3>{{ section[1] }}</h3>
-        <dl>
-          <div v-for="row in usageRows(tokenUsage[section[0]])" :key="row.key">
+        <div class="usage-block-header">
+          <h3>{{ section.label }}</h3>
+          <el-tag :type="sectionTagType(section.state.status)" size="small" effect="plain">
+            {{ section.state.label }}
+          </el-tag>
+        </div>
+        <dl v-if="section.state.status === 'has_usage'">
+          <div v-for="row in usageRows(section.usage)" :key="row.key">
             <dt>{{ row.label }}</dt>
             <dd>{{ row.value }}</dd>
           </div>
         </dl>
+        <p v-else class="beginner-empty">{{ sectionMessage(section.state.status) }}</p>
       </section>
     </div>
   </el-card>

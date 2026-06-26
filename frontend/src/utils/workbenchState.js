@@ -157,7 +157,7 @@ export function splitCandidateConfirmationState(runData) {
       ...candidate,
       confirmationId,
     };
-    if (confirmationId) {
+    if (isConfirmableCandidate(candidate, confirmationId)) {
       result.confirmable.push(candidateWithState);
     } else {
       result.blocked.push(candidateWithState);
@@ -168,4 +168,174 @@ export function splitCandidateConfirmationState(runData) {
 
 export function confirmableCandidates(runData) {
   return splitCandidateConfirmationState(runData).confirmable;
+}
+
+export function candidateConfirmationSummary(runData) {
+  const candidateState = splitCandidateConfirmationState(runData);
+  const confirmableCount = candidateState.confirmable.length;
+  const warningOnlyCount = candidateState.blocked.length;
+  return {
+    confirmableCount,
+    warningOnlyCount,
+    hasConfirmable: confirmableCount > 0,
+    hasWarningOnly: warningOnlyCount > 0,
+  };
+}
+
+export function uniqueUnusedPreferences(runData) {
+  const seenIds = new Set();
+  const seenStructuredKeys = new Set();
+  const seenStructuredFallbackKeys = new Set();
+  const seenUnstructuredKeys = new Set();
+  const uniqueItems = [];
+  const items = [
+    ...listOrEmpty(runData?.unexecuted_preferences),
+    ...listOrEmpty(runData?.not_executed_preferences),
+    ...listOrEmpty(runData?.no_schema_field_preferences),
+  ];
+
+  for (const item of items) {
+    const identity = unusedPreferenceIdentity(item);
+    if (
+      (identity.idKey && seenIds.has(identity.idKey))
+      || (
+        identity.structured
+        && identity.structuredKey
+        && seenStructuredKeys.has(identity.structuredKey)
+      )
+      || (
+        identity.structured
+        && identity.fallbackKeys.some((key) => seenUnstructuredKeys.has(key))
+      )
+      || (
+        !identity.structured
+        && identity.fallbackKeys.some((key) => (
+          seenUnstructuredKeys.has(key) || seenStructuredFallbackKeys.has(key)
+        ))
+      )
+    ) {
+      continue;
+    }
+    uniqueItems.push(item);
+    if (identity.idKey) {
+      seenIds.add(identity.idKey);
+    }
+    if (identity.structured) {
+      if (identity.structuredKey) {
+        seenStructuredKeys.add(identity.structuredKey);
+      }
+      identity.fallbackKeys.forEach((key) => seenStructuredFallbackKeys.add(key));
+    } else {
+      identity.fallbackKeys.forEach((key) => seenUnstructuredKeys.add(key));
+    }
+  }
+
+  return uniqueItems;
+}
+
+export function tokenUsageSectionState(tokenUsage, key) {
+  const usage = tokenUsage?.[key];
+  if (!usage) return { status: 'not_returned', label: '未返回用量' };
+  const hasPositiveValue = Object.values(usage).some((value) => Number(value) > 0);
+  return hasPositiveValue
+    ? { status: 'has_usage', label: '已返回用量' }
+    : { status: 'zero_usage', label: '未发生调用' };
+}
+
+export function tokenUsageSummaryState(tokenUsage) {
+  const sectionStates = ['extractor', 'generator', 'total'].map((key) => (
+    tokenUsageSectionState(tokenUsage, key)
+  ));
+  if (sectionStates.some((state) => state.status === 'has_usage')) {
+    return { type: 'success', label: '已返回用量' };
+  }
+  if (sectionStates.some((state) => state.status === 'zero_usage')) {
+    return { type: 'info', label: '未发生调用' };
+  }
+  return { type: 'warning', label: '未返回用量' };
+}
+
+function listOrEmpty(items) {
+  return Array.isArray(items) ? items : [];
+}
+
+function isConfirmableCandidate(candidate, confirmationId) {
+  return Boolean(
+    confirmationId
+    && candidate?.executable !== false
+    && !isNoSchemaCandidate(candidate)
+  );
+}
+
+function isNoSchemaCandidate(candidate) {
+  return candidate?.match_type === 'no_schema_field'
+    || candidate?.status === 'not_executable_missing_schema';
+}
+
+function unusedPreferenceIdentity(item) {
+  if (!item || typeof item !== 'object') {
+    const value = normalizeSemanticValue(item);
+    return {
+      idKey: '',
+      structured: false,
+      structuredKey: '',
+      fallbackKeys: value ? [`value:${value}`] : [],
+    };
+  }
+
+  const id = normalizeSemanticValue(item.id);
+  const text = preferenceDisplayText(item);
+  const fieldId = normalizeSemanticValue(item.field_id || item.field);
+  const reason = normalizeSemanticValue(item.reason || item.message);
+  const matchType = normalizeSemanticValue(item.match_type);
+  const fallbackValue = normalizeSemanticValue(item.value || item.normalized_value);
+  const fallbackKeys = [];
+
+  if (text && reason) {
+    fallbackKeys.push(`reason_text:${reason}:${text}`);
+  } else if (text) {
+    fallbackKeys.push(`text:${text}`);
+  }
+  if (!fallbackKeys.length && fallbackValue) {
+    fallbackKeys.push(`value:${fallbackValue}`);
+  }
+
+  let structuredKey = '';
+  if (fieldId && text) {
+    structuredKey = [
+      'field_text',
+      fieldId,
+      text,
+      reason ? `reason:${reason}` : '',
+      matchType ? `match_type:${matchType}` : '',
+    ].filter(Boolean).join(':');
+  }
+
+  return {
+    idKey: id ? `id:${id}` : '',
+    structured: Boolean(fieldId),
+    structuredKey,
+    fallbackKeys,
+  };
+}
+
+function preferenceDisplayText(item) {
+  return normalizeSemanticValue(
+    item.source_text
+    || item.preference
+    || item.display
+    || item.label
+    || item.text
+  );
+}
+
+function normalizeSemanticValue(value) {
+  if (value === null || value === undefined) return '';
+  if (Array.isArray(value)) {
+    return value.map((item) => normalizeSemanticValue(item)).filter(Boolean).join('|');
+  }
+  if (typeof value === 'object') {
+    return JSON.stringify(value);
+  }
+  return String(value).trim().toLowerCase();
 }

@@ -3,12 +3,16 @@ import test from 'node:test';
 
 import {
   boundarySelectionsFromPreflight,
+  candidateConfirmationSummary,
   confirmableCandidates,
   createEmptyWorkbenchState,
   isEmptyWorkbenchState,
   mergeDemoRun,
   splitPreflightBoundarySelections,
   splitCandidateConfirmationState,
+  tokenUsageSummaryState,
+  tokenUsageSectionState,
+  uniqueUnusedPreferences,
 } from './workbenchState.js';
 import {
   FALLBACK_WORKBENCH_OPTIONS,
@@ -129,6 +133,195 @@ test('splitCandidateConfirmationState keeps id-only candidates warning-only', ()
   assert.deepEqual(
     split.blocked.map((candidate) => candidate.preference),
     ['软件工程', '没有 id'],
+  );
+});
+
+test('splitCandidateConfirmationState blocks non-executable candidates even with candidate ids', () => {
+  const split = splitCandidateConfirmationState({
+    candidates_to_confirm: [
+      { candidate_id: 'c_city', preference: '广州' },
+      { candidate_id: 'c_school', preference: '学校好一点', executable: false },
+      { candidate_id: 'c_coop', preference: '中外合作', match_type: 'no_schema_field' },
+    ],
+  });
+
+  assert.deepEqual(
+    split.confirmable.map((candidate) => candidate.confirmationId),
+    ['c_city'],
+  );
+  assert.deepEqual(
+    split.blocked.map((candidate) => candidate.confirmationId),
+    ['c_school', 'c_coop'],
+  );
+});
+
+test('candidateConfirmationSummary counts confirmable and warning-only candidates', () => {
+  const summary = candidateConfirmationSummary({
+    candidates_to_confirm: [
+      { candidate_id: 'c_city', preference: '广州' },
+      { id: 'legacy_id', preference: '软件工程' },
+      { preference: '缺少系统 id' },
+    ],
+  });
+
+  assert.deepEqual(summary, {
+    confirmableCount: 1,
+    warningOnlyCount: 2,
+    hasConfirmable: true,
+    hasWarningOnly: true,
+  });
+});
+
+test('uniqueUnusedPreferences merges unused preference arrays without semantic duplicates', () => {
+  const unused = uniqueUnusedPreferences({
+    unexecuted_preferences: [
+      {
+        id: 'unused_city',
+        field_id: 'city',
+        source_text: '离家近',
+        preference: '离家近',
+        reason: '缺少距离字段',
+        match_type: 'no_schema_field',
+      },
+      {
+        field_id: 'major',
+        source_text: '计算机相关',
+        preference: '计算机相关',
+        reason: '待确认专业边界',
+        match_type: 'partial_match',
+      },
+    ],
+    not_executed_preferences: [
+      {
+        id: 'unused_city',
+        field_id: 'city',
+        source_text: '离家近',
+        preference: '离家近',
+        reason: '缺少距离字段',
+        match_type: 'no_schema_field',
+      },
+      {
+        field_id: 'major',
+        source_text: '计算机相关',
+        preference: '计算机相关',
+        reason: '待确认专业边界',
+        match_type: 'partial_match',
+      },
+    ],
+    no_schema_field_preferences: [
+      {
+        field_id: 'dorm',
+        source_text: '宿舍好',
+        preference: '宿舍好',
+        reason: '当前数据表没有宿舍字段',
+        match_type: 'no_schema_field',
+      },
+    ],
+  });
+
+  assert.deepEqual(
+    unused.map((item) => item.preference),
+    ['离家近', '计算机相关', '宿舍好'],
+  );
+});
+
+test('uniqueUnusedPreferences dedupes same unstructured text and reason across lists', () => {
+  const unused = uniqueUnusedPreferences({
+    unexecuted_preferences: [
+      { preference: '中外合作', reason: '缺少字段' },
+      { preference: '离家近', reason: '缺少距离字段' },
+    ],
+    no_schema_field_preferences: [
+      {
+        source_text: '中外合作',
+        field_id: 'cooperation_type',
+        reason: '缺少字段',
+        match_type: 'no_schema_field',
+      },
+    ],
+  });
+
+  assert.deepEqual(
+    unused.map((item) => item.preference || item.source_text),
+    ['中外合作', '离家近'],
+  );
+});
+
+test('uniqueUnusedPreferences keeps same text distinct when field identity differs', () => {
+  const unused = uniqueUnusedPreferences({
+    no_schema_field_preferences: [
+      {
+        source_text: '中外合作',
+        field_id: 'cooperation_type',
+        reason: '缺少合作办学字段',
+        match_type: 'no_schema_field',
+      },
+      {
+        source_text: '中外合作',
+        field_id: 'program_tag',
+        reason: '缺少专业标签字段',
+        match_type: 'no_schema_field',
+      },
+    ],
+  });
+
+  assert.deepEqual(
+    unused.map((item) => item.field_id),
+    ['cooperation_type', 'program_tag'],
+  );
+});
+
+test('uniqueUnusedPreferences keeps same text distinct when reason differs', () => {
+  const unused = uniqueUnusedPreferences({
+    no_schema_field_preferences: [
+      {
+        source_text: '中外合作',
+        field_id: 'cooperation_type',
+        reason: '缺少合作办学字段',
+        match_type: 'no_schema_field',
+      },
+      {
+        source_text: '中外合作',
+        field_id: 'cooperation_type',
+        reason: '字段未通过审查',
+        match_type: 'no_schema_field',
+      },
+    ],
+  });
+
+  assert.deepEqual(
+    unused.map((item) => item.reason),
+    ['缺少合作办学字段', '字段未通过审查'],
+  );
+});
+
+test('tokenUsageSectionState distinguishes missing, zero, and returned usage', () => {
+  assert.deepEqual(
+    tokenUsageSectionState(null, 'extractor'),
+    { status: 'not_returned', label: '未返回用量' },
+  );
+  assert.deepEqual(
+    tokenUsageSectionState({ extractor: { total_tokens: 0 } }, 'extractor'),
+    { status: 'zero_usage', label: '未发生调用' },
+  );
+  assert.deepEqual(
+    tokenUsageSectionState({ generator: { prompt_tokens: 10, total_tokens: 14 } }, 'generator'),
+    { status: 'has_usage', label: '已返回用量' },
+  );
+});
+
+test('tokenUsageSummaryState distinguishes returned, zero, and missing usage', () => {
+  assert.deepEqual(
+    tokenUsageSummaryState({ extractor: { total_tokens: 1 } }),
+    { type: 'success', label: '已返回用量' },
+  );
+  assert.deepEqual(
+    tokenUsageSummaryState({ extractor: { total_tokens: 0 } }),
+    { type: 'info', label: '未发生调用' },
+  );
+  assert.deepEqual(
+    tokenUsageSummaryState(null),
+    { type: 'warning', label: '未返回用量' },
   );
 });
 

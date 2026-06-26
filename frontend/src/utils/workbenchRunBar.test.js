@@ -63,12 +63,36 @@ test('normalizeRunBarStatus lets failure win over prior successful data', () => 
   }), { type: 'danger', label: '查询失败' });
 });
 
-test('normalizeRunBarStatus treats needs_confirmation with zero results as completed', () => {
+test('normalizeRunBarStatus treats needs_confirmation with confirmable candidates as actionable', () => {
+  assert.deepEqual(normalizeRunBarStatus({
+    loading: false,
+    lastRunFailed: false,
+    runData: {
+      status: 'needs_confirmation',
+      result_count: 0,
+      candidates_to_confirm: [{ candidate_id: 'c_city', preference: '广州' }],
+    },
+  }), { type: 'warning', label: '待确认' });
+});
+
+test('normalizeRunBarStatus treats needs_confirmation with only warning candidates as informational', () => {
+  assert.deepEqual(normalizeRunBarStatus({
+    loading: false,
+    lastRunFailed: false,
+    runData: {
+      status: 'needs_confirmation',
+      result_count: 0,
+      candidates_to_confirm: [{ preference: '离家近', reason: '没有距离字段' }],
+    },
+  }), { type: 'info', label: '有提示' });
+});
+
+test('normalizeRunBarStatus treats needs_confirmation without candidate items as completed', () => {
   assert.deepEqual(normalizeRunBarStatus({
     loading: false,
     lastRunFailed: false,
     runData: { status: 'needs_confirmation', result_count: 0 },
-  }), { type: 'warning', label: '待确认' });
+  }), { type: 'success', label: '已完成' });
 });
 
 test('normalizeRunBarStatus treats blocked with zero results as blocked', () => {

@@ -28,11 +28,13 @@ import {
 } from './utils/workbenchRequests';
 import {
   boundarySelectionsFromPreflight,
+  candidateConfirmationSummary,
   createEmptyPreflightState,
   createEmptyWorkbenchState,
   isCurrentPreflight,
   mergeDemoRun,
   splitPreflightBoundarySelections,
+  uniqueUnusedPreferences,
 } from './utils/workbenchState';
 import {
   firstOptionValue,
@@ -125,12 +127,14 @@ const dataSourceTag = computed(() => {
 });
 const quickStats = computed(() => {
   const data = runData.value || {};
+  const confirmationSummary = candidateConfirmationSummary(data);
   return [
     { label: '处理状态', value: statusLabel(data.status || 'ok'), tone: data.status || 'ok' },
     { label: '可看结果', value: data.result_count ?? 0, tone: 'ok' },
     { label: '已用条件', value: data.executable_rules?.length || data.executed_filters?.length || 0, tone: 'ok' },
-    { label: '待确认', value: data.candidate_rules?.length || data.candidates_to_confirm?.length || 0, tone: 'needs_confirmation' },
-    { label: '未参与', value: data.not_executed_preferences?.length || data.unexecuted_preferences?.length || data.no_schema_field_preferences?.length || 0, tone: 'blocked' },
+    { label: '可确认', value: confirmationSummary.confirmableCount, tone: 'needs_confirmation' },
+    { label: '仅提示', value: confirmationSummary.warningOnlyCount, tone: 'needs_confirmation' },
+    { label: '未参与', value: uniqueUnusedPreferences(data).length, tone: 'blocked' },
   ];
 });
 const runBarStatus = computed(() => normalizeRunBarStatus({
