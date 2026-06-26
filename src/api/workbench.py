@@ -52,7 +52,7 @@ from src.semantic.admissions_major_rank import (
     admissions_major_rank_query_matches,
 )
 from src.semantic.capability_graph import DatasetCapabilityGraph
-from src.semantic.intent_models import SemanticIntent
+from src.semantic.intent_models import SemanticIntent, SemanticUserContext
 from src.semantic.query_options import SemanticQueryOptionsBuilder
 from src.semantic.ranking_plan import RankingPlan
 from src.semantic.reviewed_mapping import ReviewedMappingRegistry
@@ -1250,6 +1250,37 @@ def _semantic_ranking_plan(config: WorkbenchConfig) -> RankingPlan | None:
     return RankingPlan.model_validate(payload)
 
 
+def _semantic_intent_with_hard_context(
+    intent: SemanticIntent,
+    config: WorkbenchConfig,
+) -> SemanticIntent:
+    hard = _execution_safe_structured_preferences(config.hard_filters)
+    if not hard:
+        return intent
+
+    context = intent.user_context.model_dump()
+    source_province = _clean_text(hard.get("source_province"))
+    subject_type = _clean_text(hard.get("subject_type"))
+    reselected_subjects = _clean_list(hard.get("reselected_subjects"))
+    user_rank = _optional_int(hard.get("user_rank"))
+    user_score = _optional_int(hard.get("user_score") or hard.get("score"))
+
+    if source_province:
+        context["source_province"] = source_province
+    if subject_type:
+        context["subject_type"] = subject_type
+    if reselected_subjects:
+        context["reselected_subjects"] = reselected_subjects
+    if user_rank:
+        context["user_rank"] = user_rank
+    if user_score:
+        context["user_score"] = user_score
+
+    return intent.model_copy(
+        update={"user_context": SemanticUserContext.model_validate(context)}
+    )
+
+
 def _semantic_planner_attempt(
     config: WorkbenchConfig,
     domain_config: DomainConfig,
@@ -1309,8 +1340,9 @@ def _semantic_planner_attempt(
         )
 
     usage = dict(extraction.usage or {})
+    intent = _semantic_intent_with_hard_context(extraction.intent, config)
     return SemanticPlannerAttempt(
-        intent=extraction.intent,
+        intent=intent,
         usage=usage,
         planner=_planner_trace(
             mode="llm_semantic",
@@ -1319,7 +1351,7 @@ def _semantic_planner_attempt(
             fallback_used=False,
             fallback_reason=None,
             token_usage=usage,
-            semantic_intent_query_type=extraction.intent.query_type,
+            semantic_intent_query_type=intent.query_type,
         ),
     )
 
@@ -1328,6 +1360,7 @@ def _supplied_semantic_intent_attempt(config: WorkbenchConfig) -> SemanticPlanne
     supplied_intent = config.soft_preferences.get("semantic_intent")
     if supplied_intent:
         intent = SemanticIntent.model_validate(supplied_intent)
+        intent = _semantic_intent_with_hard_context(intent, config)
         return SemanticPlannerAttempt(
             intent=intent,
             planner=_planner_trace(

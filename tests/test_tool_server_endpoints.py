@@ -20,7 +20,12 @@ from fastapi.testclient import TestClient
 
 from src.api import server as server_module
 from src.api.server import app
-from tests.test_uploaded_dataset_flow import _queryable_uploaded_admissions
+from tests.test_uploaded_dataset_flow import (
+    FakeSemanticIntentClient,
+    _evidence_requirements_for_basic_recommendation,
+    _queryable_uploaded_admissions,
+    _semantic_recommendation_intent_without_context,
+)
 from tests.test_tool_contract import (
     _actor,
     _generated_generic_dataset,
@@ -69,6 +74,12 @@ class ToolServerEndpointsTest(unittest.TestCase):
 
     def test_workbench_preflight_endpoint_returns_contract(self) -> None:
         prompt = "我想进深圳大学，目前排位15000，帮我看看有什么专业可以选"
+        fake_client = FakeSemanticIntentClient(
+            [
+                _semantic_recommendation_intent_without_context(),
+                _evidence_requirements_for_basic_recommendation(),
+            ]
+        )
         with TemporaryDirectory() as directory:
             service, dataset_id = _queryable_uploaded_admissions(
                 Path(directory),
@@ -76,29 +87,40 @@ class ToolServerEndpointsTest(unittest.TestCase):
             )
 
             with patch.object(server_module, "dataset_service", service):
-                response = self.client.post(
-                    "/workbench/preflight",
-                    headers=_auth_headers("query-token"),
-                    json={
-                        "dataset_id": dataset_id,
-                        "domain_name": "admissions",
-                        "user_input": prompt,
-                        "hard_filters": {
-                            "source_province": "广东",
-                            "subject_type": "物理",
-                            "reselected_subjects": ["化学", "生物"],
-                            "user_rank": 15000,
-                        },
-                        "soft_preferences": {"prompt": prompt},
-                        "planner_mode": "llm_semantic",
-                    },
-                )
+                with patch(
+                    "src.api.workbench.deepseek_slot_adapter_enabled",
+                    return_value=True,
+                ):
+                    with patch(
+                        "src.api.workbench._interactive_deepseek_client",
+                        return_value=fake_client,
+                    ):
+                        response = self.client.post(
+                            "/workbench/preflight",
+                            headers=_auth_headers("query-token"),
+                            json={
+                                "dataset_id": dataset_id,
+                                "domain_name": "admissions",
+                                "user_input": prompt,
+                                "hard_filters": {
+                                    "source_province": "广东",
+                                    "subject_type": "物理",
+                                    "reselected_subjects": ["化学", "生物"],
+                                    "user_rank": 15000,
+                                },
+                                "soft_preferences": {"prompt": prompt},
+                                "planner_mode": "llm_semantic",
+                            },
+                        )
 
         payload = response.json()
         self.assertEqual(response.status_code, 200)
         self.assertEqual(payload["schema_version"], "workbench_preflight.v1")
         self.assertEqual(payload["dataset_id"], dataset_id)
         self.assertEqual(payload["items"], [])
+        fact_sources = {item["source"] for item in payload["recognized_facts"]}
+        self.assertIn("hard_filters.subject_type", fact_sources)
+        self.assertIn("hard_filters.reselected_subjects", fact_sources)
         self.assertNotIn("sql", json.dumps(payload, ensure_ascii=False).lower())
 
     def test_workbench_query_rejects_forged_preflight_confirmation(self) -> None:
@@ -141,6 +163,15 @@ class ToolServerEndpointsTest(unittest.TestCase):
 
     def test_workbench_query_accepts_current_preflight_reference(self) -> None:
         prompt = "我想进深圳大学，目前排位15000，帮我看看有什么专业可以选"
+        fake_client = FakeSemanticIntentClient(
+            [
+                _semantic_recommendation_intent_without_context(),
+                _evidence_requirements_for_basic_recommendation(),
+                _semantic_recommendation_intent_without_context(),
+                _evidence_requirements_for_basic_recommendation(),
+                {"criteria": []},
+            ]
+        )
         with TemporaryDirectory() as directory:
             service, dataset_id = _queryable_uploaded_admissions(
                 Path(directory),
@@ -148,44 +179,52 @@ class ToolServerEndpointsTest(unittest.TestCase):
             )
 
             with patch.object(server_module, "dataset_service", service):
-                preflight_response = self.client.post(
-                    "/workbench/preflight",
-                    headers=_auth_headers("query-token"),
-                    json={
-                        "dataset_id": dataset_id,
-                        "domain_name": "admissions",
-                        "user_input": prompt,
-                        "hard_filters": {
-                            "source_province": "广东",
-                            "subject_type": "物理",
-                            "reselected_subjects": ["化学", "生物"],
-                            "user_rank": 15000,
-                        },
-                        "soft_preferences": {"prompt": prompt},
-                        "planner_mode": "llm_semantic",
-                    },
-                )
-                preflight = preflight_response.json()
-                response = self.client.post(
-                    "/workbench/query",
-                    headers=_auth_headers("query-token"),
-                    json={
-                        "dataset_id": dataset_id,
-                        "domain_name": "admissions",
-                        "user_input": prompt,
-                        "hard_filters": {
-                            "source_province": "广东",
-                            "subject_type": "物理",
-                            "reselected_subjects": ["化学", "生物"],
-                            "user_rank": 15000,
-                        },
-                        "soft_preferences": {"prompt": prompt},
-                        "planner_mode": "llm_semantic",
-                        "preflight_id": preflight["preflight_id"],
-                        "confirmed_boundaries": [],
-                        "disabled_boundaries": [],
-                    },
-                )
+                with patch(
+                    "src.api.workbench.deepseek_slot_adapter_enabled",
+                    return_value=True,
+                ):
+                    with patch(
+                        "src.api.workbench._interactive_deepseek_client",
+                        return_value=fake_client,
+                    ):
+                        preflight_response = self.client.post(
+                            "/workbench/preflight",
+                            headers=_auth_headers("query-token"),
+                            json={
+                                "dataset_id": dataset_id,
+                                "domain_name": "admissions",
+                                "user_input": prompt,
+                                "hard_filters": {
+                                    "source_province": "广东",
+                                    "subject_type": "物理",
+                                    "reselected_subjects": ["化学", "生物"],
+                                    "user_rank": 15000,
+                                },
+                                "soft_preferences": {"prompt": prompt},
+                                "planner_mode": "llm_semantic",
+                            },
+                        )
+                        preflight = preflight_response.json()
+                        response = self.client.post(
+                            "/workbench/query",
+                            headers=_auth_headers("query-token"),
+                            json={
+                                "dataset_id": dataset_id,
+                                "domain_name": "admissions",
+                                "user_input": prompt,
+                                "hard_filters": {
+                                    "source_province": "广东",
+                                    "subject_type": "物理",
+                                    "reselected_subjects": ["化学", "生物"],
+                                    "user_rank": 15000,
+                                },
+                                "soft_preferences": {"prompt": prompt},
+                                "planner_mode": "llm_semantic",
+                                "preflight_id": preflight["preflight_id"],
+                                "confirmed_boundaries": [],
+                                "disabled_boundaries": [],
+                            },
+                        )
 
         payload = response.json()
         self.assertEqual(response.status_code, 200)
@@ -194,6 +233,9 @@ class ToolServerEndpointsTest(unittest.TestCase):
             payload["status"],
             {"ok", "needs_confirmation", "no_results", "blocked"},
         )
+        context = payload["evidence_pack"]["semantic_intent"]["user_context"]
+        self.assertEqual(context["subject_type"], "物理")
+        self.assertEqual(context["reselected_subjects"], ["化学", "生物"])
 
     def test_tools_list_filters_by_actor_permission(self) -> None:
         response = self.client.get(

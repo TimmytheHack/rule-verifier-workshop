@@ -70,6 +70,9 @@ def run_workbench_preflight(
         response["recognized_facts"].extend(
             _recognized_facts_from_intent(config, planner_attempt.intent.model_dump())
         )
+        response["recognized_facts"] = _dedupe_recognized_facts(
+            response["recognized_facts"]
+        )
         if planner_attempt.intent.query_type == "semantic_recommendation":
             try:
                 gate_attempt = (
@@ -206,18 +209,36 @@ def _recognized_facts_from_inputs(
     config: WorkbenchPreflightConfig,
 ) -> list[dict[str, Any]]:
     facts: list[dict[str, Any]] = []
-    rank = (config.hard_filters or {}).get("user_rank")
-    if rank:
+    hard_filters = workbench_module._execution_safe_structured_preferences(
+        config.hard_filters or {}
+    )
+    for field, label in [
+        ("user_rank", "全省排位"),
+        ("source_province", "生源地"),
+        ("subject_type", "科类"),
+        ("reselected_subjects", "再选科目"),
+    ]:
+        value = _hard_filter_fact_value(field, hard_filters.get(field))
+        if value in (None, "", []):
+            continue
         facts.append(
             {
-                "fact_id": confirmation_id(preflight_id(config), "user_rank", "fact"),
-                "label": "全省排位",
-                "value": rank,
-                "source": "hard_filters.user_rank",
+                "fact_id": confirmation_id(preflight_id(config), field, "fact"),
+                "label": label,
+                "value": value,
+                "source": f"hard_filters.{field}",
                 "executable": True,
             }
         )
     return facts
+
+
+def _hard_filter_fact_value(field: str, value: Any) -> Any:
+    if field == "user_rank":
+        return workbench_module._optional_int(value)
+    if field == "reselected_subjects":
+        return workbench_module._clean_list(value)
+    return workbench_module._clean_text(value)
 
 
 def _recognized_facts_from_intent(
@@ -250,6 +271,25 @@ def _recognized_facts_from_intent(
             }
         )
     return facts
+
+
+def _dedupe_recognized_facts(
+    facts: list[dict[str, Any]],
+) -> list[dict[str, Any]]:
+    deduped: dict[str, dict[str, Any]] = {}
+    for fact in facts:
+        key = str(fact.get("label") or fact.get("fact_id") or len(deduped))
+        existing = deduped.get(key)
+        if existing is None:
+            deduped[key] = fact
+            continue
+        source = str(fact.get("source") or "")
+        existing_source = str(existing.get("source") or "")
+        if source.startswith("hard_filters.") and not existing_source.startswith(
+            "hard_filters."
+        ):
+            deduped[key] = fact
+    return list(deduped.values())
 
 
 def _not_executable_preferences(

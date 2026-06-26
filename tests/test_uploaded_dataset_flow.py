@@ -763,6 +763,54 @@ class UploadedSemanticAdmissionsFlowTest(unittest.TestCase):
         self.assertEqual(response["items"], [])
         self.assertEqual(response["top_results"], [])
 
+    def test_uploaded_admissions_preflight_recognizes_structured_hard_filters(
+        self,
+    ) -> None:
+        query = "我的排位是15000，想读人工智能，计算机，请给出推荐"
+        fake_client = FakeSemanticIntentClient(
+            [
+                _semantic_recommendation_intent_without_context(),
+                _evidence_requirements_for_basic_recommendation(),
+            ],
+        )
+        hard_filters = {
+            "source_province": "广东",
+            "subject_type": "物理",
+            "reselected_subjects": ["化学", "生物"],
+            "user_rank": 15000,
+        }
+        with TemporaryDirectory() as directory:
+            service, dataset_id = _queryable_uploaded_admissions(
+                Path(directory),
+                use_excel=False,
+            )
+
+            with patch(
+                "src.api.workbench.deepseek_slot_adapter_enabled",
+                return_value=True,
+            ):
+                with patch(
+                    "src.api.workbench._interactive_deepseek_client",
+                    return_value=fake_client,
+                ):
+                    response = service.preflight(
+                        dataset_id,
+                        user_input=query,
+                        hard_filters=hard_filters,
+                        soft_preferences={"prompt": query},
+                        planner_mode="llm_semantic",
+                        domain_name="admissions",
+                    )
+
+        fact_sources = {item["source"] for item in response["recognized_facts"]}
+        self.assertIn("hard_filters.source_province", fact_sources)
+        self.assertIn("hard_filters.subject_type", fact_sources)
+        self.assertIn("hard_filters.reselected_subjects", fact_sources)
+        self.assertIn("hard_filters.user_rank", fact_sources)
+        context = response["planner"]["semantic_intent"]["user_context"]
+        self.assertEqual(context["subject_type"], "物理")
+        self.assertEqual(context["reselected_subjects"], ["化学", "生物"])
+
     def test_uploaded_admissions_preflight_excludes_external_preferences(
         self,
     ) -> None:
@@ -1164,6 +1212,144 @@ print(json.dumps({
             response["no_schema_field_preferences"][0]["field_id"],
             "school_country_or_region",
         )
+
+    def test_uploaded_semantic_query_merges_hard_filters_into_intent_context(
+        self,
+    ) -> None:
+        query = "我的排位是15000，想读人工智能，计算机，请给出推荐"
+        fake_client = FakeSemanticIntentClient(
+            [
+                _semantic_recommendation_intent_without_context(),
+                _evidence_requirements_for_basic_recommendation(),
+                {"criteria": []},
+            ]
+        )
+        hard_filters = {
+            "source_province": "广东",
+            "subject_type": "物理",
+            "reselected_subjects": ["化学", "生物"],
+            "user_rank": 15000,
+        }
+        with TemporaryDirectory() as directory:
+            service, dataset_id = _queryable_uploaded_admissions(
+                Path(directory),
+                use_excel=False,
+            )
+
+            with patch(
+                "src.api.workbench.deepseek_slot_adapter_enabled",
+                return_value=True,
+            ):
+                with patch(
+                    "src.api.workbench._interactive_deepseek_client",
+                    return_value=fake_client,
+                ):
+                    response = service.query(
+                        dataset_id,
+                        user_input=query,
+                        hard_filters=hard_filters,
+                        soft_preferences={"prompt": query},
+                        planner_mode="llm_semantic",
+                    )
+
+        assert_workbench_contract(self, response)
+        context = response["evidence_pack"]["semantic_intent"]["user_context"]
+        self.assertEqual(context["source_province"], "广东")
+        self.assertEqual(context["subject_type"], "物理")
+        self.assertEqual(context["reselected_subjects"], ["化学", "生物"])
+        self.assertEqual(context["user_rank"], 15000)
+        warning_codes = {item["code"] for item in response["warnings"]}
+        self.assertNotIn("subject_type_not_provided", warning_codes)
+        self.assertNotIn("subject_requirement_not_provided", warning_codes)
+
+    def test_uploaded_semantic_query_hard_filters_override_llm_context(
+        self,
+    ) -> None:
+        query = "我的排位是15000，想读人工智能，计算机，请给出推荐"
+        fake_client = FakeSemanticIntentClient(
+            [
+                _semantic_recommendation_intent_conflicting_context(),
+                _evidence_requirements_for_basic_recommendation(),
+                {"criteria": []},
+            ]
+        )
+        hard_filters = {
+            "source_province": "广东",
+            "subject_type": "物理",
+            "reselected_subjects": ["化学", "生物"],
+            "user_rank": 15000,
+            "score": 640,
+        }
+        with TemporaryDirectory() as directory:
+            service, dataset_id = _queryable_uploaded_admissions(
+                Path(directory),
+                use_excel=False,
+            )
+
+            with patch(
+                "src.api.workbench.deepseek_slot_adapter_enabled",
+                return_value=True,
+            ):
+                with patch(
+                    "src.api.workbench._interactive_deepseek_client",
+                    return_value=fake_client,
+                ):
+                    response = service.query(
+                        dataset_id,
+                        user_input=query,
+                        hard_filters=hard_filters,
+                        soft_preferences={"prompt": query},
+                        planner_mode="llm_semantic",
+                    )
+
+        assert_workbench_contract(self, response)
+        context = response["evidence_pack"]["semantic_intent"]["user_context"]
+        self.assertEqual(context["source_province"], "广东")
+        self.assertEqual(context["subject_type"], "物理")
+        self.assertEqual(context["reselected_subjects"], ["化学", "生物"])
+        self.assertEqual(context["user_rank"], 15000)
+        self.assertEqual(context["user_score"], 640)
+
+    def test_supplied_semantic_intent_merges_hard_filter_context(
+        self,
+    ) -> None:
+        query = "我的排位是15000，想读人工智能，计算机，请给出推荐"
+        with TemporaryDirectory() as directory:
+            service, dataset_id = _queryable_uploaded_admissions(
+                Path(directory),
+                use_excel=False,
+            )
+
+            response = service.query(
+                dataset_id,
+                user_input=query,
+                hard_filters={
+                    "source_province": "广东",
+                    "subject_type": "物理",
+                    "reselected_subjects": ["化学", "生物"],
+                    "user_rank": 15000,
+                    "user_score": 641,
+                },
+                soft_preferences={
+                    "prompt": query,
+                    "semantic_intent": (
+                        _semantic_recommendation_intent_conflicting_context()
+                    ),
+                },
+                planner_mode="llm_semantic",
+            )
+
+        assert_workbench_contract(self, response)
+        self.assertEqual(response["status"], "ok")
+        planner = response["evidence_pack"]["planner"]
+        self.assertEqual(planner["mode"], "supplied_semantic_intent")
+        self.assertNotIn("evidence_requirements", planner)
+        context = response["evidence_pack"]["semantic_intent"]["user_context"]
+        self.assertEqual(context["source_province"], "广东")
+        self.assertEqual(context["subject_type"], "物理")
+        self.assertEqual(context["reselected_subjects"], ["化学", "生物"])
+        self.assertEqual(context["user_rank"], 15000)
+        self.assertEqual(context["user_score"], 641)
 
     def test_uploaded_score_without_rank_uses_llm_but_needs_rank_confirmation(
         self,
@@ -2805,6 +2991,32 @@ def _semantic_recommendation_intent() -> dict[str, object]:
         ],
         "requested_output": ["recommendation_sections", "minimum_rank"],
         "source_language": "zh-CN",
+    }
+
+
+def _semantic_recommendation_intent_without_context() -> dict[str, object]:
+    return {
+        **_semantic_recommendation_intent(),
+        "user_context": {
+            "user_rank": None,
+            "user_score": None,
+            "source_province": None,
+            "subject_type": None,
+            "reselected_subjects": [],
+        },
+    }
+
+
+def _semantic_recommendation_intent_conflicting_context() -> dict[str, object]:
+    return {
+        **_semantic_recommendation_intent(),
+        "user_context": {
+            "user_rank": 99999,
+            "user_score": 500,
+            "source_province": "湖南",
+            "subject_type": "历史",
+            "reselected_subjects": ["政治"],
+        },
     }
 
 
