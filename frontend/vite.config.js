@@ -1,13 +1,15 @@
 import { defineConfig } from 'vite';
 import vue from '@vitejs/plugin-vue';
 
+const backendTarget = process.env.VITE_API_PROXY_TARGET || 'http://127.0.0.1:8001';
+
 export default defineConfig({
   plugins: [vue()],
   server: {
     proxy: {
-      '/api': 'http://127.0.0.1:8001',
-      '/datasets': 'http://127.0.0.1:8001',
-      '/workbench': 'http://127.0.0.1:8001',
+      '/api': backendTarget,
+      '/datasets': backendTarget,
+      '/workbench': backendTarget,
     },
   },
 });
