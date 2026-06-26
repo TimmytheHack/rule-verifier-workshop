@@ -14,6 +14,18 @@ from typing import Any
 ROOT_DIR = Path(__file__).resolve().parents[1]
 MANIFEST_PATH = ROOT_DIR / "release_manifest.json"
 DEFAULT_OUTPUT_DIR = ROOT_DIR / "outputs/release_package"
+BUILTIN_VALUE_INDEX_PATH = ROOT_DIR / "outputs/data/schema_value_index.json"
+REQUIRED_BUILTIN_VALUE_FIELDS = (
+    "university_name",
+    "city",
+    "major_name",
+    "group_code",
+)
+REQUIRED_BUILTIN_LOOKUP_VALUES = {
+    "university_name": "深圳大学",
+    "city": "深圳",
+    "major_name": None,
+}
 REQUIRED_MAKE_TARGETS = {
     "bootstrap",
     "serve",
@@ -101,6 +113,7 @@ def validate_release_package(
                 "release_manifest.json 不能读取，跳过后续 manifest 检查。",
             )
         )
+    checks.append(_check_builtin_value_index())
     status = "fail" if any(check.status == "fail" for check in checks) else "pass"
     report = {
         "status": status,
@@ -278,6 +291,98 @@ def _check_git_commit() -> ReleaseCheck:
         "pass",
         "当前 git commit 可读取。",
         {"commit": completed.stdout.strip()},
+    )
+
+
+def _check_builtin_value_index() -> ReleaseCheck:
+    try:
+        payload = json.loads(BUILTIN_VALUE_INDEX_PATH.read_text(encoding="utf-8"))
+    except FileNotFoundError:
+        return ReleaseCheck(
+            "builtin_value_index",
+            "fail",
+            "内置 schema/value index 文件不存在。",
+            {"path": str(BUILTIN_VALUE_INDEX_PATH)},
+        )
+    except json.JSONDecodeError as exc:
+        return ReleaseCheck(
+            "builtin_value_index",
+            "fail",
+            "内置 schema/value index 不是合法 JSON。",
+            {
+                "path": str(BUILTIN_VALUE_INDEX_PATH),
+                "line": exc.lineno,
+                "column": exc.colno,
+            },
+        )
+    if not isinstance(payload, dict):
+        return ReleaseCheck(
+            "builtin_value_index",
+            "fail",
+            "内置 schema/value index 顶层必须是对象。",
+            {
+                "path": str(BUILTIN_VALUE_INDEX_PATH),
+                "actual": type(payload).__name__,
+            },
+        )
+
+    fields = payload.get("fields")
+    if not isinstance(fields, dict):
+        return ReleaseCheck(
+            "builtin_value_index",
+            "fail",
+            "内置 schema/value index 缺少 fields 对象。",
+            {"path": str(BUILTIN_VALUE_INDEX_PATH)},
+        )
+
+    missing = []
+    inactive = []
+    empty_lookup_values = []
+    missing_values = []
+    for field_id in REQUIRED_BUILTIN_VALUE_FIELDS:
+        field = fields.get(field_id)
+        if not isinstance(field, dict):
+            missing.append(field_id)
+            continue
+        if not field.get("active"):
+            inactive.append(field_id)
+
+    for field_id, required_value in REQUIRED_BUILTIN_LOOKUP_VALUES.items():
+        field = fields.get(field_id)
+        if not isinstance(field, dict):
+            continue
+        lookup_values = field.get("lookup_values")
+        if not isinstance(lookup_values, list) or not lookup_values:
+            empty_lookup_values.append(field_id)
+            continue
+        if required_value is not None and required_value not in lookup_values:
+            missing_values.append(
+                {
+                    "field_id": field_id,
+                    "value": required_value,
+                }
+            )
+
+    failed = bool(missing or inactive or empty_lookup_values or missing_values)
+    failure_message = (
+        "内置 schema/value index 缺少或停用了关键字段。"
+        if missing or inactive
+        else "内置 schema/value index 缺少关键 lookup 证据。"
+    )
+    return ReleaseCheck(
+        "builtin_value_index",
+        "fail" if failed else "pass",
+        "内置 schema/value index 关键字段可用。"
+        if not failed
+        else failure_message,
+        {
+            "path": str(BUILTIN_VALUE_INDEX_PATH),
+            "required_fields": sorted(REQUIRED_BUILTIN_VALUE_FIELDS),
+            "missing": missing,
+            "inactive": inactive,
+            "empty_lookup_values": empty_lookup_values,
+            "missing_values": missing_values,
+        },
     )
 
 

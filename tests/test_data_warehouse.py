@@ -36,7 +36,11 @@ class DataWarehouseTest(unittest.TestCase):
                         "生源地": "广东",
                         "科类": "物理",
                         "选科要求": "不限",
+                        "院校名称": "深圳大学",
+                        "院校专业组代码": "10590101",
+                        "专业代码": "080901",
                         "专业名称": "计算机科学与技术",
+                        "专业全称": "计算机科学与技术",
                         "城市": "广州",
                         "专业组最低位次1": 32000,
                         "学费": "6850元/年",
@@ -45,7 +49,11 @@ class DataWarehouseTest(unittest.TestCase):
                         "生源地": "广东",
                         "科类": "物理",
                         "选科要求": "不限",
+                        "院校名称": "广东工业大学",
+                        "院校专业组代码": "11845101",
+                        "专业代码": "080902",
                         "专业名称": "软件工程",
+                        "专业全称": "软件工程",
                         "城市": "深圳",
                         "专业组最低位次1": 35000,
                         "学费": "8000元/年",
@@ -83,15 +91,28 @@ class DataWarehouseTest(unittest.TestCase):
             missing_city_audit = value_index.audit_value("city", "珠海")
 
         self.assertEqual(result.row_count, 2)
-        self.assertEqual(result.column_count, 7)
+        self.assertEqual(result.column_count, 11)
         summary = result.to_dict()
         self.assertEqual(summary["source_path"], str(workbook_path))
         self.assertEqual(summary["fingerprint"], result.source_fingerprint)
         self.assertEqual(summary["row_count"], 2)
-        self.assertEqual(summary["column_count"], 7)
+        self.assertEqual(summary["column_count"], 11)
         self.assertIn("major_name", summary["field_profiles"])
         self.assertIsInstance(summary["created_at"], str)
         self.assertEqual(len(loaded.dataframe), 2)
+        self.assertIn("university_name", index_payload["fields"])
+        self.assertTrue(index_payload["fields"]["university_name"]["active"])
+        self.assertTrue(
+            index_payload["fields"]["university_name"]["lookup_complete"]
+        )
+        self.assertEqual(
+            index_payload["fields"]["university_name"]["lookup_values"],
+            ["深圳大学", "广东工业大学"],
+        )
+        self.assertIn(
+            "深圳大学",
+            index_payload["fields"]["university_name"]["lookup_values"],
+        )
         self.assertIn("major_name", index_payload["fields"])
         self.assertTrue(index_payload["fields"]["major_name"]["active"])
         self.assertTrue(index_payload["fields"]["major_name"]["lookup_complete"])
