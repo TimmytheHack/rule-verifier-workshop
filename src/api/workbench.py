@@ -3786,11 +3786,14 @@ def _confirmation_match_type(record: dict[str, Any]) -> str | None:
     if status == "confirmable" or record.get("requires_human_confirmation"):
         return "partial_match"
     if audit_status in {
-        "partial_match",
         "not_found",
         "not_found_in_partial_index",
-        "partial_numeric_profile",
         "outside_numeric_profile",
+    }:
+        return None
+    if audit_status in {
+        "partial_match",
+        "partial_numeric_profile",
     }:
         return "partial_match"
     return None
@@ -3924,7 +3927,7 @@ def _append_grounding_non_executable_preferences(
     )
     preferences = list(updated.get("non_executable_preferences", []))
     for record in attribute_grounding.get("attributes", []):
-        if record.get("status") not in {"missing_schema", "unmapped_attribute"}:
+        if not _grounding_record_should_be_preserved_as_not_executed(record):
             continue
         if _matches_not_executed_override(record, domain_config) and has_cooperation_warning:
             continue
@@ -3943,7 +3946,7 @@ def _append_grounding_non_executable_preferences(
             {
                 "source_text": source_text,
                 "status": "not_executed",
-                "reason": _grounding_reason(record.get("reason")),
+                "reason": _grounding_non_executable_reason(record),
                 "field_id": record.get("field_id"),
             }
         )
@@ -3951,6 +3954,36 @@ def _append_grounding_non_executable_preferences(
         existing_field_ids.add(record.get("field_id"))
     updated["non_executable_preferences"] = preferences
     return updated
+
+
+def _grounding_record_should_be_preserved_as_not_executed(
+    record: dict[str, Any],
+) -> bool:
+    status = record.get("status")
+    if status in {"missing_schema", "unmapped_attribute"}:
+        return True
+    if status in {"confirmable", "context_only"} or record.get(
+        "requires_human_confirmation"
+    ):
+        return False
+    audit_status = (record.get("value_index_audit") or {}).get("status")
+    return audit_status in {
+        "partial_match",
+        "not_found",
+        "not_found_in_partial_index",
+    }
+
+
+def _grounding_non_executable_reason(record: dict[str, Any]) -> str | None:
+    audit_status = (record.get("value_index_audit") or {}).get("status")
+    field = record.get("source_column") or record.get("field_id") or "对应字段"
+    if audit_status == "not_found":
+        return f"未在字段“{field}”的已审查完整值索引中命中，不能进入 hard filter。"
+    if audit_status == "not_found_in_partial_index":
+        return f"未在字段“{field}”的已审查值索引中命中，当前索引不完整，不能进入 hard filter。"
+    if audit_status == "partial_match":
+        return f"只有部分值在字段“{field}”的已审查值索引中命中，不能整体进入 hard filter。"
+    return _grounding_reason(record.get("reason"))
 
 
 def _matches_not_executed_override(
@@ -4795,6 +4828,7 @@ def _not_executed_preferences(
             {
                 "id": f"not_exec_{index}",
                 "preference": source_text,
+                "field_id": item.get("field_id"),
                 "display": (
                     override["display"]
                     if override

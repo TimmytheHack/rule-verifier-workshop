@@ -84,6 +84,8 @@ python scripts/build_data_warehouse.py
 
 内置 admissions Workbench 会使用 reviewed value entity linker 处理已审查 value index 中的显式实体。比如“我想进深圳大学”会优先识别为 `院校名称 = 深圳大学`，并抑制其中的 `深圳` 城市子串；“我想去深圳的大学”仍可识别为 `城市 in_contains 深圳`。如果用户说“深圳大学附近”或使用否定、距离、身份边界等表达，相关实体会写入 `EvidencePack.entity_linking.not_executed_links`，不会变成 SQL filter。这个 linker 只读取 schema/value index，不读原始 Excel，不调用 LLM，也不能绕过 `RuleVerifier`。
 
+如果用户明确填写或表达了当前专业名称 value index 未命中的专业，例如“天体物理”，Workbench 会把原词保留到 `not_executed_preferences` / `unanswerable_intents`，并说明未进入 hard filter；不会静默忽略，也不会把它当作已执行的专业筛选。`就业好`、`宿舍好`、`学校氛围好一点` 这类外部质量偏好在没有已审查结构化字段时同样只作为不可回答/未执行证据保留，不会被误当作“相关专业”候选。
+
 ## 上传自己的表格
 
 1. 启动后端和前端。

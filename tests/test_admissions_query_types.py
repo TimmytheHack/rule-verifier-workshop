@@ -531,6 +531,52 @@ class AdmissionsQueryTypesTest(unittest.TestCase):
         self.assertIn("软件工程", params)
         self.assertNotIn("人工智能", params)
 
+    def test_unknown_major_from_text_is_preserved_as_not_executed(self) -> None:
+        query = "我是广东物理类，排位32000，想读天体物理"
+        result = _run(query)
+
+        self.assertEqual(result["status"], "ok")
+        self.assertNotIn(
+            "天体物理",
+            result["evidence_pack"]["execution_summary"]["params"],
+        )
+        not_executed = result["evidence_pack"]["not_executed_preferences"]
+        self.assertTrue(
+            any(
+                item.get("source_text") == "天体物理"
+                and item.get("field_id") == "major_name"
+                for item in not_executed
+            )
+        )
+        self.assertFalse(result["candidates_to_confirm"])
+
+    def test_unknown_major_from_structured_field_is_preserved_as_not_executed(
+        self,
+    ) -> None:
+        query = "我是广东物理类，排位32000"
+        result = run_workbench_with_test_warehouse(
+            WorkbenchConfig(
+                user_input=query,
+                hard_filters={"major_keyword": "天体物理"},
+                soft_preferences={"prompt": query},
+                extractor="regex",
+            )
+        )
+
+        self.assertEqual(result["status"], "ok")
+        self.assertNotIn(
+            "天体物理",
+            result["evidence_pack"]["execution_summary"]["params"],
+        )
+        self.assertTrue(
+            any(
+                item.get("source_text") == "天体物理"
+                and item.get("field_id") == "major_name"
+                for item in result["evidence_pack"]["not_executed_preferences"]
+            )
+        )
+        self.assertFalse(result["candidates_to_confirm"])
+
     def test_confirmed_major_candidate_records_match_mode(self) -> None:
         query = "我今年高考分数 630，位次 9000，想读计算机相关，想留在广东省"
         first = _run(query)

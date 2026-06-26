@@ -29,6 +29,11 @@
       "attribute_class": "deterministic_candidate",
       "reason": "明确专业词可以作为列表抽取，但仍需经过规则构造和验证后才能执行。"
     },
+    "preferences.unknown_major_terms": {
+      "field_id": "major_name",
+      "attribute_class": "deterministic_candidate",
+      "reason": "用户明确给出专业词，但必须先在已审查专业名称值索引中命中，才能进入 hard filter。"
+    },
     "preferences.preferred_cities": {
       "field_id": "city",
       "attribute_class": "deterministic_candidate"
@@ -119,6 +124,7 @@
     "好学校": {"field_id": "school_reputation", "status": "missing_schema", "reason": "当前数据中没有已审查的学校质量字段。"},
     "就业前景好": {"field_id": "employment_outlook", "status": "missing_schema", "reason": "当前数据中没有就业结果字段。"},
     "好就业": {"field_id": "employment_outlook", "status": "missing_schema", "reason": "当前数据中没有就业结果字段。"},
+    "就业好": {"field_id": "employment_outlook", "status": "missing_schema", "reason": "当前数据中没有就业结果字段。"},
     "好找工作": {"field_id": "employment_outlook", "status": "missing_schema", "reason": "当前数据中没有就业结果字段。"},
     "就业更好": {"field_id": "employment_outlook", "status": "missing_schema", "reason": "当前数据中没有就业结果字段。"},
     "将来好就业": {"field_id": "employment_outlook", "status": "missing_schema", "reason": "当前数据中没有就业结果字段。"},
@@ -130,6 +136,11 @@
     "本地就业": {"field_id": null, "status": "context_only", "reason": "本地就业需要明确城市或家庭所在地，不能直接执行。"},
     "升学深造": {"field_id": null, "status": "context_only", "reason": "升学深造是目标偏好，当前不作为招生表筛选字段。"},
     "读研": {"field_id": null, "status": "context_only", "reason": "读研是目标偏好，当前不作为招生表筛选字段。"},
+    "宿舍好": {"field_id": "dorm_quality", "status": "missing_schema", "reason": "当前数据中没有已审查的宿舍质量字段。"},
+    "宿舍条件好": {"field_id": "dorm_quality", "status": "missing_schema", "reason": "当前数据中没有已审查的宿舍质量字段。"},
+    "学校氛围好一点": {"field_id": "school_atmosphere", "status": "missing_schema", "reason": "当前数据中没有已审查的学校氛围字段。"},
+    "学校氛围好": {"field_id": "school_atmosphere", "status": "missing_schema", "reason": "当前数据中没有已审查的学校氛围字段。"},
+    "氛围好": {"field_id": "school_atmosphere", "status": "missing_schema", "reason": "当前数据中没有已审查的学校氛围字段。"},
     "离家近一点": {"field_id": "distance_from_home", "status": "missing_schema", "reason": "当前数据中没有家庭位置或距离字段。"},
     "离家近": {"field_id": "distance_from_home", "status": "missing_schema", "reason": "当前数据中没有家庭位置或距离字段。"},
     "偏远": {"field_id": "city_remoteness", "status": "missing_schema", "reason": "当前数据中没有已审查的偏远程度字段。"},

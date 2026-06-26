@@ -40,6 +40,7 @@ class RegexExtractor:
         reselected_subjects = self._reselected_subjects(text)
         preferred_cities = self._preferred_cities(text)
         major_exact_terms = self._major_exact_terms(text)
+        unknown_major_terms = self._unknown_major_terms(text, major_exact_terms)
         major_abbreviation_candidate = self._major_abbreviation_candidate(text)
         if major_abbreviation_candidate:
             major_exact_terms = [
@@ -80,6 +81,7 @@ class RegexExtractor:
             "preferences": {
                 "major_keyword": major_keyword,
                 "major_exact_terms": major_exact_terms,
+                "unknown_major_terms": unknown_major_terms,
                 "preferred_cities": preferred_cities,
                 "preferred_school_provinces": self._preferred_school_provinces(text),
                 "risk_preference_raw": self._first_present(
@@ -114,6 +116,7 @@ class RegexExtractor:
             "raw_sources": self._raw_sources(
                 text=text,
                 major_expansion_raw=major_expansion_raw,
+                unknown_major_terms=unknown_major_terms,
                 cooperation_preference_raw=cooperation_preference_raw,
                 employment_preference_raw=employment_preference_raw,
                 family_resource_raw=family_resource_raw,
@@ -159,10 +162,11 @@ class RegexExtractor:
         return _unique(cities)
 
     def _major_expansion(self, text: str) -> str | None:
-        for term in self._major_source_terms(text):
+        major_sources = self._major_source_terms(text)
+        for term in major_sources:
             if f"{term}相关" in text:
                 return f"{term}相关"
-        if any(token in text for token in ["相关", "都可以", "或者", "、", "/", "互联网"]):
+        if major_sources and any(token in text for token in ["都可以", "或者", "/", "互联网"]):
             return "相关专业"
         return None
 
@@ -170,6 +174,28 @@ class RegexExtractor:
         if "计科" in text and "计算机" not in text:
             return "计科"
         return None
+
+    def _unknown_major_terms(
+        self,
+        text: str,
+        known_major_terms: list[str],
+    ) -> list[str]:
+        known = set(known_major_terms)
+        terms: list[str] = []
+        patterns = [
+            r"(?:想|希望|打算|考虑|准备|计划)?(?:读|学|报考|报|选|选择)"
+            r"([\u4e00-\u9fffA-Za-z0-9]{2,16})(?:专业|方向)?",
+            r"(?:专业|方向)(?:想|希望|打算|考虑|准备|计划)?(?:读|学|报考|报|选|选择)?"
+            r"([\u4e00-\u9fffA-Za-z0-9]{2,16})",
+        ]
+        for pattern in patterns:
+            for match in re.finditer(pattern, text):
+                term = _clean_major_term(match.group(1))
+                if not term or term in known or self._major_exact_terms(term):
+                    continue
+                if term not in terms:
+                    terms.append(term)
+        return terms
 
     def _first_present(self, text: str, candidates: list[str]) -> str | None:
         for candidate in candidates:
@@ -238,17 +264,25 @@ class RegexExtractor:
         dedicated_preferences: list[str | None],
     ) -> list[str]:
         dedicated_terms = {term for term in dedicated_preferences if term}
-        return [
-            term
-            for term in self.aliases["other_vague_terms"]
-            if term not in dedicated_terms
-            and _positive_term_index(
+        matches = []
+        for term in self.aliases["other_vague_terms"]:
+            if term in dedicated_terms:
+                continue
+            index = _positive_term_index(
                 text,
                 term,
                 blocked_phrase=family_resource_raw,
             )
-            is not None
-        ]
+            if index is None:
+                continue
+            matches.append((index, index + len(term), term))
+
+        selected = []
+        for start, end, term in sorted(matches, key=lambda item: (item[0], -len(item[2]))):
+            if any(start >= kept_start and end <= kept_end for kept_start, kept_end, _ in selected):
+                continue
+            selected.append((start, end, term))
+        return [term for _, _, term in sorted(selected)]
 
     def _reselected_subjects(self, text: str) -> list[str]:
         normalized = text.replace("思想政治", "政治").replace("生物学", "生物")
@@ -266,6 +300,7 @@ class RegexExtractor:
         self,
         text: str,
         major_expansion_raw: str | None,
+        unknown_major_terms: list[str],
         cooperation_preference_raw: str | None,
         employment_preference_raw: str | None,
         family_resource_raw: str | None,
@@ -285,6 +320,8 @@ class RegexExtractor:
             sources["user_context.reselected_subjects"] = reselected_sources
         if major_expansion_raw:
             sources["preferences.major_expansion_raw"] = major_expansion_raw
+        if unknown_major_terms:
+            sources["preferences.unknown_major_terms"] = unknown_major_terms
         if cooperation_preference_raw:
             sources["preferences.cooperation_preference_raw"] = cooperation_preference_raw
         if employment_preference_raw:
@@ -405,6 +442,27 @@ def _parse_quantity(value: str) -> int | None:
     except (ValueError, KeyError):
         return None
     return int(parsed)
+
+
+def _clean_major_term(value: str) -> str:
+    text = re.split(r"[，。,.；;、/]", value.strip(), maxsplit=1)[0]
+    text = re.sub(r"的?(?:专业|方向|类|相关)$", "", text)
+    if any(marker in text for marker in ["就业", "宿舍", "氛围", "学校"]):
+        return ""
+    blocked = {
+        "专业",
+        "方向",
+        "大学",
+        "学校",
+        "本科",
+        "以后",
+        "将来",
+        "就业",
+        "好就业",
+        "宿舍",
+        "氛围",
+    }
+    return "" if text in blocked else text
 
 
 def _unique(values: list[str]) -> list[str]:

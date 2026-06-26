@@ -97,9 +97,17 @@ class EvidencePack:
             execution,
             domain_config,
         )
+        no_schema_preferences = (
+            base_no_schema_preferences
+            + guidance_no_schema_preferences
+        )
         not_executed = (
             _not_executed_preferences(classified_rules)
             + guidance_not_executed
+        )
+        unanswerable = _legacy_unanswerable_intents(
+            not_executed,
+            no_schema_preferences,
         )
         top_results = [
             _compact_result(rank, row, domain_config)
@@ -139,10 +147,7 @@ class EvidencePack:
                 [],
             ),
             unconfirmed_candidates=confirmation.get("unconfirmed_candidates", []),
-            no_schema_field_preferences=(
-                base_no_schema_preferences
-                + guidance_no_schema_preferences
-            ),
+            no_schema_field_preferences=no_schema_preferences,
             rejected_confirmations=confirmation.get("rejected_candidates", []),
             policy_references=policy_references or [],
             decision_guidance=guidance,
@@ -152,7 +157,7 @@ class EvidencePack:
                     "answerable": bool(compact_rules),
                 }
             ],
-            unanswerable_intents=[],
+            unanswerable_intents=unanswerable,
             verified_query_plan={},
             capability_graph_summary={},
             entity_linking=entity_linking or {"status": "not_applicable"},
@@ -199,6 +204,44 @@ def _guidance_not_executed_preferences(
             }
         )
     return items
+
+
+def _legacy_unanswerable_intents(
+    not_executed_preferences: list[dict[str, Any]],
+    no_schema_preferences: list[dict[str, Any]],
+) -> list[dict[str, Any]]:
+    intents: list[dict[str, Any]] = []
+    seen: set[tuple[str, str]] = set()
+    for item in [*no_schema_preferences, *not_executed_preferences]:
+        source_text = str(
+            item.get("source_text")
+            or item.get("preference")
+            or item.get("source_span")
+            or ""
+        ).strip()
+        field_id = str(item.get("field_id") or item.get("missing_field") or "")
+        if not source_text:
+            continue
+        key = (field_id, source_text)
+        if key in seen:
+            continue
+        seen.add(key)
+        intents.append(
+            {
+                "source_text": source_text,
+                "field_id": field_id or None,
+                "answerable": False,
+                "requirement_type": _legacy_requirement_type(item),
+                "reason": item.get("reason") or "该偏好没有进入已验证执行证据。",
+            }
+        )
+    return intents
+
+
+def _legacy_requirement_type(item: dict[str, Any]) -> str:
+    if item.get("match_type") == "no_schema_field" or item.get("field_id"):
+        return "knowledge_base_or_reviewed_field"
+    return "unsupported"
 
 
 def _guidance_no_schema_preferences(
@@ -345,9 +388,12 @@ def _attribute_match_category(record: dict[str, Any]) -> str | None:
     if status == "confirmable" or record.get("requires_human_confirmation"):
         return "partial_match"
     if audit_status in {
-        "partial_match",
         "not_found",
         "not_found_in_partial_index",
+    }:
+        return "unmatched_value"
+    if audit_status in {
+        "partial_match",
         "partial_numeric_profile",
         "outside_numeric_profile",
     }:
@@ -370,6 +416,8 @@ def _attribute_action(
         if source_text in confirmed_source_texts:
             return "confirmed_executed"
         return "needs_confirmation"
+    if category == "unmatched_value":
+        return "not_executed"
     return "not_executed"
 
 
@@ -388,6 +436,13 @@ def _attribute_reason(
     if category == "partial_match":
         reason = _user_facing_reason(record.get("reason")) or "需要确认具体边界。"
         return f"{reason}未进入 hard filter。"
+    if category == "unmatched_value":
+        audit_status = (record.get("value_index_audit") or {}).get("status")
+        if audit_status == "not_found":
+            return f"未在字段“{field}”的已审查完整值索引中命中，未进入 hard filter。"
+        if audit_status == "not_found_in_partial_index":
+            return f"未在字段“{field}”的已审查值索引中命中，未进入 hard filter。"
+        return f"数值未落入字段“{field}”的已审查范围，未进入 hard filter。"
     reason = _user_facing_reason(record.get("reason")) or "缺少可执行字段。"
     return f"{reason}原文已保留，未进入 hard filter。"
 
@@ -521,6 +576,7 @@ def _not_executed_preferences(classified_rules: dict[str, Any]) -> list[dict[str
             "source_text": preference.get("source_text"),
             "status": preference.get("status", "not_executed"),
             "reason": _user_facing_reason(preference.get("reason")),
+            "field_id": preference.get("field_id"),
         }
         record["safety_warning"] = _not_executed_warning(record)
         preferences.append(record)

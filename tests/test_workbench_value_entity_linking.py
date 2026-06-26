@@ -205,6 +205,7 @@ def _run(prompt: str) -> dict[str, object]:
         WorkbenchConfig(
             user_input=prompt,
             soft_preferences={"prompt": prompt},
+            extractor="regex",
             planner_mode="legacy",
         )
     )

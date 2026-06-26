@@ -741,6 +741,46 @@ class CareerGuidanceWorkbenchTest(unittest.TestCase):
             1,
         )
 
+    def test_external_quality_preferences_are_preserved_as_unanswerable(
+        self,
+    ) -> None:
+        query = "我是广东物理类，排位32000，就业好、宿舍好、学校氛围好一点"
+
+        result = run_workbench_with_test_warehouse(
+            WorkbenchConfig(
+                user_input=query,
+                soft_preferences={"prompt": query},
+                extractor="regex",
+            )
+        )
+
+        self.assertFalse(result["candidates_to_confirm"])
+        self.assertNotIn(
+            "相关专业",
+            {str(item.get("preference")) for item in result["candidate_rules"]},
+        )
+        unanswerable = {
+            item.get("source_text"): item
+            for item in result["evidence_pack"]["unanswerable_intents"]
+        }
+        self.assertIn("就业好", unanswerable)
+        self.assertIn("宿舍好", unanswerable)
+        self.assertIn("学校氛围好一点", unanswerable)
+        self.assertNotIn("学校氛围好", unanswerable)
+        self.assertNotIn("氛围好", unanswerable)
+        self.assertEqual(
+            unanswerable["就业好"]["field_id"],
+            "employment_outlook",
+        )
+        self.assertEqual(
+            unanswerable["宿舍好"]["field_id"],
+            "dorm_quality",
+        )
+        self.assertEqual(
+            unanswerable["学校氛围好一点"]["field_id"],
+            "school_atmosphere",
+        )
+
     def test_score_only_with_career_guidance_still_does_not_execute(self) -> None:
         query = "广东物理，630分，家里没资源，想选好就业的计算机专业。"
 
