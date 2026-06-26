@@ -4,6 +4,7 @@ import test from 'node:test';
 import {
   mergePromptText,
   primaryWorkbenchRunLabel,
+  workbenchProcessingStatus,
 } from './workbenchUiState.js';
 
 test('primaryWorkbenchRunLabel shows query progress for built-in data while loading', () => {
@@ -52,4 +53,24 @@ test('mergePromptText avoids duplicating the same quick example text', () => {
     ),
     '想学计算机，最好在广州深圳，学校稳一点。想找学费两万以内的专业。',
   );
+});
+
+test('workbenchProcessingStatus labels non-actionable confirmation responses as tips', () => {
+  assert.deepEqual(workbenchProcessingStatus({
+    status: 'needs_confirmation',
+    confirmationSummary: {
+      confirmableCount: 0,
+      warningOnlyCount: 1,
+    },
+  }), { label: '有提示', tone: 'info' });
+});
+
+test('workbenchProcessingStatus keeps actionable confirmation responses explicit', () => {
+  assert.deepEqual(workbenchProcessingStatus({
+    status: 'needs_confirmation',
+    confirmationSummary: {
+      confirmableCount: 1,
+      warningOnlyCount: 0,
+    },
+  }), { label: '待确认', tone: 'needs_confirmation' });
 });

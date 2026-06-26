@@ -20,6 +20,42 @@ export function primaryWorkbenchRunLabel({
   return currentPreflightReady ? '重新预检' : '先做预检';
 }
 
+export function workbenchProcessingStatus({
+  status = 'ok',
+  confirmationSummary = {},
+} = {}) {
+  if (status === 'needs_confirmation') {
+    if (confirmationSummary.confirmableCount > 0) {
+      return { label: '待确认', tone: 'needs_confirmation' };
+    }
+    if (confirmationSummary.warningOnlyCount > 0) {
+      return { label: '有提示', tone: 'info' };
+    }
+    return { label: '已完成', tone: 'ok' };
+  }
+
+  const labels = {
+    idle: '待查询',
+    ready: '可查询',
+    ok: '通过',
+    no_results: '无结果',
+    blocked: '已阻断',
+    error: '错误',
+  };
+  const tones = {
+    idle: 'info',
+    ready: 'info',
+    ok: 'ok',
+    no_results: 'info',
+    blocked: 'blocked',
+    error: 'error',
+  };
+  return {
+    label: labels[status] || status,
+    tone: tones[status] || 'info',
+  };
+}
+
 export function mergePromptText(currentPrompt, addition) {
   const current = cleanPrompt(currentPrompt);
   const next = cleanPrompt(addition);

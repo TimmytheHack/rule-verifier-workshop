@@ -278,6 +278,10 @@ input {
   border-color: #b9ddca;
 }
 
+.tone-info {
+  border-color: #bfd3e6;
+}
+
 .tone-needs_confirmation {
   border-color: #efd49b;
 }

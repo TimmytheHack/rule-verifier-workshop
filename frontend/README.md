@@ -73,6 +73,8 @@ npm run build
 
 “证据调试”工作区展示 uploaded dataset 的 `WorkbenchResponse` 中的 `items`、`top_results`、`result_sections`、`EvidencePack`、warnings 和 trace。`items` 与 `result_sections` 是主展示层，`top_results` 只作为兼容层。当 `status=needs_confirmation` 且 `candidates_to_confirm` 包含上一轮系统生成、可执行的 `candidate_id` 时，前端只允许提交这些 `candidate_id`；缺少 `candidate_id`、`executable=false`、`match_type=no_schema_field` 或 missing-schema 状态的 candidate 只展示为“仅提示”，不会出现确认按钮。如果是缺少位次等必要信息，则只展示 warning 并等待补充输入。`blocked`、`no_results`、warnings 和前端操作审计记录会单独显示。前端任何工作区都不生成 hard filter。
 
+主查询页的“处理状态”只在存在可提交的 `candidate_id` 时显示“待确认”。如果后端状态是 `needs_confirmation` 但没有可确认条件，只有不可提交的提示项，页面显示“有提示”，并在“仅提示”计数中展示，避免暗示还有确认按钮或确认步骤。
+
 ## 后端查询模式
 
 启动后端：

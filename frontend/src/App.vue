@@ -41,7 +41,10 @@ import {
   normalizeWorkbenchOptions,
 } from './utils/workbenchOptions';
 import { normalizeRunBarStatus } from './utils/workbenchRunBar';
-import { primaryWorkbenchRunLabel } from './utils/workbenchUiState';
+import {
+  primaryWorkbenchRunLabel,
+  workbenchProcessingStatus,
+} from './utils/workbenchUiState';
 import {
   canRerunConfirmedRequest,
   defaultWorkbenchMode,
@@ -129,12 +132,16 @@ const dataSourceTag = computed(() => {
 const quickStats = computed(() => {
   const data = runData.value || {};
   const confirmationSummary = candidateConfirmationSummary(data);
+  const processingStatus = workbenchProcessingStatus({
+    status: data.status || 'ok',
+    confirmationSummary,
+  });
   return [
-    { label: '处理状态', value: statusLabel(data.status || 'ok'), tone: data.status || 'ok' },
+    { label: '处理状态', value: processingStatus.label, tone: processingStatus.tone },
     { label: '可看结果', value: data.result_count ?? 0, tone: 'ok' },
     { label: '已用条件', value: data.executable_rules?.length || data.executed_filters?.length || 0, tone: 'ok' },
     { label: '可确认', value: confirmationSummary.confirmableCount, tone: 'needs_confirmation' },
-    { label: '仅提示', value: confirmationSummary.warningOnlyCount, tone: 'needs_confirmation' },
+    { label: '仅提示', value: confirmationSummary.warningOnlyCount, tone: confirmationSummary.warningOnlyCount ? 'info' : 'ok' },
     { label: '未参与', value: uniqueUnusedPreferences(data).length, tone: 'blocked' },
   ];
 });
@@ -615,18 +622,6 @@ function ensureSelectedRuntimeOptions() {
   }
 }
 
-function statusLabel(status) {
-  const labels = {
-    idle: '待查询',
-    ready: '可查询',
-    ok: '通过',
-    needs_confirmation: '待确认',
-    no_results: '无结果',
-    blocked: '已阻断',
-    error: '错误',
-  };
-  return labels[status] || status;
-}
 </script>
 
 <template>

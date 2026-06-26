@@ -133,6 +133,13 @@ test('WorkbenchRunBar bounds the run options popover on mobile viewports', () =>
   assert.doesNotMatch(source, /:width="420"/);
 });
 
+test('quick stats provide an informational tone for non-actionable tips', () => {
+  const source = readSource('../style.css');
+  const toneInfo = cssRule(source, '.tone-info');
+
+  assert.match(toneInfo, /border-color:\s*#bfd3e6;/);
+});
+
 test('C-lite query layout bounds desktop overflow and restores mobile page flow', () => {
   const source = readSource('../style.css');
   const cLiteQuery = cssRule(source, '.c-lite-query');
