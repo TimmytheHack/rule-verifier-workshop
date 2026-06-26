@@ -108,6 +108,8 @@ EvidencePack constrains answer.
 
 legacy admissions Workbench 现在在 `AttributeGrounder` 之后运行 reviewed value entity linker。它只读取 `SchemaRegistry` 和 `SchemaValueIndex`，用已审查 value evidence 处理完整实体与子串的歧义：例如“我想进深圳大学”会提出 `university_name = 深圳大学`，并抑制其中的 `city = 深圳`；“我想去深圳的大学”仍可执行城市筛选；“深圳大学附近”、否定、距离或身份上下文会进入 `entity_linking.not_executed_links`。accepted entity links 仍必须先通过 `RuleVerifier.audit_proposed_rules`，再由 Workbench merge guard 进入执行层；suppressed/boundary evidence 只会阻止不安全 hard filter，不能绕过 verifier 或直接生成 SQL。`EvidencePack.entity_linking` 和 `debug_trace.entity_linking` 保存这些决策，answer layer 只能基于该 evidence 解释哪些实体被执行、哪些子串或边界没有执行。
 
+这个能力依赖运行时 `outputs/data/schema_value_index.json` 的 reviewed lookup，而不是代码里的学校名单。发布检查要求该 artifact 至少包含 active `university_name`、`city`、`major_name` 和 `group_code` 字段，并要求 `university_name` 精确 lookup 能命中“深圳大学”、`city` lookup 能命中“深圳”。如果 artifact 只剩少量字段或缺少这些 lookup，测试里的临时仓库可能仍通过，但真实 API 会退化成城市子串匹配；因此 release 前必须重建 warehouse/value index，并运行 `scripts/validate_release_package.py`。
+
 当上传 admissions 分数/位次表只包含 `专业`、`所属专业组`、`最低位次`、`最低分数`、`学校所在` 等字段时，
 `admissions_schema_v1` 会先用已审查列名别名把这些源列映射到 admissions canonical 字段。
 系统可以在 `capability_graph` 和 `semantic_query_options` 支持下生成专业最低位次的
@@ -143,6 +145,8 @@ DeepSeekSemanticIntentExtractor
 `mode`、`provider`、`called`、`fallback_used`、`fallback_reason`、`token_usage` 和必要的 `error_type`。
 显式 `planner_mode=legacy` 会跳过 LLM semantic planner。判断 DeepSeek 是否参与，应看
 `token_usage.extractor` 和 `EvidencePack.planner`，不能只根据回答是否可用推断。
+
+uploaded `llm_semantic` 路径还会把用户表单中的硬条件合并进 `SemanticIntent.user_context`。合并范围只限 `source_province`、`subject_type`、`reselected_subjects`、`user_rank` 和 `user_score` / `score` 这类执行安全上下文；LLM 返回空值、漏抽或抽错时，不得覆盖表单事实，也不得把分数换算成位次。preflight 的 recognized facts 同样会优先展示这些 hard filters，避免用户在表单里选择了科类或排位，但正式 LLM semantic 查询没有用到。
 
 其中 DeepSeek 只能提出 `SemanticIntent` 或候选排序，不能直接生成 SQL，也不能返回候选集外
 row。`RankingPlan` 是 LLM 生成的可验证计划，不是 recommendation function。系统只执行通用
@@ -569,6 +573,7 @@ Workbench 的 confirmation loop 也属于执行边界：
 - 已确认 candidate 会重新经过规则形状检查，然后才编译成参数化 DuckDB SQL。
 - `no_schema_field` 偏好即使被用户确认也不执行，例如当前没有合作办学类型字段时，`校企合作` / `中外合作` 只能保留为未执行偏好。
 - EvidencePack 会记录 `confirmed_rules`、`confirmation_source`、`executed_after_confirmation`、`unconfirmed_candidates` 和 `no_schema_field_preferences`。
+- 前端 confirmation UI 只把带有系统生成 `candidate_id` 且未被标记为不可执行的 candidate 归入“可确认条件”。缺少 `candidate_id`、`executable=false`、`match_type=no_schema_field` 或 missing-schema 状态的 candidate 归入“仅提示”，不能提交到 confirmation loop。
 
 Workbench API 返回固定的 `WorkbenchResponse` contract：
 

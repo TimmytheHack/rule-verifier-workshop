@@ -85,6 +85,29 @@
 2. 必要时调整源文件表头或重新上传指定 sheet。
 3. 使用 review workflow 审查并批准字段。
 
+## 深圳大学被当成深圳城市筛选
+
+现象：
+
+- 内置 admissions 查询“我想进深圳大学，目前排位15000”时，结果里出现非深圳大学的院校；
+- `executed_filters` 只有 `city in_contains 深圳`，没有 `university_name = 深圳大学`；
+- `debug_trace.entity_linking` 为空，或 `schema_value_index` 中没有 `university_name` lookup。
+
+原因：
+
+- `outputs/data/schema_value_index.json` 不是最新构建产物；
+- value index 中没有 active `university_name` 字段，或 lookup values 缺少“深圳大学”；
+- release package 没有校验内置 admissions 运行时 artifact。
+
+处理：
+
+1. 确认仓库根目录存在本地真实招生 Excel。
+2. 运行 `source .venv/bin/activate && python scripts/build_data_warehouse.py`。
+3. 运行 `python scripts/validate_release_package.py --json-only`，确认 `builtin_value_index` 通过。
+4. 重新查询并检查 `EvidencePack.entity_linking.accepted_links` 包含 `university_name=深圳大学`，同时内部城市子串被 suppressed。
+
+如果用户表达的是“深圳的大学”，应执行城市筛选；如果表达“深圳大学附近”“不要深圳大学”或带距离/否定边界，应进入 `not_executed_links`，不能直接执行为院校或城市筛选。
+
 ## ambiguous score fields
 
 现象：
@@ -126,6 +149,44 @@
 1. 前端必须保存上一轮完整 `WorkbenchResponse`。
 2. `workbench.confirm` 只传 `previous_response` 和用户确认的 `candidate_id`。
 3. 不要把新的自由文本传入 confirm。
+
+## 前端只有提示但不能确认
+
+现象：
+
+- 页面显示“有提示”或“仅提示”；
+- 没有“确认后再查”按钮；
+- `candidates_to_confirm` 中有文本，但没有可勾选项。
+
+原因：
+
+- candidate 缺少系统生成的 `candidate_id`；
+- candidate 被后端标记为 `executable=false`；
+- candidate 是 `match_type=no_schema_field` 或 missing-schema 状态。
+
+处理：
+
+- 这是预期安全行为。前端只允许提交上一轮响应中可执行的 `candidate_id`。
+- 如果确实希望该偏好可执行，需要先补 reviewed 字段、allowed op、value evidence 或用户边界，再由后端重新生成可确认 candidate。
+- 不要在前端把提示文本手动改写成 `confirmed_candidates`。
+
+## 模型用量显示未返回或未发生调用
+
+现象：
+
+- 模型用量卡片显示 `未返回用量`；
+- 或显示 `未发生调用`，但查询仍然有结果。
+
+原因：
+
+- `未返回用量` 表示响应没有该阶段 `token_usage` 字段；
+- `未发生调用` 表示后端返回了该阶段 usage，但 token 数为 0；
+- deterministic planner、legacy planner、fallback 或 answer-only 路径都可能不产生某一阶段的 token。
+
+处理：
+
+- 判断 DeepSeek 是否参与，应同时查看 `EvidencePack.planner` 和 `token_usage.extractor`。
+- 不要把模型用量标签解释成筛选规则是否执行；规则执行只看 `executed_filters`、`verified_query_plan`、`ranking` 和 `EvidencePack`。
 
 ## top_results / items 字段误读
 

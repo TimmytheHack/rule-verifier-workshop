@@ -140,6 +140,10 @@ uploaded admissions 额外暴露 reviewed semantic capability path。`GET /datas
 会返回 `semantic_query_options`，用于说明当前表支持的 deterministic filters、sort fields、
 query types 和 unsupported fields。自然语言推荐请求可以由 DeepSeek 抽取候选
 `SemanticIntent`，但执行路径只接受 reviewed mapping 和 verifier 通过后的 `QueryAST`。
+`/workbench/query` payload 中已经结构化提交的 admissions 硬条件必须先合并进
+`SemanticIntent.user_context`，包括 `source_province`、`subject_type`、
+`reselected_subjects`、`user_rank` 和 `user_score` / `score`。这些值来自用户表单和
+preflight 确认，不来自 LLM；LLM 返回空值或冲突值时，不得覆盖这些硬条件，也不得把分数估算成位次。
 `semantic_recommendation` 的 `EvidencePack` 必须记录：
 
 - `verified_query_plan`：实际进入 SQLBuilder 的字段、op、参数和值。
@@ -233,6 +237,7 @@ outputs/tool_manifest/tool_manifest.json
 - `draft` / `needs_review` pack 必须返回 `blocked`，不执行 SQL。
 - `warehouse` metadata、schema/value index metadata 和源文件 fingerprint 不一致时返回 `blocked`。
 - `POST /workbench/query` 仍走 `DomainConfig`、`RuleVerifier`、confirmation loop 和参数化 DuckDB SQL；前端自然语言不能直接生成 hard filter。
+- 前端只能确认上一轮响应中带有系统生成 `candidate_id` 且未被标记为不可执行的 candidate。缺少 `candidate_id`、`executable=false`、`match_type=no_schema_field` 或 missing-schema 状态的 candidate 只能展示为提示，不能提交到 `confirmed_candidates`。
 - 普通 C-lite 前端中，uploaded admissions 数据集必须先通过“导入数据”一键导入流水线完成字段模板确认并生成可查询数据；该流水线内部可以完成 `approve-domain` 和 warehouse 重建。
 - 手动 `approve-domain` 或手动重建 warehouse 属于“字段审查”或 operator/admin 高级流程，不是普通上传页路径。一键导入成功并进入 `queryable` 后，前端可以把该 `dataset_id` 注册为主查询页数据源；如果本地 `DATA_ROOT` 被清理，主查询页必须切回内置 admissions 或在“导入数据”重新上传。
 
