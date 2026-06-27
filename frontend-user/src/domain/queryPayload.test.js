@@ -1,7 +1,10 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 
-import { buildWorkbenchPayload } from './queryOptions.js';
+import {
+  buildWorkbenchPayload,
+  workbenchPayloadSignature,
+} from './queryOptions.js';
 
 test('buildWorkbenchPayload sends only schema-declared fields as hard filters', () => {
   const payload = buildWorkbenchPayload({
@@ -47,4 +50,42 @@ test('buildWorkbenchPayload keeps empty prompt valid without inventing filters',
   assert.equal(payload.user_input, '查询');
   assert.deepEqual(payload.hard_filters, {});
   assert.deepEqual(payload.soft_preferences, { prompt: '查询' });
+});
+
+test('workbenchPayloadSignature changes when prompt or schema filter changes', () => {
+  const options = {
+    required_user_context: ['user_rank'],
+    filters: {
+      city: { allowed_ops: ['contains'], field_type: 'text' },
+      tuition: { allowed_ops: ['<='], field_type: 'number' },
+    },
+  };
+  const first = buildWorkbenchPayload({
+    prompt: '想找广州项目',
+    userContext: { user_rank: '15000' },
+    filterValues: { city: '广州', tuition: '20000' },
+    options,
+  });
+  const same = buildWorkbenchPayload({
+    prompt: '想找广州项目',
+    userContext: { user_rank: 15000 },
+    filterValues: { tuition: 20000, city: '广州' },
+    options,
+  });
+  const changedPrompt = buildWorkbenchPayload({
+    prompt: '想找深圳项目',
+    userContext: { user_rank: '15000' },
+    filterValues: { city: '广州', tuition: '20000' },
+    options,
+  });
+  const changedFilter = buildWorkbenchPayload({
+    prompt: '想找广州项目',
+    userContext: { user_rank: '15000' },
+    filterValues: { city: '深圳', tuition: '20000' },
+    options,
+  });
+
+  assert.equal(workbenchPayloadSignature(first), workbenchPayloadSignature(same));
+  assert.notEqual(workbenchPayloadSignature(first), workbenchPayloadSignature(changedPrompt));
+  assert.notEqual(workbenchPayloadSignature(first), workbenchPayloadSignature(changedFilter));
 });

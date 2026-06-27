@@ -1,5 +1,5 @@
 <script setup>
-import { computed, reactive, watchEffect } from 'vue';
+import { computed, reactive, watch, watchEffect } from 'vue';
 import {
   buildQueryControls,
   buildWorkbenchPayload,
@@ -13,7 +13,7 @@ const props = defineProps({
   },
   running: Boolean,
 });
-const emit = defineEmits(['submit']);
+const emit = defineEmits(['submit', 'payload-change']);
 
 const prompt = defineModel('prompt', { default: '' });
 const userContext = reactive({});
@@ -23,6 +23,13 @@ const filterOps = reactive({});
 const queryOptions = computed(() => props.profile.semantic_query_options || {});
 const controls = computed(() => buildQueryControls(queryOptions.value));
 const summary = computed(() => summarizeDatasetCapability(props.profile));
+const currentPayload = computed(() => buildWorkbenchPayload({
+  prompt: prompt.value,
+  userContext,
+  filterValues,
+  filterOps,
+  options: queryOptions.value,
+}));
 
 watchEffect(() => {
   for (const filter of controls.value.filters) {
@@ -32,14 +39,12 @@ watchEffect(() => {
   }
 });
 
+watch(currentPayload, (payload) => {
+  emit('payload-change', payload);
+}, { immediate: true });
+
 function submit() {
-  emit('submit', buildWorkbenchPayload({
-    prompt: prompt.value,
-    userContext,
-    filterValues,
-    filterOps,
-    options: queryOptions.value,
-  }));
+  emit('submit', currentPayload.value);
 }
 </script>
 

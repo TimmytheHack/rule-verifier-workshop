@@ -110,6 +110,14 @@ export function buildWorkbenchPayload({
   };
 }
 
+export function workbenchPayloadSignature(payload = {}) {
+  return JSON.stringify(stableValue({
+    user_input: normalizedPrompt(payload.user_input),
+    hard_filters: safeObject(payload.hard_filters),
+    soft_preferences: safeObject(payload.soft_preferences),
+  }));
+}
+
 function requiredContext(options = {}) {
   return stringList(safeObject(options).required_user_context);
 }
@@ -194,4 +202,18 @@ function hasValue(value) {
     && value !== undefined
     && value !== ''
     && !(Array.isArray(value) && value.length === 0);
+}
+
+function stableValue(value) {
+  if (Array.isArray(value)) {
+    return value.map(stableValue);
+  }
+  if (value && typeof value === 'object') {
+    return Object.fromEntries(
+      Object.entries(value)
+        .sort(([left], [right]) => left.localeCompare(right))
+        .map(([key, item]) => [key, stableValue(item)]),
+    );
+  }
+  return value;
 }

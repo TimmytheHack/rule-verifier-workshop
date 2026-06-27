@@ -7,6 +7,7 @@ import {
 } from '../api/datasets.js';
 import EvidenceSummary from '../components/EvidenceSummary.vue';
 import QueryComposer from '../components/QueryComposer.vue';
+import { workbenchPayloadSignature } from '../domain/queryOptions.js';
 
 const props = defineProps({
   datasetId: {
@@ -23,7 +24,10 @@ const loading = ref(false);
 const running = ref(false);
 const executing = ref(false);
 const error = ref('');
+const preflightNotice = ref('');
 const lastQueryPayload = ref(null);
+const lastPreflightSignature = ref('');
+const currentPayloadSignature = ref('');
 const boundarySelections = ref({});
 
 const boundaryConfirmations = computed(() =>
@@ -51,6 +55,9 @@ watch(
     prompt.value = '';
     boundarySelections.value = {};
     lastQueryPayload.value = null;
+    lastPreflightSignature.value = '';
+    currentPayloadSignature.value = '';
+    preflightNotice.value = '';
     loadProfile();
   },
 );
@@ -72,11 +79,15 @@ async function runPreflight(payload) {
     error.value = '数据源缺少已审查 domain，无法查询。';
     return;
   }
+  const submittedSignature = workbenchPayloadSignature(payload);
+  currentPayloadSignature.value = submittedSignature;
   running.value = true;
   error.value = '';
+  preflightNotice.value = '';
   result.value = null;
   boundarySelections.value = {};
-  lastQueryPayload.value = {
+  lastQueryPayload.value = null;
+  const queryPayload = {
     domainName: profile.value.domain_name,
     userInput: payload.user_input,
     hardFilters: payload.hard_filters,
@@ -84,11 +95,19 @@ async function runPreflight(payload) {
     plannerMode: 'auto',
   };
   try {
-    result.value = await preflightDatasetQuery({
+    const preflight = await preflightDatasetQuery({
       datasetId: props.datasetId,
-      ...lastQueryPayload.value,
+      ...queryPayload,
     });
+    if (currentPayloadSignature.value !== submittedSignature) {
+      preflightNotice.value = '查询条件已变化，请重新运行查询前检查。';
+      return;
+    }
+    lastQueryPayload.value = queryPayload;
+    lastPreflightSignature.value = submittedSignature;
+    result.value = preflight;
   } catch (exc) {
+    lastPreflightSignature.value = '';
     error.value = exc.message || '查询前检查失败。';
   } finally {
     running.value = false;
@@ -135,6 +154,19 @@ function selectBoundary(confirmationId, optionId) {
   };
 }
 
+function handlePayloadChange(payload) {
+  const signature = workbenchPayloadSignature(payload);
+  currentPayloadSignature.value = signature;
+  if (!lastPreflightSignature.value || signature === lastPreflightSignature.value) {
+    return;
+  }
+  result.value = null;
+  boundarySelections.value = {};
+  lastQueryPayload.value = null;
+  lastPreflightSignature.value = '';
+  preflightNotice.value = '查询条件已变化，请重新运行查询前检查。';
+}
+
 function hasBlockingRequirement(payload) {
   return (Array.isArray(payload?.missing_requirements) ? payload.missing_requirements : [])
     .some((item) => item.blocking !== false);
@@ -160,8 +192,10 @@ function hasBlockingRequirement(payload) {
         v-model:prompt="prompt"
         :profile="profile"
         :running="running"
+        @payload-change="handlePayloadChange"
         @submit="runPreflight"
       />
+      <p v-if="preflightNotice" class="state-line">{{ preflightNotice }}</p>
       <div v-if="result?.preflight_id" class="execution-bar">
         <p>
           {{ boundaryConfirmations.length ? `已处理 ${handledBoundaryCount} / ${boundaryConfirmations.length} 个确认项` : '查询前检查已完成' }}
