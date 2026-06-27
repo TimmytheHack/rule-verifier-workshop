@@ -48,6 +48,17 @@ class ServerDeploymentTest(unittest.TestCase):
         self.assertEqual(payload["api_version"], "api.v1")
         self.assertEqual(payload["tool_contract_version"], "tools.v1")
 
+    def test_distribution_mode_status(self) -> None:
+        with patch.dict(
+            os.environ,
+            {"APP_DISTRIBUTION_MODE": "user_upload_only"},
+            clear=False,
+        ):
+            response = self.client.get("/version")
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()["distribution_mode"], "user_upload_only")
+
     def test_openapi_and_tool_manifest_can_be_generated(self) -> None:
         with TemporaryDirectory() as directory:
             root = Path(directory)

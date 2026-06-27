@@ -212,6 +212,7 @@ def version() -> dict[str, str]:
         "schema_version": WORKBENCH_SCHEMA_VERSION,
         "api_version": API_VERSION,
         "tool_contract_version": TOOL_CONTRACT_VERSION,
+        "distribution_mode": os.getenv("APP_DISTRIBUTION_MODE", "development"),
     }
 
 

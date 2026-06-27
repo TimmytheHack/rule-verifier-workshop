@@ -49,7 +49,7 @@ make serve
 另开一个终端启动前端：
 
 ```bash
-cd frontend
+cd frontend-user
 npm install
 npm run dev
 ```
@@ -60,7 +60,15 @@ npm run dev
 http://127.0.0.1:5173
 ```
 
-只看前端演示数据时，可以不启动后端。要使用真实 API、一键导入数据、字段审查或构建 warehouse，需要后端正在运行。
+`frontend-user/` 是面向本地用户的新入口，不加载旧 mock/demo 数据，也不展示内部 admissions 数据源。它只从本机后端读取用户上传的数据源列表、能力摘要和 LLM 设置。旧 `frontend/` 仍保留给研发、演示和证据调试使用。
+
+发行给普通用户时建议使用：
+
+```bash
+APP_DISTRIBUTION_MODE=user_upload_only
+```
+
+该模式表示页面只面向用户上传表格和本机配置，不依赖内部 admissions Excel、内部 warehouse 或旧 mock 结果。
 
 ## 使用内置招生数据
 
@@ -218,7 +226,8 @@ evidence.get
 |---|---|
 | `make bootstrap` | 创建 `.venv` 并安装 Python 依赖。 |
 | `make serve` | 启动 FastAPI 后端。 |
-| `cd frontend && npm run dev` | 启动前端开发服务。 |
+| `cd frontend-user && npm run dev` | 启动本地用户 Web。 |
+| `cd frontend && npm run dev` | 启动旧研发前端。 |
 | `make frontend` | 构建前端。 |
 | `make test` | 运行单元测试。 |
 | `make demo` | 运行 demo acceptance。 |
@@ -283,7 +292,8 @@ git status --short
 
 | 路径 | 说明 |
 |---|---|
-| `frontend/` | Vue 3 前端工作台。 |
+| `frontend-user/` | 独立本地用户 Web，不读取旧 mock/demo 数据。 |
+| `frontend/` | 研发、演示和证据调试用 Vue 3 前端工作台。 |
 | `src/` | 后端 API、规则验证、执行器和报告生成代码。 |
 | `domains/` | admissions、housing、products 的 domain pack 配置。 |
 | `rules/` | 跨 domain 的规则生命周期、信息需求和模糊词配置。 |
