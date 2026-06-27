@@ -774,6 +774,9 @@ class UploadedDatasetFlowTest(unittest.TestCase):
             bad_dir = root / "bad"
             bad_dir.mkdir(parents=True, exist_ok=True)
             (bad_dir / "dataset.json").write_text("{}", encoding="utf-8")
+            bad_json_dir = service.root / "bad_json"
+            bad_json_dir.mkdir(parents=True, exist_ok=True)
+            (bad_json_dir / "dataset.json").write_text("[]", encoding="utf-8")
 
             payload = service.list_datasets()
 

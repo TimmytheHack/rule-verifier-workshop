@@ -342,6 +342,8 @@ class DatasetService:
                 continue
             try:
                 metadata = _load_json(metadata_path)
+                if not isinstance(metadata, dict):
+                    continue
                 raw_dataset_id = metadata.get("dataset_id")
                 if not raw_dataset_id:
                     continue
