@@ -33,6 +33,8 @@ const boundarySelections = ref({});
 const boundaryConfirmations = computed(() =>
   Array.isArray(result.value?.boundary_confirmations) ? result.value.boundary_confirmations : [],
 );
+const profileTitle = computed(() => profile.value?.original_filename || props.datasetId);
+const profileStatusLabel = computed(() => statusLabel(profile.value?.status));
 const handledBoundaryCount = computed(() =>
   boundaryConfirmations.value.filter((item) => boundarySelections.value[item.confirmation_id]).length,
 );
@@ -171,6 +173,16 @@ function hasBlockingRequirement(payload) {
   return (Array.isArray(payload?.missing_requirements) ? payload.missing_requirements : [])
     .some((item) => item.blocking !== false);
 }
+
+function statusLabel(status) {
+  if (status === 'queryable') return '可查询';
+  if (status === 'uploaded') return '已导入';
+  if (status === 'profiled') return '已分析';
+  if (status === 'needs_review') return '待审查';
+  if (status === 'approved') return '已批准';
+  if (status === 'blocked') return '已阻断';
+  return status || '未知状态';
+}
 </script>
 
 <template>
@@ -184,9 +196,9 @@ function hasBlockingRequirement(payload) {
       <div class="detail-heading">
         <div>
           <p class="kicker">已选择数据源</p>
-          <h2>{{ profile.domain_name || datasetId }}</h2>
+          <h2>{{ profileTitle }}</h2>
         </div>
-        <span class="status-pill">{{ profile.status || '未知状态' }}</span>
+        <span class="status-pill">{{ profileStatusLabel }}</span>
       </div>
       <QueryComposer
         v-model:prompt="prompt"

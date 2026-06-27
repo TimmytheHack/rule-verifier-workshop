@@ -7,16 +7,18 @@ import {
 } from './queryOptions.js';
 
 test('summarizeDatasetCapability ignores template ids and uses capability fields', () => {
+  const domainPrefix = 'reviewed_domain';
   const summary = summarizeDatasetCapability({
     domain_template_id: 'legacy_template_x',
-    capability_level: 'admissions_filterable',
+    capability_level: `${domainPrefix}_filterable`,
     recommendation_readiness: 'candidate_list',
     semantic_query_options: {
-      query_types: ['admissions_major_rank'],
+      query_types: [`${domainPrefix}_major_rank`],
       required_user_context: ['user_rank'],
     },
   });
 
+  assert.equal(summary.capabilityLevel, 'filterable');
   assert.equal(summary.label, '可查询候选列表');
   assert.equal(summary.requiresUserRank, true);
   assert.equal(summary.canCallRecommendation, false);

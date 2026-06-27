@@ -3,13 +3,11 @@ const REQUIRED_INPUT_LABELS = {
 };
 
 const CAPABILITY_LABELS = {
-  admissions_profile_only: '只能查看字段',
-  admissions_filterable: '可字段筛选',
-  admissions_major_rank: '可查询专业位次',
-  admissions_candidate_list: '可查询候选列表',
-  admissions_verified_recommendation: '可生成验证推荐',
-  filterable: '可字段筛选',
   profile_only: '只能查看字段',
+  filterable: '可字段筛选',
+  rank_query: '可查询位次/排名',
+  candidate_list: '可查询候选列表',
+  verified_recommendation: '可生成验证推荐',
 };
 
 const READINESS_LABELS = {
@@ -20,8 +18,8 @@ const READINESS_LABELS = {
 export function summarizeDatasetCapability(profile = {}) {
   const options = safeObject(profile.semantic_query_options);
   const queryTypes = stringList(options.query_types);
-  const capabilityLevel = stringValue(profile.capability_level) || inferCapabilityLevel(queryTypes);
-  const readiness = stringValue(profile.recommendation_readiness)
+  const capabilityLevel = normalizeCapabilityLevel(profile.capability_level, queryTypes);
+  const readiness = normalizeReadiness(profile.recommendation_readiness)
     || inferRecommendationReadiness(capabilityLevel, queryTypes);
 
   return {
@@ -31,7 +29,7 @@ export function summarizeDatasetCapability(profile = {}) {
     queryTypes,
     requiresUserRank: requiredContext(options).includes('user_rank'),
     canCallRecommendation:
-      capabilityLevel === 'admissions_verified_recommendation'
+      capabilityLevel === 'verified_recommendation'
       && readiness === 'verified_recommendation',
   };
 }
@@ -124,25 +122,57 @@ function requiredContext(options = {}) {
 
 function inferCapabilityLevel(queryTypes) {
   if (queryTypes.includes('semantic_recommendation')) {
-    return 'admissions_candidate_list';
+    return 'candidate_list';
   }
-  if (queryTypes.includes('admissions_major_rank')) {
-    return 'admissions_major_rank';
+  if (queryTypes.some(isRankQueryType)) {
+    return 'rank_query';
   }
   return queryTypes.length ? 'filterable' : 'profile_only';
 }
 
 function inferRecommendationReadiness(capabilityLevel, queryTypes) {
-  if (capabilityLevel === 'admissions_verified_recommendation') {
+  if (capabilityLevel === 'verified_recommendation') {
     return 'verified_recommendation';
   }
   if (
-    capabilityLevel === 'admissions_candidate_list'
+    capabilityLevel === 'candidate_list'
     || queryTypes.includes('semantic_recommendation')
   ) {
     return 'candidate_list';
   }
   return capabilityLevel === 'filterable' ? 'not_applicable' : 'not_ready';
+}
+
+function normalizeCapabilityLevel(value, queryTypes) {
+  const normalized = normalizeBySuffix(stringValue(value), [
+    'verified_recommendation',
+    'candidate_list',
+    'profile_only',
+    'filterable',
+    'major_rank',
+  ]);
+  if (normalized === 'major_rank') return 'rank_query';
+  return normalized || inferCapabilityLevel(queryTypes);
+}
+
+function normalizeReadiness(value) {
+  return normalizeBySuffix(stringValue(value), [
+    'verified_recommendation',
+    'candidate_list',
+    'not_applicable',
+    'not_ready',
+  ]);
+}
+
+function normalizeBySuffix(value, suffixes) {
+  if (!value) return '';
+  if (suffixes.includes(value)) return value;
+  const suffix = suffixes.find((item) => value.endsWith(`_${item}`));
+  return suffix || '';
+}
+
+function isRankQueryType(value) {
+  return value === 'major_rank' || value.endsWith('_major_rank');
 }
 
 function stringList(value) {

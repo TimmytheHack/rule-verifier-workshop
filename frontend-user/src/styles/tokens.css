@@ -172,6 +172,13 @@ h1 {
   background: var(--accent);
 }
 
+.status-strip[data-status="filterable"],
+.status-strip[data-status="rank_query"],
+.status-strip[data-status="candidate_list"],
+.status-strip[data-status="verified_recommendation"] {
+  background: var(--accent);
+}
+
 .dataset-card-body {
   display: grid;
   gap: 14px;
