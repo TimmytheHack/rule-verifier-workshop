@@ -556,7 +556,9 @@ git commit -m "feat: add local llm settings"
 ## Task 3: 独立 `frontend-user` 项目骨架
 
 **Files:**
+- Create: `frontend-user/.gitignore`
 - Create: `frontend-user/package.json`
+- Create: `frontend-user/package-lock.json`
 - Create: `frontend-user/vite.config.js`
 - Create: `frontend-user/index.html`
 - Create: `frontend-user/src/main.js`
