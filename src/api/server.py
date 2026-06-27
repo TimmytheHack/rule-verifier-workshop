@@ -211,6 +211,17 @@ def options() -> dict[str, object]:
     return available_options()
 
 
+@app.get("/datasets")
+def list_datasets(request: Request) -> dict[str, object]:
+    """列出本机托管数据源。"""
+
+    try:
+        _ensure_scope(_actor_context_from_request(request), "read_only")
+        return dataset_service.list_datasets()
+    except DatasetServiceError as exc:
+        raise _dataset_http_error(exc) from exc
+
+
 @app.post("/datasets/upload")
 async def upload_dataset(
     request: Request,

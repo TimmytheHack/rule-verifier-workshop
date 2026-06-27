@@ -298,6 +298,12 @@ class DatasetService:
         return {
             "dataset_id": dataset_id,
             "status": metadata["status"],
+            "domain_name": metadata.get("domain_name"),
+            "domain_pack_status": metadata.get("domain_pack_status"),
+            "capability_level": metadata.get("capability_level")
+            or _default_capability_level(metadata),
+            "recommendation_readiness": metadata.get("recommendation_readiness")
+            or _default_recommendation_readiness(metadata),
             "source_fingerprint": metadata["source_fingerprint"],
             "row_count": profile.get("row_count"),
             "column_count": profile.get("column_count"),
@@ -321,6 +327,32 @@ class DatasetService:
             "semantic_mapping_candidates": semantic_mapping_candidates,
             "warnings": metadata.get("warnings", []),
         }
+
+    def list_datasets(self) -> dict[str, Any]:
+        """列出本机托管数据源，不暴露本地文件路径。"""
+
+        datasets: list[dict[str, Any]] = []
+        if not self.root.exists():
+            return {"datasets": datasets}
+        for child in sorted(self.root.iterdir(), key=lambda path: path.name):
+            if not child.is_dir():
+                continue
+            metadata_path = child / "dataset.json"
+            if not metadata_path.exists():
+                continue
+            try:
+                metadata = _load_json(metadata_path)
+                raw_dataset_id = metadata.get("dataset_id")
+                if not raw_dataset_id:
+                    continue
+                dataset_id = str(raw_dataset_id)
+                self._validate_dataset_id(dataset_id, allow_reserved=False)
+                if self._dataset_dir(dataset_id).resolve() != child.resolve():
+                    continue
+            except (DatasetServiceError, OSError, ValueError, json.JSONDecodeError):
+                continue
+            datasets.append(_dataset_list_item(metadata))
+        return {"datasets": datasets}
 
     def review_summary(self, dataset_id: str) -> dict[str, Any]:
         """返回 review UI 所需的字段、seed ops 和风险摘要。"""
@@ -1033,6 +1065,46 @@ def _review_result_payload(dataset_id: str, result: Any) -> dict[str, Any]:
         "message": result.message,
         "payload": result.payload,
     }
+
+
+def _dataset_list_item(metadata: dict[str, Any]) -> dict[str, Any]:
+    item = {
+        "dataset_id": metadata.get("dataset_id"),
+        "status": metadata.get("status"),
+        "domain_name": metadata.get("domain_name"),
+        "domain_pack_status": metadata.get("domain_pack_status"),
+        "capability_level": metadata.get("capability_level")
+        or _default_capability_level(metadata),
+        "recommendation_readiness": metadata.get("recommendation_readiness")
+        or _default_recommendation_readiness(metadata),
+        "original_filename": metadata.get("original_filename"),
+        "row_count": metadata.get("row_count"),
+        "column_count": metadata.get("column_count"),
+        "sheet_name": metadata.get("sheet_name"),
+        "created_at": metadata.get("created_at"),
+        "updated_at": metadata.get("updated_at"),
+        "warnings": metadata.get("warnings", []),
+        "errors": metadata.get("errors", []),
+    }
+    return {key: value for key, value in item.items() if value is not None}
+
+
+def _default_capability_level(metadata: dict[str, Any]) -> str:
+    if metadata.get("status") != "queryable":
+        return "profile_only"
+    if _uses_admissions_schema_template(metadata):
+        return "admissions_filterable"
+    return "filterable"
+
+
+def _default_recommendation_readiness(metadata: dict[str, Any]) -> str:
+    if metadata.get("status") != "queryable":
+        return "not_ready"
+    return (
+        "candidate_list"
+        if _uses_admissions_schema_template(metadata)
+        else "not_applicable"
+    )
 
 
 def _resolve_domain_template_id(

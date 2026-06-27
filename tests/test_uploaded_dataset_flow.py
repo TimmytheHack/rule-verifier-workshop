@@ -730,6 +730,58 @@ class UploadedDatasetFlowTest(unittest.TestCase):
             response["evidence_pack"]["planner"],
         )
 
+    def test_list_datasets_returns_safe_summaries(self) -> None:
+        with TemporaryDirectory() as directory:
+            root = Path(directory)
+            service, dataset_id = _generated_generic_dataset(root)
+            metadata_path = service._metadata_path(dataset_id)  # noqa: SLF001
+            metadata = json.loads(metadata_path.read_text(encoding="utf-8"))
+            metadata.update(
+                {
+                    "status": "queryable",
+                    "domain_name": "leases",
+                    "warehouse_database_path": str(root / "secret.duckdb"),
+                    "capability_level": "filterable",
+                    "recommendation_readiness": "not_applicable",
+                }
+            )
+            metadata_path.write_text(
+                json.dumps(metadata, ensure_ascii=False, indent=2) + "\n",
+                encoding="utf-8",
+            )
+
+            payload = service.list_datasets()
+            profile = service.profile(dataset_id)
+
+        self.assertEqual(len(payload["datasets"]), 1)
+        item = payload["datasets"][0]
+        self.assertEqual(item["dataset_id"], dataset_id)
+        self.assertEqual(item["status"], "queryable")
+        self.assertEqual(item["capability_level"], "filterable")
+        self.assertEqual(item["recommendation_readiness"], "not_applicable")
+        self.assertNotIn("source_path", item)
+        self.assertNotIn("warehouse_database_path", item)
+        self.assertNotIn(str(root), json.dumps(item, ensure_ascii=False))
+
+        self.assertEqual(profile["domain_name"], "leases")
+        self.assertEqual(profile["capability_level"], "filterable")
+        self.assertEqual(profile["recommendation_readiness"], "not_applicable")
+
+    def test_list_datasets_ignores_invalid_directories(self) -> None:
+        with TemporaryDirectory() as directory:
+            root = Path(directory)
+            service, dataset_id = _generated_generic_dataset(root)
+            bad_dir = root / "bad"
+            bad_dir.mkdir(parents=True, exist_ok=True)
+            (bad_dir / "dataset.json").write_text("{}", encoding="utf-8")
+
+            payload = service.list_datasets()
+
+        self.assertEqual(
+            [item["dataset_id"] for item in payload["datasets"]],
+            [dataset_id],
+        )
+
 
 class UploadedSemanticAdmissionsFlowTest(unittest.TestCase):
     def test_uploaded_admissions_preflight_returns_contract(self) -> None:
