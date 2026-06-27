@@ -1,3 +1,5 @@
+const DEFAULT_DEV_ACTOR_TOKEN = import.meta.env?.DEV ? 'operator-token' : '';
+
 export async function requestJson(url, options = {}) {
   const response = await fetch(url, jsonRequestOptions(options));
   const payload = await response.json().catch(() => ({}));
@@ -10,8 +12,21 @@ export async function requestJson(url, options = {}) {
   return payload;
 }
 
+export function authHeaders() {
+  let token = DEFAULT_DEV_ACTOR_TOKEN;
+  try {
+    token = globalThis.localStorage?.getItem('actor_token') || DEFAULT_DEV_ACTOR_TOKEN;
+  } catch {
+    token = DEFAULT_DEV_ACTOR_TOKEN;
+  }
+  return token ? { 'X-Actor-Token': token } : {};
+}
+
 function jsonRequestOptions(options) {
-  const headers = new Headers(options.headers || {});
+  const headers = new Headers(authHeaders());
+  new Headers(options.headers || {}).forEach((value, key) => {
+    headers.set(key, value);
+  });
   if (options.body !== undefined && !headers.has('Content-Type')) {
     headers.set('Content-Type', 'application/json');
   }

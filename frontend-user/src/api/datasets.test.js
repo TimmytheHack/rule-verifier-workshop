@@ -27,7 +27,7 @@ test('uploadDataset sends raw file body without JSON content type', async () => 
 
     assert.equal(payload.dataset_id, 'ds_upload');
     assert.equal(request.options.body, file);
-    assert.equal(request.options.headers, undefined);
+    assert.equal(new Headers(request.options.headers).has('Content-Type'), false);
   } finally {
     globalThis.fetch = originalFetch;
   }

@@ -1,4 +1,6 @@
 <script setup>
+import { summarizeDatasetCapability } from '../domain/queryOptions.js';
+
 defineProps({
   datasets: {
     type: Array,
@@ -14,11 +16,18 @@ function statusLabel(status) {
   if (status === 'queryable') return '可查询';
   if (status === 'uploaded') return '已导入';
   if (status === 'profiled') return '已分析';
+  if (status === 'needs_review') return '待审查';
+  if (status === 'approved') return '已批准';
+  if (status === 'blocked') return '已阻断';
   return status || '未知状态';
 }
 
 function capabilityLabel(dataset) {
-  return dataset.capability_level || dataset.recommendation_readiness || '待确认';
+  return summarizeDatasetCapability(dataset).label;
+}
+
+function actionLabel(status) {
+  return status === 'queryable' ? '开始查询' : '待完成导入';
 }
 </script>
 
@@ -48,7 +57,7 @@ function capabilityLabel(dataset) {
           <div class="dataset-card-title">
             <div>
               <h3>{{ dataset.original_filename || dataset.dataset_id }}</h3>
-              <p>{{ dataset.domain_name || '通用表格' }}</p>
+              <p>本地表格</p>
             </div>
             <span>{{ statusLabel(dataset.status) }}</span>
           </div>
@@ -72,7 +81,7 @@ function capabilityLabel(dataset) {
             :disabled="dataset.status !== 'queryable'"
             @click="emit('open-dataset', dataset.dataset_id)"
           >
-            开始查询
+            {{ actionLabel(dataset.status) }}
           </button>
         </div>
       </article>

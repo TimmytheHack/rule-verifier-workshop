@@ -1,4 +1,4 @@
-import { requestJson } from './client.js';
+import { authHeaders, requestJson } from './client.js';
 
 export function listDatasets() {
   return requestJson('/datasets');
@@ -21,6 +21,7 @@ export function uploadDataset({ file, datasetId, sheetName }) {
   if (sheetName) params.set('sheet_name', sheetName);
   return fetch(`/datasets/upload?${params.toString()}`, {
     method: 'POST',
+    headers: authHeaders(),
     body: file,
   }).then(handleUploadResponse);
 }
