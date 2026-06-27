@@ -744,6 +744,19 @@ class UploadedDatasetFlowTest(unittest.TestCase):
                     "capability_level": "filterable",
                     "recommendation_readiness": "not_applicable",
                     "original_filename": "C:\\Users\\tz\\private\\housing.csv",
+                    "warnings": [
+                        {
+                            "code": "source_path_warning",
+                            "message": f"source path {root / 'private' / 'housing.csv'}",
+                        },
+                        f"plain warning {root / 'private' / 'other.csv'}",
+                    ],
+                    "errors": [
+                        {
+                            "code": "warehouse_error",
+                            "message": f"failed at {root / 'secret.duckdb'}",
+                        }
+                    ],
                 }
             )
             metadata_path.write_text(
@@ -761,11 +774,19 @@ class UploadedDatasetFlowTest(unittest.TestCase):
         self.assertEqual(item["capability_level"], "filterable")
         self.assertEqual(item["recommendation_readiness"], "not_applicable")
         self.assertEqual(item["original_filename"], "housing.csv")
+        self.assertEqual(item["warning_count"], 2)
+        self.assertEqual(item["error_count"], 1)
+        self.assertEqual(item["warning_codes"], ["source_path_warning"])
+        self.assertEqual(item["error_codes"], ["warehouse_error"])
         self.assertNotIn("C:\\Users", item["original_filename"])
         self.assertNotIn("\\", item["original_filename"])
         self.assertNotIn("source_path", item)
         self.assertNotIn("warehouse_database_path", item)
-        self.assertNotIn(str(root), json.dumps(item, ensure_ascii=False))
+        serialized_item = json.dumps(item, ensure_ascii=False)
+        self.assertNotIn(str(root), serialized_item)
+        self.assertNotIn("source path", serialized_item)
+        self.assertNotIn("plain warning", serialized_item)
+        self.assertNotIn("failed at", serialized_item)
 
         self.assertEqual(profile["domain_name"], "leases")
         self.assertEqual(profile["capability_level"], "filterable")
