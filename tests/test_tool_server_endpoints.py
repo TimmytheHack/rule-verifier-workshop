@@ -237,6 +237,49 @@ class ToolServerEndpointsTest(unittest.TestCase):
         self.assertEqual(context["subject_type"], "物理")
         self.assertEqual(context["reselected_subjects"], ["化学", "生物"])
 
+    def test_list_datasets_endpoint_requires_read_scope_and_returns_safe_payload(
+        self,
+    ) -> None:
+        payload = {
+            "datasets": [
+                {
+                    "dataset_id": "ds_local",
+                    "status": "queryable",
+                    "original_filename": "housing.csv",
+                    "warning_count": 1,
+                    "warning_codes": ["upload_warning"],
+                    "error_count": 0,
+                    "error_codes": [],
+                }
+            ]
+        }
+
+        class FakeDatasetService:
+            def list_datasets(self) -> dict[str, object]:
+                return payload
+
+        with patch.object(server_module, "dataset_service", FakeDatasetService()):
+            reader_response = self.client.get(
+                "/datasets",
+                headers=_auth_headers("reader-token"),
+            )
+            anonymous_response = self.client.get("/datasets")
+            query_response = self.client.get(
+                "/datasets",
+                headers=_auth_headers("query-token"),
+            )
+
+        serialized = json.dumps(reader_response.json(), ensure_ascii=False)
+
+        self.assertEqual(reader_response.status_code, 200)
+        self.assertEqual(reader_response.json(), payload)
+        self.assertEqual(anonymous_response.status_code, 403)
+        self.assertEqual(query_response.status_code, 403)
+        self.assertNotIn("source_path", serialized)
+        self.assertNotIn("warehouse_database_path", serialized)
+        self.assertNotIn("/Users/", serialized)
+        self.assertNotIn("secret.duckdb", serialized)
+
     def test_tools_list_filters_by_actor_permission(self) -> None:
         response = self.client.get(
             "/tools/list",
