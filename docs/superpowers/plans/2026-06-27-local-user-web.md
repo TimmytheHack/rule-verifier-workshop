@@ -179,6 +179,8 @@ Add module-level helpers near `_review_result_payload`:
 
 ```python
 def _dataset_list_item(metadata: dict[str, Any]) -> dict[str, Any]:
+    warning_summary = _safe_issue_summary(metadata.get("warnings", []))
+    error_summary = _safe_issue_summary(metadata.get("errors", []))
     item = {
         "dataset_id": metadata.get("dataset_id"),
         "status": metadata.get("status"),
@@ -188,16 +190,44 @@ def _dataset_list_item(metadata: dict[str, Any]) -> dict[str, Any]:
         or _default_capability_level(metadata),
         "recommendation_readiness": metadata.get("recommendation_readiness")
         or _default_recommendation_readiness(metadata),
-        "original_filename": metadata.get("original_filename"),
+        "original_filename": _safe_original_filename(metadata.get("original_filename")),
         "row_count": metadata.get("row_count"),
         "column_count": metadata.get("column_count"),
         "sheet_name": metadata.get("sheet_name"),
         "created_at": metadata.get("created_at"),
         "updated_at": metadata.get("updated_at"),
-        "warnings": metadata.get("warnings", []),
-        "errors": metadata.get("errors", []),
+        "warning_count": warning_summary["count"],
+        "error_count": error_summary["count"],
+        "warning_codes": warning_summary["codes"],
+        "error_codes": error_summary["codes"],
     }
     return {key: value for key, value in item.items() if value is not None}
+
+
+def _safe_issue_summary(entries: Any) -> dict[str, Any]:
+    if not isinstance(entries, list):
+        return {"count": 0, "codes": []}
+    codes = sorted(
+        {
+            code
+            for entry in entries
+            if isinstance(entry, dict)
+            for code in [entry.get("code")]
+            if _is_safe_issue_code(code)
+        }
+    )
+    return {"count": len(entries), "codes": codes}
+
+
+def _is_safe_issue_code(code: Any) -> bool:
+    return isinstance(code, str) and bool(re.fullmatch(r"[A-Za-z0-9_.-]+", code))
+
+
+def _safe_original_filename(filename: Any) -> str | None:
+    if filename is None:
+        return None
+    normalized = str(filename).replace("\\", "/")
+    return Path(normalized).name
 
 
 def _default_capability_level(metadata: dict[str, Any]) -> str:
