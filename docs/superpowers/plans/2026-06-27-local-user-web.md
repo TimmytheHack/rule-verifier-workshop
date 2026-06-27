@@ -582,12 +582,16 @@ Create `frontend-user/package.json`:
     "preview": "vite preview --host 127.0.0.1",
     "test:unit": "node --test \"src/**/*.test.js\""
   },
+  "engines": {
+    "node": "^20.19.0 || >=22.12.0"
+  },
   "dependencies": {
-    "@vitejs/plugin-vue": "^5.2.4",
-    "vite": "^5.4.19",
     "vue": "^3.5.17"
   },
-  "devDependencies": {}
+  "devDependencies": {
+    "@vitejs/plugin-vue": "^6.0.7",
+    "vite": "^8.1.0"
+  }
 }
 ```
 
@@ -802,6 +806,8 @@ Create `frontend-user/README.md`:
 这是独立于现有研发前端的本地用户 Web。页面不读取旧 mock/demo 数据，不展示内部 admissions 数据源，只消费本机后端返回的数据源和能力摘要。
 
 ## 本地运行
+
+需要 Node.js `^20.19.0 || >=22.12.0`。
 
 ```bash
 npm install
