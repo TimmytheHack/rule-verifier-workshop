@@ -2,8 +2,10 @@
 
 from __future__ import annotations
 
+import errno
 import json
 import os
+import stat
 from pathlib import Path
 from typing import Any
 from urllib.parse import urlparse
@@ -44,13 +46,15 @@ def save_llm_settings(payload: dict[str, Any]) -> dict[str, Any]:
         "api_url": api_url,
     }
     api_key = str(payload.get("api_key") or "").strip()
+    path = settings_path()
+    _reject_unsafe_write_path(path)
     existing = _read_settings()
     if api_key:
         settings["api_key"] = api_key
     elif existing.get("api_key"):
         settings["api_key"] = existing["api_key"]
     _write_settings_securely(
-        settings_path(),
+        path,
         json.dumps(settings, ensure_ascii=False, indent=2) + "\n",
     )
     return llm_status()
@@ -79,7 +83,20 @@ def local_setting_value(name: str) -> str | None:
 
 def _valid_deepseek_api_url(value: str) -> bool:
     parsed = urlparse(value)
-    return parsed.scheme == "https" and parsed.hostname == "api.deepseek.com"
+    try:
+        port = parsed.port
+    except ValueError:
+        return False
+    return (
+        parsed.scheme == "https"
+        and parsed.hostname == "api.deepseek.com"
+        and parsed.path == "/chat/completions"
+        and parsed.username is None
+        and parsed.password is None
+        and parsed.query == ""
+        and parsed.fragment == ""
+        and port in {None, 443}
+    )
 
 
 def _write_settings_securely(path: Path, content: str) -> None:
@@ -91,15 +108,33 @@ def _write_settings_securely(path: Path, content: str) -> None:
 
     if not parent_existed:
         os.chmod(path.parent, 0o700)
-    if path.exists():
+    existing_mode = _reject_unsafe_write_path(path)
+    if existing_mode is not None:
         os.chmod(path, 0o600)
-    flags = os.O_WRONLY | os.O_CREAT | os.O_TRUNC
-    fd = os.open(path, flags, 0o600)
+    flags = os.O_WRONLY | os.O_CREAT | os.O_TRUNC | getattr(os, "O_NOFOLLOW", 0)
+    try:
+        fd = os.open(path, flags, 0o600)
+    except OSError as exc:
+        if exc.errno == errno.ELOOP:
+            raise ValueError("本机 LLM 设置路径不安全") from exc
+        raise
     try:
         with os.fdopen(fd, "w", encoding="utf-8") as handle:
             handle.write(content)
     finally:
         os.chmod(path, 0o600)
+
+
+def _reject_unsafe_write_path(path: Path) -> int | None:
+    if os.name != "posix":
+        return None
+    try:
+        existing_mode = path.lstat().st_mode
+    except FileNotFoundError:
+        return None
+    if stat.S_ISLNK(existing_mode):
+        raise ValueError("本机 LLM 设置路径不安全")
+    return existing_mode
 
 
 def _read_settings() -> dict[str, Any]:

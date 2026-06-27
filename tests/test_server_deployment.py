@@ -235,6 +235,10 @@ class ServerDeploymentTest(unittest.TestCase):
         invalid_urls = [
             "http://api.deepseek.com/chat/completions",
             "https://example.com/chat/completions",
+            "https://api.deepseek.com/v1/chat/completions",
+            "https://api.deepseek.com/chat/completions?x=1",
+            "https://user:pass@api.deepseek.com/chat/completions",
+            "https://api.deepseek.com:444/chat/completions",
         ]
         with TemporaryDirectory() as directory:
             settings_path = Path(directory) / "llm.json"
@@ -419,6 +423,116 @@ class ServerDeploymentTest(unittest.TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(parent_mode, 0o755)
         self.assertEqual(file_mode, 0o600)
+
+    def test_llm_settings_rejects_symlink_path_on_posix(self) -> None:
+        if os.name != "posix":
+            self.skipTest("symlink check applies to POSIX only")
+
+        with TemporaryDirectory() as directory:
+            root = Path(directory)
+            settings_path = root / "llm.json"
+            target_path = root / "target.json"
+            target_content = "target-unchanged-secret"
+            target_path.write_text(target_content, encoding="utf-8")
+            try:
+                settings_path.symlink_to(target_path)
+            except OSError as exc:
+                self.skipTest(f"symlink unavailable: {exc}")
+            with patch.dict(
+                os.environ,
+                {
+                    "LOCAL_SETTINGS_PATH": str(settings_path),
+                    "AUTH_TOKENS_JSON": json.dumps(
+                        {
+                            "operator-token": {
+                                "actor_id": "operator",
+                                "permission_scopes": ["diagnostics"],
+                            }
+                        }
+                    ),
+                },
+                clear=False,
+            ):
+                response = self.client.post(
+                    "/settings/llm",
+                    headers={"X-Actor-Token": "operator-token"},
+                    json={
+                        "enabled": True,
+                        "provider": "deepseek",
+                        "api_key": "secret-test-key",
+                    },
+                )
+                target_after = target_path.read_text(encoding="utf-8")
+
+        serialized = json.dumps(response.json(), ensure_ascii=False)
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(target_after, target_content)
+        self.assertIn("本机 LLM 设置路径不安全", serialized)
+        self.assertNotIn(str(settings_path), serialized)
+        self.assertNotIn(str(target_path), serialized)
+        self.assertNotIn("secret-test-key", serialized)
+
+    def test_llm_settings_unauthorized_malformed_post_checks_auth_first(self) -> None:
+        secret_value = "secret-malformed-value"
+        with TemporaryDirectory() as directory:
+            settings_path = Path(directory) / "llm.json"
+            with patch.dict(
+                os.environ,
+                {
+                    "LOCAL_SETTINGS_PATH": str(settings_path),
+                    "AUTH_TOKENS_JSON": json.dumps(
+                        {
+                            "operator-token": {
+                                "actor_id": "operator",
+                                "permission_scopes": ["diagnostics"],
+                            }
+                        }
+                    ),
+                },
+                clear=False,
+            ):
+                response = self.client.post(
+                    "/settings/llm",
+                    content=f'{{"api_key":"{secret_value}"',
+                    headers={"Content-Type": "application/json"},
+                )
+
+        serialized = json.dumps(response.json(), ensure_ascii=False)
+        self.assertEqual(response.status_code, 403)
+        self.assertNotIn(secret_value, serialized)
+
+    def test_llm_settings_authorized_malformed_post_is_generic_400(self) -> None:
+        secret_value = "secret-malformed-value"
+        with TemporaryDirectory() as directory:
+            settings_path = Path(directory) / "llm.json"
+            with patch.dict(
+                os.environ,
+                {
+                    "LOCAL_SETTINGS_PATH": str(settings_path),
+                    "AUTH_TOKENS_JSON": json.dumps(
+                        {
+                            "operator-token": {
+                                "actor_id": "operator",
+                                "permission_scopes": ["diagnostics"],
+                            }
+                        }
+                    ),
+                },
+                clear=False,
+            ):
+                response = self.client.post(
+                    "/settings/llm",
+                    content=f'{{"api_key":"{secret_value}"',
+                    headers={
+                        "Content-Type": "application/json",
+                        "X-Actor-Token": "operator-token",
+                    },
+                )
+
+        serialized = json.dumps(response.json(), ensure_ascii=False)
+        self.assertEqual(response.status_code, 400)
+        self.assertIn("invalid_llm_settings", serialized)
+        self.assertNotIn(secret_value, serialized)
 
     def test_env_value_reads_enabled_local_settings(self) -> None:
         with TemporaryDirectory() as directory:

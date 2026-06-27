@@ -11,7 +11,7 @@ from typing import Any
 
 from fastapi import FastAPI, HTTPException, Query, Request
 from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ValidationError
 
 from src.api.dataset_service import DatasetService, DatasetServiceError
 from src.api.local_settings import llm_status, save_llm_settings
@@ -231,15 +231,22 @@ def get_llm_settings(request: Request) -> dict[str, Any]:
 
 
 @app.post("/settings/llm")
-def update_llm_settings(
-    request: LLMSettingsRequest,
-    http_request: Request,
-) -> dict[str, Any]:
+async def update_llm_settings(http_request: Request) -> dict[str, Any]:
     """保存本机 LLM 配置，不把密钥回显给前端。"""
 
     _ensure_scope(_actor_context_from_request(http_request), "diagnostics")
     try:
+        payload = await http_request.json()
+        request = LLMSettingsRequest.model_validate(payload)
         return save_llm_settings(request.model_dump())
+    except (json.JSONDecodeError, ValidationError, TypeError):
+        raise HTTPException(
+            status_code=400,
+            detail={
+                "code": "invalid_llm_settings",
+                "message": "LLM 设置请求无效",
+            },
+        ) from None
     except ValueError as exc:
         raise HTTPException(
             status_code=400,
