@@ -348,7 +348,7 @@ class ServerDeploymentTest(unittest.TestCase):
             self.skipTest("file mode check applies to POSIX only")
 
         with TemporaryDirectory() as directory:
-            settings_path = Path(directory) / "llm.json"
+            settings_path = Path(directory) / "settings" / "llm.json"
             with patch.dict(
                 os.environ,
                 {
@@ -374,9 +374,51 @@ class ServerDeploymentTest(unittest.TestCase):
                     },
                 )
                 mode = stat.S_IMODE(settings_path.stat().st_mode)
+                parent_mode = stat.S_IMODE(settings_path.parent.stat().st_mode)
 
         self.assertEqual(response.status_code, 200)
         self.assertEqual(mode, 0o600)
+        self.assertEqual(parent_mode, 0o700)
+
+    def test_llm_settings_existing_parent_mode_is_not_changed_on_posix(self) -> None:
+        if os.name != "posix":
+            self.skipTest("file mode check applies to POSIX only")
+
+        with TemporaryDirectory() as directory:
+            settings_dir = Path(directory) / "custom"
+            settings_dir.mkdir()
+            os.chmod(settings_dir, 0o755)
+            settings_path = settings_dir / "llm.json"
+            with patch.dict(
+                os.environ,
+                {
+                    "LOCAL_SETTINGS_PATH": str(settings_path),
+                    "AUTH_TOKENS_JSON": json.dumps(
+                        {
+                            "operator-token": {
+                                "actor_id": "operator",
+                                "permission_scopes": ["diagnostics"],
+                            }
+                        }
+                    ),
+                },
+                clear=False,
+            ):
+                response = self.client.post(
+                    "/settings/llm",
+                    headers={"X-Actor-Token": "operator-token"},
+                    json={
+                        "enabled": True,
+                        "provider": "deepseek",
+                        "api_key": "secret-test-key",
+                    },
+                )
+                parent_mode = stat.S_IMODE(settings_dir.stat().st_mode)
+                file_mode = stat.S_IMODE(settings_path.stat().st_mode)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(parent_mode, 0o755)
+        self.assertEqual(file_mode, 0o600)
 
     def test_env_value_reads_enabled_local_settings(self) -> None:
         with TemporaryDirectory() as directory:

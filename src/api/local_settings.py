@@ -83,12 +83,14 @@ def _valid_deepseek_api_url(value: str) -> bool:
 
 
 def _write_settings_securely(path: Path, content: str) -> None:
+    parent_existed = path.parent.exists()
     path.parent.mkdir(parents=True, exist_ok=True)
     if os.name != "posix":
         path.write_text(content, encoding="utf-8")
         return
 
-    os.chmod(path.parent, 0o700)
+    if not parent_existed:
+        os.chmod(path.parent, 0o700)
     if path.exists():
         os.chmod(path, 0o600)
     flags = os.O_WRONLY | os.O_CREAT | os.O_TRUNC
