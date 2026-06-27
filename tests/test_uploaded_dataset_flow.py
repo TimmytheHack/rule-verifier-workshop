@@ -796,7 +796,7 @@ class UploadedDatasetFlowTest(unittest.TestCase):
         with TemporaryDirectory() as directory:
             root = Path(directory)
             service, dataset_id = _generated_generic_dataset(root)
-            bad_dir = root / "bad"
+            bad_dir = service.root / "bad"
             bad_dir.mkdir(parents=True, exist_ok=True)
             (bad_dir / "dataset.json").write_text("{}", encoding="utf-8")
             bad_json_dir = service.root / "bad_json"
@@ -807,6 +807,24 @@ class UploadedDatasetFlowTest(unittest.TestCase):
             (bad_status_dir / "dataset.json").write_text(
                 json.dumps(
                     {"dataset_id": "ds_bad_status", "status": "not_a_status"},
+                    ensure_ascii=False,
+                ),
+                encoding="utf-8",
+            )
+            wrong_dir = service.root / "wrong_dir"
+            wrong_dir.mkdir(parents=True, exist_ok=True)
+            (wrong_dir / "dataset.json").write_text(
+                json.dumps(
+                    {"dataset_id": "some_other_id", "status": "uploaded"},
+                    ensure_ascii=False,
+                ),
+                encoding="utf-8",
+            )
+            unsafe_dir = service.root / "unsafe"
+            unsafe_dir.mkdir(parents=True, exist_ok=True)
+            (unsafe_dir / "dataset.json").write_text(
+                json.dumps(
+                    {"dataset_id": "../unsafe", "status": "uploaded"},
                     ensure_ascii=False,
                 ),
                 encoding="utf-8",
