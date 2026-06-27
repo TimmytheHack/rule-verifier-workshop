@@ -704,6 +704,14 @@ def env_value(name: str) -> str | None:
     value = os.getenv(name)
     if value:
         return value
+    try:
+        from src.api.local_settings import local_setting_value
+
+        local_value = local_setting_value(name)
+    except Exception:  # noqa: BLE001 - 本机设置不可用时回退到 .env。
+        local_value = None
+    if local_value:
+        return local_value
     for dotenv_path in _dotenv_paths():
         value = _read_dotenv_value(dotenv_path, name)
         if value:

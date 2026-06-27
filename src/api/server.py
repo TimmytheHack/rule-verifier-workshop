@@ -14,6 +14,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 
 from src.api.dataset_service import DatasetService, DatasetServiceError
+from src.api.local_settings import llm_status, save_llm_settings
 from src.api.preflight_store import PreflightStore, PreflightValidationError
 from src.api.tool_registry import (
     TOOL_CONTRACT_VERSION,
@@ -139,6 +140,16 @@ class ToolInvokeRequest(BaseModel):
     actor_context: dict[str, Any] = Field(default_factory=dict)
 
 
+class LLMSettingsRequest(BaseModel):
+    """本机 LLM 设置请求。"""
+
+    enabled: bool = False
+    provider: str = "deepseek"
+    model: str = "deepseek-chat"
+    api_url: str = "https://api.deepseek.com/chat/completions"
+    api_key: str | None = None
+
+
 def _frontend_origins() -> list[str]:
     configured = os.getenv("FRONTEND_ORIGIN")
     if not configured:
@@ -209,6 +220,31 @@ def options() -> dict[str, object]:
     """Return API-mode user option whitelists."""
 
     return available_options()
+
+
+@app.get("/settings/llm")
+def get_llm_settings(request: Request) -> dict[str, Any]:
+    """返回本机 LLM 配置状态，不返回密钥明文。"""
+
+    _ensure_scope(_actor_context_from_request(request), "read_only")
+    return llm_status()
+
+
+@app.post("/settings/llm")
+def update_llm_settings(
+    request: LLMSettingsRequest,
+    http_request: Request,
+) -> dict[str, Any]:
+    """保存本机 LLM 配置，不把密钥回显给前端。"""
+
+    _ensure_scope(_actor_context_from_request(http_request), "diagnostics")
+    try:
+        return save_llm_settings(request.model_dump())
+    except ValueError as exc:
+        raise HTTPException(
+            status_code=400,
+            detail={"code": "invalid_llm_settings", "message": str(exc)},
+        ) from exc
 
 
 @app.get("/datasets")

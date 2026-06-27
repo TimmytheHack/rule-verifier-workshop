@@ -1,11 +1,13 @@
 from __future__ import annotations
 
 import json
+import os
 import subprocess
 import unittest
 import warnings
 from pathlib import Path
 from tempfile import TemporaryDirectory
+from unittest.mock import patch
 
 warnings.filterwarnings(
     "ignore",
@@ -117,6 +119,47 @@ class ServerDeploymentTest(unittest.TestCase):
         self.assertNotIn("sk-", content)
         self.assertNotIn("replace_with", content)
         self.assertRegex(content, r"(?m)^DEEPSEEK_API_KEY=$")
+
+    def test_llm_settings_status_does_not_return_secret(self) -> None:
+        with TemporaryDirectory() as directory:
+            settings_path = Path(directory) / "llm.json"
+            with patch.dict(
+                os.environ,
+                {
+                    "LOCAL_SETTINGS_PATH": str(settings_path),
+                    "AUTH_TOKENS_JSON": json.dumps(
+                        {
+                            "operator-token": {
+                                "actor_id": "operator",
+                                "permission_scopes": ["read_only", "diagnostics"],
+                            }
+                        }
+                    ),
+                },
+                clear=False,
+            ):
+                response = self.client.post(
+                    "/settings/llm",
+                    headers={"X-Actor-Token": "operator-token"},
+                    json={
+                        "enabled": True,
+                        "provider": "deepseek",
+                        "model": "deepseek-chat",
+                        "api_url": "https://api.deepseek.com/chat/completions",
+                        "api_key": "secret-test-key",
+                    },
+                )
+                status = self.client.get(
+                    "/settings/llm",
+                    headers={"X-Actor-Token": "operator-token"},
+                )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(status.status_code, 200)
+        payload = status.json()
+        self.assertTrue(payload["api_key_configured"])
+        self.assertNotIn("api_key", payload)
+        self.assertNotIn("secret-test-key", json.dumps(payload))
 
 
 if __name__ == "__main__":
