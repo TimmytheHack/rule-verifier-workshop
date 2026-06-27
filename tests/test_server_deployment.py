@@ -231,6 +231,43 @@ class ServerDeploymentTest(unittest.TestCase):
         self.assertIn("不支持的 LLM provider", serialized)
         self.assertNotIn(invalid_provider, serialized)
 
+    def test_llm_settings_rejects_invalid_api_urls_without_echoing_value(self) -> None:
+        invalid_urls = [
+            "http://api.deepseek.com/chat/completions",
+            "https://example.com/chat/completions",
+        ]
+        with TemporaryDirectory() as directory:
+            settings_path = Path(directory) / "llm.json"
+            with patch.dict(
+                os.environ,
+                {
+                    "LOCAL_SETTINGS_PATH": str(settings_path),
+                    "AUTH_TOKENS_JSON": json.dumps(
+                        {
+                            "operator-token": {
+                                "actor_id": "operator",
+                                "permission_scopes": ["diagnostics"],
+                            }
+                        }
+                    ),
+                },
+                clear=False,
+            ):
+                responses = [
+                    self.client.post(
+                        "/settings/llm",
+                        headers={"X-Actor-Token": "operator-token"},
+                        json={"enabled": True, "provider": "deepseek", "api_url": url},
+                    )
+                    for url in invalid_urls
+                ]
+
+        for response, invalid_url in zip(responses, invalid_urls, strict=True):
+            serialized = json.dumps(response.json(), ensure_ascii=False)
+            self.assertEqual(response.status_code, 400)
+            self.assertIn("不支持的 LLM api_url", serialized)
+            self.assertNotIn(invalid_url, serialized)
+
     def test_llm_settings_blank_api_key_preserves_existing_key(self) -> None:
         with TemporaryDirectory() as directory:
             settings_path = Path(directory) / "llm.json"
@@ -375,6 +412,47 @@ class ServerDeploymentTest(unittest.TestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertEqual(value, "secret-test-key")
+
+    def test_env_value_local_disabled_overrides_dotenv_enable_llm(self) -> None:
+        with TemporaryDirectory() as directory:
+            root = Path(directory)
+            settings_path = root / "llm.json"
+            dotenv_path = root / ".env"
+            settings_path.write_text(
+                json.dumps({"enabled": False, "provider": "deepseek"}),
+                encoding="utf-8",
+            )
+            dotenv_path.write_text("ENABLE_LLM=true\n", encoding="utf-8")
+            with patch.dict(
+                os.environ,
+                {"LOCAL_SETTINGS_PATH": str(settings_path)},
+                clear=True,
+            ), patch(
+                "src.extractors.deepseek_extractor._dotenv_paths",
+                return_value=[dotenv_path],
+            ):
+                value = env_value("ENABLE_LLM")
+
+        self.assertEqual(value, "false")
+
+    def test_env_value_shell_enable_llm_wins_over_local_disabled(self) -> None:
+        with TemporaryDirectory() as directory:
+            settings_path = Path(directory) / "llm.json"
+            settings_path.write_text(
+                json.dumps({"enabled": False, "provider": "deepseek"}),
+                encoding="utf-8",
+            )
+            with patch.dict(
+                os.environ,
+                {
+                    "ENABLE_LLM": "true",
+                    "LOCAL_SETTINGS_PATH": str(settings_path),
+                },
+                clear=True,
+            ):
+                value = env_value("ENABLE_LLM")
+
+        self.assertEqual(value, "true")
 
 
 if __name__ == "__main__":
