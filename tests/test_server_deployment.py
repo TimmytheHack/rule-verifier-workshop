@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import os
+import stat
 import subprocess
 import unittest
 import warnings
@@ -19,6 +20,7 @@ from fastapi.testclient import TestClient
 from jsonschema import Draft202012Validator
 
 from scripts.export_tool_manifest import MANIFEST_SCHEMA
+from src.extractors.deepseek_extractor import env_value
 from src.api.server import app
 
 
@@ -160,6 +162,219 @@ class ServerDeploymentTest(unittest.TestCase):
         self.assertTrue(payload["api_key_configured"])
         self.assertNotIn("api_key", payload)
         self.assertNotIn("secret-test-key", json.dumps(payload))
+
+    def test_llm_settings_requires_authorized_scopes(self) -> None:
+        with TemporaryDirectory() as directory:
+            settings_path = Path(directory) / "llm.json"
+            with patch.dict(
+                os.environ,
+                {
+                    "LOCAL_SETTINGS_PATH": str(settings_path),
+                    "AUTH_TOKENS_JSON": json.dumps(
+                        {
+                            "reader-token": {
+                                "actor_id": "reader",
+                                "permission_scopes": ["read_only"],
+                            }
+                        }
+                    ),
+                },
+                clear=False,
+            ):
+                anonymous_get = self.client.get("/settings/llm")
+                anonymous_post = self.client.post(
+                    "/settings/llm",
+                    json={"enabled": True, "provider": "deepseek"},
+                )
+                reader_get = self.client.get(
+                    "/settings/llm",
+                    headers={"X-Actor-Token": "reader-token"},
+                )
+                reader_post = self.client.post(
+                    "/settings/llm",
+                    headers={"X-Actor-Token": "reader-token"},
+                    json={"enabled": True, "provider": "deepseek"},
+                )
+
+        self.assertEqual(anonymous_get.status_code, 403)
+        self.assertEqual(anonymous_post.status_code, 403)
+        self.assertEqual(reader_get.status_code, 200)
+        self.assertEqual(reader_post.status_code, 403)
+
+    def test_llm_settings_rejects_provider_without_echoing_value(self) -> None:
+        invalid_provider = "secret-provider-value"
+        with TemporaryDirectory() as directory:
+            settings_path = Path(directory) / "llm.json"
+            with patch.dict(
+                os.environ,
+                {
+                    "LOCAL_SETTINGS_PATH": str(settings_path),
+                    "AUTH_TOKENS_JSON": json.dumps(
+                        {
+                            "operator-token": {
+                                "actor_id": "operator",
+                                "permission_scopes": ["diagnostics"],
+                            }
+                        }
+                    ),
+                },
+                clear=False,
+            ):
+                response = self.client.post(
+                    "/settings/llm",
+                    headers={"X-Actor-Token": "operator-token"},
+                    json={"enabled": True, "provider": invalid_provider},
+                )
+
+        serialized = json.dumps(response.json(), ensure_ascii=False)
+        self.assertEqual(response.status_code, 400)
+        self.assertIn("不支持的 LLM provider", serialized)
+        self.assertNotIn(invalid_provider, serialized)
+
+    def test_llm_settings_blank_api_key_preserves_existing_key(self) -> None:
+        with TemporaryDirectory() as directory:
+            settings_path = Path(directory) / "llm.json"
+            env = {
+                "LOCAL_SETTINGS_PATH": str(settings_path),
+                "AUTH_TOKENS_JSON": json.dumps(
+                    {
+                        "operator-token": {
+                            "actor_id": "operator",
+                            "permission_scopes": ["read_only", "diagnostics"],
+                        }
+                    }
+                ),
+            }
+            with patch.dict(os.environ, env, clear=False):
+                initial = self.client.post(
+                    "/settings/llm",
+                    headers={"X-Actor-Token": "operator-token"},
+                    json={
+                        "enabled": True,
+                        "provider": "deepseek",
+                        "api_key": "secret-test-key",
+                    },
+                )
+                blank_key = self.client.post(
+                    "/settings/llm",
+                    headers={"X-Actor-Token": "operator-token"},
+                    json={
+                        "enabled": True,
+                        "provider": "deepseek",
+                        "api_key": "   ",
+                    },
+                )
+                status = self.client.get(
+                    "/settings/llm",
+                    headers={"X-Actor-Token": "operator-token"},
+                )
+
+        self.assertEqual(initial.status_code, 200)
+        self.assertEqual(blank_key.status_code, 200)
+        self.assertEqual(status.status_code, 200)
+        payload = status.json()
+        self.assertTrue(payload["api_key_configured"])
+        self.assertNotIn("api_key", payload)
+        self.assertNotIn("secret-test-key", json.dumps(payload))
+
+    def test_llm_settings_corrupt_file_falls_back_safely(self) -> None:
+        with TemporaryDirectory() as directory:
+            settings_path = Path(directory) / "llm.json"
+            settings_path.write_text("{not-json", encoding="utf-8")
+            with patch.dict(
+                os.environ,
+                {
+                    "LOCAL_SETTINGS_PATH": str(settings_path),
+                    "AUTH_TOKENS_JSON": json.dumps(
+                        {
+                            "reader-token": {
+                                "actor_id": "reader",
+                                "permission_scopes": ["read_only"],
+                            }
+                        }
+                    ),
+                },
+                clear=False,
+            ):
+                response = self.client.get(
+                    "/settings/llm",
+                    headers={"X-Actor-Token": "reader-token"},
+                )
+
+        self.assertEqual(response.status_code, 200)
+        payload = response.json()
+        self.assertFalse(payload["api_key_configured"])
+        self.assertFalse(payload["enabled"])
+
+    def test_llm_settings_file_mode_is_restrictive_on_posix(self) -> None:
+        if os.name != "posix":
+            self.skipTest("file mode check applies to POSIX only")
+
+        with TemporaryDirectory() as directory:
+            settings_path = Path(directory) / "llm.json"
+            with patch.dict(
+                os.environ,
+                {
+                    "LOCAL_SETTINGS_PATH": str(settings_path),
+                    "AUTH_TOKENS_JSON": json.dumps(
+                        {
+                            "operator-token": {
+                                "actor_id": "operator",
+                                "permission_scopes": ["diagnostics"],
+                            }
+                        }
+                    ),
+                },
+                clear=False,
+            ):
+                response = self.client.post(
+                    "/settings/llm",
+                    headers={"X-Actor-Token": "operator-token"},
+                    json={
+                        "enabled": True,
+                        "provider": "deepseek",
+                        "api_key": "secret-test-key",
+                    },
+                )
+                mode = stat.S_IMODE(settings_path.stat().st_mode)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(mode, 0o600)
+
+    def test_env_value_reads_enabled_local_settings(self) -> None:
+        with TemporaryDirectory() as directory:
+            settings_path = Path(directory) / "llm.json"
+            with patch.dict(
+                os.environ,
+                {
+                    "LOCAL_SETTINGS_PATH": str(settings_path),
+                    "DEEPSEEK_API_KEY": "",
+                    "AUTH_TOKENS_JSON": json.dumps(
+                        {
+                            "operator-token": {
+                                "actor_id": "operator",
+                                "permission_scopes": ["diagnostics"],
+                            }
+                        }
+                    ),
+                },
+                clear=False,
+            ):
+                response = self.client.post(
+                    "/settings/llm",
+                    headers={"X-Actor-Token": "operator-token"},
+                    json={
+                        "enabled": True,
+                        "provider": "deepseek",
+                        "model": "deepseek-chat",
+                        "api_url": "https://api.deepseek.com/chat/completions",
+                        "api_key": "secret-test-key",
+                    },
+                )
+                value = env_value("DEEPSEEK_API_KEY")
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(value, "secret-test-key")
 
 
 if __name__ == "__main__":

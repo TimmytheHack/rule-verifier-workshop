@@ -32,7 +32,7 @@ def llm_status() -> dict[str, Any]:
 def save_llm_settings(payload: dict[str, Any]) -> dict[str, Any]:
     provider = str(payload.get("provider") or "deepseek")
     if provider not in SUPPORTED_PROVIDERS:
-        raise ValueError(f"不支持的 LLM provider：{provider}")
+        raise ValueError("不支持的 LLM provider")
     settings = {
         "enabled": bool(payload.get("enabled")),
         "provider": provider,
@@ -53,6 +53,7 @@ def save_llm_settings(payload: dict[str, Any]) -> dict[str, Any]:
         json.dumps(settings, ensure_ascii=False, indent=2) + "\n",
         encoding="utf-8",
     )
+    os.chmod(path, 0o600)
     return llm_status()
 
 

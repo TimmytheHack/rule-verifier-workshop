@@ -699,7 +699,7 @@ def deepseek_usage_from_payload(api_payload: dict[str, Any]) -> dict[str, int]:
 
 
 def env_value(name: str) -> str | None:
-    """Read an env var from the shell first, then from a local `.env` file."""
+    """按 shell 环境、本机设置、`.env` 的顺序读取配置值。"""
 
     value = os.getenv(name)
     if value:
