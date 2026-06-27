@@ -162,6 +162,10 @@ Modify `src/api/dataset_service.py` inside `DatasetService` after `profile()`:
                 continue
             try:
                 metadata = _load_json(metadata_path)
+                if not isinstance(metadata, dict):
+                    continue
+                if metadata.get("status") not in DATASET_STATUS_VALUES:
+                    continue
                 raw_dataset_id = metadata.get("dataset_id")
                 if not raw_dataset_id:
                     continue
