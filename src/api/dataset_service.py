@@ -1079,7 +1079,9 @@ def _dataset_list_item(metadata: dict[str, Any]) -> dict[str, Any]:
         or _default_capability_level(metadata),
         "recommendation_readiness": metadata.get("recommendation_readiness")
         or _default_recommendation_readiness(metadata),
-        "original_filename": metadata.get("original_filename"),
+        "original_filename": _safe_original_filename(
+            metadata.get("original_filename")
+        ),
         "row_count": metadata.get("row_count"),
         "column_count": metadata.get("column_count"),
         "sheet_name": metadata.get("sheet_name"),
@@ -1089,6 +1091,12 @@ def _dataset_list_item(metadata: dict[str, Any]) -> dict[str, Any]:
         "errors": metadata.get("errors", []),
     }
     return {key: value for key, value in item.items() if value is not None}
+
+
+def _safe_original_filename(filename: Any) -> str | None:
+    if filename is None:
+        return None
+    return Path(str(filename)).name
 
 
 def _default_capability_level(metadata: dict[str, Any]) -> str:

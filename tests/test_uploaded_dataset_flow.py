@@ -743,6 +743,7 @@ class UploadedDatasetFlowTest(unittest.TestCase):
                     "warehouse_database_path": str(root / "secret.duckdb"),
                     "capability_level": "filterable",
                     "recommendation_readiness": "not_applicable",
+                    "original_filename": str(root / "private" / "housing.csv"),
                 }
             )
             metadata_path.write_text(
@@ -759,6 +760,7 @@ class UploadedDatasetFlowTest(unittest.TestCase):
         self.assertEqual(item["status"], "queryable")
         self.assertEqual(item["capability_level"], "filterable")
         self.assertEqual(item["recommendation_readiness"], "not_applicable")
+        self.assertEqual(item["original_filename"], "housing.csv")
         self.assertNotIn("source_path", item)
         self.assertNotIn("warehouse_database_path", item)
         self.assertNotIn(str(root), json.dumps(item, ensure_ascii=False))
