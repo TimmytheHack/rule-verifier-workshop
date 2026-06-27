@@ -1,0 +1,115 @@
+:root {
+  color-scheme: light;
+  --surface: #f6f8f5;
+  --surface-elevated: #ffffff;
+  --text-primary: #17362f;
+  --text-muted: #60766e;
+  --accent: #2b6f8f;
+  --review: #d19b3d;
+  --danger: #b94b43;
+  --border: #d7dfd5;
+  --radius: 8px;
+  font-family:
+    Atkinson Hyperlegible,
+    -apple-system,
+    BlinkMacSystemFont,
+    "PingFang SC",
+    "Microsoft YaHei",
+    sans-serif;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  min-width: 320px;
+  background: var(--surface);
+  color: var(--text-primary);
+}
+
+button,
+input,
+select,
+textarea { font: inherit; }
+
+button {
+  min-height: 44px;
+  cursor: pointer;
+}
+
+button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  outline: 3px solid color-mix(in srgb, var(--accent) 48%, white);
+  outline-offset: 2px;
+}
+
+.app-shell {
+  width: min(1180px, calc(100vw - 32px));
+  margin: 0 auto;
+  padding: 24px 0 48px;
+}
+
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 68px;
+  gap: 16px;
+  padding: 16px 0;
+}
+
+.kicker {
+  margin: 0 0 4px;
+  color: var(--text-muted);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+h1,
+h2,
+p { margin-top: 0; }
+
+h1 {
+  margin-bottom: 0;
+  font-size: clamp(28px, 4vw, 40px);
+  line-height: 1.12;
+}
+
+.empty-panel {
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface-elevated);
+  padding: 24px;
+}
+
+.primary-button,
+.secondary-button {
+  border: 1px solid transparent;
+  border-radius: var(--radius);
+  padding: 0 16px;
+  font-weight: 800;
+}
+
+.primary-button {
+  background: var(--text-primary);
+  color: #ffffff;
+}
+
+.secondary-button {
+  background: var(--surface-elevated);
+  color: var(--text-primary);
+  border-color: var(--border);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  button {
+    transition:
+      transform 160ms ease,
+      background-color 160ms ease,
+      border-color 160ms ease;
+  }
+
+  button:active { transform: translateY(1px); }
+}
