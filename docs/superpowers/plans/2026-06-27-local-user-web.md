@@ -115,6 +115,11 @@ Append to `tests/test_uploaded_dataset_flow.py`:
         self.assertNotIn("warehouse_database_path", item)
         self.assertNotIn(str(root), json.dumps(item, ensure_ascii=False))
 
+        profile = service.profile(dataset_id)
+        self.assertEqual(profile["domain_name"], "leases")
+        self.assertEqual(profile["capability_level"], "filterable")
+        self.assertEqual(profile["recommendation_readiness"], "not_applicable")
+
     def test_list_datasets_ignores_invalid_directories(self) -> None:
         with TemporaryDirectory() as directory:
             root = Path(directory)
@@ -209,7 +214,22 @@ def _default_recommendation_readiness(metadata: dict[str, Any]) -> str:
     return "candidate_list" if _uses_admissions_schema_template(metadata) else "not_applicable"
 ```
 
-- [ ] **Step 4: 暴露 `GET /datasets`**
+- [ ] **Step 4: 让 profile 返回同一套能力摘要**
+
+Modify `src/api/dataset_service.py` inside `profile()` return payload:
+
+```python
+            "domain_name": metadata.get("domain_name"),
+            "domain_pack_status": metadata.get("domain_pack_status"),
+            "capability_level": metadata.get("capability_level")
+            or _default_capability_level(metadata),
+            "recommendation_readiness": metadata.get("recommendation_readiness")
+            or _default_recommendation_readiness(metadata),
+```
+
+Place these fields beside `dataset_id` and `status`, before `source_fingerprint`.
+
+- [ ] **Step 5: 暴露 `GET /datasets`**
 
 Modify `src/api/server.py` before `@app.post("/datasets/upload")`:
 
@@ -225,7 +245,7 @@ def list_datasets(request: Request) -> dict[str, object]:
         raise _dataset_http_error(exc) from exc
 ```
 
-- [ ] **Step 5: 运行测试确认通过**
+- [ ] **Step 6: 运行测试确认通过**
 
 Run:
 
@@ -235,7 +255,7 @@ Run:
 
 Expected: OK.
 
-- [ ] **Step 6: 提交**
+- [ ] **Step 7: 提交**
 
 ```bash
 git add src/api/dataset_service.py src/api/server.py tests/test_uploaded_dataset_flow.py
@@ -297,6 +317,7 @@ Append to `tests/test_server_deployment.py`:
 Add imports at top if absent:
 
 ```python
+import os
 from unittest.mock import patch
 ```
 
@@ -1687,15 +1708,19 @@ async function runPreflight(payload) {
   running.value = true;
   error.value = '';
   try {
+    const domainName = profile.value?.domain_name;
+    if (!domainName) {
+      throw new Error('数据源缺少已审查 domain，无法查询。');
+    }
     result.value = await requestJson('/workbench/preflight', {
       method: 'POST',
       body: JSON.stringify({
         dataset_id: props.datasetId,
-        domain_name: profile.value?.domain_name || 'admissions',
+        domain_name: domainName,
         user_input: payload.user_input || prompt.value || '查询',
         hard_filters: payload.hard_filters || {},
         soft_preferences: payload.soft_preferences || {},
-        planner_mode: 'llm_semantic',
+        planner_mode: 'auto',
       }),
     });
   } catch (exc) {
