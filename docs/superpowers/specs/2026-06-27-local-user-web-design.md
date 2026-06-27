@@ -20,7 +20,7 @@
 
 - 首页先展示本机数据源库，用户先选表格，再进入查询页。
 - 查询页由后端 profile、`capability_graph` 和 `semantic_query_options` 驱动，不在前端硬编码招生字段。
-- 如果数据源使用 `admissions_schema_v1`，才展示招生专用查询体验。
+- 如果数据源使用 `admissions_schema_v1`，才展示招生领域外观和字段说明；具体查询能力仍由后端能力摘要决定。
 - 如果数据源不是 admissions 模板，展示通用 schema-driven 查询体验。
 - 视觉上采用扁平、清楚、低阴影、8px 圆角、强文本层级和明确状态色条。
 
@@ -60,7 +60,7 @@
 2. 前端调用 `POST /datasets/upload`。
 3. 前端调用 `POST /datasets/{dataset_id}/generate-domain-pack`。
 4. 前端调用 `GET /datasets/{dataset_id}/profile` 展示字段识别和能力摘要。
-5. 对 admissions 上传表，默认传入 `template_id=admissions_schema_v1`。
+5. 对用户明确选择的招生上传表，默认传入 `template_id=admissions_schema_v1`。
 6. 前端调用 `POST /datasets/{dataset_id}/approve-domain` 和 `POST /datasets/{dataset_id}/build-warehouse`。
 7. 后端返回 `status=queryable` 后，数据源进入首页列表。
 
@@ -75,7 +75,7 @@
 
 1. 前端先调用 `GET /datasets/{dataset_id}/profile`。
 2. 前端根据 `semantic_query_options.query_types`、`filters` 和 `sort_fields` 渲染查询控件。
-3. 如果数据源是 `admissions_schema_v1`，展示招生专用控件，例如省排位、排位范围、排序方式和偏好描述。
+3. 如果数据源是 `admissions_schema_v1`，先展示招生领域外观，再根据 query type 和 required context 决定是否显示省排位、排位范围、排序方式和偏好描述。
 4. 如果不是 admissions 模板，展示通用查询输入、可用字段筛选器和排序控件。
 5. 用户提交后，优先调用 `POST /workbench/preflight` 做查询前检查。
 6. 如果后端返回需要确认的边界或 candidate，用户只确认系统返回的 ID 或选项。
@@ -118,7 +118,7 @@
 
 ### admissions 查询页
 
-admissions 专用页只在后端返回匹配模板时出现。它可以显示招生域控件，但仍由后端白名单驱动：
+admissions 专用页只在后端返回匹配模板时出现。模板只说明字段命名、领域文案和候选映射接近招生表，不代表这份表适合完整语义推荐。前端可以显示招生域控件，但仍由后端白名单驱动：
 
 - 用户排位相关输入。
 - 科类、选科等已映射字段。
@@ -127,6 +127,22 @@ admissions 专用页只在后端返回匹配模板时出现。它可以显示招
 - 查询前检查。
 
 前端不能因为字段名相似就自行启用 admissions 控件。必须依赖后端 metadata、review summary 或 `semantic_query_options`。
+
+### admissions 能力分级
+
+不是所有 admissions 上传表都适合走同一条语义推荐链路。比如有的表只有院校层级，有的表缺少专业最低位次，有的表只包含分数没有排位，有的表年份或省份语境不适合广东志愿填报默认规则。
+
+前端应把 admissions 数据源分成能力层级展示：
+
+- `admissions_profile_only`：已识别为招生表，但缺少可查询必要字段，只能展示字段审查和缺失项。
+- `admissions_filterable`：有已审查字段和可执行 filter/sort，但没有足够 evidence 做招生语义推荐。
+- `admissions_major_rank`：后端 `semantic_query_options.query_types` 包含 `admissions_major_rank`，可以回答专业位次类查询。
+- `admissions_candidate_list`：可以生成 verified filters 后的候选列表，但没有 verified `RankingPlan` 时不能称为排名推荐。
+- `admissions_verified_recommendation`：只有后端确认 query type、必要 user context、字段映射、value evidence 和 `RankingPlan` 都通过验证时，才显示为推荐结果。
+
+UI 文案必须跟随能力层级。没有 verified `RankingPlan` 时，页面说“候选列表”，不能说“推荐排序”。只有分数没有排位时，页面要求补充省排位，不执行推荐 SQL。
+
+如果现有 `semantic_query_options` 不足以表达这些层级，后端应新增只读字段，例如 `admissions_capability_level` 或 `recommendation_readiness`。该字段由后端根据 reviewed mapping、query type、required user context、warehouse audit 和 ranking plan readiness 计算，前端只消费结果。
 
 ### 设置页
 
@@ -288,6 +304,7 @@ frontend-user/
 - `GET /settings/llm` 不返回密钥明文。
 - `POST /settings/llm` 写入本地配置并可被 DeepSeek client 读取。
 - `APP_DISTRIBUTION_MODE=user_upload_only` 不依赖内部 admissions 数据。
+- admissions 上传表缺少推荐必要字段时，后端能力摘要不能标记为 `admissions_verified_recommendation`。
 
 前端：
 
@@ -295,6 +312,7 @@ frontend-user/
 - 数据源首页恢复已导入数据。
 - `QueryComposer` 根据 `semantic_query_options` 渲染字段筛选器。
 - `AdmissionsQueryComposer` 只在 `admissions_schema_v1` 时启用。
+- `AdmissionsQueryComposer` 根据 admissions 能力层级降级展示，不能把所有 admissions 模板数据源都显示为推荐可用。
 - 没有 query type 时展示不可执行说明。
 - preflight 确认只提交系统返回的 ID。
 - 构建产物不引用现有 mock/demo JSON。
