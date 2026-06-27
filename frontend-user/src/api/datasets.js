@@ -38,7 +38,6 @@ export function approveDomain(datasetId, payload = {}) {
     body: JSON.stringify({
       title_field: null,
       primary_fields: [],
-      default_safe_sort: true,
       reviewed_by: 'local_user_web',
       ...payload,
     }),
