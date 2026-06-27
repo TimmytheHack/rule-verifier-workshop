@@ -1096,7 +1096,8 @@ def _dataset_list_item(metadata: dict[str, Any]) -> dict[str, Any]:
 def _safe_original_filename(filename: Any) -> str | None:
     if filename is None:
         return None
-    return Path(str(filename)).name
+    normalized = str(filename).replace("\\", "/")
+    return Path(normalized).name
 
 
 def _default_capability_level(metadata: dict[str, Any]) -> str:
