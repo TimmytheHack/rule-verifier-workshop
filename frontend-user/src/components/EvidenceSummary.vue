@@ -25,15 +25,16 @@ const recognizedFacts = computed(() => {
 const boundaryConfirmations = computed(() => safeList(props.result?.boundary_confirmations));
 const pendingCandidates = computed(() => safeList(props.result?.candidates_to_confirm));
 const missingRequirements = computed(() => safeList(props.result?.missing_requirements));
-const notExecuted = computed(() => [
+const notExecuted = computed(() => dedupeEvidenceItems([
   ...safeList(props.result?.not_executable_preferences),
   ...safeList(props.result?.unexecuted_preferences),
   ...safeList(props.result?.no_schema_field_preferences),
-]);
+]));
 const displayResults = computed(() => {
   const top = safeList(props.result?.top_results);
   return top.length ? top : safeList(props.result?.items);
 });
+const resultsTruncated = computed(() => displayResults.value.length > 8);
 
 function safeList(value) {
   return Array.isArray(value) ? value : [];
@@ -55,6 +56,26 @@ function itemText(item) {
     || item.label
     || item.id
     || '未执行偏好';
+}
+
+function dedupeEvidenceItems(items) {
+  const seen = new Set();
+  const output = [];
+  for (const item of items) {
+    const key = [
+      item.preference_id,
+      item.field_id,
+      item.source_text,
+      item.preference,
+      item.reason,
+      item.message,
+    ].filter(Boolean).join('|');
+    const stableKey = key || JSON.stringify(item);
+    if (seen.has(stableKey)) continue;
+    seen.add(stableKey);
+    output.push(item);
+  }
+  return output;
 }
 
 function resultTitle(item) {
@@ -184,7 +205,10 @@ function resultTitle(item) {
           </dl>
         </article>
       </div>
-      <p v-else class="state-line">还没有执行结果。</p>
+      <p v-if="resultsTruncated" class="state-line">
+        仅展示前 8 条，完整数量以结果数为准。
+      </p>
+      <p v-if="!displayResults.length" class="state-line">还没有执行结果。</p>
     </div>
   </section>
 </template>
