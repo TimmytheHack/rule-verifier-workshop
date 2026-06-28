@@ -4,7 +4,7 @@ VENVPY ?= $(VENV)/bin/python
 PIP ?= $(VENV)/bin/pip
 DEV_AUTH_TOKENS_JSON ?= {"operator-token":{"actor_id":"operator","permission_scopes":["read_only","query","confirm","dataset_write","review_admin","warehouse_admin","diagnostics"]},"agent-token":{"actor_id":"agent","permission_scopes":["read_only","query","confirm"]}}
 
-.PHONY: bootstrap test quality pilot operator-trial demo agent-acceptance release-check serve frontend clean-artifacts
+.PHONY: bootstrap test quality pilot operator-trial demo agent-acceptance release-check serve serve-user frontend frontend-user-build clean-artifacts
 
 bootstrap:
 	@if [ ! -x "$(VENVPY)" ]; then $(PYTHON) -m venv $(VENV); fi
@@ -40,12 +40,29 @@ serve:
 		$(VENVPY) -m uvicorn src.api.server:app --reload --port 8001; \
 	fi
 
+serve-user: frontend-user-build
+	@echo "Open http://127.0.0.1:8001"
+	@if [ -z "$$AUTH_TOKENS_JSON" ]; then \
+		export AUTH_TOKENS_JSON='$(DEV_AUTH_TOKENS_JSON)'; \
+		export APP_DISTRIBUTION_MODE=user_upload_only; \
+		export FRONTEND_USER_DIST=frontend-user/dist; \
+		export LOCAL_USER_AUTO_AUTH_TOKEN=operator-token; \
+		$(VENVPY) -m uvicorn src.api.server:app --reload --port 8001; \
+	else \
+		export APP_DISTRIBUTION_MODE=user_upload_only; \
+		export FRONTEND_USER_DIST=frontend-user/dist; \
+		$(VENVPY) -m uvicorn src.api.server:app --reload --port 8001; \
+	fi
+
 frontend:
 	@if [ -d frontend ] && [ -f frontend/package.json ]; then \
 		cd frontend && npm run build; \
 	else \
 		echo "frontend/package.json not found; skipped"; \
 	fi
+
+frontend-user-build:
+	cd frontend-user && npm install && npm run build
 
 clean-artifacts:
 	find src scripts tests -type d -name '__pycache__' -prune -exec rm -rf {} + 2>/dev/null || true

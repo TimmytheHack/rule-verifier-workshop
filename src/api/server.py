@@ -11,6 +11,7 @@ from typing import Any
 
 from fastapi import FastAPI, HTTPException, Query, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import FileResponse
 from pydantic import BaseModel, Field, ValidationError
 
 from src.api.dataset_service import DatasetService, DatasetServiceError
@@ -42,6 +43,7 @@ ROOT_DIR = Path(__file__).resolve().parents[2]
 API_VERSION = "api.v1"
 DATA_ROOT = Path(os.getenv("DATA_ROOT", "outputs/uploaded_datasets"))
 OUTPUT_ROOT = Path(os.getenv("OUTPUT_ROOT", "outputs"))
+DEFAULT_FRONTEND_USER_DIST = ROOT_DIR / "frontend-user" / "dist"
 DEFAULT_FRONTEND_ORIGINS = [
     "http://127.0.0.1:5173",
     "http://localhost:5173",
@@ -601,6 +603,22 @@ def tool_invoke(
         raise _tool_http_error(exc) from exc
 
 
+@app.get("/", include_in_schema=False)
+def frontend_index() -> FileResponse:
+    """返回本地用户 Web 首页。"""
+
+    response = _frontend_file_response("")
+    _set_local_user_auth_cookie(response)
+    return response
+
+
+@app.get("/assets/{full_path:path}", include_in_schema=False)
+def frontend_asset(full_path: str) -> FileResponse:
+    """返回本地用户 Web 构建资源。"""
+
+    return _frontend_file_response(f"assets/{full_path}")
+
+
 def _dataset_http_error(exc: DatasetServiceError) -> HTTPException:
     return HTTPException(
         status_code=exc.status_code,
@@ -616,6 +634,45 @@ def _invalid_preflight_http_error(message: str) -> HTTPException:
     return HTTPException(
         status_code=400,
         detail={"code": "invalid_preflight", "message": message},
+    )
+
+
+def _frontend_file_response(full_path: str) -> FileResponse:
+    dist_dir = Path(
+        os.getenv("FRONTEND_USER_DIST", str(DEFAULT_FRONTEND_USER_DIST))
+    ).resolve()
+    index_path = (dist_dir / "index.html").resolve()
+    if not index_path.is_file():
+        raise HTTPException(
+            status_code=404,
+            detail={
+                "code": "frontend_not_built",
+                "message": "本地用户 Web 尚未构建，请先运行 frontend-user build。",
+            },
+        )
+    if full_path:
+        requested_path = (dist_dir / full_path).resolve()
+        try:
+            requested_path.relative_to(dist_dir)
+        except ValueError:
+            raise HTTPException(status_code=404, detail="Not Found") from None
+        if requested_path.is_file():
+            return FileResponse(requested_path)
+        if Path(full_path).suffix:
+            raise HTTPException(status_code=404, detail="Not Found")
+    return FileResponse(index_path)
+
+
+def _set_local_user_auth_cookie(response: FileResponse) -> None:
+    token = os.getenv("LOCAL_USER_AUTO_AUTH_TOKEN", "").strip()
+    if not token or token not in _auth_token_map():
+        return
+    response.set_cookie(
+        key="actor_token",
+        value=token,
+        httponly=True,
+        samesite="lax",
+        path="/",
     )
 
 

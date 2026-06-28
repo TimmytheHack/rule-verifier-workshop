@@ -43,10 +43,16 @@ cp .env.example .env
 启动后端：
 
 ```bash
-make serve
+make serve-user
 ```
 
-另开一个终端启动前端：
+打开：
+
+```text
+http://127.0.0.1:8001
+```
+
+`make serve-user` 会先构建 `frontend-user/dist`，再用同一个 FastAPI 服务托管新本地用户 Web 和 API。需要改前端代码时，再使用开发模式：
 
 ```bash
 cd frontend-user
@@ -54,13 +60,15 @@ npm install
 npm run dev
 ```
 
-打开：
+开发模式地址：
 
 ```text
 http://127.0.0.1:5173
 ```
 
-`frontend-user/` 是面向本地用户的新入口，不加载旧 mock/demo 数据，也不展示内部 admissions 数据源。它只从本机后端读取用户上传的数据源列表、能力摘要和 LLM 设置。旧 `frontend/` 仍保留给研发、演示和证据调试使用。
+`frontend-user/` 是面向本地用户的新入口，不加载旧 mock/demo 数据，也不展示内部领域数据源。它只从本机后端读取用户上传的数据源列表、能力摘要和 LLM 设置。旧 `frontend/` 仍保留给研发、演示和证据调试使用。
+
+本机未设置 `AUTH_TOKENS_JSON` 时，`make serve-user` 会使用开发 token，并通过 HttpOnly cookie 让同端口页面访问本机 API；token 不会写进前端 JS 构建产物。生产或多人环境不要使用示例 token，应配置真实 `AUTH_TOKENS_JSON`；如仍需要本机单用户自动登录，可把 `LOCAL_USER_AUTO_AUTH_TOKEN` 设为其中一个真实 token。
 
 发行给普通用户时建议使用：
 
@@ -226,7 +234,9 @@ evidence.get
 |---|---|
 | `make bootstrap` | 创建 `.venv` 并安装 Python 依赖。 |
 | `make serve` | 启动 FastAPI 后端。 |
-| `cd frontend-user && npm run dev` | 启动本地用户 Web。 |
+| `make serve-user` | 构建并启动同端口本地用户 Web。 |
+| `make frontend-user-build` | 构建本地用户 Web 静态产物。 |
+| `cd frontend-user && npm run dev` | 启动本地用户 Web 开发模式。 |
 | `cd frontend && npm run dev` | 启动旧研发前端。 |
 | `make frontend` | 构建前端。 |
 | `make test` | 运行单元测试。 |

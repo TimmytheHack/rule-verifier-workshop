@@ -59,6 +59,54 @@ class ServerDeploymentTest(unittest.TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json()["distribution_mode"], "user_upload_only")
 
+    def test_frontend_user_dist_is_served_without_auth(self) -> None:
+        with TemporaryDirectory() as directory:
+            dist = Path(directory)
+            assets = dist / "assets"
+            assets.mkdir()
+            (dist / "index.html").write_text(
+                "<!doctype html><div id='app'>本地表格工作台</div>",
+                encoding="utf-8",
+            )
+            (assets / "app.js").write_text("console.log('ok');", encoding="utf-8")
+            with patch.dict(
+                os.environ,
+                {
+                    "FRONTEND_USER_DIST": str(dist),
+                    "AUTH_TOKENS_JSON": json.dumps(
+                        {
+                            "operator-token": {
+                                "actor_id": "operator",
+                                "permission_scopes": ["read_only", "diagnostics"],
+                            }
+                        }
+                    ),
+                    "LOCAL_USER_AUTO_AUTH_TOKEN": "operator-token",
+                },
+                clear=False,
+            ):
+                anonymous = TestClient(app)
+                protected_api = anonymous.get("/datasets")
+                home = self.client.get("/")
+                asset = self.client.get("/assets/app.js")
+                datasets = self.client.get("/datasets")
+                settings = self.client.get("/settings/llm")
+                unknown_api = self.client.get("/api/not-found")
+
+        self.assertEqual(protected_api.status_code, 403)
+        self.assertEqual(home.status_code, 200)
+        self.assertIn("本地表格工作台", home.text)
+        cookie_header = home.headers.get("set-cookie", "")
+        self.assertIn("actor_token=operator-token", cookie_header)
+        self.assertIn("HttpOnly", cookie_header)
+        self.assertIn("SameSite=lax", cookie_header)
+        self.assertEqual(self.client.cookies.get("actor_token"), "operator-token")
+        self.assertEqual(asset.status_code, 200)
+        self.assertIn("console.log", asset.text)
+        self.assertEqual(datasets.status_code, 200)
+        self.assertEqual(settings.status_code, 200)
+        self.assertEqual(unknown_api.status_code, 404)
+
     def test_openapi_and_tool_manifest_can_be_generated(self) -> None:
         with TemporaryDirectory() as directory:
             root = Path(directory)
@@ -108,7 +156,9 @@ class ServerDeploymentTest(unittest.TestCase):
             "pilot",
             "demo",
             "serve",
+            "serve-user",
             "frontend",
+            "frontend-user-build",
             "clean-artifacts",
         ]:
             self.assertRegex(content, rf"(?m)^{target}:")
@@ -126,6 +176,8 @@ class ServerDeploymentTest(unittest.TestCase):
             "TOOL_AUDIT_MAX_BYTES=",
             "TOOL_AUDIT_BACKUPS=",
             "FRONTEND_ORIGIN=",
+            "FRONTEND_USER_DIST=",
+            "LOCAL_USER_AUTO_AUTH_TOKEN=",
             "LOG_LEVEL=",
         ]:
             self.assertIn(key, content)

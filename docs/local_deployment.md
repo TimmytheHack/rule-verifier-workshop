@@ -42,6 +42,8 @@ cp .env.example .env
 | `TOOL_AUDIT_MAX_BYTES` | 单个 audit JSONL 文件最大字节数，超过后轮转。 |
 | `TOOL_AUDIT_BACKUPS` | audit log 保留的轮转备份数量。 |
 | `FRONTEND_ORIGIN` | 允许的前端 origin，逗号分隔。 |
+| `FRONTEND_USER_DIST` | 本地用户 Web 静态构建目录，默认 `frontend-user/dist`。 |
+| `LOCAL_USER_AUTO_AUTH_TOKEN` | 本地同端口用户 Web 自动登录 cookie 使用的 token；必须同时存在于 `AUTH_TOKENS_JSON`。生产默认不应启用。 |
 | `LOG_LEVEL` | 服务日志级别。 |
 
 DeepSeek slot adapter 默认不启用。需要验证真实 API 时，确认 `.env` 中存在
@@ -59,6 +61,17 @@ DeepSeek slot adapter 默认不启用。需要验证真实 API 时，确认 `.en
 `planner_mode=legacy`。
 
 ## 启动服务
+
+普通用户本机入口建议使用：
+
+```bash
+make serve-user
+```
+
+该命令会先构建 `frontend-user/dist`，再以 `APP_DISTRIBUTION_MODE=user_upload_only` 启动 FastAPI，并在 `http://127.0.0.1:8001` 同端口托管本地用户 Web 和 API。用户不需要再单独启动 Vite 前端。
+本机未设置 `AUTH_TOKENS_JSON` 时，`make serve-user` 会使用仓库的开发 token，并设置 HttpOnly `actor_token` cookie 供同端口页面访问 API。生产或多人环境必须换成真实 token；只有明确需要本机单用户自动登录时，才设置 `LOCAL_USER_AUTO_AUTH_TOKEN`。
+
+只启动后端 API 时使用：
 
 ```bash
 make serve
