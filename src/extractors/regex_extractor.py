@@ -16,7 +16,7 @@ import cn2an
 
 from src.domains import DomainConfig
 
-DEFAULT_ALIAS_PATH = DomainConfig.load("admissions").value_aliases_path
+DEFAULT_ALIAS_PATH: Path | None = None
 ARABIC_QUANTITY_PATTERN = r"(?:\d{1,3}(?:[,，]\d{3})+|\d+)(?:\.\d+)?"
 NUMBER_TEXT_PATTERN = (
     rf"{ARABIC_QUANTITY_PATTERN}\s*(?:万|w|W)?|[零〇一二两三四五六七八九十百千万点]+"
@@ -28,11 +28,16 @@ def _load_aliases(path: str) -> dict[str, Any]:
     return json.loads(Path(path).read_text(encoding="utf-8"))
 
 
+def _default_alias_path() -> Path:
+    return DomainConfig.load("admissions").value_aliases_path
+
+
 class RegexExtractor:
     """Benchmark-compatible deterministic extractor using aliases and regex."""
 
-    def __init__(self, alias_path: str | Path = DEFAULT_ALIAS_PATH) -> None:
-        self.aliases = _load_aliases(str(alias_path))
+    def __init__(self, alias_path: str | Path | None = DEFAULT_ALIAS_PATH) -> None:
+        resolved_alias_path = alias_path or _default_alias_path()
+        self.aliases = _load_aliases(str(resolved_alias_path))
 
     def extract(self, text: str) -> dict[str, Any]:
         user_rank = self._user_rank(text)

@@ -63,7 +63,18 @@ DEFAULT_USER_INPUT = (
     "我是广东物理类，排位32000，想学计算机，最好在广州深圳，"
     "学校稳一点，不想去太贵的中外合作。"
 )
-ADMISSIONS_DOMAIN = DomainConfig.load("admissions")
+ADMISSIONS_DOMAIN_ID = "admissions"
+
+
+class _LazyAdmissionsDomain:
+    def _domain(self) -> DomainConfig:
+        return DomainConfig.load(ADMISSIONS_DOMAIN_ID)
+
+    def __getattr__(self, name: str) -> Any:
+        return getattr(self._domain(), name)
+
+
+ADMISSIONS_DOMAIN = _LazyAdmissionsDomain()
 
 EXTRACTOR_OPTIONS = {
     "hybrid": "规则优先，大模型补槽",
@@ -217,10 +228,11 @@ SQL_COMMAND_TEXT_PATTERN = re.compile(
 
 WAREHOUSE_DATABASE_PATH = Path("outputs/data/guangdong_admissions.duckdb")
 WAREHOUSE_VALUE_INDEX_PATH = Path("outputs/data/schema_value_index.json")
-WORKBOOK_NAME = ADMISSIONS_DOMAIN.workbook_path
-SCHEMA_PATH = ADMISSIONS_DOMAIN.schema_path
-TAXONOMY_PATH = ADMISSIONS_DOMAIN.rule_taxonomy_path
-REQUIRED_COLUMNS = ADMISSIONS_DOMAIN.required_columns
+DEFAULT_WORKBOOK_NAME = Path("admissions.xlsx")
+WORKBOOK_NAME = DEFAULT_WORKBOOK_NAME
+SCHEMA_PATH = Path("domains/admissions/schema_registry.json")
+TAXONOMY_PATH = Path("domains/admissions/rule_taxonomy.json")
+REQUIRED_COLUMNS: list[str] = []
 
 
 class DeepSeekSlotAdapter:
@@ -452,7 +464,9 @@ def _domain_config(config: WorkbenchConfig) -> DomainConfig:
 
 def _workbook_path(domain_config: DomainConfig) -> Path:
     if _is_builtin_admissions_domain(domain_config):
-        return Path(WORKBOOK_NAME)
+        if Path(WORKBOOK_NAME) != DEFAULT_WORKBOOK_NAME:
+            return Path(WORKBOOK_NAME)
+        return domain_config.workbook_path
     return domain_config.workbook_path
 
 
@@ -469,10 +483,12 @@ def _warehouse_value_index_path(domain_config: DomainConfig) -> Path:
 
 
 def _is_builtin_admissions_domain(domain_config: DomainConfig) -> bool:
-    return (
-        domain_config.domain_id == ADMISSIONS_DOMAIN.domain_id
-        and domain_config.root.resolve() == ADMISSIONS_DOMAIN.root.resolve()
-    )
+    if domain_config.domain_id != ADMISSIONS_DOMAIN_ID:
+        return False
+    try:
+        return domain_config.root.resolve() == ADMISSIONS_DOMAIN.root.resolve()
+    except FileNotFoundError:
+        return False
 
 
 def run_workbench(config: WorkbenchConfig) -> dict[str, Any]:
@@ -749,7 +765,7 @@ def _run_semantic_capability_query(
     config: WorkbenchConfig,
     domain_config: DomainConfig,
 ) -> SemanticCapabilityRun | SemanticCapabilityFallback | None:
-    if domain_config.domain_id != ADMISSIONS_DOMAIN.domain_id:
+    if domain_config.domain_id != ADMISSIONS_DOMAIN_ID:
         return None
     if not domain_config.semantic_capabilities:
         return None
@@ -1911,7 +1927,7 @@ def _run_admissions_planned_query(
     config: WorkbenchConfig,
     domain_config: DomainConfig,
 ) -> Any | None:
-    if domain_config.domain_id != ADMISSIONS_DOMAIN.domain_id:
+    if domain_config.domain_id != ADMISSIONS_DOMAIN_ID:
         return None
     return AdmissionsQueryPlanner(
         domain_config=domain_config,
@@ -2263,7 +2279,7 @@ def _decision_option_suggestions_for_payload(
     domain_config: DomainConfig,
     slots: dict[str, Any],
 ) -> dict[str, Any]:
-    if domain_config.domain_id != ADMISSIONS_DOMAIN.domain_id:
+    if domain_config.domain_id != ADMISSIONS_DOMAIN_ID:
         return {
             "status": "reference_only",
             "execution_effect": "does_not_change_sql_or_results",
@@ -2281,7 +2297,7 @@ def _guidance_slots_for_payload(
     config: WorkbenchConfig,
     domain_config: DomainConfig,
 ) -> dict[str, Any]:
-    if domain_config.domain_id != ADMISSIONS_DOMAIN.domain_id:
+    if domain_config.domain_id != ADMISSIONS_DOMAIN_ID:
         return {}
     prompt = _soft_prompt(config) or config.user_input or _compose_user_request(config)
     slots = RegexExtractor(alias_path=domain_config.value_aliases_path).extract(prompt)
@@ -3045,7 +3061,7 @@ def _execute_verified_hard_rules(
 
 
 def _admissions_sort_policy(config: WorkbenchConfig) -> list[dict[str, Any]] | None:
-    if config.domain_name != ADMISSIONS_DOMAIN.domain_id or config.domain_path:
+    if config.domain_name != ADMISSIONS_DOMAIN_ID or config.domain_path:
         return None
     sort_mode = _clean_text(config.soft_preferences.get("sort_mode"))
     if sort_mode in SORT_MODE_OPTIONS and sort_mode in ADMISSIONS_SORT_POLICIES:
@@ -3107,7 +3123,7 @@ def _run_value_entity_linker(
     value_index: SchemaValueIndex | None,
     domain_config: DomainConfig,
 ) -> EntityLinkingResult:
-    if domain_config.domain_id != ADMISSIONS_DOMAIN.domain_id:
+    if domain_config.domain_id != ADMISSIONS_DOMAIN_ID:
         return EntityLinkingResult(status="not_applicable")
     try:
         return ReviewedValueEntityLinker(schema_registry, value_index).link(user_request)
@@ -3130,7 +3146,7 @@ def _validate_controlled_options(
     config: WorkbenchConfig,
     domain_config: DomainConfig,
 ) -> None:
-    if domain_config.domain_id != ADMISSIONS_DOMAIN.domain_id:
+    if domain_config.domain_id != ADMISSIONS_DOMAIN_ID:
         return
     _validate_rank_window_option(config.soft_preferences)
 
@@ -3203,7 +3219,7 @@ def _extract_slots(
     domain_config: DomainConfig | None = None,
 ) -> tuple[dict[str, Any], dict[str, int] | None]:
     domain_config = domain_config or _domain_config(config)
-    if domain_config.domain_id != ADMISSIONS_DOMAIN.domain_id:
+    if domain_config.domain_id != ADMISSIONS_DOMAIN_ID:
         return _generic_domain_slots(config), None
     soft_prompt = _soft_prompt(config)
     if config.extractor == "regex":
@@ -3456,7 +3472,7 @@ def _apply_soft_confirmations(
     domain_config: DomainConfig | None = None,
 ) -> dict[str, Any]:
     domain_config = domain_config or _domain_config(config)
-    if domain_config.domain_id != ADMISSIONS_DOMAIN.domain_id:
+    if domain_config.domain_id != ADMISSIONS_DOMAIN_ID:
         return classified_rules
     updated = dict(classified_rules)
     candidate_rule_ids = {
@@ -4225,7 +4241,7 @@ def _stable_value(value: Any) -> str:
 
 
 def _compose_user_request(config: WorkbenchConfig) -> str:
-    if config.domain_name != ADMISSIONS_DOMAIN.domain_id or config.domain_path:
+    if config.domain_name != ADMISSIONS_DOMAIN_ID or config.domain_path:
         prompt = _clean_prompt_text(config.soft_preferences.get("prompt"))
         if prompt:
             return prompt
@@ -4301,7 +4317,7 @@ def _display_hard_filters_for_domain(
     config: WorkbenchConfig,
     domain_config: DomainConfig,
 ) -> dict[str, Any]:
-    if domain_config.domain_id == ADMISSIONS_DOMAIN.domain_id:
+    if domain_config.domain_id == ADMISSIONS_DOMAIN_ID:
         return _public_structured_filters(_display_hard_filters(config.hard_filters))
     return _public_structured_filters(config.hard_filters)
 
@@ -4353,7 +4369,7 @@ def _display_soft_preferences_for_domain(
     config: WorkbenchConfig,
     domain_config: DomainConfig,
 ) -> dict[str, Any]:
-    if domain_config.domain_id == ADMISSIONS_DOMAIN.domain_id:
+    if domain_config.domain_id == ADMISSIONS_DOMAIN_ID:
         return _public_soft_preferences(_display_soft_preferences(config.soft_preferences))
     return _public_soft_preferences(config.soft_preferences)
 

@@ -20,13 +20,6 @@ try:
 except ModuleNotFoundError:  # pragma: no cover - 依赖安装前的降级路径。
     Draft202012Validator = None  # type: ignore[assignment]
 
-from scripts.run_quality_gate import QualityGateOptions, run_quality_gate
-from scripts.run_real_dataset_pilot import (
-    _json_ready as _pilot_json_ready,
-    _render_markdown as _render_pilot_markdown,
-    _fixture_path,
-    run_pilot,
-)
 from src.api.dataset_service import DatasetService, DatasetServiceError
 from src.api.workbench import WorkbenchConfig, run_workbench
 
@@ -44,6 +37,7 @@ LLM_SAFE_TOOL_NAMES = {
     "workbench.confirm",
     "evidence.get",
 }
+USER_UPLOAD_ONLY_DISABLED_TOOLS = {"quality.run", "pilot.run"}
 FORBIDDEN_LLM_INPUT_FIELDS = {
     "raw_sql",
     "sql",
@@ -115,7 +109,11 @@ def list_tools(
 ) -> list[dict[str, Any]]:
     """列出可调用 tool contract。"""
 
-    contracts = [_public_contract(contract) for contract in _load_contracts().values()]
+    contracts = [
+        _public_contract(contract)
+        for contract in _load_contracts().values()
+        if _tool_available_in_distribution(str(contract.get("name") or ""))
+    ]
     if permission_scope:
         contracts = [
             contract
@@ -135,7 +133,7 @@ def get_tool_schema(tool_name: str) -> dict[str, Any]:
     """返回单个 tool 的完整 contract。"""
 
     contracts = _load_contracts()
-    if tool_name not in contracts:
+    if tool_name not in contracts or not _tool_available_in_distribution(tool_name):
         raise ToolRegistryError(f"Unknown tool: {tool_name}")
     return dict(contracts[tool_name])
 
@@ -153,6 +151,8 @@ def invoke_tool(
     dataset_id = _payload_dataset_id(payload)
     started = time.monotonic()
     try:
+        if not _tool_available_in_distribution(tool_name):
+            raise ToolRegistryError(f"Unknown tool: {tool_name}")
         _enforce_permission(contract, actor_context)
         _validate_payload(contract, payload)
         if contract.get("llm_safe"):
@@ -200,6 +200,7 @@ def _dispatch_tool(
     if tool_name == "dataset.profile":
         return service.profile(str(payload["dataset_id"]))
     if tool_name == "dataset.generate_domain_pack":
+        _reject_user_upload_only_domain_template(payload)
         return service.generate_domain_pack(
             str(payload["dataset_id"]),
             domain_name=payload.get("domain_name"),
@@ -299,6 +300,8 @@ def _tool_workbench_query(
             confirmed_candidates=confirmed,
             domain_name=str(domain) if domain else None,
         )
+    if _user_upload_only_mode():
+        raise ToolRegistryError("workbench.query requires dataset_id in user_upload_only mode")
     return run_workbench(
         WorkbenchConfig(
             user_input=natural_language,
@@ -345,6 +348,8 @@ def _tool_evidence_get(payload: dict[str, Any]) -> dict[str, Any]:
 
 
 def _tool_quality_run(payload: dict[str, Any]) -> dict[str, Any]:
+    from scripts.run_quality_gate import QualityGateOptions, run_quality_gate
+
     output_dir = Path(str(payload.get("output_dir") or "outputs/quality_gate"))
     _reject_path_traversal(output_dir)
     options = QualityGateOptions(
@@ -360,6 +365,13 @@ def _tool_quality_run(payload: dict[str, Any]) -> dict[str, Any]:
 
 
 def _tool_pilot_run(payload: dict[str, Any]) -> dict[str, Any]:
+    from scripts.run_real_dataset_pilot import (
+        _fixture_path,
+        _json_ready as _pilot_json_ready,
+        _render_markdown as _render_pilot_markdown,
+        run_pilot,
+    )
+
     output_dir = Path(str(payload.get("output_dir") or "outputs/real_dataset_pilot"))
     _reject_path_traversal(output_dir)
     if payload.get("fixture"):
@@ -395,6 +407,25 @@ def _load_contracts() -> dict[str, dict[str, Any]]:
             continue
         contracts[str(name)] = contract
     return contracts
+
+
+def _tool_available_in_distribution(tool_name: str) -> bool:
+    if not _user_upload_only_mode():
+        return True
+    return tool_name not in USER_UPLOAD_ONLY_DISABLED_TOOLS
+
+
+def _reject_user_upload_only_domain_template(payload: dict[str, Any]) -> None:
+    if not _user_upload_only_mode():
+        return
+    if payload.get("base_domain") or payload.get("template_id"):
+        raise ToolRegistryError(
+            "domain templates are not available in user_upload_only mode"
+        )
+
+
+def _user_upload_only_mode() -> bool:
+    return os.getenv("APP_DISTRIBUTION_MODE") == "user_upload_only"
 
 
 def _public_contract(contract: dict[str, Any]) -> dict[str, Any]:

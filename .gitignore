@@ -42,6 +42,8 @@ outputs/real_dataset_pilot/fixtures/
 outputs/real_dataset_pilot/uploaded_datasets/
 outputs/operator_trial/
 outputs/local_settings/
+outputs/local_user_app/
+outputs/local_user_web/
 outputs/tool_audit/
 outputs/release_package/
 domains/**/*.duckdb

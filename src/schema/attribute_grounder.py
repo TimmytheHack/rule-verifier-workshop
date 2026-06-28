@@ -16,7 +16,7 @@ from src.domains import DomainConfig
 from src.schema.schema_registry import SchemaRegistry
 
 
-DEFAULT_POLICY_PATH = DomainConfig.load().attribute_grounding_path
+DEFAULT_POLICY_PATH: Path | None = None
 
 
 def _value_at(payload: dict[str, Any], path: tuple[str, ...]) -> Any:

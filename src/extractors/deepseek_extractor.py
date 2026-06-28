@@ -27,7 +27,7 @@ from src.domains import DomainConfig
 
 DEEPSEEK_API_URL = "https://api.deepseek.com/chat/completions"
 DEFAULT_MODEL = "deepseek-chat"
-DEFAULT_ALIAS_PATH = DomainConfig.load("admissions").value_aliases_path
+DEFAULT_ALIAS_PATH: Path | None = None
 SUPPORTED_MODELS = {
     "deepseek-v4-flash",
     "deepseek-v4-pro",
@@ -471,7 +471,10 @@ def _optional_text(value: Any) -> str | None:
 
 @lru_cache(maxsize=1)
 def _admissions_aliases() -> dict[str, Any]:
-    return json.loads(Path(DEFAULT_ALIAS_PATH).read_text(encoding="utf-8"))
+    alias_path = (
+        DEFAULT_ALIAS_PATH or DomainConfig.load("admissions").value_aliases_path
+    )
+    return json.loads(Path(alias_path).read_text(encoding="utf-8"))
 
 
 def _first_present(text: str, candidates: list[str]) -> str | None:

@@ -214,7 +214,7 @@ def version() -> dict[str, str]:
         "schema_version": WORKBENCH_SCHEMA_VERSION,
         "api_version": API_VERSION,
         "tool_contract_version": TOOL_CONTRACT_VERSION,
-        "distribution_mode": os.getenv("APP_DISTRIBUTION_MODE", "development"),
+        "distribution_mode": _distribution_mode(),
     }
 
 
@@ -300,6 +300,7 @@ def generate_dataset_domain_pack(
 
     try:
         _ensure_scope(_actor_context_from_request(http_request), "dataset_write")
+        _reject_user_upload_only_domain_template(request)
         return dataset_service.generate_domain_pack(
             dataset_id,
             domain_name=request.domain_name,
@@ -476,6 +477,14 @@ def query_workbench(
                 confirmed_candidates=request.confirmed_candidates,
                 domain_name=request.domain_name,
             )
+        if _user_upload_only_mode():
+            raise HTTPException(
+                status_code=400,
+                detail={
+                    "code": "dataset_id_required",
+                    "message": "本地用户模式必须选择一个已上传数据源。",
+                },
+            )
         return run_workbench(
             WorkbenchConfig(
                 user_input=request.user_input.strip(),
@@ -628,6 +637,29 @@ def _dataset_http_error(exc: DatasetServiceError) -> HTTPException:
             "details": exc.details or {},
         },
     )
+
+
+def _reject_user_upload_only_domain_template(
+    request: GenerateDomainPackRequest,
+) -> None:
+    if not _user_upload_only_mode():
+        return
+    if request.base_domain or request.template_id:
+        raise HTTPException(
+            status_code=400,
+            detail={
+                "code": "domain_template_unavailable",
+                "message": "本地用户模式不复用内置领域模板。",
+            },
+        )
+
+
+def _distribution_mode() -> str:
+    return os.getenv("APP_DISTRIBUTION_MODE", "development")
+
+
+def _user_upload_only_mode() -> bool:
+    return _distribution_mode() == "user_upload_only"
 
 
 def _invalid_preflight_http_error(message: str) -> HTTPException:
@@ -842,6 +874,13 @@ def _check_tool_schemas() -> dict[str, Any]:
 
 
 def _check_domain_configs() -> dict[str, Any]:
+    if _user_upload_only_mode():
+        return {
+            "name": "domain_configs",
+            "ok": True,
+            "skipped": True,
+            "reason": "user_upload_only",
+        }
     failures = []
     for domain in ["admissions", "housing", "products"]:
         try:
@@ -857,6 +896,13 @@ def _check_domain_configs() -> dict[str, Any]:
 
 
 def _check_quality_gate_dependencies() -> dict[str, Any]:
+    if _user_upload_only_mode():
+        return {
+            "name": "quality_gate_dependencies",
+            "ok": True,
+            "skipped": True,
+            "reason": "user_upload_only",
+        }
     python_path = ROOT_DIR / ".venv/bin/python"
     script_path = ROOT_DIR / "scripts/run_quality_gate.py"
     return {

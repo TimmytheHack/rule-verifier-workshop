@@ -59,6 +59,91 @@ class ServerDeploymentTest(unittest.TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json()["distribution_mode"], "user_upload_only")
 
+    def test_user_upload_only_requires_dataset_for_workbench_query(self) -> None:
+        token_map = {
+            "local-token": {
+                "actor_id": "local_app",
+                "permission_scopes": ["query"],
+            }
+        }
+        with patch.dict(
+            os.environ,
+            {
+                "APP_DISTRIBUTION_MODE": "user_upload_only",
+                "AUTH_TOKENS_JSON": json.dumps(token_map),
+            },
+            clear=False,
+        ):
+            response = self.client.post(
+                "/workbench/query",
+                headers={"X-Actor-Token": "local-token"},
+                json={"user_input": "看看内置 admissions"},
+            )
+            tool_response = self.client.post(
+                "/tools/workbench.query/invoke",
+                headers={"X-Actor-Token": "local-token"},
+                json={"payload": {"natural_language": "看看内置 admissions"}},
+            )
+
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.json()["detail"]["code"], "dataset_id_required")
+        self.assertEqual(tool_response.status_code, 400)
+        self.assertEqual(
+            tool_response.json()["detail"]["code"],
+            "invalid_tool_request",
+        )
+        self.assertIn("dataset_id", tool_response.json()["detail"]["message"])
+
+    def test_user_upload_only_hides_dev_tools_and_domain_templates(self) -> None:
+        token_map = {
+            "local-token": {
+                "actor_id": "local_app",
+                "permission_scopes": [
+                    "read_only",
+                    "query",
+                    "confirm",
+                    "dataset_write",
+                    "review_admin",
+                    "warehouse_admin",
+                    "diagnostics",
+                ],
+            }
+        }
+        with patch.dict(
+            os.environ,
+            {
+                "APP_DISTRIBUTION_MODE": "user_upload_only",
+                "AUTH_TOKENS_JSON": json.dumps(token_map),
+            },
+            clear=False,
+        ):
+            tools_response = self.client.get(
+                "/tools/list",
+                headers={"X-Actor-Token": "local-token"},
+            )
+            schema_response = self.client.get("/tools/quality.run/schema")
+            template_response = self.client.post(
+                "/tools/dataset.generate_domain_pack/invoke",
+                headers={"X-Actor-Token": "local-token"},
+                json={
+                    "payload": {
+                        "dataset_id": "uploaded_table",
+                        "template_id": "admissions_schema_v1",
+                    }
+                },
+            )
+
+        names = {tool["name"] for tool in tools_response.json()["tools"]}
+        self.assertEqual(tools_response.status_code, 200)
+        self.assertNotIn("quality.run", names)
+        self.assertNotIn("pilot.run", names)
+        self.assertEqual(schema_response.status_code, 400)
+        self.assertEqual(template_response.status_code, 400)
+        self.assertIn(
+            "domain templates",
+            template_response.json()["detail"]["message"],
+        )
+
     def test_frontend_user_dist_is_served_without_auth(self) -> None:
         with TemporaryDirectory() as directory:
             dist = Path(directory)
@@ -157,6 +242,7 @@ class ServerDeploymentTest(unittest.TestCase):
             "demo",
             "serve",
             "serve-user",
+            "macos-app",
             "frontend",
             "frontend-user-build",
             "clean-artifacts",

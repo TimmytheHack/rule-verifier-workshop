@@ -48,13 +48,24 @@ make serve-user
 
 macOS 也可以直接双击仓库根目录的 `start_local_user_web.command`。
 
+如果想生成真正的 macOS `.app` 包：
+
+```bash
+make macos-app
+open outputs/local_user_app/本地表格工作台.app
+```
+
+该 app 包内只放上传数据流所需的后端源码快照、tool contract 和前端构建产物；构建时会把可运行的 Python runtime 安装到 `~/Library/Application Support/SZU Local Workbench/runtime/workbench/`，双击后不需要再打开 Terminal。上传数据、LLM key、查询规则和日志也写入 `~/Library/Application Support/SZU Local Workbench/`；不会写回 app 包，也不会复制仓库里的 `.env`、上传数据、outputs 产物、内置 admissions/housing/products domain pack 或质量/pilot 诊断工具。更新代码或依赖后，重新运行 `make macos-app` 生成新快照并刷新本机 runtime。
+
+这个 `.app` 是同一台机器上的本地启动包，不是跨机器分发包；如果移动到另一台电脑，需要在目标机器上从项目重新运行 `make macos-app`。
+
 打开：
 
 ```text
 http://127.0.0.1:8001
 ```
 
-`make serve-user` 和 `start_local_user_web.command` 会先构建 `frontend-user/dist`，再用同一个 FastAPI 服务托管新本地用户 Web 和 API。需要改前端代码时，再使用开发模式：
+`make serve-user` 和 `start_local_user_web.command` 会先构建 `frontend-user/dist`，再用同一个 FastAPI 服务托管新本地用户 Web 和 API。`make macos-app` 生成的 `.app` 会复用该前端构建产物并在本机自动打开页面。需要改前端代码时，再使用开发模式：
 
 ```bash
 cd frontend-user
@@ -237,6 +248,7 @@ evidence.get
 | `make bootstrap` | 创建 `.venv` 并安装 Python 依赖。 |
 | `make serve` | 启动 FastAPI 后端。 |
 | `make serve-user` | 构建并启动同端口本地用户 Web。 |
+| `make macos-app` | 生成可双击的 macOS 本地用户 Web app。 |
 | `make frontend-user-build` | 构建本地用户 Web 静态产物。 |
 | `./start_local_user_web.command` | macOS 双击/命令行启动本地用户 Web。 |
 | `cd frontend-user && npm run dev` | 启动本地用户 Web 开发模式。 |

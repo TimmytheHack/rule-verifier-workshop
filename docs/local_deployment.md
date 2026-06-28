@@ -68,8 +68,19 @@ DeepSeek slot adapter 默认不启用。需要验证真实 API 时，确认 `.en
 make serve-user
 ```
 
-macOS 用户也可以双击仓库根目录的 `start_local_user_web.command`。这两个入口都会先构建 `frontend-user/dist`，再以 `APP_DISTRIBUTION_MODE=user_upload_only` 启动 FastAPI，并在 `http://127.0.0.1:8001` 同端口托管本地用户 Web 和 API。用户不需要再单独启动 Vite 前端。
-本机未设置 `AUTH_TOKENS_JSON` 时，启动器会使用仓库的开发 token，并设置 HttpOnly `actor_token` cookie 供同端口页面访问 API。生产或多人环境必须换成真实 token；只有明确需要本机单用户自动登录时，才设置 `LOCAL_USER_AUTO_AUTH_TOKEN`。
+macOS 用户也可以双击仓库根目录的 `start_local_user_web.command`。如果希望生成 `.app`，运行：
+
+```bash
+make macos-app
+open outputs/local_user_app/本地表格工作台.app
+```
+
+生成的 app 会把上传数据流所需的后端源码快照、必要脚本、tool contract 和 `frontend-user/dist` 放进 `Contents/Resources/workbench_source/`；构建时会把可运行的 Python runtime 安装到 `~/Library/Application Support/SZU Local Workbench/runtime/workbench/`，因此可以直接双击启动，不需要再打开 Terminal。上传数据、LLM key、生成的规则和日志写入 `~/Library/Application Support/SZU Local Workbench/`，不会写回 app 包，也不会复制仓库里的 `.env`、上传数据、outputs 产物、内置 admissions/housing/products domain pack 或质量/pilot 诊断工具。代码、前端或依赖更新后，重新运行 `make macos-app` 生成新快照并刷新本机 runtime。
+
+该 `.app` 面向同一台机器本地使用，不是可直接拷贝给其他电脑的独立发行包。换机器使用时，需要在目标机器重新运行 `make macos-app`。
+
+这些入口都会以 `APP_DISTRIBUTION_MODE=user_upload_only` 启动 FastAPI，并在 `http://127.0.0.1:8001` 同端口托管本地用户 Web 和 API。用户不需要再单独启动 Vite 前端。
+本机未设置 `AUTH_TOKENS_JSON` 时，`make serve-user` 和 `.command` 启动器会使用仓库的开发 token，并设置 HttpOnly `actor_token` cookie 供同端口页面访问 API。`.app` 每次启动会生成一次性本机 token，不使用固定开发 token。`user_upload_only` 模式要求 `/workbench/query` 必须携带已上传的 `dataset_id`，不会回退到内置 admissions/housing/products 查询。生产或多人环境必须换成真实 token；只有明确需要本机单用户自动登录时，才设置 `LOCAL_USER_AUTO_AUTH_TOKEN`。
 
 只启动后端 API 时使用：
 
@@ -115,7 +126,7 @@ export AUTH_TOKENS_JSON='{"operator-token":{"actor_id":"operator","permission_sc
 普通用户在“导入数据”上传招生 Excel/CSV 并点击一键导入；`approve` 和 `build` 是后端流水线内部步骤，
 不要求用户手动进入字段审查。导入成功后，前端会把最近可查询的 uploaded admissions `dataset_id`
 保存在浏览器本地状态，并在主查询页作为数据源使用。清理 `DATA_ROOT`、更换本地数据目录或重启到空目录后，
-需要在前端切回内置 admissions，或在“导入数据”重新上传并一键导入。只有字段模板不匹配或导入失败时，
+需要在“导入数据”重新上传并一键导入；`user_upload_only` 模式不会回退到内置 admissions。只有字段模板不匹配或导入失败时，
 才进入“字段审查”处理高级审查信息。
 
 `POST /tools/{tool_name}/invoke` 请求体：
