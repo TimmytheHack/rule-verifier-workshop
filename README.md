@@ -46,13 +46,15 @@ cp .env.example .env
 make serve-user
 ```
 
+macOS 也可以直接双击仓库根目录的 `start_local_user_web.command`。
+
 打开：
 
 ```text
 http://127.0.0.1:8001
 ```
 
-`make serve-user` 会先构建 `frontend-user/dist`，再用同一个 FastAPI 服务托管新本地用户 Web 和 API。需要改前端代码时，再使用开发模式：
+`make serve-user` 和 `start_local_user_web.command` 会先构建 `frontend-user/dist`，再用同一个 FastAPI 服务托管新本地用户 Web 和 API。需要改前端代码时，再使用开发模式：
 
 ```bash
 cd frontend-user
@@ -236,6 +238,7 @@ evidence.get
 | `make serve` | 启动 FastAPI 后端。 |
 | `make serve-user` | 构建并启动同端口本地用户 Web。 |
 | `make frontend-user-build` | 构建本地用户 Web 静态产物。 |
+| `./start_local_user_web.command` | macOS 双击/命令行启动本地用户 Web。 |
 | `cd frontend-user && npm run dev` | 启动本地用户 Web 开发模式。 |
 | `cd frontend && npm run dev` | 启动旧研发前端。 |
 | `make frontend` | 构建前端。 |

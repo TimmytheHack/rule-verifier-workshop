@@ -40,19 +40,8 @@ serve:
 		$(VENVPY) -m uvicorn src.api.server:app --reload --port 8001; \
 	fi
 
-serve-user: frontend-user-build
-	@echo "Open http://127.0.0.1:8001"
-	@if [ -z "$$AUTH_TOKENS_JSON" ]; then \
-		export AUTH_TOKENS_JSON='$(DEV_AUTH_TOKENS_JSON)'; \
-		export APP_DISTRIBUTION_MODE=user_upload_only; \
-		export FRONTEND_USER_DIST=frontend-user/dist; \
-		export LOCAL_USER_AUTO_AUTH_TOKEN=operator-token; \
-		$(VENVPY) -m uvicorn src.api.server:app --reload --port 8001; \
-	else \
-		export APP_DISTRIBUTION_MODE=user_upload_only; \
-		export FRONTEND_USER_DIST=frontend-user/dist; \
-		$(VENVPY) -m uvicorn src.api.server:app --reload --port 8001; \
-	fi
+serve-user:
+	$(VENVPY) scripts/run_local_user_web.py
 
 frontend:
 	@if [ -d frontend ] && [ -f frontend/package.json ]; then \

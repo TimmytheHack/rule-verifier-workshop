@@ -12,7 +12,7 @@
 make serve-user
 ```
 
-然后打开 `http://127.0.0.1:8001`。该模式会把当前前端构建产物交给 FastAPI 同端口托管。
+macOS 也可以双击仓库根目录的 `start_local_user_web.command`。然后打开 `http://127.0.0.1:8001`。该模式会把当前前端构建产物交给 FastAPI 同端口托管。
 如果未设置自定义 `AUTH_TOKENS_JSON`，仓库根目录的 `make serve-user` 会为本机页面设置 HttpOnly 开发 cookie，使页面可以访问本机 API。
 
 前端开发时使用：

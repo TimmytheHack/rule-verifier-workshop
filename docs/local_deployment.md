@@ -68,8 +68,8 @@ DeepSeek slot adapter 默认不启用。需要验证真实 API 时，确认 `.en
 make serve-user
 ```
 
-该命令会先构建 `frontend-user/dist`，再以 `APP_DISTRIBUTION_MODE=user_upload_only` 启动 FastAPI，并在 `http://127.0.0.1:8001` 同端口托管本地用户 Web 和 API。用户不需要再单独启动 Vite 前端。
-本机未设置 `AUTH_TOKENS_JSON` 时，`make serve-user` 会使用仓库的开发 token，并设置 HttpOnly `actor_token` cookie 供同端口页面访问 API。生产或多人环境必须换成真实 token；只有明确需要本机单用户自动登录时，才设置 `LOCAL_USER_AUTO_AUTH_TOKEN`。
+macOS 用户也可以双击仓库根目录的 `start_local_user_web.command`。这两个入口都会先构建 `frontend-user/dist`，再以 `APP_DISTRIBUTION_MODE=user_upload_only` 启动 FastAPI，并在 `http://127.0.0.1:8001` 同端口托管本地用户 Web 和 API。用户不需要再单独启动 Vite 前端。
+本机未设置 `AUTH_TOKENS_JSON` 时，启动器会使用仓库的开发 token，并设置 HttpOnly `actor_token` cookie 供同端口页面访问 API。生产或多人环境必须换成真实 token；只有明确需要本机单用户自动登录时，才设置 `LOCAL_USER_AUTO_AUTH_TOKEN`。
 
 只启动后端 API 时使用：
 
