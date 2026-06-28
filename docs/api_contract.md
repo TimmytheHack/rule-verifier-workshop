@@ -138,7 +138,7 @@ endpoint：
 
 uploaded admissions 额外暴露 reviewed semantic capability path。`GET /datasets/{dataset_id}/profile`
 会返回 `semantic_query_options`，用于说明当前表支持的 deterministic filters、sort fields、
-query types 和 unsupported fields。自然语言推荐请求可以由 DeepSeek 抽取候选
+query types 和 unsupported fields。自然语言推荐请求可以由已配置的 OpenAI-compatible LLM 抽取候选
 `SemanticIntent`，但执行路径只接受 reviewed mapping 和 verifier 通过后的 `QueryAST`。
 `/workbench/query` payload 中已经结构化提交的 admissions 硬条件必须先合并进
 `SemanticIntent.user_context`，包括 `source_province`、`subject_type`、
@@ -437,9 +437,9 @@ NL -> candidate QueryAST -> FieldGrounder -> OperationVerifier -> AnswerabilityG
 缺字段或 unsupported operation 的偏好。
 
 uploaded admissions 的 `planner_mode=llm_semantic` 或可用的 `auto` 路径中，
-`semantic_recommendation` 会先让 DeepSeek 生成候选 `SemanticIntent`，再运行
+`semantic_recommendation` 会先让已配置的 OpenAI-compatible LLM 生成候选 `SemanticIntent`，再运行
 `EvidenceRequirementClassifier`。只有 gate 后剩余的 `table_field` preference 可以进入
-`PreferenceGrounder`、`SemanticQueryVerifier` 和 verified SQL；随后 DeepSeek 才能基于 gate
+`PreferenceGrounder`、`SemanticQueryVerifier` 和 verified SQL；随后 LLM 才能基于 gate
 后的 intent 生成候选 `RankingPlan`。`evidence_pack.planner.ranking_plan` 状态可能是
 `generated`、`empty`、`generation_failed`、`deepseek_disabled` 或 debug-injected `supplied`；排序是否执行仍只看
 `evidence_pack.ranking.status`。`token_usage.extractor` 会合并 intent 抽取、evidence gate

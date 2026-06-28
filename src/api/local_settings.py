@@ -8,12 +8,19 @@ import os
 import stat
 from pathlib import Path
 from typing import Any
-from urllib.parse import urlparse
+
+from src.llm.openai_compatible import (
+    list_provider_templates,
+    provider_template,
+    validate_provider_api_url,
+)
 
 
 DEFAULT_SETTINGS_PATH = Path("outputs/local_settings/llm.json")
-SUPPORTED_PROVIDERS = {"deepseek"}
-DEFAULT_DEEPSEEK_API_URL = "https://api.deepseek.com/chat/completions"
+DEFAULT_PROVIDER = "deepseek"
+DEFAULT_TEMPLATE = provider_template(DEFAULT_PROVIDER)
+SUPPORTED_PROVIDERS = {item["provider"] for item in list_provider_templates()}
+DEFAULT_DEEPSEEK_API_URL = DEFAULT_TEMPLATE.api_url
 
 
 def settings_path() -> Path:
@@ -22,27 +29,30 @@ def settings_path() -> Path:
 
 def llm_status() -> dict[str, Any]:
     settings = _read_settings()
-    provider = settings.get("provider") or "deepseek"
+    template = _settings_template(settings)
     return {
         "enabled": bool(settings.get("enabled")),
-        "provider": provider,
-        "model": settings.get("model") or "deepseek-chat",
-        "api_url": settings.get("api_url") or DEFAULT_DEEPSEEK_API_URL,
+        "provider": template.provider,
+        "provider_options": list_provider_templates(),
+        "model": settings.get("model") or template.default_model,
+        "api_url": settings.get("api_url") or template.api_url,
         "api_key_configured": bool(settings.get("api_key")),
     }
 
 
 def save_llm_settings(payload: dict[str, Any]) -> dict[str, Any]:
-    provider = str(payload.get("provider") or "deepseek")
-    if provider not in SUPPORTED_PROVIDERS:
-        raise ValueError("不支持的 LLM provider")
-    api_url = str(payload.get("api_url") or DEFAULT_DEEPSEEK_API_URL)
-    if not _valid_deepseek_api_url(api_url):
-        raise ValueError("不支持的 LLM api_url")
+    try:
+        template = provider_template(str(payload.get("provider") or DEFAULT_PROVIDER))
+    except ValueError as exc:
+        raise ValueError("不支持的 LLM provider") from exc
+    api_url = validate_provider_api_url(
+        template.provider,
+        str(payload.get("api_url") or template.api_url),
+    )
     settings = {
         "enabled": bool(payload.get("enabled")),
-        "provider": provider,
-        "model": str(payload.get("model") or "deepseek-chat"),
+        "provider": template.provider,
+        "model": str(payload.get("model") or template.default_model),
         "api_url": api_url,
     }
     api_key = str(payload.get("api_key") or "").strip()
@@ -66,10 +76,19 @@ def local_setting_value(name: str) -> str | None:
         return "true" if bool(settings.get("enabled")) else "false"
     if not settings.get("enabled"):
         return None
+    template = _settings_template(settings)
+    if name == "LLM_PROVIDER":
+        return template.provider
+    if name == "LLM_API_KEY":
+        return str(settings.get("api_key")) if settings.get("api_key") else None
+    if name == "LLM_MODEL":
+        return str(settings.get("model") or template.default_model)
+    if name == "LLM_API_URL":
+        return str(settings.get("api_url") or template.api_url)
     mapping = {
-        "DEEPSEEK_API_KEY": "api_key",
-        "DEEPSEEK_MODEL": "model",
-        "DEEPSEEK_API_URL": "api_url",
+        template.api_key_env: "api_key",
+        template.model_env: "model",
+        template.api_url_env: "api_url",
         "ENABLE_LLM": "enabled",
     }
     key = mapping.get(name)
@@ -81,22 +100,11 @@ def local_setting_value(name: str) -> str | None:
     return str(value) if value else None
 
 
-def _valid_deepseek_api_url(value: str) -> bool:
-    parsed = urlparse(value)
+def _settings_template(settings: dict[str, Any]) -> Any:
     try:
-        port = parsed.port
+        return provider_template(str(settings.get("provider") or DEFAULT_PROVIDER))
     except ValueError:
-        return False
-    return (
-        parsed.scheme == "https"
-        and parsed.hostname == "api.deepseek.com"
-        and parsed.path == "/chat/completions"
-        and parsed.username is None
-        and parsed.password is None
-        and parsed.query == ""
-        and parsed.fragment == ""
-        and port in {None, 443}
-    )
+        return DEFAULT_TEMPLATE
 
 
 def _write_settings_securely(path: Path, content: str) -> None:

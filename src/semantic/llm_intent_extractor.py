@@ -26,7 +26,7 @@ class JSONChatClient(Protocol):
 
 
 class DeepSeekSemanticIntentExtractor:
-    """DeepSeek 只提出语义意图候选，不判断可执行性。"""
+    """LLM 只提出语义意图候选，不判断可执行性。"""
 
     def __init__(self, client: JSONChatClient | None = None) -> None:
         self.client = client or DeepSeekClient()
@@ -49,10 +49,14 @@ class DeepSeekSemanticIntentExtractor:
         payload = _normalize_payload(response_payload, original_text=text)
         return IntentExtractionResult(
             intent=SemanticIntent.model_validate(payload),
-            provider="deepseek",
+            provider=_client_provider(self.client),
             raw_payload=payload,
             usage=usage,
         )
+
+
+def _client_provider(client: JSONChatClient) -> str:
+    return str(getattr(client, "provider", None) or "llm")
 
 
 def _chat_json(client: JSONChatClient, system_prompt: str, user_prompt: str) -> Any:

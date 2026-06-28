@@ -3082,6 +3082,8 @@ def _admissions_rows() -> list[dict[str, object]]:
 
 
 class FakeSemanticIntentClient:
+    provider = "deepseek"
+
     def __init__(
         self,
         payload: dict[str, object] | list[dict[str, object]],

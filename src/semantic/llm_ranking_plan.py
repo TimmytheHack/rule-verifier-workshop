@@ -24,7 +24,7 @@ class RankingPlanGenerationResult:
 
 
 class DeepSeekRankingPlanGenerator:
-    """DeepSeek 只提出候选 RankingPlan，不执行排序。"""
+    """LLM 只提出候选 RankingPlan，不执行排序。"""
 
     def __init__(self, client: JSONChatClient | None = None) -> None:
         self.client = client or DeepSeekClient()
@@ -51,10 +51,14 @@ class DeepSeekRankingPlanGenerator:
         plan = RankingPlan.model_validate(payload)
         return RankingPlanGenerationResult(
             plan=plan,
-            provider="deepseek",
+            provider=_client_provider(self.client),
             raw_payload=payload,
             usage=usage,
         )
+
+
+def _client_provider(client: JSONChatClient) -> str:
+    return str(getattr(client, "provider", None) or "llm")
 
 
 def _chat_json(client: JSONChatClient, system_prompt: str, user_prompt: str) -> Any:

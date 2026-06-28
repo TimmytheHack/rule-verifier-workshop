@@ -141,11 +141,11 @@ python scripts/build_data_warehouse.py
 
 研发或 operator 显式选择招生模板时，上传 admissions 分数/位次表仍可走 reviewed admissions semantic 链路。例如源表只包含 `专业`、`所属专业组`、`最低位次`、`最低分数`、`学校所在` 等字段时，`admissions_schema_v1` 会按已审查列名别名映射到 canonical 字段。该模板不在 `user_upload_only` 普通用户模式中启用。
 
-uploaded admissions 推荐现在走 reviewed semantic 链路：DeepSeek 先提出候选 `SemanticIntent`，系统随后运行 `EvidenceRequirementClassifier`，把每个 LLM 抽取出的 preference 先分成 `table_field`、`knowledge_base_or_reviewed_field`、`reviewed_ranking_policy`、`user_boundary` 或 `unsupported`。只有 `table_field` preference 会继续进入 `PreferenceGrounder`、`SemanticQueryVerifier` 和 verified `QueryAST`；需要 reviewed KB、reviewed ranking policy、用户边界或 unsupported 的偏好会进入 `not_executed_preferences` / `unanswerable_intents`，不会进入 SQL filter、候选 `RankingPlan` prompt 或答案结论。
+uploaded admissions 推荐现在走 reviewed semantic 链路：已配置的 OpenAI-compatible LLM 先提出候选 `SemanticIntent`，系统随后运行 `EvidenceRequirementClassifier`，把每个 LLM 抽取出的 preference 先分成 `table_field`、`knowledge_base_or_reviewed_field`、`reviewed_ranking_policy`、`user_boundary` 或 `unsupported`。只有 `table_field` preference 会继续进入 `PreferenceGrounder`、`SemanticQueryVerifier` 和 verified `QueryAST`；需要 reviewed KB、reviewed ranking policy、用户边界或 unsupported 的偏好会进入 `not_executed_preferences` / `unanswerable_intents`，不会进入 SQL filter、候选 `RankingPlan` prompt 或答案结论。
 
 对 `semantic_recommendation`，Workbench 只会在 evidence gate 之后继续请求候选 `RankingPlan`；只有 `RankingVerifier` 验证 reviewed 字段、allowed operation 和可信 value evidence 后，系统才用 `GenericRankingEngine` 排序，否则回答会明确称为“候选列表”。LLM 可以提出 `RankingPlan` 和 rationale，但不能直接排序、不能新增候选 item，也不能引用 EvidencePack 之外的就业、城市发展、学校氛围等结论。`EvidencePack.planner.evidence_requirements` 记录 gate 分流，`EvidencePack.planner.ranking_plan` 记录排序计划层的状态，例如 `generated`、`empty`、`generation_failed`、`deepseek_disabled` 或 debug-injected `supplied`。只给分数没有位次时返回 `needs_confirmation`，不执行 SQL。
 
-uploaded admissions 查询的 `planner_mode` 默认为 `auto`：在 `ENABLE_LLM=true` 且 DeepSeek 可用时，系统会先调用 `DeepSeekSemanticIntentExtractor` 生成候选 `SemanticIntent`，再由系统验证并执行 `admissions_major_rank` 或 `semantic_recommendation`。UI 中明确填写的硬条件，例如生源地、科类、再选科目、省排位和分数，会在 verifier 之前合并进 `SemanticIntent.user_context`；LLM 没抽到或抽错这些上下文时，不能覆盖用户在表单中提交的结构化事实。DeepSeek 不可用、抽取失败，或适用的 `EvidenceRequirementClassifier` 失败时，`auto` 会降级到 legacy verified planner，但 `EvidencePack.planner` 会记录 `fallback_used`、`fallback_reason` 和错误类型摘要；显式传 `planner_mode=legacy` 可以跳过 LLM semantic planner。是否真的调用了 DeepSeek，应看 `token_usage.extractor` 和 `EvidencePack.planner`，不能只看答案文本。
+uploaded admissions 查询的 `planner_mode` 默认为 `auto`：在 `ENABLE_LLM=true` 且已配置 LLM key 时，系统会先调用 LLM semantic planner 生成候选 `SemanticIntent`，再由系统验证并执行 `admissions_major_rank` 或 `semantic_recommendation`。UI 中明确填写的硬条件，例如生源地、科类、再选科目、省排位和分数，会在 verifier 之前合并进 `SemanticIntent.user_context`；LLM 没抽到或抽错这些上下文时，不能覆盖用户在表单中提交的结构化事实。LLM 不可用、抽取失败，或适用的 `EvidenceRequirementClassifier` 失败时，`auto` 会降级到 legacy verified planner，但 `EvidencePack.planner` 会记录 `provider`、`fallback_used`、`fallback_reason` 和错误类型摘要；显式传 `planner_mode=legacy` 可以跳过 LLM semantic planner。是否真的调用了 LLM，应看 `token_usage.extractor` 和 `EvidencePack.planner`，不能只看答案文本。
 
 本地探针命令：
 
@@ -213,9 +213,11 @@ ENABLE_LLM=false
 
 不配置 LLM 也可以使用 demo、上传数据、字段审核、DuckDB 查询、Quality Gate 和 tool server。
 
-如果显式设置 `ENABLE_LLM=true` 并配置 `DEEPSEEK_API_KEY`，DeepSeek 只用于补齐 deterministic extractor 缺失的 slots、为 uploaded admissions 提出 schema-aware `SemanticIntent`、可选地在 bounded candidates 的 `row_id` 内 rerank，或基于证据解释结果。它不能生成 SQL，不能生成 hard rules，也不能绕过 `RuleVerifier`、reviewed mapping、确认回路、rerank validator 或 warehouse fingerprint guard。
+如果显式设置 `ENABLE_LLM=true` 并配置 LLM key，LLM 只用于补齐 deterministic extractor 缺失的 slots、为 uploaded admissions 提出 schema-aware `SemanticIntent`、可选地在 bounded candidates 的 `row_id` 内 rerank，或基于证据解释结果。它不能生成 SQL，不能生成 hard rules，也不能绕过 `RuleVerifier`、reviewed mapping、确认回路、rerank validator 或 warehouse fingerprint guard。
 
-验证 DeepSeek slot adapter：
+支持的 OpenAI-compatible provider 模板包括 `deepseek`、`qwen`、`kimi`、`zhipu`、`qianfan` 和 `hunyuan`。本地用户 Web 的设置页会按 provider 自动填入默认 `model` 和 `api_url`；环境变量也可以使用通用 `LLM_PROVIDER`、`LLM_API_KEY`、`LLM_MODEL`、`LLM_API_URL`。旧的 `DEEPSEEK_API_KEY`、`DEEPSEEK_MODEL`、`DEEPSEEK_API_URL` 仍保留兼容。
+
+验证 LLM slot adapter：
 
 ```bash
 ENABLE_LLM=true .venv/bin/python scripts/run_deepseek_slot_probe.py

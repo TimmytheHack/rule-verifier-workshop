@@ -116,7 +116,7 @@ class SlotExtractor(Protocol):
 
 
 class DeepSeekSlotAdapter:
-    """DeepSeek 生产适配层：校验输出，只保留可补槽信息。"""
+    """LLM 生产适配层：校验输出，只保留可补槽信息。"""
 
     def __init__(self, extractor: SlotExtractor | None = None) -> None:
         self.extractor = extractor or DeepSeekExtractor()
@@ -142,7 +142,7 @@ class DeepSeekSlotAdapter:
         slots = _slot_only_payload(raw_slots)
         _validate_slot_payload(slots)
         slots["llm_slot_adapter"] = {
-            "provider": "deepseek",
+            "provider": _extractor_provider(self.extractor),
             "validated": True,
             "mode": "slot_completion_only",
             "safety_policy": (
@@ -160,9 +160,15 @@ def llm_runtime_enabled() -> bool:
 
 
 def deepseek_slot_adapter_enabled() -> bool:
-    """DeepSeek slot adapter 只有显式开启且有 key 时才可用。"""
+    """LLM slot adapter 只有显式开启且有 key 时才可用。"""
 
     return llm_runtime_enabled() and has_deepseek_api_key()
+
+
+def _extractor_provider(extractor: SlotExtractor) -> str:
+    client = getattr(extractor, "client", None)
+    provider = getattr(client, "provider", None)
+    return str(provider or "llm")
 
 
 def _slot_only_payload(raw_slots: dict[str, Any]) -> dict[str, Any]:

@@ -22,7 +22,7 @@ class WorkbenchPreflightConfig:
     user_input: str
     hard_filters: dict[str, Any] = field(default_factory=dict)
     soft_preferences: dict[str, Any] = field(default_factory=dict)
-    model: str = "deepseek-v4-flash"
+    model: str = ""
     planner_mode: str = "llm_semantic"
     domain_name: str = "admissions"
     domain_path: str | None = None
@@ -91,7 +91,7 @@ def run_workbench_preflight(
                 response["status"] = "blocked"
                 response["planner"]["evidence_requirements"] = {
                     "status": "classification_failed",
-                    "provider": "deepseek",
+                    "provider": workbench_module._configured_llm_provider(),
                     "called": True,
                     "fallback_used": True,
                     "fallback_reason": "evidence_requirement_classification_failed",

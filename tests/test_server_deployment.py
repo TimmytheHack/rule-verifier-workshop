@@ -257,6 +257,10 @@ class ServerDeploymentTest(unittest.TestCase):
             "UPLOAD_MAX_MB=",
             "AUTH_TOKENS_JSON=",
             "ENABLE_LLM=false",
+            "LLM_PROVIDER=deepseek",
+            "LLM_API_KEY=",
+            "LLM_MODEL=deepseek-chat",
+            "LLM_API_URL=https://api.deepseek.com/chat/completions",
             "DEEPSEEK_API_KEY=",
             "TOOL_AUDIT_LOG_PATH=",
             "TOOL_AUDIT_MAX_BYTES=",
@@ -269,6 +273,7 @@ class ServerDeploymentTest(unittest.TestCase):
             self.assertIn(key, content)
         self.assertNotIn("sk-", content)
         self.assertNotIn("replace_with", content)
+        self.assertRegex(content, r"(?m)^LLM_API_KEY=$")
         self.assertRegex(content, r"(?m)^DEEPSEEK_API_KEY=$")
 
     def test_llm_settings_status_does_not_return_secret(self) -> None:
@@ -311,6 +316,56 @@ class ServerDeploymentTest(unittest.TestCase):
         self.assertTrue(payload["api_key_configured"])
         self.assertNotIn("api_key", payload)
         self.assertNotIn("secret-test-key", json.dumps(payload))
+
+    def test_llm_settings_accepts_qwen_provider_template(self) -> None:
+        with TemporaryDirectory() as directory:
+            settings_path = Path(directory) / "llm.json"
+            with patch.dict(
+                os.environ,
+                {
+                    "LOCAL_SETTINGS_PATH": str(settings_path),
+                    "AUTH_TOKENS_JSON": json.dumps(
+                        {
+                            "operator-token": {
+                                "actor_id": "operator",
+                                "permission_scopes": ["read_only", "diagnostics"],
+                            }
+                        }
+                    ),
+                },
+                clear=False,
+            ):
+                response = self.client.post(
+                    "/settings/llm",
+                    headers={"X-Actor-Token": "operator-token"},
+                    json={
+                        "enabled": True,
+                        "provider": "qwen",
+                        "model": "qwen-plus",
+                        "api_url": (
+                            "https://dashscope.aliyuncs.com/compatible-mode/v1/"
+                            "chat/completions"
+                        ),
+                        "api_key": "secret-test-key",
+                    },
+                )
+                status = self.client.get(
+                    "/settings/llm",
+                    headers={"X-Actor-Token": "operator-token"},
+                )
+                provider = env_value("LLM_PROVIDER")
+                api_key = env_value("LLM_API_KEY")
+
+        self.assertEqual(response.status_code, 200)
+        payload = status.json()
+        self.assertEqual(payload["provider"], "qwen")
+        self.assertEqual(payload["model"], "qwen-plus")
+        self.assertEqual(
+            payload["api_url"],
+            "https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions",
+        )
+        self.assertEqual(provider, "qwen")
+        self.assertEqual(api_key, "secret-test-key")
 
     def test_llm_settings_requires_authorized_scopes(self) -> None:
         with TemporaryDirectory() as directory:
@@ -418,7 +473,14 @@ class ServerDeploymentTest(unittest.TestCase):
         for response, invalid_url in zip(responses, invalid_urls, strict=True):
             serialized = json.dumps(response.json(), ensure_ascii=False)
             self.assertEqual(response.status_code, 400)
-            self.assertIn("不支持的 LLM api_url", serialized)
+            self.assertIn(
+                response.json()["detail"]["message"],
+                {
+                    "不支持的 LLM api_url",
+                    "LLM api_url 与 provider 不匹配",
+                    "LLM api_url path 与 provider 模板不匹配",
+                },
+            )
             self.assertNotIn(invalid_url, serialized)
 
     def test_llm_settings_blank_api_key_preserves_existing_key(self) -> None:

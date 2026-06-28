@@ -1,12 +1,12 @@
-"""Optional DeepSeek extractor.
+"""可选 DeepSeek 兼容 extractor。
 
-The DeepSeek path proposes structure only:
-- extracts preferences and source spans
-- sees a compact field summary, never raw workbook rows
-- may propose rule-shaped objects for symbolic verification
-- does not verify schema
-- does not promote candidate rules
-- does not compile or execute filters
+该路径只提出结构候选：
+- 抽取偏好和 source span
+- 只看紧凑字段摘要，不看原始 workbook 行
+- 可以提出 rule 形状供符号验证
+- 不验证 schema
+- 不提升 candidate rule
+- 不编译或执行筛选
 """
 
 from __future__ import annotations
@@ -14,19 +14,22 @@ from __future__ import annotations
 import json
 import os
 import re
-import time
-import urllib.error
-import urllib.request
-from dataclasses import dataclass
 from functools import lru_cache
 from pathlib import Path
 from typing import Any
 
 from src.domains import DomainConfig
+from src.llm.openai_compatible import (
+    OpenAICompatibleClient,
+    OpenAICompatibleJSONResponse,
+    configured_api_key_available,
+    llm_usage_from_payload,
+    provider_template,
+)
 
 
-DEEPSEEK_API_URL = "https://api.deepseek.com/chat/completions"
-DEFAULT_MODEL = "deepseek-chat"
+DEEPSEEK_API_URL = provider_template("deepseek").api_url
+DEFAULT_MODEL = provider_template("deepseek").default_model
 DEFAULT_ALIAS_PATH: Path | None = None
 SUPPORTED_MODELS = {
     "deepseek-v4-flash",
@@ -34,20 +37,15 @@ SUPPORTED_MODELS = {
     "deepseek-chat",
     "deepseek-reasoner",
 }
-RETRYABLE_HTTP_STATUS_CODES = {408, 429, 500, 502, 503, 504}
+DeepSeekJSONResponse = OpenAICompatibleJSONResponse
 
 
-@dataclass(frozen=True)
-class DeepSeekJSONResponse:
-    payload: dict[str, Any]
-    usage: dict[str, int]
-
-
-class DeepSeekClient:
-    """Small standard-library client for DeepSeek's OpenAI-compatible chat API."""
+class DeepSeekClient(OpenAICompatibleClient):
+    """兼容旧导入名的 OpenAI-compatible LLM wrapper。"""
 
     def __init__(
         self,
+        provider: str | None = None,
         api_key: str | None = None,
         model: str | None = None,
         api_url: str | None = None,
@@ -55,91 +53,22 @@ class DeepSeekClient:
         max_retries: int | None = None,
         retry_backoff_seconds: float | None = None,
     ) -> None:
-        self.api_key = api_key or env_value("DEEPSEEK_API_KEY")
-        self.model = model or env_value("DEEPSEEK_MODEL") or DEFAULT_MODEL
-        self.api_url = api_url or env_value("DEEPSEEK_API_URL") or DEEPSEEK_API_URL
-        self.timeout_seconds = (
-            timeout_seconds
-            if timeout_seconds is not None
-            else _int_env("DEEPSEEK_TIMEOUT_SECONDS", default=60)
+        super().__init__(
+            provider=provider,
+            api_key=api_key,
+            model=model,
+            api_url=api_url,
+            timeout_seconds=timeout_seconds,
+            max_retries=max_retries,
+            retry_backoff_seconds=retry_backoff_seconds,
+            env_reader=env_value,
         )
-        self.max_retries = (
-            max_retries
-            if max_retries is not None
-            else _int_env("DEEPSEEK_MAX_RETRIES", default=3)
-        )
-        self.retry_backoff_seconds = (
-            retry_backoff_seconds
-            if retry_backoff_seconds is not None
-            else _float_env("DEEPSEEK_RETRY_BACKOFF_SECONDS", default=2.0)
-        )
-
-    def chat_json(self, system_prompt: str, user_prompt: str) -> DeepSeekJSONResponse:
-        if not self.api_key:
-            raise RuntimeError("未配置 DeepSeek 密钥（环境变量 DEEPSEEK_API_KEY）。")
-
-        body = {
-            "model": self.model,
-            "messages": [
-                {"role": "system", "content": system_prompt},
-                {"role": "user", "content": user_prompt},
-            ],
-            "temperature": 0,
-            "response_format": {"type": "json_object"},
-        }
-        request = urllib.request.Request(
-            self.api_url,
-            data=json.dumps(body, ensure_ascii=False).encode("utf-8"),
-            headers={
-                "Authorization": f"Bearer {self.api_key}",
-                "Content-Type": "application/json",
-            },
-            method="POST",
-        )
-        raw = self._urlopen_with_retries(request)
-
-        api_payload = json.loads(raw)
-        content = api_payload["choices"][0]["message"]["content"]
-        return DeepSeekJSONResponse(
-            payload=json.loads(content),
-            usage=deepseek_usage_from_payload(api_payload),
-        )
-
-    def _urlopen_with_retries(self, request: urllib.request.Request) -> str:
-        for attempt in range(self.max_retries + 1):
-            try:
-                with urllib.request.urlopen(
-                    request,
-                    timeout=self.timeout_seconds,
-                ) as response:
-                    return response.read().decode("utf-8")
-            except urllib.error.HTTPError as exc:
-                if not self._should_retry_http(exc.code) or attempt >= self.max_retries:
-                    error_body = exc.read().decode("utf-8", errors="replace")
-                    raise RuntimeError(f"DeepSeek 接口错误 {exc.code}：{error_body}") from exc
-                self._sleep_before_retry(attempt)
-            except urllib.error.URLError as exc:
-                if attempt >= self.max_retries:
-                    raise RuntimeError(
-                        "DeepSeek 网络请求失败，已重试 "
-                        f"{self.max_retries + 1} 次：{exc.reason}"
-                    ) from exc
-                self._sleep_before_retry(attempt)
-        raise RuntimeError("DeepSeek 请求失败，但没有捕获到具体异常。")
-
-    def _should_retry_http(self, status_code: int) -> bool:
-        return status_code in RETRYABLE_HTTP_STATUS_CODES
-
-    def _sleep_before_retry(self, attempt: int) -> None:
-        delay = self.retry_backoff_seconds * (2 ** attempt)
-        if delay > 0:
-            time.sleep(delay)
 
 
 class DeepSeekExtractor:
-    """Uses DeepSeek for schema-aware extraction and rule proposals.
+    """使用配置的 LLM 做 schema-aware 抽取和规则候选提出。
 
-    The returned slots must still go through RuleClassifier and RuleVerifier.
+    返回的 slots 仍必须经过 RuleClassifier 和 RuleVerifier。
     """
 
     def __init__(self, client: DeepSeekClient | None = None) -> None:
@@ -215,10 +144,9 @@ class DeepSeekExtractor:
 
 
 def normalize_slots(slots: dict[str, Any], original_text: str) -> dict[str, Any]:
-    """Normalize LLM-extracted values into the schema vocabulary.
+    """把 LLM 抽取值规整到 schema vocabulary。
 
-    The LLM is allowed to extract text, but the symbolic pipeline expects stable
-    values such as `物理` rather than `物理类`.
+    LLM 可以抽取文本，但符号 pipeline 需要稳定值，例如 `物理` 而不是 `物理类`。
     """
 
     output = dict(slots)
@@ -669,36 +597,15 @@ def _term_is_in_phrase(
 
 
 def has_deepseek_api_key() -> bool:
-    """Return whether DeepSeek credentials are available without exposing them."""
+    """判断当前 LLM 凭据是否可用，不暴露明文。"""
 
-    return bool(env_value("DEEPSEEK_API_KEY"))
+    return configured_api_key_available(env_reader=env_value)
 
 
 def deepseek_usage_from_payload(api_payload: dict[str, Any]) -> dict[str, int]:
-    """Extract token usage fields returned by DeepSeek's chat API."""
+    """抽取 OpenAI-compatible chat API 返回的 token usage 字段。"""
 
-    usage = api_payload.get("usage", {})
-    keys = [
-        "prompt_tokens",
-        "completion_tokens",
-        "total_tokens",
-        "prompt_cache_hit_tokens",
-        "prompt_cache_miss_tokens",
-        "reasoning_tokens",
-    ]
-    normalized: dict[str, int] = {}
-    for key in keys:
-        normalized[key] = _int_value(usage.get(key, 0))
-
-    completion_details = usage.get("completion_tokens_details")
-    if isinstance(completion_details, dict):
-        normalized["reasoning_tokens"] = _int_value(
-            completion_details.get(
-                "reasoning_tokens",
-                normalized.get("reasoning_tokens", 0),
-            )
-        )
-    return normalized
+    return llm_usage_from_payload(api_payload)
 
 
 def env_value(name: str) -> str | None:
@@ -720,33 +627,6 @@ def env_value(name: str) -> str | None:
         if value:
             return value
     return None
-
-
-def _int_env(name: str, default: int) -> int:
-    value = env_value(name)
-    if value is None:
-        return default
-    try:
-        return int(value)
-    except ValueError:
-        return default
-
-
-def _float_env(name: str, default: float) -> float:
-    value = env_value(name)
-    if value is None:
-        return default
-    try:
-        return float(value)
-    except ValueError:
-        return default
-
-
-def _int_value(value: Any) -> int:
-    try:
-        return int(value)
-    except (TypeError, ValueError):
-        return 0
 
 
 def _dotenv_paths() -> list[Path]:

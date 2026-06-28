@@ -70,6 +70,8 @@ class SemanticIntentModelTest(unittest.TestCase):
 
 
 class FakeDeepSeekClient:
+    provider = "deepseek"
+
     def __init__(self, payload: dict[str, object]) -> None:
         self.payload = payload
         self.calls: list[dict[str, str]] = []

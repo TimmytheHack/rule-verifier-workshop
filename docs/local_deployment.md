@@ -24,7 +24,7 @@ python3 -m venv .venv
 cp .env.example .env
 ```
 
-默认配置保持 `ENABLE_LLM=false`。只跑 schema profiling、review、DuckDB 查询、demo acceptance、quality gate 和 tool server 时不需要 DeepSeek key。
+默认配置保持 `ENABLE_LLM=false`。只跑 schema profiling、review、DuckDB 查询、demo acceptance、quality gate 和 tool server 时不需要 LLM key。
 
 ## 关键环境变量
 
@@ -35,9 +35,11 @@ cp .env.example .env
 | `AUTH_TOKENS_JSON` | HTTP 鉴权 token 映射，生产环境必须配置。 |
 | `UPLOAD_MAX_MB` | 单个上传文件大小上限，默认 `25`。 |
 | `ENABLE_LLM` | 是否允许可选 LLM 辅助生成，默认 `false`。 |
-| `DEEPSEEK_API_KEY` | 可选 DeepSeek key；默认留空。 |
-| `DEEPSEEK_MODEL` | DeepSeek 模型名，默认 `deepseek-chat`。 |
-| `DEEPSEEK_API_URL` | DeepSeek OpenAI-compatible chat completions URL。 |
+| `LLM_PROVIDER` | OpenAI-compatible provider 模板，支持 `deepseek`、`qwen`、`kimi`、`zhipu`、`qianfan`、`hunyuan`。 |
+| `LLM_API_KEY` | 当前 provider 的 API key；默认留空。 |
+| `LLM_MODEL` | 当前 provider 的模型名；不填时使用 provider 模板默认值。 |
+| `LLM_API_URL` | 当前 provider 的 OpenAI-compatible chat completions URL。 |
+| `DEEPSEEK_API_KEY` / `DEEPSEEK_MODEL` / `DEEPSEEK_API_URL` | 兼容旧 DeepSeek 配置；新配置优先使用 `LLM_*`。 |
 | `TOOL_AUDIT_LOG_PATH` | tool invoke audit JSONL 路径。 |
 | `TOOL_AUDIT_MAX_BYTES` | 单个 audit JSONL 文件最大字节数，超过后轮转。 |
 | `TOOL_AUDIT_BACKUPS` | audit log 保留的轮转备份数量。 |
@@ -46,8 +48,8 @@ cp .env.example .env
 | `LOCAL_USER_AUTO_AUTH_TOKEN` | 本地同端口用户 Web 自动登录 cookie 使用的 token；必须同时存在于 `AUTH_TOKENS_JSON`。生产默认不应启用。 |
 | `LOG_LEVEL` | 服务日志级别。 |
 
-DeepSeek slot adapter 默认不启用。需要验证真实 API 时，确认 `.env` 中存在
-`ENABLE_LLM=true` 和 `DEEPSEEK_API_KEY`，然后运行：
+LLM slot adapter 默认不启用。需要验证真实 API 时，确认 `.env` 中存在
+`ENABLE_LLM=true`、`LLM_PROVIDER` 和对应 key，然后运行：
 
 ```bash
 .venv/bin/python scripts/run_deepseek_slot_probe.py
@@ -55,8 +57,8 @@ DeepSeek slot adapter 默认不启用。需要验证真实 API 时，确认 `.en
 
 该脚本只输出 fallback/adapter/token 使用摘要，不输出密钥或完整 prompt。
 
-对显式启用招生模板的 uploaded admissions 查询，`planner_mode=auto` 会在 `ENABLE_LLM=true` 且 DeepSeek 可用时先尝试
-`DeepSeekSemanticIntentExtractor`；不可用时会降级到 legacy verified planner，并在
+对显式启用招生模板的 uploaded admissions 查询，`planner_mode=auto` 会在 `ENABLE_LLM=true` 且 LLM 可用时先尝试
+LLM semantic planner；不可用时会降级到 legacy verified planner，并在
 `EvidencePack.planner` 记录降级原因。需要强制跳过 LLM planner 时，API 或 probe 可传
 `planner_mode=legacy`。
 

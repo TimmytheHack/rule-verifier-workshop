@@ -65,12 +65,18 @@ class EvidenceRequirementGate:
             query_options=query_options,
             preferences=_preference_context(intent.preferences),
         )
-        return apply_evidence_requirement_result(intent, classification)
+        return apply_evidence_requirement_result(
+            intent,
+            classification,
+            provider=_classifier_provider(self.classifier),
+        )
 
 
 def apply_evidence_requirement_result(
     intent: SemanticIntent,
     classification: EvidenceRequirementResult,
+    *,
+    provider: str = "llm",
 ) -> EvidenceRequirementGateResult:
     requirements = [
         requirement.model_dump()
@@ -99,7 +105,7 @@ def apply_evidence_requirement_result(
     usage = dict(classification.usage or {})
     planner = {
         "status": "classified",
-        "provider": "deepseek",
+        "provider": provider,
         "called": True,
         "fallback_used": False,
         "token_usage": usage,
@@ -118,6 +124,11 @@ def apply_evidence_requirement_result(
         planner=planner,
         usage=usage,
     )
+
+
+def _classifier_provider(classifier: Any) -> str:
+    client = getattr(classifier, "client", None)
+    return str(getattr(client, "provider", None) or "llm")
 
 
 def _matching_preference_index(

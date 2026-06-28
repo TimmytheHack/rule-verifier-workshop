@@ -58,7 +58,7 @@ export function preflightDatasetQuery({
   userInput,
   hardFilters = {},
   softPreferences = {},
-  model = 'deepseek-v4-flash',
+  model = '',
   plannerMode = 'auto',
 }) {
   return requestJson('/workbench/preflight', {
@@ -83,7 +83,7 @@ export function runDatasetQuery({
   softPreferences = {},
   extractor = 'regex',
   generator = 'template_evidence',
-  model = 'deepseek-v4-flash',
+  model = '',
   plannerMode = 'auto',
   confirmedCandidates = [],
   preflightId = null,

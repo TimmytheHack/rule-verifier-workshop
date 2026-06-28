@@ -104,7 +104,7 @@ class WorkbenchQueryRequest(BaseModel):
     soft_preferences: dict[str, Any] = Field(default_factory=dict)
     extractor: str = "regex"
     generator: str = "template_evidence"
-    model: str = "deepseek-v4-flash"
+    model: str = ""
     planner_mode: str = "auto"
     confirmed_candidates: list[str] = Field(default_factory=list)
     preflight_id: str | None = None
@@ -124,7 +124,7 @@ class WorkbenchPreflightRequest(BaseModel):
     user_input: str = Field(min_length=1)
     hard_filters: dict[str, Any] = Field(default_factory=dict)
     soft_preferences: dict[str, Any] = Field(default_factory=dict)
-    model: str = "deepseek-v4-flash"
+    model: str = ""
     planner_mode: str = "llm_semantic"
 
 

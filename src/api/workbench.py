@@ -266,7 +266,7 @@ class WorkbenchConfig:
     soft_preferences: dict[str, Any] = field(default_factory=dict)
     extractor: str = "hybrid"
     generator: str = "template_evidence"
-    model: str = "deepseek-v4-flash"
+    model: str = ""
     planner_mode: str = "auto"
     confirmed_candidates: list[str] = field(default_factory=list)
     domain_name: str = "admissions"
@@ -1000,7 +1000,7 @@ def _semantic_ranking_plan_attempt(
             plan=None,
             planner={
                 "status": "deepseek_disabled",
-                "provider": "deepseek",
+                "provider": _configured_llm_provider(),
                 "called": False,
                 "fallback_used": True,
             },
@@ -1025,7 +1025,7 @@ def _semantic_ranking_plan_attempt(
             plan=None,
             planner={
                 "status": "generation_failed",
-                "provider": "deepseek",
+                "provider": _configured_llm_provider(),
                 "called": True,
                 "fallback_used": True,
                 "fallback_reason": "ranking_plan_generation_failed",
@@ -1115,7 +1115,7 @@ def _with_evidence_requirement_failure(
 ) -> SemanticPlannerAttempt:
     evidence_requirements = {
         "status": "classification_failed",
-        "provider": "deepseek",
+        "provider": _configured_llm_provider(),
         "called": True,
         "fallback_used": True,
         "fallback_reason": "evidence_requirement_classification_failed",
@@ -1320,7 +1320,7 @@ def _semantic_planner_attempt(
             intent=None,
             planner=_planner_trace(
                 mode="llm_semantic",
-                provider="deepseek",
+                provider=_configured_llm_provider(),
                 called=False,
                 fallback_used=True,
                 fallback_reason="deepseek_disabled",
@@ -1342,12 +1342,12 @@ def _semantic_planner_attempt(
                 "query_options": query_options,
             },
         )
-    except Exception as exc:  # noqa: BLE001 - optional LLM path falls back.
+    except Exception as exc:  # noqa: BLE001 - 可选 LLM 路径失败时降级。
         return SemanticPlannerAttempt(
             intent=None,
             planner=_planner_trace(
                 mode="llm_semantic",
-                provider="deepseek",
+                provider=_configured_llm_provider(),
                 called=True,
                 fallback_used=True,
                 fallback_reason="intent_extraction_failed",
@@ -3138,7 +3138,8 @@ def _validate_config(config: WorkbenchConfig) -> None:
         raise ValueError(f"不支持的 planner 模式：{config.planner_mode}")
     if config.generator not in GENERATOR_OPTIONS:
         raise ValueError(f"不支持的证据回答方式：{config.generator}")
-    if config.model not in MODEL_OPTIONS:
+    model = _clean_text(config.model)
+    if model and not _safe_llm_model_name(model):
         raise ValueError(f"不支持的大模型模式：{config.model}")
 
 
@@ -3195,9 +3196,19 @@ def _selected_options(config: WorkbenchConfig) -> dict[str, str]:
             str(config.planner_mode),
         ),
         "generator": GENERATOR_OPTIONS.get(config.generator, str(config.generator)),
-        "model": MODEL_OPTIONS.get(config.model, str(config.model)),
+        "model": (
+            MODEL_OPTIONS.get(config.model, str(config.model))
+            if _clean_text(config.model)
+            else "本机 LLM 设置默认模型"
+        ),
         "domain": config.domain_name,
     }
+
+
+def _safe_llm_model_name(model: str) -> bool:
+    """只允许普通 provider 模型标识，不把旧 DeepSeek 白名单当成全局限制。"""
+
+    return bool(re.fullmatch(r"[A-Za-z0-9._:/+-]{1,128}", model))
 
 
 def _contract_query(config: WorkbenchConfig) -> dict[str, Any]:
@@ -3343,13 +3354,23 @@ def _generate_report(
 
 
 def _interactive_deepseek_client(model: str) -> Any:
-    from src.extractors.deepseek_extractor import DeepSeekClient
+    from src.llm.openai_compatible import OpenAICompatibleClient
 
-    return DeepSeekClient(
-        model=model,
+    return OpenAICompatibleClient(
+        model=model or None,
         timeout_seconds=INTERACTIVE_DEEPSEEK_TIMEOUT_SECONDS,
         max_retries=INTERACTIVE_DEEPSEEK_MAX_RETRIES,
     )
+
+
+def _configured_llm_provider() -> str:
+    from src.extractors.deepseek_extractor import env_value
+    from src.llm.openai_compatible import provider_template
+
+    try:
+        return provider_template(env_value("LLM_PROVIDER") or "deepseek").provider
+    except ValueError:
+        return "llm"
 
 
 def _soft_prompt(config: WorkbenchConfig) -> str:
