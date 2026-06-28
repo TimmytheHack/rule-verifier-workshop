@@ -3,12 +3,12 @@
 - status：`pass`
 - source_path：`outputs/real_dataset_pilot/fixtures/real_like_admissions_pilot.xlsx`
 - dataset_id：`ds_real_pilot_real_like_admissions_pil`
-- source_fingerprint：`e371c6c65607bb49079016bfe386e705be90b1bf867a2e72ddd6b6c0109d6a15`
+- source_fingerprint：`1d278aae58e5be73377e1e6254bbca9bd1e7505979dad0bf5f45c0d35ca0dfdf`
 - sheet_name：`招生数据`
 - row_count / column_count：`6` / `25`
 - detected_header_row：`3`
 - warehouse_path：`uploaded_datasets/ds_real_pilot_real_like_admissions_pil/domain_packs/admissions/warehouse/admissions.duckdb`
-- warehouse_fingerprint：`e371c6c65607bb49079016bfe386e705be90b1bf867a2e72ddd6b6c0109d6a15`
+- warehouse_fingerprint：`1d278aae58e5be73377e1e6254bbca9bd1e7505979dad0bf5f45c0d35ca0dfdf`
 
 ## Schema Profile Summary
 ```json
@@ -43,7 +43,7 @@
       "code": "upload_received",
       "severity": "info",
       "message": "文件已保存到托管数据目录。",
-      "size_bytes": 6557,
+      "size_bytes": 6556,
       "extension": ".xlsx"
     },
     {
@@ -507,7 +507,44 @@
       "unconfirmed_candidates": [],
       "no_schema_field_preferences": [],
       "rejected_confirmations": [],
-      "policy_references": []
+      "policy_references": [],
+      "decision_guidance": {
+        "status": "reference_only",
+        "execution_effect": "does_not_change_sql_or_results",
+        "executable": false,
+        "matched_rules": [],
+        "information_requests": [],
+        "no_schema_field_preferences": []
+      },
+      "decision_option_suggestions": {
+        "status": "reference_only",
+        "execution_effect": "does_not_change_sql_or_results",
+        "executable": false,
+        "source": "fixed_policy",
+        "suggestions": {}
+      },
+      "entity_linking": {
+        "status": "not_applicable"
+      },
+      "planner": {
+        "mode": "legacy",
+        "provider": null,
+        "called": false,
+        "fallback_used": false,
+        "fallback_reason": null,
+        "token_usage": null,
+        "legacy_route": "planned_query"
+      },
+      "semantic_intent": null,
+      "answerable_intents": [
+        {
+          "intent": "verified_rules",
+          "answerable": true
+        }
+      ],
+      "unanswerable_intents": [],
+      "verified_query_plan": {},
+      "capability_graph_summary": {}
     },
     "sql": "SELECT\n  CAST(\"院校专业组代码\" AS VARCHAR) AS group_code,\n  ANY_VALUE(CAST(\"专业组名称\" AS VARCHAR)) AS group_title,\n  MAX(TRY_CAST(regexp_extract(REPLACE(CAST(\"专业组最低分1\" AS VARCHAR), ',', ''), '\\d+(?:\\.\\d+)?') AS DOUBLE)) AS group_metric_score,\n  MIN(TRY_CAST(regexp_extract(REPLACE(CAST(\"专业组最低位次1\" AS VARCHAR), ',', ''), '\\d+(?:\\.\\d+)?') AS DOUBLE)) AS group_min_rank,\n  COUNT(*) AS major_count\nFROM \"admissions\"\nWHERE TRY_CAST(regexp_extract(REPLACE(CAST(\"年份\" AS VARCHAR), ',', ''), '\\d+(?:\\.\\d+)?') AS DOUBLE) = ?\n  AND STRPOS(CAST(\"院校名称\" AS VARCHAR), ?) > 0\n  AND \"院校专业组代码\" IS NOT NULL\nGROUP BY CAST(\"院校专业组代码\" AS VARCHAR)\nORDER BY group_metric_score DESC NULLS LAST, group_code ASC\nLIMIT ?",
     "params": [
@@ -648,7 +685,55 @@
         }
       ],
       "rejected_confirmations": [],
-      "policy_references": []
+      "policy_references": [],
+      "decision_guidance": {
+        "status": "reference_only",
+        "execution_effect": "does_not_change_sql_or_results",
+        "executable": false,
+        "matched_rules": [],
+        "information_requests": [],
+        "no_schema_field_preferences": []
+      },
+      "decision_option_suggestions": {
+        "status": "reference_only",
+        "execution_effect": "does_not_change_sql_or_results",
+        "executable": false,
+        "source": "fixed_policy",
+        "suggestions": {
+          "rank_window": {
+            "suggested_value": "steady",
+            "label": "稳一点",
+            "reason": "推荐请求需要先选择排位范围，默认建议从稳一点开始确认。"
+          },
+          "sort_mode": {
+            "suggested_value": "rank_asc",
+            "label": "按历史位次从高到低看（更冲）",
+            "reason": "未表达保守偏好时，可以先按历史位次从高到低浏览。"
+          }
+        }
+      },
+      "entity_linking": {
+        "status": "not_applicable"
+      },
+      "planner": {
+        "mode": "legacy",
+        "provider": null,
+        "called": false,
+        "fallback_used": false,
+        "fallback_reason": null,
+        "token_usage": null,
+        "legacy_route": "planned_query"
+      },
+      "semantic_intent": null,
+      "answerable_intents": [
+        {
+          "intent": "verified_rules",
+          "answerable": false
+        }
+      ],
+      "unanswerable_intents": [],
+      "verified_query_plan": {},
+      "capability_graph_summary": {}
     },
     "sql": "",
     "params": [],
@@ -663,7 +748,7 @@
     "code": "upload_received",
     "severity": "info",
     "message": "文件已保存到托管数据目录。",
-    "size_bytes": 6557,
+    "size_bytes": 6556,
     "extension": ".xlsx"
   },
   {
