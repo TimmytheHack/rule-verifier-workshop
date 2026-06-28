@@ -1,6 +1,6 @@
 {
   "release_candidate": "v0.1.0-rc1",
-  "captured_at": "2026-06-28T21:45:00+08:00",
+  "captured_at": "2026-06-28T22:32:20+08:00",
   "positioning": "LLM-safe structured data query tool server for Excel/CSV",
   "command_evidence": [
     {
@@ -46,9 +46,9 @@
           "uploaded_dataset_acceptance": 2
         },
         "by_status": {
-          "ok": 19,
-          "needs_confirmation": 8,
-          "no_results": 2
+          "needs_confirmation": 9,
+          "no_results": 2,
+          "ok": 18
         }
       }
     },
@@ -69,14 +69,14 @@
       "command": "make operator-trial",
       "status": "pass",
       "evidence": {
-        "run_id": "20260615_071741",
+        "run_id": "20260628_143339",
         "dataset_id": "ds_operator_trial_real_like_admissions_pil",
         "sheet_name": "招生数据",
         "detected_header_row": 3,
         "row_count": 6,
         "column_count": 25,
-        "source_fingerprint": "5c09708420f07113750eb89388926240845ced4e902473a0107405ea910639ee",
-        "warehouse_fingerprint": "5c09708420f07113750eb89388926240845ced4e902473a0107405ea910639ee",
+        "source_fingerprint": "b4aa3bd0b32fb2da4c475da0aa724dab7ca2e6bd40b97893286e1c7bb86f27d0",
+        "warehouse_fingerprint": "b4aa3bd0b32fb2da4c475da0aa724dab7ca2e6bd40b97893286e1c7bb86f27d0",
         "target_queries": [
           {
             "query_type": "group_detail_report",
@@ -112,17 +112,41 @@
     {
       "command": "make quality",
       "status": "pass",
-      "evidence": "最终干净工作区运行结果为 11 pass、0 fail、1 warning；见 sample_outputs/quality_gate_summary.json。"
+      "evidence": "最终干净工作区运行结果为 11 pass、0 fail、1 warning；unit tests 598 tests，API contract tests 17 tests；见 sample_outputs/quality_gate_summary.json。"
     },
     {
       "command": "make frontend-user-build",
-      "status": "pending_current_run",
-      "evidence": "本轮 release refresh 将重新构建独立本地用户 Web 静态产物。"
+      "status": "pass",
+      "evidence": {
+        "build": "npm install + vite build 通过。",
+        "index_asset": "frontend-user/dist/assets/index-a3DcIDgn.js"
+      }
     },
     {
       "command": "make macos-app",
-      "status": "pending_current_run",
-      "evidence": "本轮 release refresh 将重新生成 macOS 本机 .app 和 Library runtime 快照。"
+      "status": "pass",
+      "evidence": {
+        "app_path": "outputs/local_user_app/本地表格工作台.app",
+        "bundle_identifier": "local.szu.table-workbench",
+        "bundle_version": "0.2.0",
+        "runtime_version": "55be4d26f17a03d5918ed9e9fa8440e339a40da3a08b03b87dba9f77f081cd08",
+        "http_smoke": {
+          "healthz": "ok",
+          "readyz": "ok",
+          "version_distribution_mode": "user_upload_only",
+          "frontend_index": "served",
+          "settings_llm": "provider templates returned without api key echo",
+          "datasets": []
+        },
+        "upload_smoke": {
+          "dataset_id": "release_smoke_20260628",
+          "upload_status": "uploaded",
+          "row_count": 2,
+          "column_count": 2,
+          "domain_pack_status": "needs_review",
+          "cleaned_after_run": true
+        }
+      }
     },
     {
       "command": "DeepSeek live flow smoke",

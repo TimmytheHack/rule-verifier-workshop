@@ -37,8 +37,8 @@
 - 已跑通真实 DeepSeek 全流程：slot adapter 有真实 token usage；上传 96335 行、17 列 admissions Excel 后，`llm_semantic` preflight 为 `ready`，query 为 `ok`，planner 记录 `provider=deepseek`、`fallback_used=false`，缺 schema 的“不想去国外”保持未执行。
 - 已运行 `make release-check`，release package 静态校验通过。
 - 新增和更新 `tests/test_admissions_query_types.py`、`tests/test_workbench_api_contract.py`、`tests/test_rule_verifier.py`、`tests/test_duckdb_executor.py`、`tests/test_api_workbench.py`、`tests/test_career_guidance.py` 等回归覆盖。
-- 合并到 `master` 后已运行 `.venv/bin/python -m unittest discover -s tests`，结果为 `280 tests OK (expected failures=1)`。
-- 合并到 `master` 后已运行 `frontend npm run build`，构建通过；仅保留既有 Vite/Rollup warning。
+- 本轮 release refresh 已运行 `.venv/bin/python -m unittest discover -s tests`，结果为 `598 tests OK (expected failures=1)`。
+- 本轮 release refresh 已运行 `make frontend-user-build` 和 `make macos-app`，独立本地用户 Web 与 macOS `.app` 构建通过；主前端 build 在 Quality Gate 中退出码为 0，仅保留既有 Vite/Rollup warning。
 
 ## v0.1.0-rc1 候选
 

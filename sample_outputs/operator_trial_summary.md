@@ -1,14 +1,14 @@
 # Operator Trial 候选摘要
 
 - release candidate：`v0.1.0-rc1`
-- run_id：`20260615_071741`
+- run_id：`20260628_143339`
 - status：`pass`
 - dataset_id：`ds_operator_trial_real_like_admissions_pil`
 - sheet_name：`招生数据`
 - detected_header_row：`3`
 - row_count / column_count：`6` / `25`
-- source_fingerprint：`5c09708420f07113750eb89388926240845ced4e902473a0107405ea910639ee`
-- warehouse_fingerprint：`5c09708420f07113750eb89388926240845ced4e902473a0107405ea910639ee`
+- source_fingerprint：`b4aa3bd0b32fb2da4c475da0aa724dab7ca2e6bd40b97893286e1c7bb86f27d0`
+- warehouse_fingerprint：`b4aa3bd0b32fb2da4c475da0aa724dab7ca2e6bd40b97893286e1c7bb86f27d0`
 - failures：`[]`
 
 ## 操作卡点
