@@ -7,6 +7,7 @@ from pathlib import Path
 from tempfile import TemporaryDirectory
 
 from scripts.build_local_user_app import (
+    APP_VERSION,
     APP_SUPPORT_DIR_NAME,
     DEFAULT_APP_NAME,
     EXCLUDED_TOOL_SCHEMA_FILES,
@@ -34,6 +35,7 @@ class LocalUserAppBuilderTest(unittest.TestCase):
             plist_path = app_path / "Contents" / "Info.plist"
             pkg_info_path = app_path / "Contents" / "PkgInfo"
             launcher_path = app_path / "Contents" / "MacOS" / "launch"
+            bootstrap_path = app_path / "Contents" / "Resources" / "bootstrap_python.txt"
             app_launcher_path = (
                 app_path
                 / "Contents"
@@ -44,6 +46,7 @@ class LocalUserAppBuilderTest(unittest.TestCase):
             payload = plistlib.loads(plist_path.read_bytes())
             pkg_info = pkg_info_path.read_text(encoding="ascii")
             launcher_text = launcher_path.read_text(encoding="utf-8")
+            bootstrap_text = bootstrap_path.read_text(encoding="utf-8")
             app_launcher_text = app_launcher_path.read_text(encoding="utf-8")
             launcher_mode = stat.S_IMODE(launcher_path.stat().st_mode)
             serialized = b"\n".join(
@@ -54,12 +57,22 @@ class LocalUserAppBuilderTest(unittest.TestCase):
 
         self.assertEqual(payload["CFBundleExecutable"], "launch")
         self.assertEqual(payload["CFBundleName"], DEFAULT_APP_NAME)
+        self.assertEqual(payload["CFBundleShortVersionString"], APP_VERSION)
         self.assertEqual(pkg_info, "APPL????")
         self.assertIn('SOURCE_ROOT="$RESOURCE_DIR/workbench_source"', launcher_text)
         self.assertIn('APP_ROOT="$APP_SUPPORT_DIR/runtime/workbench"', launcher_text)
         self.assertIn(f"Application Support/{APP_SUPPORT_DIR_NAME}", launcher_text)
+        self.assertIn("find_bootstrap_python()", launcher_text)
+        self.assertLess(
+            launcher_text.index("find_bootstrap_python()"),
+            launcher_text.index('BOOTSTRAP_PYTHON="$(find_bootstrap_python'),
+        )
         self.assertIn('PYTHON_BIN="$APP_ROOT/.venv/bin/python"', launcher_text)
         self.assertIn("PYTHONDONTWRITEBYTECODE=1", launcher_text)
+        self.assertIn("/opt/homebrew/bin/python3", bootstrap_text)
+        self.assertIn("/usr/local/bin/python3", bootstrap_text)
+        self.assertIn("/usr/bin/python3", bootstrap_text)
+        self.assertIn("python3", bootstrap_text)
         self.assertIn('"APP_DISTRIBUTION_MODE": "user_upload_only"', app_launcher_text)
         self.assertIn('"PYTHONDONTWRITEBYTECODE": "1"', app_launcher_text)
         self.assertIn("secrets.token_urlsafe", app_launcher_text)

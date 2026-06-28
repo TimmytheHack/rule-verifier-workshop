@@ -15,6 +15,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_OUTPUT_DIR = ROOT / "outputs" / "local_user_app"
 DEFAULT_APP_NAME = "本地表格工作台"
+APP_VERSION = "0.2.0"
 EXECUTABLE_NAME = "launch"
 APP_SUPPORT_DIR_NAME = "SZU Local Workbench"
 DEFAULT_APP_RUNTIME_DIR = (
@@ -282,7 +283,7 @@ def _write_info_plist(path: Path, app_name: str) -> None:
         "CFBundleIdentifier": "local.szu.table-workbench",
         "CFBundleName": app_name,
         "CFBundlePackageType": "APPL",
-        "CFBundleShortVersionString": "0.2.0",
+        "CFBundleShortVersionString": APP_VERSION,
         "CFBundleVersion": "2",
         "LSMinimumSystemVersion": "12.0",
     }
@@ -291,7 +292,14 @@ def _write_info_plist(path: Path, app_name: str) -> None:
 
 
 def _write_bootstrap_python(path: Path) -> None:
-    path.write_text(str(Path(sys.executable).resolve()) + "\n", encoding="utf-8")
+    candidates = [
+        str(Path(sys.executable).resolve()),
+        "/opt/homebrew/bin/python3",
+        "/usr/local/bin/python3",
+        "/usr/bin/python3",
+        "python3",
+    ]
+    path.write_text("\n".join(dict.fromkeys(candidates)) + "\n", encoding="utf-8")
 
 
 def _write_shell_launcher(path: Path) -> None:
@@ -306,6 +314,27 @@ APP_ROOT="$APP_SUPPORT_DIR/runtime/workbench"
 LOG_DIR="$APP_SUPPORT_DIR/logs"
 mkdir -p "$LOG_DIR"
 
+find_bootstrap_python() {{
+  CANDIDATE_FILE="$1"
+  while IFS= read -r CANDIDATE || [ -n "$CANDIDATE" ]; do
+    [ -n "$CANDIDATE" ] || continue
+    if [[ "$CANDIDATE" = */* ]]; then
+      CANDIDATE_PATH="$CANDIDATE"
+    else
+      CANDIDATE_PATH="$(command -v "$CANDIDATE" 2>/dev/null || true)"
+    fi
+    if [ -x "$CANDIDATE_PATH" ] && "$CANDIDATE_PATH" - <<'PY' >/dev/null 2>&1
+import sys
+raise SystemExit(0 if sys.version_info >= (3, 11) else 1)
+PY
+    then
+      echo "$CANDIDATE_PATH"
+      return 0
+    fi
+  done < "$CANDIDATE_FILE"
+  return 1
+}}
+
 {{
   echo "==== $(date '+%Y-%m-%d %H:%M:%S') 启动本地用户 Web app ===="
   if [ ! -d "$SOURCE_ROOT" ]; then
@@ -315,10 +344,11 @@ mkdir -p "$LOG_DIR"
   SOURCE_VERSION="$(cat "$SOURCE_ROOT/runtime_version.txt" 2>/dev/null || true)"
   RUNTIME_VERSION="$(cat "$APP_ROOT/runtime_version.txt" 2>/dev/null || true)"
   if [ ! -x "$APP_ROOT/.venv/bin/python" ] || [ "$SOURCE_VERSION" != "$RUNTIME_VERSION" ]; then
-    BOOTSTRAP_PYTHON="$(cat "$RESOURCE_DIR/bootstrap_python.txt" 2>/dev/null || true)"
-    if [ ! -x "$BOOTSTRAP_PYTHON" ]; then
-      echo "缺少可用 Python：$BOOTSTRAP_PYTHON"
-      echo "请重新运行 make macos-app。"
+    BOOTSTRAP_PYTHON="$(find_bootstrap_python "$RESOURCE_DIR/bootstrap_python.txt" || true)"
+    if [ -z "$BOOTSTRAP_PYTHON" ]; then
+      echo "缺少 Python 3.11+，无法初始化本地运行时。"
+      echo "请先安装 Python 3.11 或联系内测维护者。"
+      /usr/bin/osascript -e 'display alert "本地表格工作台无法启动" message "缺少 Python 3.11+，无法初始化本地运行时。请先安装 Python 3.11 或联系内测维护者。" as critical' 2>/dev/null || true
       exit 1
     fi
     rm -rf "$APP_ROOT"

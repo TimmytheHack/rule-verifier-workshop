@@ -4,7 +4,7 @@ VENVPY ?= $(VENV)/bin/python
 PIP ?= $(VENV)/bin/pip
 DEV_AUTH_TOKENS_JSON ?= {"operator-token":{"actor_id":"operator","permission_scopes":["read_only","query","confirm","dataset_write","review_admin","warehouse_admin","diagnostics"]},"agent-token":{"actor_id":"agent","permission_scopes":["read_only","query","confirm"]}}
 
-.PHONY: bootstrap test quality pilot operator-trial demo agent-acceptance release-check serve serve-user macos-app frontend frontend-user-build clean-artifacts
+.PHONY: bootstrap test quality pilot operator-trial demo agent-acceptance release-check serve serve-user macos-app macos-dmg frontend frontend-user-build clean-artifacts
 
 bootstrap:
 	@if [ ! -x "$(VENVPY)" ]; then $(PYTHON) -m venv $(VENV); fi
@@ -45,6 +45,9 @@ serve-user:
 
 macos-app:
 	$(VENVPY) scripts/build_local_user_app.py
+
+macos-dmg:
+	$(VENVPY) scripts/build_internal_macos_dmg.py
 
 frontend:
 	@if [ -d frontend ] && [ -f frontend/package.json ]; then \

@@ -35,6 +35,9 @@ REQUIRED_MAKE_TARGETS = {
     "agent-acceptance",
     "quality",
     "frontend",
+    "frontend-user-build",
+    "macos-app",
+    "macos-dmg",
     "clean-artifacts",
     "release-check",
 }

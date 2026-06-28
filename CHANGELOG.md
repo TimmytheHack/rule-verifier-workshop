@@ -6,6 +6,7 @@
 
 - 新增独立本地用户 Web：普通用户先上传本机 Excel/CSV，再基于本机生成的 queryable 数据源进入查询页，不加载旧 mock/demo 数据源。
 - 新增 macOS 本机 `.app` 构建入口，`make macos-app` 会打包本地用户 Web 静态产物、必要后端源码快照和 Library runtime。
+- 新增 macOS 内测 `.dmg` 构建入口，`make macos-dmg` 会生成 `本地表格工作台.app`、中文内测说明和 SHA256 sidecar。
 - 新增 OpenAI-compatible LLM provider 模板：`deepseek`、`qwen`、`kimi`、`zhipu`、`qianfan` 和 `hunyuan`；本地设置页可选择 provider 并保存本机密钥。
 - Admissions recommendation 增加 career guidance 证据层：保留家庭资源、就业目标、考公/稳定就业等偏好，但在缺少 reviewed schema 字段时只进入 `EvidencePack` 和前端提示，不生成 hard rule。
 - 新增 `career_decision_policy.json`、`career_guidance` reporting 和相关前端展示，支持解释资源行业、资源城市、就业目标等待补充信息。
@@ -38,7 +39,7 @@
 - 已运行 `make release-check`，release package 静态校验通过。
 - 新增和更新 `tests/test_admissions_query_types.py`、`tests/test_workbench_api_contract.py`、`tests/test_rule_verifier.py`、`tests/test_duckdb_executor.py`、`tests/test_api_workbench.py`、`tests/test_career_guidance.py` 等回归覆盖。
 - 本轮 release refresh 已运行 `.venv/bin/python -m unittest discover -s tests`，结果为 `598 tests OK (expected failures=1)`。
-- 本轮 release refresh 已运行 `make frontend-user-build` 和 `make macos-app`，独立本地用户 Web 与 macOS `.app` 构建通过；主前端 build 在 Quality Gate 中退出码为 0，仅保留既有 Vite/Rollup warning。
+- 本轮 release refresh 已运行 `make frontend-user-build`、`make macos-app` 和 `make macos-dmg`，独立本地用户 Web、macOS `.app` 与内测 `.dmg` 构建通过；主前端 build 在 Quality Gate 中退出码为 0，仅保留既有 Vite/Rollup warning。
 
 ## v0.1.0-rc1 候选
 

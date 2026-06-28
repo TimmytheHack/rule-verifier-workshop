@@ -23,6 +23,7 @@ sample_outputs/operator_trial_summary.md
 - [ ] `make quality` 通过：11 pass、0 fail、1 warning；唯一 warning 是既有前端 build warning。
 - [ ] `make frontend-user-build` 通过，本地用户 Web 静态产物已更新。
 - [ ] `make macos-app` 通过，重新生成本机 `.app` 和 Library runtime 快照。
+- [ ] `make macos-dmg` 通过，生成内测 `.dmg`、中文说明和 SHA256 sidecar。
 - [ ] DeepSeek live flow smoke 通过：slot adapter 有真实 token usage，uploaded admissions `llm_semantic` preflight/query 记录 `provider=deepseek`、`fallback_used=false`，且缺 schema 的偏好保持未执行。
 - [ ] `make clean-artifacts` 后没有临时 quality/operator/agent/audit/warehouse/upload 产物留在工作区。
 - [ ] 内置 admissions 覆盖：`make demo` admissions 19/19 pass。
@@ -82,6 +83,7 @@ make demo
 make agent-acceptance
 make frontend-user-build
 make macos-app
+make macos-dmg
 ```
 
 必须确认：
@@ -92,6 +94,7 @@ make macos-app
 - [ ] fake agent 调用 admin tools 被权限拒绝。
 - [ ] 本地用户 Web 不展示旧 mock/demo 数据源；设置页支持 DeepSeek、通义千问 / DashScope、Kimi / Moonshot、智谱 GLM、百度千帆和腾讯混元 provider 模板。
 - [ ] `.app` 包不复制仓库 `.env`、上传原件、outputs 临时产物、内置 demo domain pack 或质量/pilot 诊断工具。
+- [ ] 内测 `.dmg` 包含 `本地表格工作台.app`、`内测说明.md` 和 Applications 拖拽入口；同目录生成 `.sha256` 校验文件。
 
 ## 5. 真实数据试运行
 

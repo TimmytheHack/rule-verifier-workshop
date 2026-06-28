@@ -21,6 +21,7 @@
       "make quality",
       "make frontend-user-build",
       "make macos-app",
+      "make macos-dmg",
       "DeepSeek live flow smoke",
       "make clean-artifacts"
     ],
@@ -87,6 +88,11 @@
       "name": "macos-app",
       "command": "make macos-app",
       "purpose": "生成可双击的 macOS 本地用户 Web app，并刷新 Library runtime 快照。"
+    },
+    {
+      "name": "macos-dmg",
+      "command": "make macos-dmg",
+      "purpose": "生成 macOS 内测 DMG、中文说明和 SHA256 sidecar。"
     },
     {
       "name": "clean-artifacts",

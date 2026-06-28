@@ -17,8 +17,8 @@ make serve-user
 ```
 
 macOS 也可以双击仓库根目录的 `start_local_user_web.command`，或运行 `make macos-app` 生成 `outputs/local_user_app/本地表格工作台.app` 后双击 app。然后打开 `http://127.0.0.1:8001`。该模式会把当前前端构建产物交给 FastAPI 同端口托管。
-`.app` 包内放上传数据流所需的源码快照、tool contract 和前端构建产物；构建时会把可运行的 Python runtime 安装到 `~/Library/Application Support/SZU Local Workbench/runtime/workbench/`。它不包含内置 admissions/housing/products domain pack 或质量/pilot 诊断工具；上传数据、LLM 设置、生成规则和日志写入 `~/Library/Application Support/SZU Local Workbench/`。如果未设置自定义 `AUTH_TOKENS_JSON`，仓库根目录的 `make serve-user` 会为本机页面设置 HttpOnly 开发 cookie，使页面可以访问本机 API；`.app` 每次启动会生成一次性本机 token。
-该 `.app` 是同机本地启动包；如果要换机器使用，需要在目标机器从项目重新运行 `make macos-app`。
+`.app` 包内放上传数据流所需的源码快照、tool contract 和前端构建产物；构建时可把当前机器的 Python runtime 安装到 `~/Library/Application Support/SZU Local Workbench/runtime/workbench/`。它不包含内置 admissions/housing/products domain pack 或质量/pilot 诊断工具；上传数据、LLM 设置、生成规则和日志写入 `~/Library/Application Support/SZU Local Workbench/`。如果未设置自定义 `AUTH_TOKENS_JSON`，仓库根目录的 `make serve-user` 会为本机页面设置 HttpOnly 开发 cookie，使页面可以访问本机 API；`.app` 每次启动会生成一次性本机 token。
+给其他 macOS 内测用户分发时，运行 `make macos-dmg` 生成 `outputs/local_user_app/本地表格工作台-0.2.0-macos-internal.dmg`、同名 `.sha256` 和中文 README。当前内测 DMG 未签名、未 notarize；目标机器首次启动需要可用的 Python 3.11+ 来初始化运行时。
 
 前端开发时使用：
 

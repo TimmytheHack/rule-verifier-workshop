@@ -254,6 +254,7 @@ class ServerDeploymentTest(unittest.TestCase):
             "serve",
             "serve-user",
             "macos-app",
+            "macos-dmg",
             "frontend",
             "frontend-user-build",
             "clean-artifacts",
