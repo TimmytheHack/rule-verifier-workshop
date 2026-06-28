@@ -1,12 +1,12 @@
 # Demo Acceptance 验收报告
 
-- 生成时间：`2026-06-14T16:25:02.340883Z`
+- 生成时间：`2026-06-28T14:19:50.225288Z`
 - 总记录数：`29`
 - 通过：`29`
 - 失败：`0`
 - 按 domain 统计：`{"admissions": 19, "housing": 5, "products": 5}`
 - 按验收组统计：`{"builtin_domain_acceptance": 27, "uploaded_dataset_acceptance": 2}`
-- 按 status 统计：`{"needs_confirmation": 10, "no_results": 2, "ok": 17}`
+- 按 status 统计：`{"needs_confirmation": 9, "no_results": 2, "ok": 18}`
 
 | Case | Domain | Status | Result Count | 是否通过 |
 |---|---|---|---:|---:|
@@ -31,7 +31,7 @@
 | housing_02 | housing | ok | 2 | 通过 |
 | housing_03 | housing | ok | 2 | 通过 |
 | housing_04 | housing | ok | 1 | 通过 |
-| housing_05 | housing | needs_confirmation | 5 | 通过 |
+| housing_05 | housing | ok | 5 | 通过 |
 | products_01 | products | ok | 2 | 通过 |
 | products_02 | products | ok | 1 | 通过 |
 | products_03 | products | ok | 1 | 通过 |
@@ -1507,7 +1507,39 @@
   "unconfirmed_candidates": [],
   "no_schema_field_preferences": [],
   "rejected_confirmations": [],
-  "policy_references": []
+  "policy_references": [],
+  "decision_guidance": {
+    "status": "reference_only",
+    "execution_effect": "does_not_change_sql_or_results",
+    "executable": false,
+    "matched_rules": [],
+    "information_requests": [],
+    "no_schema_field_preferences": []
+  },
+  "answerable_intents": [
+    {
+      "intent": "verified_rules",
+      "answerable": true
+    }
+  ],
+  "unanswerable_intents": [],
+  "verified_query_plan": {},
+  "capability_graph_summary": {},
+  "entity_linking": {
+    "status": "applied",
+    "accepted_links": [],
+    "suppressed_links": [],
+    "ambiguous_links": [],
+    "not_executed_links": [],
+    "proposed_rules": []
+  },
+  "decision_option_suggestions": {
+    "status": "reference_only",
+    "execution_effect": "does_not_change_sql_or_results",
+    "executable": false,
+    "source": "fixed_policy",
+    "suggestions": {}
+  }
 }
 ```
 ### answer
@@ -2771,7 +2803,19 @@
     },
     "unsafe_ungrounded_executable_attributes": 0
   },
-  "proposed_rule_audit": [],
+  "proposed_rule_audit": [
+    {
+      "rule_id": "value_entity_001",
+      "source_text": "法学",
+      "field": "专业名称",
+      "operator": "contains_any",
+      "value": [
+        "法学"
+      ],
+      "terminal_status": "executable",
+      "executable": true
+    }
+  ],
   "execution_summary": {
     "executor": "duckdb",
     "sql": "WITH source AS (\n  SELECT row_number() OVER () AS \"__source_row_number\", *\n  FROM \"admissions\"\n),\nfiltered AS (\n  SELECT\n    source.*,\n    TRY_CAST(regexp_extract(REPLACE(CAST(\"专业组最低位次1\" AS VARCHAR), ',', ''), '\\d+(?:\\.\\d+)?') AS DOUBLE) AS \"__group_rank_num\",\n    TRY_CAST(regexp_extract(REPLACE(CAST(\"学费\" AS VARCHAR), ',', ''), '\\d+(?:\\.\\d+)?') AS DOUBLE) AS \"__tuition_num\",\n    TRY_CAST(regexp_extract(REPLACE(CAST(\"院校排名\" AS VARCHAR), ',', ''), '\\d+(?:\\.\\d+)?') AS DOUBLE) AS \"__school_rank_num\",\n    TRY_CAST(regexp_extract(REPLACE(CAST(\"ID\" AS VARCHAR), ',', ''), '\\d+(?:\\.\\d+)?') AS DOUBLE) AS \"__id_num\"\n  FROM source\n  WHERE CAST(\"生源地\" AS VARCHAR) = ? AND CAST(\"科类\" AS VARCHAR) = ? AND (STRPOS(CAST(\"专业名称\" AS VARCHAR), ?) > 0)\n),\nprojectable AS (\n  SELECT *\n  FROM filtered\n  WHERE TRUE\n    AND \"__group_rank_num\" IS NOT NULL\n    AND \"__tuition_num\" IS NOT NULL\n)\nSELECT *\nFROM projectable\nORDER BY\n  \"__group_rank_num\" ASC NULLS LAST,\n  \"__school_rank_num\" ASC NULLS LAST,\n  \"__id_num\" ASC NULLS LAST",
@@ -2839,7 +2883,83 @@
   "unconfirmed_candidates": [],
   "no_schema_field_preferences": [],
   "rejected_confirmations": [],
-  "policy_references": []
+  "policy_references": [],
+  "decision_guidance": {
+    "status": "reference_only",
+    "execution_effect": "does_not_change_sql_or_results",
+    "executable": false,
+    "matched_rules": [],
+    "information_requests": [],
+    "no_schema_field_preferences": []
+  },
+  "answerable_intents": [
+    {
+      "intent": "verified_rules",
+      "answerable": true
+    }
+  ],
+  "unanswerable_intents": [],
+  "verified_query_plan": {},
+  "capability_graph_summary": {},
+  "entity_linking": {
+    "status": "applied",
+    "accepted_links": [
+      {
+        "source_text": "法学",
+        "span": [
+          16,
+          18
+        ],
+        "context_before": "20000，想读",
+        "context_after": "。",
+        "input_text": "广东历史类，排位20000，想读法学。",
+        "field_id": "major_name",
+        "source_column": "专业名称",
+        "value": "法学",
+        "op": "contains_any",
+        "match_type": "exact_full_span",
+        "mode": "major",
+        "executable": true,
+        "value_evidence": {
+          "source": "schema_value_index",
+          "status": "exact_match",
+          "lookup_complete": true,
+          "matched_values": [
+            "法学"
+          ]
+        },
+        "resolution": "accepted_longest_exact_entity"
+      }
+    ],
+    "suppressed_links": [],
+    "ambiguous_links": [],
+    "not_executed_links": [],
+    "proposed_rules": [
+      {
+        "rule_id": "value_entity_001",
+        "source_text": "法学",
+        "category": "deterministic",
+        "field_id": "major_name",
+        "field": "专业名称",
+        "operator": "contains_any",
+        "value": [
+          "法学"
+        ],
+        "semantic_type": "explicit_user_fact",
+        "value_source": "explicit_user_fact",
+        "requires_human_confirmation": false,
+        "reason": "reviewed value index exact match",
+        "proposed_by": "reviewed_value_entity_linker"
+      }
+    ]
+  },
+  "decision_option_suggestions": {
+    "status": "reference_only",
+    "execution_effect": "does_not_change_sql_or_results",
+    "executable": false,
+    "source": "fixed_policy",
+    "suggestions": {}
+  }
 }
 ```
 ### answer
@@ -2854,6 +2974,9 @@
 - 科类：历史；状态：已对齐字段；来源：历史
 - 排位：20000；状态：已对齐字段；来源：排位20000
 - 专业名称：法学；状态：已对齐字段；来源：法学
+
+规则提议审查：
+- 规则值_entity_001：专业名称 包含任一 法学；审查状态：验证通过，可执行
 
 字段值审计解释：
 - [已执行] 广东 -> 生源地：exact_match；索引命中：广东；已匹配字段“生源地”，并已进入 hard filter。
@@ -3314,7 +3437,19 @@
     },
     "unsafe_ungrounded_executable_attributes": 0
   },
-  "proposed_rule_audit": [],
+  "proposed_rule_audit": [
+    {
+      "rule_id": "value_entity_001",
+      "source_text": "软件工程",
+      "field": "专业名称",
+      "operator": "contains_any",
+      "value": [
+        "软件工程"
+      ],
+      "terminal_status": "executable",
+      "executable": true
+    }
+  ],
   "execution_summary": {
     "executor": "duckdb",
     "sql": "WITH source AS (\n  SELECT row_number() OVER () AS \"__source_row_number\", *\n  FROM \"admissions\"\n),\nfiltered AS (\n  SELECT\n    source.*,\n    TRY_CAST(regexp_extract(REPLACE(CAST(\"专业组最低位次1\" AS VARCHAR), ',', ''), '\\d+(?:\\.\\d+)?') AS DOUBLE) AS \"__group_rank_num\",\n    TRY_CAST(regexp_extract(REPLACE(CAST(\"学费\" AS VARCHAR), ',', ''), '\\d+(?:\\.\\d+)?') AS DOUBLE) AS \"__tuition_num\",\n    TRY_CAST(regexp_extract(REPLACE(CAST(\"院校排名\" AS VARCHAR), ',', ''), '\\d+(?:\\.\\d+)?') AS DOUBLE) AS \"__school_rank_num\",\n    TRY_CAST(regexp_extract(REPLACE(CAST(\"ID\" AS VARCHAR), ',', ''), '\\d+(?:\\.\\d+)?') AS DOUBLE) AS \"__id_num\"\n  FROM source\n  WHERE CAST(\"生源地\" AS VARCHAR) = ? AND CAST(\"科类\" AS VARCHAR) = ? AND (STRPOS(CAST(\"专业名称\" AS VARCHAR), ?) > 0) AND (STRPOS(CAST(\"城市\" AS VARCHAR), ?) > 0)\n),\nprojectable AS (\n  SELECT *\n  FROM filtered\n  WHERE TRUE\n    AND \"__group_rank_num\" IS NOT NULL\n    AND \"__tuition_num\" IS NOT NULL\n)\nSELECT *\nFROM projectable\nORDER BY\n  \"__group_rank_num\" ASC NULLS LAST,\n  \"__school_rank_num\" ASC NULLS LAST,\n  \"__id_num\" ASC NULLS LAST",
@@ -3398,7 +3533,83 @@
   "unconfirmed_candidates": [],
   "no_schema_field_preferences": [],
   "rejected_confirmations": [],
-  "policy_references": []
+  "policy_references": [],
+  "decision_guidance": {
+    "status": "reference_only",
+    "execution_effect": "does_not_change_sql_or_results",
+    "executable": false,
+    "matched_rules": [],
+    "information_requests": [],
+    "no_schema_field_preferences": []
+  },
+  "answerable_intents": [
+    {
+      "intent": "verified_rules",
+      "answerable": true
+    }
+  ],
+  "unanswerable_intents": [],
+  "verified_query_plan": {},
+  "capability_graph_summary": {},
+  "entity_linking": {
+    "status": "applied",
+    "accepted_links": [
+      {
+        "source_text": "软件工程",
+        "span": [
+          16,
+          20
+        ],
+        "context_before": "0000，深圳，",
+        "context_after": "。",
+        "input_text": "广东物理，排位30000，深圳，软件工程。",
+        "field_id": "major_name",
+        "source_column": "专业名称",
+        "value": "软件工程",
+        "op": "contains_any",
+        "match_type": "exact_full_span",
+        "mode": "major",
+        "executable": true,
+        "value_evidence": {
+          "source": "schema_value_index",
+          "status": "exact_match",
+          "lookup_complete": true,
+          "matched_values": [
+            "软件工程"
+          ]
+        },
+        "resolution": "accepted_longest_exact_entity"
+      }
+    ],
+    "suppressed_links": [],
+    "ambiguous_links": [],
+    "not_executed_links": [],
+    "proposed_rules": [
+      {
+        "rule_id": "value_entity_001",
+        "source_text": "软件工程",
+        "category": "deterministic",
+        "field_id": "major_name",
+        "field": "专业名称",
+        "operator": "contains_any",
+        "value": [
+          "软件工程"
+        ],
+        "semantic_type": "explicit_user_fact",
+        "value_source": "explicit_user_fact",
+        "requires_human_confirmation": false,
+        "reason": "reviewed value index exact match",
+        "proposed_by": "reviewed_value_entity_linker"
+      }
+    ]
+  },
+  "decision_option_suggestions": {
+    "status": "reference_only",
+    "execution_effect": "does_not_change_sql_or_results",
+    "executable": false,
+    "source": "fixed_policy",
+    "suggestions": {}
+  }
 }
 ```
 ### answer
@@ -3414,6 +3625,9 @@
 - 排位：30000；状态：已对齐字段；来源：排位30000
 - 专业名称：软件工程；状态：已对齐字段；来源：软件工程
 - 城市：深圳；状态：已对齐字段；来源：深圳
+
+规则提议审查：
+- 规则值_entity_001：专业名称 包含任一 软件工程；审查状态：验证通过，可执行
 
 字段值审计解释：
 - [已执行] 广东 -> 生源地：exact_match；索引命中：广东；已匹配字段“生源地”，并已进入 hard filter。
@@ -4987,7 +5201,39 @@
   ],
   "no_schema_field_preferences": [],
   "rejected_confirmations": [],
-  "policy_references": []
+  "policy_references": [],
+  "decision_guidance": {
+    "status": "reference_only",
+    "execution_effect": "does_not_change_sql_or_results",
+    "executable": false,
+    "matched_rules": [],
+    "information_requests": [],
+    "no_schema_field_preferences": []
+  },
+  "answerable_intents": [
+    {
+      "intent": "verified_rules",
+      "answerable": true
+    }
+  ],
+  "unanswerable_intents": [],
+  "verified_query_plan": {},
+  "capability_graph_summary": {},
+  "entity_linking": {
+    "status": "applied",
+    "accepted_links": [],
+    "suppressed_links": [],
+    "ambiguous_links": [],
+    "not_executed_links": [],
+    "proposed_rules": []
+  },
+  "decision_option_suggestions": {
+    "status": "reference_only",
+    "execution_effect": "does_not_change_sql_or_results",
+    "executable": false,
+    "source": "fixed_policy",
+    "suggestions": {}
+  }
 }
 ```
 ### answer
@@ -6061,6 +6307,7 @@ candidate_id 确认状态：
   {
     "id": "not_exec_1",
     "preference": "不要校企合作",
+    "field_id": null,
     "display": "不要校企合作未执行：缺少合作办学类型字段，当前版本不从文本字段推断。",
     "reason": "缺少合作办学类型字段，当前版本不从文本字段推断。",
     "missing_field": "缺少已审查数据字段",
@@ -6140,6 +6387,7 @@ candidate_id 确认状态：
       "source_text": "不要校企合作",
       "status": "not_executed",
       "reason": "缺少合作办学类型字段，当前版本不从文本字段推断。",
+      "field_id": null,
       "safety_warning": "不要校企合作 未执行：缺少合作办学类型字段，当前版本不从文本字段推断。"
     }
   ],
@@ -6568,7 +6816,54 @@ candidate_id 确认状态：
       "status": "reference_only",
       "effect": "does_not_change_sql_or_results"
     }
-  ]
+  ],
+  "decision_guidance": {
+    "status": "reference_only",
+    "execution_effect": "does_not_change_sql_or_results",
+    "executable": false,
+    "matched_rules": [],
+    "information_requests": [],
+    "no_schema_field_preferences": []
+  },
+  "answerable_intents": [
+    {
+      "intent": "verified_rules",
+      "answerable": true
+    }
+  ],
+  "unanswerable_intents": [
+    {
+      "source_text": "不要校企合作",
+      "field_id": "cooperation_type",
+      "answerable": false,
+      "requirement_type": "knowledge_base_or_reviewed_field",
+      "reason": "当前数据中没有可执行字段，不能进入筛表。"
+    },
+    {
+      "source_text": "不要校企合作",
+      "field_id": null,
+      "answerable": false,
+      "requirement_type": "unsupported",
+      "reason": "缺少合作办学类型字段，当前版本不从文本字段推断。"
+    }
+  ],
+  "verified_query_plan": {},
+  "capability_graph_summary": {},
+  "entity_linking": {
+    "status": "applied",
+    "accepted_links": [],
+    "suppressed_links": [],
+    "ambiguous_links": [],
+    "not_executed_links": [],
+    "proposed_rules": []
+  },
+  "decision_option_suggestions": {
+    "status": "reference_only",
+    "execution_effect": "does_not_change_sql_or_results",
+    "executable": false,
+    "source": "fixed_policy",
+    "suggestions": {}
+  }
 }
 ```
 ### answer
@@ -6911,7 +7206,39 @@ candidate_id 确认状态：
   "unconfirmed_candidates": [],
   "no_schema_field_preferences": [],
   "rejected_confirmations": [],
-  "policy_references": []
+  "policy_references": [],
+  "decision_guidance": {
+    "status": "reference_only",
+    "execution_effect": "does_not_change_sql_or_results",
+    "executable": false,
+    "matched_rules": [],
+    "information_requests": [],
+    "no_schema_field_preferences": []
+  },
+  "answerable_intents": [
+    {
+      "intent": "verified_rules",
+      "answerable": true
+    }
+  ],
+  "unanswerable_intents": [],
+  "verified_query_plan": {},
+  "capability_graph_summary": {},
+  "entity_linking": {
+    "status": "applied",
+    "accepted_links": [],
+    "suppressed_links": [],
+    "ambiguous_links": [],
+    "not_executed_links": [],
+    "proposed_rules": []
+  },
+  "decision_option_suggestions": {
+    "status": "reference_only",
+    "execution_effect": "does_not_change_sql_or_results",
+    "executable": false,
+    "source": "fixed_policy",
+    "suggestions": {}
+  }
 }
 ```
 ### answer
@@ -7850,6 +8177,7 @@ candidate_id 确认状态：
   {
     "id": "not_exec_1",
     "preference": "不要中外合作",
+    "field_id": null,
     "display": "中外合作未执行：缺少合作办学类型字段",
     "reason": "当前数据字段定义没有合作办学类型字段，不能验证或执行“排除中外合作”。",
     "missing_field": "合作办学类型字段",
@@ -7909,6 +8237,7 @@ candidate_id 确认状态：
       "source_text": "不要中外合作",
       "status": "not_executed",
       "reason": "缺少合作办学类型字段，当前版本不从文本字段推断。",
+      "field_id": null,
       "safety_warning": "不要中外合作 未执行：缺少合作办学类型字段，当前版本不从文本字段推断。"
     }
   ],
@@ -8217,7 +8546,54 @@ candidate_id 确认状态：
       "status": "reference_only",
       "effect": "does_not_change_sql_or_results"
     }
-  ]
+  ],
+  "decision_guidance": {
+    "status": "reference_only",
+    "execution_effect": "does_not_change_sql_or_results",
+    "executable": false,
+    "matched_rules": [],
+    "information_requests": [],
+    "no_schema_field_preferences": []
+  },
+  "answerable_intents": [
+    {
+      "intent": "verified_rules",
+      "answerable": true
+    }
+  ],
+  "unanswerable_intents": [
+    {
+      "source_text": "不要中外合作",
+      "field_id": "cooperation_type",
+      "answerable": false,
+      "requirement_type": "knowledge_base_or_reviewed_field",
+      "reason": "当前数据中没有可执行字段，不能进入筛表。"
+    },
+    {
+      "source_text": "不要中外合作",
+      "field_id": null,
+      "answerable": false,
+      "requirement_type": "unsupported",
+      "reason": "缺少合作办学类型字段，当前版本不从文本字段推断。"
+    }
+  ],
+  "verified_query_plan": {},
+  "capability_graph_summary": {},
+  "entity_linking": {
+    "status": "applied",
+    "accepted_links": [],
+    "suppressed_links": [],
+    "ambiguous_links": [],
+    "not_executed_links": [],
+    "proposed_rules": []
+  },
+  "decision_option_suggestions": {
+    "status": "reference_only",
+    "execution_effect": "does_not_change_sql_or_results",
+    "executable": false,
+    "source": "fixed_policy",
+    "suggestions": {}
+  }
 }
 ```
 ### answer
@@ -9432,7 +9808,39 @@ candidate_id 确认状态：
   "unconfirmed_candidates": [],
   "no_schema_field_preferences": [],
   "rejected_confirmations": [],
-  "policy_references": []
+  "policy_references": [],
+  "decision_guidance": {
+    "status": "reference_only",
+    "execution_effect": "does_not_change_sql_or_results",
+    "executable": false,
+    "matched_rules": [],
+    "information_requests": [],
+    "no_schema_field_preferences": []
+  },
+  "answerable_intents": [
+    {
+      "intent": "verified_rules",
+      "answerable": true
+    }
+  ],
+  "unanswerable_intents": [],
+  "verified_query_plan": {},
+  "capability_graph_summary": {},
+  "entity_linking": {
+    "status": "applied",
+    "accepted_links": [],
+    "suppressed_links": [],
+    "ambiguous_links": [],
+    "not_executed_links": [],
+    "proposed_rules": []
+  },
+  "decision_option_suggestions": {
+    "status": "reference_only",
+    "execution_effect": "does_not_change_sql_or_results",
+    "executable": false,
+    "source": "fixed_policy",
+    "suggestions": {}
+  }
 }
 ```
 ### answer
@@ -10783,7 +11191,39 @@ candidate_id 确认状态：
   "unconfirmed_candidates": [],
   "no_schema_field_preferences": [],
   "rejected_confirmations": [],
-  "policy_references": []
+  "policy_references": [],
+  "decision_guidance": {
+    "status": "reference_only",
+    "execution_effect": "does_not_change_sql_or_results",
+    "executable": false,
+    "matched_rules": [],
+    "information_requests": [],
+    "no_schema_field_preferences": []
+  },
+  "answerable_intents": [
+    {
+      "intent": "verified_rules",
+      "answerable": true
+    }
+  ],
+  "unanswerable_intents": [],
+  "verified_query_plan": {},
+  "capability_graph_summary": {},
+  "entity_linking": {
+    "status": "applied",
+    "accepted_links": [],
+    "suppressed_links": [],
+    "ambiguous_links": [],
+    "not_executed_links": [],
+    "proposed_rules": []
+  },
+  "decision_option_suggestions": {
+    "status": "reference_only",
+    "execution_effect": "does_not_change_sql_or_results",
+    "executable": false,
+    "source": "fixed_policy",
+    "suggestions": {}
+  }
 }
 ```
 ### answer
@@ -12055,7 +12495,19 @@ candidate_id 确认状态：
     },
     "unsafe_ungrounded_executable_attributes": 0
   },
-  "proposed_rule_audit": [],
+  "proposed_rule_audit": [
+    {
+      "rule_id": "value_entity_001",
+      "source_text": "法学",
+      "field": "专业名称",
+      "operator": "contains_any",
+      "value": [
+        "法学"
+      ],
+      "terminal_status": "executable",
+      "executable": true
+    }
+  ],
   "execution_summary": {
     "executor": "duckdb",
     "sql": "WITH source AS (\n  SELECT row_number() OVER () AS \"__source_row_number\", *\n  FROM \"admissions\"\n),\nfiltered AS (\n  SELECT\n    source.*,\n    TRY_CAST(regexp_extract(REPLACE(CAST(\"专业组最低位次1\" AS VARCHAR), ',', ''), '\\d+(?:\\.\\d+)?') AS DOUBLE) AS \"__group_rank_num\",\n    TRY_CAST(regexp_extract(REPLACE(CAST(\"学费\" AS VARCHAR), ',', ''), '\\d+(?:\\.\\d+)?') AS DOUBLE) AS \"__tuition_num\",\n    TRY_CAST(regexp_extract(REPLACE(CAST(\"院校排名\" AS VARCHAR), ',', ''), '\\d+(?:\\.\\d+)?') AS DOUBLE) AS \"__school_rank_num\",\n    TRY_CAST(regexp_extract(REPLACE(CAST(\"ID\" AS VARCHAR), ',', ''), '\\d+(?:\\.\\d+)?') AS DOUBLE) AS \"__id_num\"\n  FROM source\n  WHERE CAST(\"生源地\" AS VARCHAR) = ? AND CAST(\"科类\" AS VARCHAR) = ? AND (STRPOS(CAST(\"专业名称\" AS VARCHAR), ?) > 0)\n),\nprojectable AS (\n  SELECT *\n  FROM filtered\n  WHERE TRUE\n    AND \"__group_rank_num\" IS NOT NULL\n    AND \"__tuition_num\" IS NOT NULL\n)\nSELECT *\nFROM projectable\nORDER BY\n  \"__group_rank_num\" ASC NULLS LAST,\n  \"__school_rank_num\" ASC NULLS LAST,\n  \"__id_num\" ASC NULLS LAST",
@@ -12133,7 +12585,83 @@ candidate_id 确认状态：
   "unconfirmed_candidates": [],
   "no_schema_field_preferences": [],
   "rejected_confirmations": [],
-  "policy_references": []
+  "policy_references": [],
+  "decision_guidance": {
+    "status": "reference_only",
+    "execution_effect": "does_not_change_sql_or_results",
+    "executable": false,
+    "matched_rules": [],
+    "information_requests": [],
+    "no_schema_field_preferences": []
+  },
+  "answerable_intents": [
+    {
+      "intent": "verified_rules",
+      "answerable": true
+    }
+  ],
+  "unanswerable_intents": [],
+  "verified_query_plan": {},
+  "capability_graph_summary": {},
+  "entity_linking": {
+    "status": "applied",
+    "accepted_links": [
+      {
+        "source_text": "法学",
+        "span": [
+          13,
+          15
+        ],
+        "context_before": "排位25000，",
+        "context_after": "，预算有限。",
+        "input_text": "广东历史，排位25000，法学，预算有限。",
+        "field_id": "major_name",
+        "source_column": "专业名称",
+        "value": "法学",
+        "op": "contains_any",
+        "match_type": "exact_full_span",
+        "mode": "major",
+        "executable": true,
+        "value_evidence": {
+          "source": "schema_value_index",
+          "status": "exact_match",
+          "lookup_complete": true,
+          "matched_values": [
+            "法学"
+          ]
+        },
+        "resolution": "accepted_longest_exact_entity"
+      }
+    ],
+    "suppressed_links": [],
+    "ambiguous_links": [],
+    "not_executed_links": [],
+    "proposed_rules": [
+      {
+        "rule_id": "value_entity_001",
+        "source_text": "法学",
+        "category": "deterministic",
+        "field_id": "major_name",
+        "field": "专业名称",
+        "operator": "contains_any",
+        "value": [
+          "法学"
+        ],
+        "semantic_type": "explicit_user_fact",
+        "value_source": "explicit_user_fact",
+        "requires_human_confirmation": false,
+        "reason": "reviewed value index exact match",
+        "proposed_by": "reviewed_value_entity_linker"
+      }
+    ]
+  },
+  "decision_option_suggestions": {
+    "status": "reference_only",
+    "execution_effect": "does_not_change_sql_or_results",
+    "executable": false,
+    "source": "fixed_policy",
+    "suggestions": {}
+  }
 }
 ```
 ### answer
@@ -12149,6 +12677,9 @@ candidate_id 确认状态：
 - 排位：25000；状态：已对齐字段；来源：排位25000
 - 专业名称：法学；状态：已对齐字段；来源：法学
 - 太贵：预算有限；状态：待确认；来源：预算有限
+
+规则提议审查：
+- 规则值_entity_001：专业名称 包含任一 法学；审查状态：验证通过，可执行
 
 字段值审计解释：
 - [已执行] 广东 -> 生源地：exact_match；索引命中：广东；已匹配字段“生源地”，并已进入 hard filter。
@@ -12872,7 +13403,7 @@ candidate_id 确认状态：
       },
       {
         "status": "not_executed",
-        "text": "就业前景好 未执行：当前数据中没有就业结果字段。"
+        "text": "就业前景好 未执行：当前数据中没有已审查的就业结果字段，不能把“好就业”作为筛选条件。"
       }
     ],
     "year": 2024,
@@ -12908,7 +13439,7 @@ candidate_id 确认状态：
       },
       {
         "status": "not_executed",
-        "text": "就业前景好 未执行：当前数据中没有就业结果字段。"
+        "text": "就业前景好 未执行：当前数据中没有已审查的就业结果字段，不能把“好就业”作为筛选条件。"
       }
     ],
     "year": 2024,
@@ -12944,7 +13475,7 @@ candidate_id 确认状态：
       },
       {
         "status": "not_executed",
-        "text": "就业前景好 未执行：当前数据中没有就业结果字段。"
+        "text": "就业前景好 未执行：当前数据中没有已审查的就业结果字段，不能把“好就业”作为筛选条件。"
       }
     ],
     "year": 2024,
@@ -12980,7 +13511,7 @@ candidate_id 确认状态：
       },
       {
         "status": "not_executed",
-        "text": "就业前景好 未执行：当前数据中没有就业结果字段。"
+        "text": "就业前景好 未执行：当前数据中没有已审查的就业结果字段，不能把“好就业”作为筛选条件。"
       }
     ],
     "year": 2024,
@@ -13016,7 +13547,7 @@ candidate_id 确认状态：
       },
       {
         "status": "not_executed",
-        "text": "就业前景好 未执行：当前数据中没有就业结果字段。"
+        "text": "就业前景好 未执行：当前数据中没有已审查的就业结果字段，不能把“好就业”作为筛选条件。"
       }
     ],
     "year": 2024,
@@ -13076,8 +13607,9 @@ candidate_id 确认状态：
   {
     "id": "not_exec_1",
     "preference": "就业前景好",
-    "display": "就业前景好未执行：当前数据中没有就业结果字段。",
-    "reason": "当前数据中没有就业结果字段。",
+    "field_id": "employment_outlook",
+    "display": "就业前景好未执行：当前数据中没有已审查的就业结果字段，不能把“好就业”作为筛选条件。",
+    "reason": "当前数据中没有已审查的就业结果字段，不能把“好就业”作为筛选条件。",
     "missing_field": "缺少已审查数据字段",
     "source_span": "就业前景好"
   }
@@ -13134,8 +13666,9 @@ candidate_id 确认状态：
     {
       "source_text": "就业前景好",
       "status": "not_executed",
-      "reason": "当前数据中没有就业结果字段。",
-      "safety_warning": "就业前景好 未执行：当前数据中没有就业结果字段。"
+      "reason": "当前数据中没有已审查的就业结果字段，不能把“好就业”作为筛选条件。",
+      "field_id": "employment_outlook",
+      "safety_warning": "就业前景好 未执行：当前数据中没有已审查的就业结果字段，不能把“好就业”作为筛选条件。"
     }
   ],
   "result_count": 19473,
@@ -13166,7 +13699,7 @@ candidate_id 确认状态：
         {
           "rule_id": "not_executed_1",
           "status": "not_executed",
-          "reason": "就业前景好 未执行：当前数据中没有就业结果字段。"
+          "reason": "就业前景好 未执行：当前数据中没有已审查的就业结果字段，不能把“好就业”作为筛选条件。"
         }
       ]
     },
@@ -13196,7 +13729,7 @@ candidate_id 确认状态：
         {
           "rule_id": "not_executed_1",
           "status": "not_executed",
-          "reason": "就业前景好 未执行：当前数据中没有就业结果字段。"
+          "reason": "就业前景好 未执行：当前数据中没有已审查的就业结果字段，不能把“好就业”作为筛选条件。"
         }
       ]
     },
@@ -13226,7 +13759,7 @@ candidate_id 确认状态：
         {
           "rule_id": "not_executed_1",
           "status": "not_executed",
-          "reason": "就业前景好 未执行：当前数据中没有就业结果字段。"
+          "reason": "就业前景好 未执行：当前数据中没有已审查的就业结果字段，不能把“好就业”作为筛选条件。"
         }
       ]
     },
@@ -13256,7 +13789,7 @@ candidate_id 确认状态：
         {
           "rule_id": "not_executed_1",
           "status": "not_executed",
-          "reason": "就业前景好 未执行：当前数据中没有就业结果字段。"
+          "reason": "就业前景好 未执行：当前数据中没有已审查的就业结果字段，不能把“好就业”作为筛选条件。"
         }
       ]
     },
@@ -13286,7 +13819,7 @@ candidate_id 确认状态：
         {
           "rule_id": "not_executed_1",
           "status": "not_executed",
-          "reason": "就业前景好 未执行：当前数据中没有就业结果字段。"
+          "reason": "就业前景好 未执行：当前数据中没有已审查的就业结果字段，不能把“好就业”作为筛选条件。"
         }
       ]
     }
@@ -13306,7 +13839,7 @@ candidate_id 确认状态：
     "safety_warnings": [
       "答案只能使用 evidence_pack 中的已验证规则、确认记录、结果摘要和 trace。",
       "候选偏好在确认或模拟确认之前不得执行。",
-      "就业前景好 未执行：当前数据中没有就业结果字段。"
+      "就业前景好 未执行：当前数据中没有已审查的就业结果字段，不能把“好就业”作为筛选条件。"
     ]
   },
   "extracted_preferences": [
@@ -13394,13 +13927,13 @@ candidate_id 确认状态：
     },
     {
       "source_text": "就业前景好",
-      "slot_path": "preferences.other_vague_preferences[]",
+      "slot_path": "preferences.employment_preference_raw",
       "field": "employment_outlook",
       "value": "就业前景好",
       "match_type": "no_schema_field",
       "action": "not_executed",
       "matched_values": [],
-      "reason": "当前数据中没有就业结果字段。原文已保留，未进入 hard filter。"
+      "reason": "当前数据中没有已审查的就业结果字段，不能把“好就业”作为筛选条件。原文已保留，未进入 hard filter。"
     }
   ],
   "confirmed_rules": [],
@@ -13411,7 +13944,7 @@ candidate_id 确认状态：
     {
       "candidate_id": "cand_c878a7931b736b08",
       "source_text": "就业前景好",
-      "slot_path": "preferences.other_vague_preferences[]",
+      "slot_path": "preferences.employment_preference_raw",
       "field_id": "employment_outlook",
       "field": "无可执行字段",
       "match_type": "no_schema_field",
@@ -13419,12 +13952,52 @@ candidate_id 确认状态：
       "value": null,
       "label": "不可执行",
       "executable": false,
-      "reason": "当前数据中没有就业结果字段。",
+      "reason": "当前数据中没有已审查的就业结果字段，不能把“好就业”作为筛选条件。",
       "matched_values": []
     }
   ],
   "rejected_confirmations": [],
-  "policy_references": []
+  "policy_references": [],
+  "decision_guidance": {
+    "status": "reference_only",
+    "execution_effect": "does_not_change_sql_or_results",
+    "executable": false,
+    "matched_rules": [],
+    "information_requests": [],
+    "no_schema_field_preferences": []
+  },
+  "answerable_intents": [
+    {
+      "intent": "verified_rules",
+      "answerable": true
+    }
+  ],
+  "unanswerable_intents": [
+    {
+      "source_text": "就业前景好",
+      "field_id": "employment_outlook",
+      "answerable": false,
+      "requirement_type": "knowledge_base_or_reviewed_field",
+      "reason": "当前数据中没有已审查的就业结果字段，不能把“好就业”作为筛选条件。"
+    }
+  ],
+  "verified_query_plan": {},
+  "capability_graph_summary": {},
+  "entity_linking": {
+    "status": "applied",
+    "accepted_links": [],
+    "suppressed_links": [],
+    "ambiguous_links": [],
+    "not_executed_links": [],
+    "proposed_rules": []
+  },
+  "decision_option_suggestions": {
+    "status": "reference_only",
+    "execution_effect": "does_not_change_sql_or_results",
+    "executable": false,
+    "source": "fixed_policy",
+    "suggestions": {}
+  }
 }
 ```
 ### answer
@@ -13442,7 +14015,7 @@ candidate_id 确认状态：
 字段值审计解释：
 - [已执行] 广东 -> 生源地：exact_match；索引命中：广东；已匹配字段“生源地”，并已进入 hard filter。
 - [已执行] 物理 -> 科类：exact_match；索引命中：物理；已匹配字段“科类”，并已进入 hard filter。
-- [未执行] 就业前景好 -> employment_outlook：no_schema_field；当前数据中没有就业结果字段。原文已保留，未进入 hard filter。
+- [未执行] 就业前景好 -> employment_outlook：no_schema_field；当前数据中没有已审查的就业结果字段，不能把“好就业”作为筛选条件。原文已保留，未进入 hard filter。
 
 已执行规则：
 - e_source_province：生源地 等于 广东
@@ -13452,10 +14025,10 @@ candidate_id 确认状态：
 - 不想去太贵的中外合作：未执行，原因：缺少合作办学类型字段。。
 
 缺少字段，不能确认执行：
-- 就业前景好：当前数据中没有就业结果字段。；即使提交该 candidate_id 也不能执行。
+- 就业前景好：当前数据中没有已审查的就业结果字段，不能把“好就业”作为筛选条件。；即使提交该 candidate_id 也不能执行。
 
 未执行但已保留的偏好：
-- 就业前景好：未执行，未参与筛选。原因：当前数据中没有就业结果字段。
+- 就业前景好：未执行，未参与筛选。原因：当前数据中没有已审查的就业结果字段，不能把“好就业”作为筛选条件。
 
 前 5 条结果：
 - 1. 清华大学；专业组代码：10003202；专业代码：046；专业名称：建筑类；专业全称：建筑类(含：建筑学、城乡规划、风景园林，北京市)；选科要求：不限；城市：海淀区；学费：5000 元/年；专业组最低位次：53。
@@ -13467,7 +14040,7 @@ candidate_id 确认状态：
 安全说明：
 - 答案只能使用 证据包 中的已验证规则、确认记录、结果摘要和 trace。
 - 候选偏好在确认或模拟确认之前不得执行。
-- 就业前景好 未执行：当前数据中没有就业结果字段。
+- 就业前景好 未执行：当前数据中没有已审查的就业结果字段，不能把“好就业”作为筛选条件。
 
 ## admissions_12 `通过`
 
@@ -14218,7 +14791,7 @@ candidate_id 确认状态：
       },
       {
         "status": "not_executed",
-        "text": "好就业 未执行：当前数据中没有就业结果字段。"
+        "text": "好就业 未执行：当前数据中没有已审查的就业结果字段，不能把“好就业”作为筛选条件。"
       }
     ],
     "year": 2024,
@@ -14258,7 +14831,7 @@ candidate_id 确认状态：
       },
       {
         "status": "not_executed",
-        "text": "好就业 未执行：当前数据中没有就业结果字段。"
+        "text": "好就业 未执行：当前数据中没有已审查的就业结果字段，不能把“好就业”作为筛选条件。"
       }
     ],
     "year": 2024,
@@ -14298,7 +14871,7 @@ candidate_id 确认状态：
       },
       {
         "status": "not_executed",
-        "text": "好就业 未执行：当前数据中没有就业结果字段。"
+        "text": "好就业 未执行：当前数据中没有已审查的就业结果字段，不能把“好就业”作为筛选条件。"
       }
     ],
     "year": 2024,
@@ -14338,7 +14911,7 @@ candidate_id 确认状态：
       },
       {
         "status": "not_executed",
-        "text": "好就业 未执行：当前数据中没有就业结果字段。"
+        "text": "好就业 未执行：当前数据中没有已审查的就业结果字段，不能把“好就业”作为筛选条件。"
       }
     ],
     "year": 2024,
@@ -14378,7 +14951,7 @@ candidate_id 确认状态：
       },
       {
         "status": "not_executed",
-        "text": "好就业 未执行：当前数据中没有就业结果字段。"
+        "text": "好就业 未执行：当前数据中没有已审查的就业结果字段，不能把“好就业”作为筛选条件。"
       }
     ],
     "year": 2024,
@@ -14448,8 +15021,9 @@ candidate_id 确认状态：
   {
     "id": "not_exec_1",
     "preference": "好就业",
-    "display": "好就业未执行：当前数据中没有就业结果字段。",
-    "reason": "当前数据中没有就业结果字段。",
+    "field_id": "employment_outlook",
+    "display": "好就业未执行：当前数据中没有已审查的就业结果字段，不能把“好就业”作为筛选条件。",
+    "reason": "当前数据中没有已审查的就业结果字段，不能把“好就业”作为筛选条件。",
     "missing_field": "缺少已审查数据字段",
     "source_span": "好就业"
   }
@@ -14517,8 +15091,9 @@ candidate_id 确认状态：
     {
       "source_text": "好就业",
       "status": "not_executed",
-      "reason": "当前数据中没有就业结果字段。",
-      "safety_warning": "好就业 未执行：当前数据中没有就业结果字段。"
+      "reason": "当前数据中没有已审查的就业结果字段，不能把“好就业”作为筛选条件。",
+      "field_id": "employment_outlook",
+      "safety_warning": "好就业 未执行：当前数据中没有已审查的就业结果字段，不能把“好就业”作为筛选条件。"
     }
   ],
   "result_count": 277,
@@ -14554,7 +15129,7 @@ candidate_id 确认状态：
         {
           "rule_id": "not_executed_1",
           "status": "not_executed",
-          "reason": "好就业 未执行：当前数据中没有就业结果字段。"
+          "reason": "好就业 未执行：当前数据中没有已审查的就业结果字段，不能把“好就业”作为筛选条件。"
         }
       ]
     },
@@ -14589,7 +15164,7 @@ candidate_id 确认状态：
         {
           "rule_id": "not_executed_1",
           "status": "not_executed",
-          "reason": "好就业 未执行：当前数据中没有就业结果字段。"
+          "reason": "好就业 未执行：当前数据中没有已审查的就业结果字段，不能把“好就业”作为筛选条件。"
         }
       ]
     },
@@ -14624,7 +15199,7 @@ candidate_id 确认状态：
         {
           "rule_id": "not_executed_1",
           "status": "not_executed",
-          "reason": "好就业 未执行：当前数据中没有就业结果字段。"
+          "reason": "好就业 未执行：当前数据中没有已审查的就业结果字段，不能把“好就业”作为筛选条件。"
         }
       ]
     },
@@ -14659,7 +15234,7 @@ candidate_id 确认状态：
         {
           "rule_id": "not_executed_1",
           "status": "not_executed",
-          "reason": "好就业 未执行：当前数据中没有就业结果字段。"
+          "reason": "好就业 未执行：当前数据中没有已审查的就业结果字段，不能把“好就业”作为筛选条件。"
         }
       ]
     },
@@ -14694,7 +15269,7 @@ candidate_id 确认状态：
         {
           "rule_id": "not_executed_1",
           "status": "not_executed",
-          "reason": "好就业 未执行：当前数据中没有就业结果字段。"
+          "reason": "好就业 未执行：当前数据中没有已审查的就业结果字段，不能把“好就业”作为筛选条件。"
         }
       ]
     }
@@ -14715,7 +15290,7 @@ candidate_id 确认状态：
     "safety_warnings": [
       "答案只能使用 evidence_pack 中的已验证规则、确认记录、结果摘要和 trace。",
       "候选偏好在确认或模拟确认之前不得执行。",
-      "好就业 未执行：当前数据中没有就业结果字段。"
+      "好就业 未执行：当前数据中没有已审查的就业结果字段，不能把“好就业”作为筛选条件。"
     ]
   },
   "extracted_preferences": [
@@ -14763,7 +15338,19 @@ candidate_id 确认状态：
     },
     "unsafe_ungrounded_executable_attributes": 0
   },
-  "proposed_rule_audit": [],
+  "proposed_rule_audit": [
+    {
+      "rule_id": "value_entity_001",
+      "source_text": "人工智能",
+      "field": "专业名称",
+      "operator": "contains_any",
+      "value": [
+        "人工智能"
+      ],
+      "terminal_status": "executable",
+      "executable": true
+    }
+  ],
   "execution_summary": {
     "executor": "duckdb",
     "sql": "WITH source AS (\n  SELECT row_number() OVER () AS \"__source_row_number\", *\n  FROM \"admissions\"\n),\nfiltered AS (\n  SELECT\n    source.*,\n    TRY_CAST(regexp_extract(REPLACE(CAST(\"专业组最低位次1\" AS VARCHAR), ',', ''), '\\d+(?:\\.\\d+)?') AS DOUBLE) AS \"__group_rank_num\",\n    TRY_CAST(regexp_extract(REPLACE(CAST(\"学费\" AS VARCHAR), ',', ''), '\\d+(?:\\.\\d+)?') AS DOUBLE) AS \"__tuition_num\",\n    TRY_CAST(regexp_extract(REPLACE(CAST(\"院校排名\" AS VARCHAR), ',', ''), '\\d+(?:\\.\\d+)?') AS DOUBLE) AS \"__school_rank_num\",\n    TRY_CAST(regexp_extract(REPLACE(CAST(\"ID\" AS VARCHAR), ',', ''), '\\d+(?:\\.\\d+)?') AS DOUBLE) AS \"__id_num\"\n  FROM source\n  WHERE CAST(\"生源地\" AS VARCHAR) = ? AND CAST(\"科类\" AS VARCHAR) = ? AND (STRPOS(CAST(\"专业名称\" AS VARCHAR), ?) > 0)\n),\nprojectable AS (\n  SELECT *\n  FROM filtered\n  WHERE TRUE\n    AND \"__group_rank_num\" IS NOT NULL\n    AND \"__tuition_num\" IS NOT NULL\n)\nSELECT *\nFROM projectable\nORDER BY\n  \"__group_rank_num\" ASC NULLS LAST,\n  \"__school_rank_num\" ASC NULLS LAST,\n  \"__id_num\" ASC NULLS LAST",
@@ -14826,13 +15413,13 @@ candidate_id 确认状态：
     },
     {
       "source_text": "好就业",
-      "slot_path": "preferences.other_vague_preferences[]",
+      "slot_path": "preferences.employment_preference_raw",
       "field": "employment_outlook",
       "value": "好就业",
       "match_type": "no_schema_field",
       "action": "not_executed",
       "matched_values": [],
-      "reason": "当前数据中没有就业结果字段。原文已保留，未进入 hard filter。"
+      "reason": "当前数据中没有已审查的就业结果字段，不能把“好就业”作为筛选条件。原文已保留，未进入 hard filter。"
     }
   ],
   "confirmed_rules": [],
@@ -14843,7 +15430,7 @@ candidate_id 确认状态：
     {
       "candidate_id": "cand_94ded559e4a0cf3a",
       "source_text": "好就业",
-      "slot_path": "preferences.other_vague_preferences[]",
+      "slot_path": "preferences.employment_preference_raw",
       "field_id": "employment_outlook",
       "field": "无可执行字段",
       "match_type": "no_schema_field",
@@ -14851,12 +15438,96 @@ candidate_id 确认状态：
       "value": null,
       "label": "不可执行",
       "executable": false,
-      "reason": "当前数据中没有就业结果字段。",
+      "reason": "当前数据中没有已审查的就业结果字段，不能把“好就业”作为筛选条件。",
       "matched_values": []
     }
   ],
   "rejected_confirmations": [],
-  "policy_references": []
+  "policy_references": [],
+  "decision_guidance": {
+    "status": "reference_only",
+    "execution_effect": "does_not_change_sql_or_results",
+    "executable": false,
+    "matched_rules": [],
+    "information_requests": [],
+    "no_schema_field_preferences": []
+  },
+  "answerable_intents": [
+    {
+      "intent": "verified_rules",
+      "answerable": true
+    }
+  ],
+  "unanswerable_intents": [
+    {
+      "source_text": "好就业",
+      "field_id": "employment_outlook",
+      "answerable": false,
+      "requirement_type": "knowledge_base_or_reviewed_field",
+      "reason": "当前数据中没有已审查的就业结果字段，不能把“好就业”作为筛选条件。"
+    }
+  ],
+  "verified_query_plan": {},
+  "capability_graph_summary": {},
+  "entity_linking": {
+    "status": "applied",
+    "accepted_links": [
+      {
+        "source_text": "人工智能",
+        "span": [
+          13,
+          17
+        ],
+        "context_before": "排位35000，",
+        "context_after": "，好就业。",
+        "input_text": "广东物理，排位35000，人工智能，好就业。",
+        "field_id": "major_name",
+        "source_column": "专业名称",
+        "value": "人工智能",
+        "op": "contains_any",
+        "match_type": "exact_full_span",
+        "mode": "major",
+        "executable": true,
+        "value_evidence": {
+          "source": "schema_value_index",
+          "status": "exact_match",
+          "lookup_complete": true,
+          "matched_values": [
+            "人工智能"
+          ]
+        },
+        "resolution": "accepted_longest_exact_entity"
+      }
+    ],
+    "suppressed_links": [],
+    "ambiguous_links": [],
+    "not_executed_links": [],
+    "proposed_rules": [
+      {
+        "rule_id": "value_entity_001",
+        "source_text": "人工智能",
+        "category": "deterministic",
+        "field_id": "major_name",
+        "field": "专业名称",
+        "operator": "contains_any",
+        "value": [
+          "人工智能"
+        ],
+        "semantic_type": "explicit_user_fact",
+        "value_source": "explicit_user_fact",
+        "requires_human_confirmation": false,
+        "reason": "reviewed value index exact match",
+        "proposed_by": "reviewed_value_entity_linker"
+      }
+    ]
+  },
+  "decision_option_suggestions": {
+    "status": "reference_only",
+    "execution_effect": "does_not_change_sql_or_results",
+    "executable": false,
+    "source": "fixed_policy",
+    "suggestions": {}
+  }
 }
 ```
 ### answer
@@ -14872,11 +15543,14 @@ candidate_id 确认状态：
 - 排位：35000；状态：已对齐字段；来源：排位35000
 - 专业名称：人工智能；状态：已对齐字段；来源：人工智能
 
+规则提议审查：
+- 规则值_entity_001：专业名称 包含任一 人工智能；审查状态：验证通过，可执行
+
 字段值审计解释：
 - [已执行] 广东 -> 生源地：exact_match；索引命中：广东；已匹配字段“生源地”，并已进入 hard filter。
 - [已执行] 物理 -> 科类：exact_match；索引命中：物理；已匹配字段“科类”，并已进入 hard filter。
 - [已执行] 人工智能 -> 专业名称：exact_match；索引命中：人工智能；已匹配字段“专业名称”，并已进入 hard filter。
-- [未执行] 好就业 -> employment_outlook：no_schema_field；当前数据中没有就业结果字段。原文已保留，未进入 hard filter。
+- [未执行] 好就业 -> employment_outlook：no_schema_field；当前数据中没有已审查的就业结果字段，不能把“好就业”作为筛选条件。原文已保留，未进入 hard filter。
 
 已执行规则：
 - e_source_province：生源地 等于 广东
@@ -14887,10 +15561,10 @@ candidate_id 确认状态：
 - 不想去太贵的中外合作：未执行，原因：缺少合作办学类型字段。。
 
 缺少字段，不能确认执行：
-- 好就业：当前数据中没有就业结果字段。；即使提交该 candidate_id 也不能执行。
+- 好就业：当前数据中没有已审查的就业结果字段，不能把“好就业”作为筛选条件。；即使提交该 candidate_id 也不能执行。
 
 未执行但已保留的偏好：
-- 好就业：未执行，未参与筛选。原因：当前数据中没有就业结果字段。
+- 好就业：未执行，未参与筛选。原因：当前数据中没有已审查的就业结果字段，不能把“好就业”作为筛选条件。
 
 前 5 条结果：
 - 1. 上海交通大学；专业组代码：10248202；专业代码：018；专业名称：人工智能；专业全称：人工智能(拔尖英才试点班，校本部)；选科要求：化学；城市：闵行区；学费：7000 元/年；专业组最低位次：104。
@@ -14902,7 +15576,7 @@ candidate_id 确认状态：
 安全说明：
 - 答案只能使用 证据包 中的已验证规则、确认记录、结果摘要和 trace。
 - 候选偏好在确认或模拟确认之前不得执行。
-- 好就业 未执行：当前数据中没有就业结果字段。
+- 好就业 未执行：当前数据中没有已审查的就业结果字段，不能把“好就业”作为筛选条件。
 
 ## admissions_13 `通过`
 
@@ -16176,7 +16850,19 @@ candidate_id 确认状态：
     },
     "unsafe_ungrounded_executable_attributes": 0
   },
-  "proposed_rule_audit": [],
+  "proposed_rule_audit": [
+    {
+      "rule_id": "value_entity_001",
+      "source_text": "软件工程",
+      "field": "专业名称",
+      "operator": "contains_any",
+      "value": [
+        "软件工程"
+      ],
+      "terminal_status": "executable",
+      "executable": true
+    }
+  ],
   "execution_summary": {
     "executor": "duckdb",
     "sql": "WITH source AS (\n  SELECT row_number() OVER () AS \"__source_row_number\", *\n  FROM \"admissions\"\n),\nfiltered AS (\n  SELECT\n    source.*,\n    TRY_CAST(regexp_extract(REPLACE(CAST(\"专业组最低位次1\" AS VARCHAR), ',', ''), '\\d+(?:\\.\\d+)?') AS DOUBLE) AS \"__group_rank_num\",\n    TRY_CAST(regexp_extract(REPLACE(CAST(\"学费\" AS VARCHAR), ',', ''), '\\d+(?:\\.\\d+)?') AS DOUBLE) AS \"__tuition_num\",\n    TRY_CAST(regexp_extract(REPLACE(CAST(\"院校排名\" AS VARCHAR), ',', ''), '\\d+(?:\\.\\d+)?') AS DOUBLE) AS \"__school_rank_num\",\n    TRY_CAST(regexp_extract(REPLACE(CAST(\"ID\" AS VARCHAR), ',', ''), '\\d+(?:\\.\\d+)?') AS DOUBLE) AS \"__id_num\"\n  FROM source\n  WHERE CAST(\"生源地\" AS VARCHAR) = ? AND CAST(\"科类\" AS VARCHAR) = ? AND (STRPOS(CAST(\"专业名称\" AS VARCHAR), ?) > 0)\n),\nprojectable AS (\n  SELECT *\n  FROM filtered\n  WHERE TRUE\n    AND \"__group_rank_num\" IS NOT NULL\n    AND \"__tuition_num\" IS NOT NULL\n)\nSELECT *\nFROM projectable\nORDER BY\n  \"__group_rank_num\" ASC NULLS LAST,\n  \"__school_rank_num\" ASC NULLS LAST,\n  \"__id_num\" ASC NULLS LAST",
@@ -16254,7 +16940,83 @@ candidate_id 确认状态：
   "unconfirmed_candidates": [],
   "no_schema_field_preferences": [],
   "rejected_confirmations": [],
-  "policy_references": []
+  "policy_references": [],
+  "decision_guidance": {
+    "status": "reference_only",
+    "execution_effect": "does_not_change_sql_or_results",
+    "executable": false,
+    "matched_rules": [],
+    "information_requests": [],
+    "no_schema_field_preferences": []
+  },
+  "answerable_intents": [
+    {
+      "intent": "verified_rules",
+      "answerable": true
+    }
+  ],
+  "unanswerable_intents": [],
+  "verified_query_plan": {},
+  "capability_graph_summary": {},
+  "entity_linking": {
+    "status": "applied",
+    "accepted_links": [
+      {
+        "source_text": "软件工程",
+        "span": [
+          13,
+          17
+        ],
+        "context_before": "排位52000，",
+        "context_after": "，费用别太高。",
+        "input_text": "广东物理，排位52000，软件工程，费用别太高。",
+        "field_id": "major_name",
+        "source_column": "专业名称",
+        "value": "软件工程",
+        "op": "contains_any",
+        "match_type": "exact_full_span",
+        "mode": "major",
+        "executable": true,
+        "value_evidence": {
+          "source": "schema_value_index",
+          "status": "exact_match",
+          "lookup_complete": true,
+          "matched_values": [
+            "软件工程"
+          ]
+        },
+        "resolution": "accepted_longest_exact_entity"
+      }
+    ],
+    "suppressed_links": [],
+    "ambiguous_links": [],
+    "not_executed_links": [],
+    "proposed_rules": [
+      {
+        "rule_id": "value_entity_001",
+        "source_text": "软件工程",
+        "category": "deterministic",
+        "field_id": "major_name",
+        "field": "专业名称",
+        "operator": "contains_any",
+        "value": [
+          "软件工程"
+        ],
+        "semantic_type": "explicit_user_fact",
+        "value_source": "explicit_user_fact",
+        "requires_human_confirmation": false,
+        "reason": "reviewed value index exact match",
+        "proposed_by": "reviewed_value_entity_linker"
+      }
+    ]
+  },
+  "decision_option_suggestions": {
+    "status": "reference_only",
+    "execution_effect": "does_not_change_sql_or_results",
+    "executable": false,
+    "source": "fixed_policy",
+    "suggestions": {}
+  }
 }
 ```
 ### answer
@@ -16270,6 +17032,9 @@ candidate_id 确认状态：
 - 排位：52000；状态：已对齐字段；来源：排位52000
 - 专业名称：软件工程；状态：已对齐字段；来源：软件工程
 - 太贵：费用别太高；状态：待确认；来源：费用别太高
+
+规则提议审查：
+- 规则值_entity_001：专业名称 包含任一 软件工程；审查状态：验证通过，可执行
 
 字段值审计解释：
 - [已执行] 广东 -> 生源地：exact_match；索引命中：广东；已匹配字段“生源地”，并已进入 hard filter。
@@ -17718,7 +18483,19 @@ candidate_id 确认状态：
     },
     "unsafe_ungrounded_executable_attributes": 0
   },
-  "proposed_rule_audit": [],
+  "proposed_rule_audit": [
+    {
+      "rule_id": "value_entity_001",
+      "source_text": "人工智能",
+      "field": "专业名称",
+      "operator": "contains_any",
+      "value": [
+        "人工智能"
+      ],
+      "terminal_status": "executable",
+      "executable": true
+    }
+  ],
   "execution_summary": {
     "executor": "duckdb",
     "sql": "WITH source AS (\n  SELECT row_number() OVER () AS \"__source_row_number\", *\n  FROM \"admissions\"\n),\nfiltered AS (\n  SELECT\n    source.*,\n    TRY_CAST(regexp_extract(REPLACE(CAST(\"专业组最低位次1\" AS VARCHAR), ',', ''), '\\d+(?:\\.\\d+)?') AS DOUBLE) AS \"__group_rank_num\",\n    TRY_CAST(regexp_extract(REPLACE(CAST(\"学费\" AS VARCHAR), ',', ''), '\\d+(?:\\.\\d+)?') AS DOUBLE) AS \"__tuition_num\",\n    TRY_CAST(regexp_extract(REPLACE(CAST(\"院校排名\" AS VARCHAR), ',', ''), '\\d+(?:\\.\\d+)?') AS DOUBLE) AS \"__school_rank_num\",\n    TRY_CAST(regexp_extract(REPLACE(CAST(\"ID\" AS VARCHAR), ',', ''), '\\d+(?:\\.\\d+)?') AS DOUBLE) AS \"__id_num\"\n  FROM source\n  WHERE CAST(\"生源地\" AS VARCHAR) = ? AND CAST(\"科类\" AS VARCHAR) = ? AND (STRPOS(CAST(\"专业名称\" AS VARCHAR), ?) > 0) AND (STRPOS(CAST(\"城市\" AS VARCHAR), ?) > 0 OR STRPOS(CAST(\"城市\" AS VARCHAR), ?) > 0)\n),\nprojectable AS (\n  SELECT *\n  FROM filtered\n  WHERE TRUE\n    AND \"__group_rank_num\" IS NOT NULL\n    AND \"__tuition_num\" IS NOT NULL\n)\nSELECT *\nFROM projectable\nORDER BY\n  \"__group_rank_num\" ASC NULLS LAST,\n  \"__school_rank_num\" ASC NULLS LAST,\n  \"__id_num\" ASC NULLS LAST",
@@ -17836,7 +18613,83 @@ candidate_id 确认状态：
   ],
   "no_schema_field_preferences": [],
   "rejected_confirmations": [],
-  "policy_references": []
+  "policy_references": [],
+  "decision_guidance": {
+    "status": "reference_only",
+    "execution_effect": "does_not_change_sql_or_results",
+    "executable": false,
+    "matched_rules": [],
+    "information_requests": [],
+    "no_schema_field_preferences": []
+  },
+  "answerable_intents": [
+    {
+      "intent": "verified_rules",
+      "answerable": true
+    }
+  ],
+  "unanswerable_intents": [],
+  "verified_query_plan": {},
+  "capability_graph_summary": {},
+  "entity_linking": {
+    "status": "applied",
+    "accepted_links": [
+      {
+        "source_text": "人工智能",
+        "span": [
+          21,
+          25
+        ],
+        "context_before": "广州深圳都可以，",
+        "context_after": "。",
+        "input_text": "广东物理，排位42000，广州深圳都可以，人工智能。",
+        "field_id": "major_name",
+        "source_column": "专业名称",
+        "value": "人工智能",
+        "op": "contains_any",
+        "match_type": "exact_full_span",
+        "mode": "major",
+        "executable": true,
+        "value_evidence": {
+          "source": "schema_value_index",
+          "status": "exact_match",
+          "lookup_complete": true,
+          "matched_values": [
+            "人工智能"
+          ]
+        },
+        "resolution": "accepted_longest_exact_entity"
+      }
+    ],
+    "suppressed_links": [],
+    "ambiguous_links": [],
+    "not_executed_links": [],
+    "proposed_rules": [
+      {
+        "rule_id": "value_entity_001",
+        "source_text": "人工智能",
+        "category": "deterministic",
+        "field_id": "major_name",
+        "field": "专业名称",
+        "operator": "contains_any",
+        "value": [
+          "人工智能"
+        ],
+        "semantic_type": "explicit_user_fact",
+        "value_source": "explicit_user_fact",
+        "requires_human_confirmation": false,
+        "reason": "reviewed value index exact match",
+        "proposed_by": "reviewed_value_entity_linker"
+      }
+    ]
+  },
+  "decision_option_suggestions": {
+    "status": "reference_only",
+    "execution_effect": "does_not_change_sql_or_results",
+    "executable": false,
+    "source": "fixed_policy",
+    "suggestions": {}
+  }
 }
 ```
 ### answer
@@ -17852,6 +18705,9 @@ candidate_id 确认状态：
 - 排位：42000；状态：已对齐字段；来源：排位42000
 - 专业名称：人工智能；状态：已对齐字段；来源：人工智能
 - 城市：广州、深圳；状态：已对齐字段；来源：广州、深圳
+
+规则提议审查：
+- 规则值_entity_001：专业名称 包含任一 人工智能；审查状态：验证通过，可执行
 
 字段值审计解释：
 - [已执行] 广东 -> 生源地：exact_match；索引命中：广东；已匹配字段“生源地”，并已进入 hard filter。
@@ -19286,7 +20142,19 @@ candidate_id 确认状态：
     },
     "unsafe_ungrounded_executable_attributes": 0
   },
-  "proposed_rule_audit": [],
+  "proposed_rule_audit": [
+    {
+      "rule_id": "value_entity_001",
+      "source_text": "汉语言文学",
+      "field": "专业名称",
+      "operator": "contains_any",
+      "value": [
+        "汉语言文学"
+      ],
+      "terminal_status": "executable",
+      "executable": true
+    }
+  ],
   "execution_summary": {
     "executor": "duckdb",
     "sql": "WITH source AS (\n  SELECT row_number() OVER () AS \"__source_row_number\", *\n  FROM \"admissions\"\n),\nfiltered AS (\n  SELECT\n    source.*,\n    TRY_CAST(regexp_extract(REPLACE(CAST(\"专业组最低位次1\" AS VARCHAR), ',', ''), '\\d+(?:\\.\\d+)?') AS DOUBLE) AS \"__group_rank_num\",\n    TRY_CAST(regexp_extract(REPLACE(CAST(\"学费\" AS VARCHAR), ',', ''), '\\d+(?:\\.\\d+)?') AS DOUBLE) AS \"__tuition_num\",\n    TRY_CAST(regexp_extract(REPLACE(CAST(\"院校排名\" AS VARCHAR), ',', ''), '\\d+(?:\\.\\d+)?') AS DOUBLE) AS \"__school_rank_num\",\n    TRY_CAST(regexp_extract(REPLACE(CAST(\"ID\" AS VARCHAR), ',', ''), '\\d+(?:\\.\\d+)?') AS DOUBLE) AS \"__id_num\"\n  FROM source\n  WHERE CAST(\"生源地\" AS VARCHAR) = ? AND CAST(\"科类\" AS VARCHAR) = ? AND (STRPOS(CAST(\"专业名称\" AS VARCHAR), ?) > 0) AND (STRPOS(CAST(\"城市\" AS VARCHAR), ?) > 0)\n),\nprojectable AS (\n  SELECT *\n  FROM filtered\n  WHERE TRUE\n    AND \"__group_rank_num\" IS NOT NULL\n    AND \"__tuition_num\" IS NOT NULL\n)\nSELECT *\nFROM projectable\nORDER BY\n  \"__group_rank_num\" ASC NULLS LAST,\n  \"__school_rank_num\" ASC NULLS LAST,\n  \"__id_num\" ASC NULLS LAST",
@@ -19370,7 +20238,83 @@ candidate_id 确认状态：
   "unconfirmed_candidates": [],
   "no_schema_field_preferences": [],
   "rejected_confirmations": [],
-  "policy_references": []
+  "policy_references": [],
+  "decision_guidance": {
+    "status": "reference_only",
+    "execution_effect": "does_not_change_sql_or_results",
+    "executable": false,
+    "matched_rules": [],
+    "information_requests": [],
+    "no_schema_field_preferences": []
+  },
+  "answerable_intents": [
+    {
+      "intent": "verified_rules",
+      "answerable": true
+    }
+  ],
+  "unanswerable_intents": [],
+  "verified_query_plan": {},
+  "capability_graph_summary": {},
+  "entity_linking": {
+    "status": "applied",
+    "accepted_links": [
+      {
+        "source_text": "汉语言文学",
+        "span": [
+          16,
+          21
+        ],
+        "context_before": "8000，广州，",
+        "context_after": "。",
+        "input_text": "广东历史，排位18000，广州，汉语言文学。",
+        "field_id": "major_name",
+        "source_column": "专业名称",
+        "value": "汉语言文学",
+        "op": "contains_any",
+        "match_type": "exact_full_span",
+        "mode": "major",
+        "executable": true,
+        "value_evidence": {
+          "source": "schema_value_index",
+          "status": "exact_match",
+          "lookup_complete": true,
+          "matched_values": [
+            "汉语言文学"
+          ]
+        },
+        "resolution": "accepted_longest_exact_entity"
+      }
+    ],
+    "suppressed_links": [],
+    "ambiguous_links": [],
+    "not_executed_links": [],
+    "proposed_rules": [
+      {
+        "rule_id": "value_entity_001",
+        "source_text": "汉语言文学",
+        "category": "deterministic",
+        "field_id": "major_name",
+        "field": "专业名称",
+        "operator": "contains_any",
+        "value": [
+          "汉语言文学"
+        ],
+        "semantic_type": "explicit_user_fact",
+        "value_source": "explicit_user_fact",
+        "requires_human_confirmation": false,
+        "reason": "reviewed value index exact match",
+        "proposed_by": "reviewed_value_entity_linker"
+      }
+    ]
+  },
+  "decision_option_suggestions": {
+    "status": "reference_only",
+    "execution_effect": "does_not_change_sql_or_results",
+    "executable": false,
+    "source": "fixed_policy",
+    "suggestions": {}
+  }
 }
 ```
 ### answer
@@ -19386,6 +20330,9 @@ candidate_id 确认状态：
 - 排位：18000；状态：已对齐字段；来源：排位18000
 - 专业名称：汉语言文学；状态：已对齐字段；来源：汉语言文学
 - 城市：广州；状态：已对齐字段；来源：广州
+
+规则提议审查：
+- 规则值_entity_001：专业名称 包含任一 汉语言文学；审查状态：验证通过，可执行
 
 字段值审计解释：
 - [已执行] 广东 -> 生源地：exact_match；索引命中：广东；已匹配字段“生源地”，并已进入 hard filter。
@@ -20512,7 +21459,34 @@ candidate_id 确认状态：
   "unconfirmed_candidates": [],
   "no_schema_field_preferences": [],
   "rejected_confirmations": [],
-  "policy_references": []
+  "policy_references": [],
+  "decision_guidance": {
+    "status": "reference_only",
+    "execution_effect": "does_not_change_sql_or_results",
+    "executable": false,
+    "matched_rules": [],
+    "information_requests": [],
+    "no_schema_field_preferences": []
+  },
+  "decision_option_suggestions": {
+    "status": "reference_only",
+    "execution_effect": "does_not_change_sql_or_results",
+    "executable": false,
+    "source": "fixed_policy",
+    "suggestions": {}
+  },
+  "entity_linking": {
+    "status": "not_applicable"
+  },
+  "answerable_intents": [
+    {
+      "intent": "verified_rules",
+      "answerable": true
+    }
+  ],
+  "unanswerable_intents": [],
+  "verified_query_plan": {},
+  "capability_graph_summary": {}
 }
 ```
 ### answer
@@ -20710,7 +21684,34 @@ candidate_id 确认状态：
       "status": "reference_only",
       "effect": "does_not_change_sql_or_results"
     }
-  ]
+  ],
+  "decision_guidance": {
+    "status": "reference_only",
+    "execution_effect": "does_not_change_sql_or_results",
+    "executable": false,
+    "matched_rules": [],
+    "information_requests": [],
+    "no_schema_field_preferences": []
+  },
+  "decision_option_suggestions": {
+    "status": "reference_only",
+    "execution_effect": "does_not_change_sql_or_results",
+    "executable": false,
+    "source": "fixed_policy",
+    "suggestions": {}
+  },
+  "entity_linking": {
+    "status": "not_applicable"
+  },
+  "answerable_intents": [
+    {
+      "intent": "verified_rules",
+      "answerable": false
+    }
+  ],
+  "unanswerable_intents": [],
+  "verified_query_plan": {},
+  "capability_graph_summary": {}
 }
 ```
 ### answer
@@ -21471,7 +22472,39 @@ candidate_id 确认状态：
   "unconfirmed_candidates": [],
   "no_schema_field_preferences": [],
   "rejected_confirmations": [],
-  "policy_references": []
+  "policy_references": [],
+  "decision_guidance": {
+    "status": "reference_only",
+    "execution_effect": "does_not_change_sql_or_results",
+    "executable": false,
+    "matched_rules": [],
+    "information_requests": [],
+    "no_schema_field_preferences": []
+  },
+  "answerable_intents": [
+    {
+      "intent": "verified_rules",
+      "answerable": true
+    }
+  ],
+  "unanswerable_intents": [],
+  "verified_query_plan": {},
+  "capability_graph_summary": {},
+  "entity_linking": {
+    "status": "not_applicable",
+    "accepted_links": [],
+    "suppressed_links": [],
+    "ambiguous_links": [],
+    "not_executed_links": [],
+    "proposed_rules": []
+  },
+  "decision_option_suggestions": {
+    "status": "reference_only",
+    "execution_effect": "does_not_change_sql_or_results",
+    "executable": false,
+    "source": "fixed_policy",
+    "suggestions": {}
+  }
 }
 ```
 ### answer
@@ -22097,7 +23130,39 @@ candidate_id 确认状态：
   "unconfirmed_candidates": [],
   "no_schema_field_preferences": [],
   "rejected_confirmations": [],
-  "policy_references": []
+  "policy_references": [],
+  "decision_guidance": {
+    "status": "reference_only",
+    "execution_effect": "does_not_change_sql_or_results",
+    "executable": false,
+    "matched_rules": [],
+    "information_requests": [],
+    "no_schema_field_preferences": []
+  },
+  "answerable_intents": [
+    {
+      "intent": "verified_rules",
+      "answerable": true
+    }
+  ],
+  "unanswerable_intents": [],
+  "verified_query_plan": {},
+  "capability_graph_summary": {},
+  "entity_linking": {
+    "status": "not_applicable",
+    "accepted_links": [],
+    "suppressed_links": [],
+    "ambiguous_links": [],
+    "not_executed_links": [],
+    "proposed_rules": []
+  },
+  "decision_option_suggestions": {
+    "status": "reference_only",
+    "execution_effect": "does_not_change_sql_or_results",
+    "executable": false,
+    "source": "fixed_policy",
+    "suggestions": {}
+  }
 }
 ```
 ### answer
@@ -22637,7 +23702,39 @@ candidate_id 确认状态：
   "unconfirmed_candidates": [],
   "no_schema_field_preferences": [],
   "rejected_confirmations": [],
-  "policy_references": []
+  "policy_references": [],
+  "decision_guidance": {
+    "status": "reference_only",
+    "execution_effect": "does_not_change_sql_or_results",
+    "executable": false,
+    "matched_rules": [],
+    "information_requests": [],
+    "no_schema_field_preferences": []
+  },
+  "answerable_intents": [
+    {
+      "intent": "verified_rules",
+      "answerable": true
+    }
+  ],
+  "unanswerable_intents": [],
+  "verified_query_plan": {},
+  "capability_graph_summary": {},
+  "entity_linking": {
+    "status": "not_applicable",
+    "accepted_links": [],
+    "suppressed_links": [],
+    "ambiguous_links": [],
+    "not_executed_links": [],
+    "proposed_rules": []
+  },
+  "decision_option_suggestions": {
+    "status": "reference_only",
+    "execution_effect": "does_not_change_sql_or_results",
+    "executable": false,
+    "source": "fixed_policy",
+    "suggestions": {}
+  }
 }
 ```
 ### answer
@@ -23107,7 +24204,39 @@ candidate_id 确认状态：
   "unconfirmed_candidates": [],
   "no_schema_field_preferences": [],
   "rejected_confirmations": [],
-  "policy_references": []
+  "policy_references": [],
+  "decision_guidance": {
+    "status": "reference_only",
+    "execution_effect": "does_not_change_sql_or_results",
+    "executable": false,
+    "matched_rules": [],
+    "information_requests": [],
+    "no_schema_field_preferences": []
+  },
+  "answerable_intents": [
+    {
+      "intent": "verified_rules",
+      "answerable": true
+    }
+  ],
+  "unanswerable_intents": [],
+  "verified_query_plan": {},
+  "capability_graph_summary": {},
+  "entity_linking": {
+    "status": "not_applicable",
+    "accepted_links": [],
+    "suppressed_links": [],
+    "ambiguous_links": [],
+    "not_executed_links": [],
+    "proposed_rules": []
+  },
+  "decision_option_suggestions": {
+    "status": "reference_only",
+    "execution_effect": "does_not_change_sql_or_results",
+    "executable": false,
+    "source": "fixed_policy",
+    "suggestions": {}
+  }
 }
 ```
 ### answer
@@ -23152,7 +24281,7 @@ candidate_id 确认状态：
 - domain: `housing`
 - acceptance_group: `builtin_domain_acceptance`
 - query: Seattle under 1500.
-- status: `needs_confirmation`
+- status: `ok`
 - query_type: `verified_filter`
 - pass/fail：`通过`
 
@@ -23490,6 +24619,10 @@ candidate_id 确认状态：
       {
         "status": "pass",
         "text": "rent_usd 1200 不高于 1500"
+      },
+      {
+        "status": "not_executed",
+        "text": "Seattle 未执行：未在字段“city”的已审查完整值索引中命中，不能进入 hard filter。"
       }
     ],
     "listing_id": 8,
@@ -23506,6 +24639,10 @@ candidate_id 确认状态：
       {
         "status": "pass",
         "text": "rent_usd 1300 不高于 1500"
+      },
+      {
+        "status": "not_executed",
+        "text": "Seattle 未执行：未在字段“city”的已审查完整值索引中命中，不能进入 hard filter。"
       }
     ],
     "listing_id": 11,
@@ -23522,6 +24659,10 @@ candidate_id 确认状态：
       {
         "status": "pass",
         "text": "rent_usd 1400 不高于 1500"
+      },
+      {
+        "status": "not_executed",
+        "text": "Seattle 未执行：未在字段“city”的已审查完整值索引中命中，不能进入 hard filter。"
       }
     ],
     "listing_id": 1,
@@ -23538,6 +24679,10 @@ candidate_id 确认状态：
       {
         "status": "pass",
         "text": "rent_usd 1450 不高于 1500"
+      },
+      {
+        "status": "not_executed",
+        "text": "Seattle 未执行：未在字段“city”的已审查完整值索引中命中，不能进入 hard filter。"
       }
     ],
     "listing_id": 5,
@@ -23554,6 +24699,10 @@ candidate_id 确认状态：
       {
         "status": "pass",
         "text": "rent_usd 1500 不高于 1500"
+      },
+      {
+        "status": "not_executed",
+        "text": "Seattle 未执行：未在字段“city”的已审查完整值索引中命中，不能进入 hard filter。"
       }
     ],
     "listing_id": 4,
@@ -23589,7 +24738,17 @@ candidate_id 确认状态：
 ```
 ### unexecuted_preferences
 ```json
-[]
+[
+  {
+    "id": "not_exec_1",
+    "preference": "Seattle",
+    "field_id": "city",
+    "display": "Seattle未执行：未在字段“city”的已审查完整值索引中命中，不能进入 hard filter。",
+    "reason": "未在字段“city”的已审查完整值索引中命中，不能进入 hard filter。",
+    "missing_field": "缺少已审查数据字段",
+    "source_span": "Seattle"
+  }
+]
 ```
 ### SQL / params
 ```json
@@ -23619,7 +24778,15 @@ candidate_id 确认状态：
     }
   ],
   "candidate_confirmations": [],
-  "not_executed_preferences": [],
+  "not_executed_preferences": [
+    {
+      "source_text": "Seattle",
+      "status": "not_executed",
+      "reason": "未在字段“city”的已审查完整值索引中命中，不能进入 hard filter。",
+      "field_id": "city",
+      "safety_warning": "Seattle 未执行：未在字段“city”的已审查完整值索引中命中，不能进入 hard filter。"
+    }
+  ],
   "result_count": 5,
   "top_k_results": [
     {
@@ -23636,6 +24803,11 @@ candidate_id 确认状态：
           "rule_id": "e_rent_cap",
           "status": "pass",
           "reason": "rent_usd 1200 不高于 1500"
+        },
+        {
+          "rule_id": "not_executed_1",
+          "status": "not_executed",
+          "reason": "Seattle 未执行：未在字段“city”的已审查完整值索引中命中，不能进入 hard filter。"
         }
       ]
     },
@@ -23653,6 +24825,11 @@ candidate_id 确认状态：
           "rule_id": "e_rent_cap",
           "status": "pass",
           "reason": "rent_usd 1300 不高于 1500"
+        },
+        {
+          "rule_id": "not_executed_1",
+          "status": "not_executed",
+          "reason": "Seattle 未执行：未在字段“city”的已审查完整值索引中命中，不能进入 hard filter。"
         }
       ]
     },
@@ -23670,6 +24847,11 @@ candidate_id 确认状态：
           "rule_id": "e_rent_cap",
           "status": "pass",
           "reason": "rent_usd 1400 不高于 1500"
+        },
+        {
+          "rule_id": "not_executed_1",
+          "status": "not_executed",
+          "reason": "Seattle 未执行：未在字段“city”的已审查完整值索引中命中，不能进入 hard filter。"
         }
       ]
     },
@@ -23687,6 +24869,11 @@ candidate_id 确认状态：
           "rule_id": "e_rent_cap",
           "status": "pass",
           "reason": "rent_usd 1450 不高于 1500"
+        },
+        {
+          "rule_id": "not_executed_1",
+          "status": "not_executed",
+          "reason": "Seattle 未执行：未在字段“city”的已审查完整值索引中命中，不能进入 hard filter。"
         }
       ]
     },
@@ -23704,6 +24891,11 @@ candidate_id 确认状态：
           "rule_id": "e_rent_cap",
           "status": "pass",
           "reason": "rent_usd 1500 不高于 1500"
+        },
+        {
+          "rule_id": "not_executed_1",
+          "status": "not_executed",
+          "reason": "Seattle 未执行：未在字段“city”的已审查完整值索引中命中，不能进入 hard filter。"
         }
       ]
     }
@@ -23712,15 +24904,17 @@ candidate_id 确认状态：
     "executed_rule_ids": [
       "e_rent_cap"
     ],
-    "not_executed_preference_count": 0,
+    "not_executed_preference_count": 1,
     "traced_result_count": 5,
     "top_k": 5,
     "top_k_trace_status_counts": {
-      "pass": 5
+      "pass": 5,
+      "not_executed": 5
     },
     "safety_warnings": [
       "答案只能使用 evidence_pack 中的已验证规则、确认记录、结果摘要和 trace。",
-      "候选偏好在确认或模拟确认之前不得执行。"
+      "候选偏好在确认或模拟确认之前不得执行。",
+      "Seattle 未执行：未在字段“city”的已审查完整值索引中命中，不能进入 hard filter。"
     ]
   },
   "extracted_preferences": [
@@ -23782,10 +24976,10 @@ candidate_id 确认状态：
       "value": [
         "Seattle"
       ],
-      "match_type": "partial_match",
-      "action": "needs_confirmation",
+      "match_type": "unmatched_value",
+      "action": "not_executed",
       "matched_values": [],
-      "reason": "该属性已映射到当前数据字段，但仍需经过规则验证。未进入 hard filter。"
+      "reason": "未在字段“city”的已审查完整值索引中命中，未进入 hard filter。"
     },
     {
       "source_text": "1500",
@@ -23804,7 +24998,47 @@ candidate_id 确认状态：
   "unconfirmed_candidates": [],
   "no_schema_field_preferences": [],
   "rejected_confirmations": [],
-  "policy_references": []
+  "policy_references": [],
+  "decision_guidance": {
+    "status": "reference_only",
+    "execution_effect": "does_not_change_sql_or_results",
+    "executable": false,
+    "matched_rules": [],
+    "information_requests": [],
+    "no_schema_field_preferences": []
+  },
+  "answerable_intents": [
+    {
+      "intent": "verified_rules",
+      "answerable": true
+    }
+  ],
+  "unanswerable_intents": [
+    {
+      "source_text": "Seattle",
+      "field_id": "city",
+      "answerable": false,
+      "requirement_type": "knowledge_base_or_reviewed_field",
+      "reason": "未在字段“city”的已审查完整值索引中命中，不能进入 hard filter。"
+    }
+  ],
+  "verified_query_plan": {},
+  "capability_graph_summary": {},
+  "entity_linking": {
+    "status": "not_applicable",
+    "accepted_links": [],
+    "suppressed_links": [],
+    "ambiguous_links": [],
+    "not_executed_links": [],
+    "proposed_rules": []
+  },
+  "decision_option_suggestions": {
+    "status": "reference_only",
+    "execution_effect": "does_not_change_sql_or_results",
+    "executable": false,
+    "source": "fixed_policy",
+    "suggestions": {}
+  }
 }
 ```
 ### answer
@@ -23819,7 +25053,7 @@ candidate_id 确认状态：
 - 租金上限：1500；状态：已对齐字段；来源：1500
 
 字段值审计解释：
-- [需确认] Seattle -> city：partial_match；该属性已映射到当前数据字段，但仍需经过规则验证。未进入 hard filter。
+- [未执行] Seattle -> city：unmatched_规则值；未在字段“city”的已审查完整值索引中命中，未进入 hard filter。
 - [已执行] 1500 -> rent_usd：exact_match；已匹配字段“rent_usd”，并已进入 hard filter。
 
 已执行规则：
@@ -23828,7 +25062,7 @@ candidate_id 确认状态：
 候选偏好确认记录：
 
 未执行但已保留的偏好：
-- 无。
+- Seattle：未执行，未参与筛选。原因：未在字段“city”的已审查完整值索引中命中，不能进入 hard filter。
 
 前 5 条结果：
 - 1. 8；城市：Houston；卧室数：1；月租：1200 元/年；类型：apartment；评分：3.9。
@@ -23840,6 +25074,7 @@ candidate_id 确认状态：
 安全说明：
 - 答案只能使用 证据包 中的已验证规则、确认记录、结果摘要和 trace。
 - 候选偏好在确认或模拟确认之前不得执行。
+- Seattle 未执行：未在字段“city”的已审查完整值索引中命中，不能进入 hard filter。
 
 ## products_01 `通过`
 
@@ -24269,7 +25504,39 @@ candidate_id 确认状态：
   "unconfirmed_candidates": [],
   "no_schema_field_preferences": [],
   "rejected_confirmations": [],
-  "policy_references": []
+  "policy_references": [],
+  "decision_guidance": {
+    "status": "reference_only",
+    "execution_effect": "does_not_change_sql_or_results",
+    "executable": false,
+    "matched_rules": [],
+    "information_requests": [],
+    "no_schema_field_preferences": []
+  },
+  "answerable_intents": [
+    {
+      "intent": "verified_rules",
+      "answerable": true
+    }
+  ],
+  "unanswerable_intents": [],
+  "verified_query_plan": {},
+  "capability_graph_summary": {},
+  "entity_linking": {
+    "status": "not_applicable",
+    "accepted_links": [],
+    "suppressed_links": [],
+    "ambiguous_links": [],
+    "not_executed_links": [],
+    "proposed_rules": []
+  },
+  "decision_option_suggestions": {
+    "status": "reference_only",
+    "execution_effect": "does_not_change_sql_or_results",
+    "executable": false,
+    "source": "fixed_policy",
+    "suggestions": {}
+  }
 }
 ```
 ### answer
@@ -24670,7 +25937,39 @@ candidate_id 确认状态：
   "unconfirmed_candidates": [],
   "no_schema_field_preferences": [],
   "rejected_confirmations": [],
-  "policy_references": []
+  "policy_references": [],
+  "decision_guidance": {
+    "status": "reference_only",
+    "execution_effect": "does_not_change_sql_or_results",
+    "executable": false,
+    "matched_rules": [],
+    "information_requests": [],
+    "no_schema_field_preferences": []
+  },
+  "answerable_intents": [
+    {
+      "intent": "verified_rules",
+      "answerable": true
+    }
+  ],
+  "unanswerable_intents": [],
+  "verified_query_plan": {},
+  "capability_graph_summary": {},
+  "entity_linking": {
+    "status": "not_applicable",
+    "accepted_links": [],
+    "suppressed_links": [],
+    "ambiguous_links": [],
+    "not_executed_links": [],
+    "proposed_rules": []
+  },
+  "decision_option_suggestions": {
+    "status": "reference_only",
+    "execution_effect": "does_not_change_sql_or_results",
+    "executable": false,
+    "source": "fixed_policy",
+    "suggestions": {}
+  }
 }
 ```
 ### answer
@@ -25019,7 +26318,39 @@ candidate_id 确认状态：
   "unconfirmed_candidates": [],
   "no_schema_field_preferences": [],
   "rejected_confirmations": [],
-  "policy_references": []
+  "policy_references": [],
+  "decision_guidance": {
+    "status": "reference_only",
+    "execution_effect": "does_not_change_sql_or_results",
+    "executable": false,
+    "matched_rules": [],
+    "information_requests": [],
+    "no_schema_field_preferences": []
+  },
+  "answerable_intents": [
+    {
+      "intent": "verified_rules",
+      "answerable": true
+    }
+  ],
+  "unanswerable_intents": [],
+  "verified_query_plan": {},
+  "capability_graph_summary": {},
+  "entity_linking": {
+    "status": "not_applicable",
+    "accepted_links": [],
+    "suppressed_links": [],
+    "ambiguous_links": [],
+    "not_executed_links": [],
+    "proposed_rules": []
+  },
+  "decision_option_suggestions": {
+    "status": "reference_only",
+    "execution_effect": "does_not_change_sql_or_results",
+    "executable": false,
+    "source": "fixed_policy",
+    "suggestions": {}
+  }
 }
 ```
 ### answer
@@ -25481,7 +26812,39 @@ candidate_id 确认状态：
   "unconfirmed_candidates": [],
   "no_schema_field_preferences": [],
   "rejected_confirmations": [],
-  "policy_references": []
+  "policy_references": [],
+  "decision_guidance": {
+    "status": "reference_only",
+    "execution_effect": "does_not_change_sql_or_results",
+    "executable": false,
+    "matched_rules": [],
+    "information_requests": [],
+    "no_schema_field_preferences": []
+  },
+  "answerable_intents": [
+    {
+      "intent": "verified_rules",
+      "answerable": true
+    }
+  ],
+  "unanswerable_intents": [],
+  "verified_query_plan": {},
+  "capability_graph_summary": {},
+  "entity_linking": {
+    "status": "not_applicable",
+    "accepted_links": [],
+    "suppressed_links": [],
+    "ambiguous_links": [],
+    "not_executed_links": [],
+    "proposed_rules": []
+  },
+  "decision_option_suggestions": {
+    "status": "reference_only",
+    "execution_effect": "does_not_change_sql_or_results",
+    "executable": false,
+    "source": "fixed_policy",
+    "suggestions": {}
+  }
 }
 ```
 ### answer
@@ -25707,7 +27070,39 @@ candidate_id 确认状态：
   "unconfirmed_candidates": [],
   "no_schema_field_preferences": [],
   "rejected_confirmations": [],
-  "policy_references": []
+  "policy_references": [],
+  "decision_guidance": {
+    "status": "reference_only",
+    "execution_effect": "does_not_change_sql_or_results",
+    "executable": false,
+    "matched_rules": [],
+    "information_requests": [],
+    "no_schema_field_preferences": []
+  },
+  "answerable_intents": [
+    {
+      "intent": "verified_rules",
+      "answerable": true
+    }
+  ],
+  "unanswerable_intents": [],
+  "verified_query_plan": {},
+  "capability_graph_summary": {},
+  "entity_linking": {
+    "status": "not_applicable",
+    "accepted_links": [],
+    "suppressed_links": [],
+    "ambiguous_links": [],
+    "not_executed_links": [],
+    "proposed_rules": []
+  },
+  "decision_option_suggestions": {
+    "status": "reference_only",
+    "execution_effect": "does_not_change_sql_or_results",
+    "executable": false,
+    "source": "fixed_policy",
+    "suggestions": {}
+  }
 }
 ```
 ### answer
@@ -25944,7 +27339,7 @@ candidate_id 确认状态：
   "generate_status": "needs_review",
   "approve_ok": true,
   "build_status": "queryable",
-  "source_fingerprint": "791b717197a13aa13179e17032590b116ba23eb71273447a5a234ef96c00aa63"
+  "source_fingerprint": "8436ee1660023f0b5240d64eb597c43988588f40dd1120fb5e69748549abb648"
 }
 ```
 ### EvidencePack
@@ -26107,7 +27502,60 @@ candidate_id 确认状态：
   "unconfirmed_candidates": [],
   "no_schema_field_preferences": [],
   "rejected_confirmations": [],
-  "policy_references": []
+  "policy_references": [],
+  "decision_guidance": {
+    "status": "reference_only",
+    "execution_effect": "does_not_change_sql_or_results",
+    "executable": false,
+    "matched_rules": [],
+    "information_requests": [],
+    "no_schema_field_preferences": []
+  },
+  "decision_option_suggestions": {
+    "status": "reference_only",
+    "execution_effect": "does_not_change_sql_or_results",
+    "executable": false,
+    "source": "fixed_policy",
+    "suggestions": {}
+  },
+  "entity_linking": {
+    "status": "not_applicable"
+  },
+  "planner": {
+    "mode": "legacy",
+    "provider": null,
+    "called": false,
+    "fallback_used": true,
+    "fallback_reason": "unsupported_semantic_intent",
+    "token_usage": null,
+    "legacy_route": "planned_query",
+    "prior_planner": {
+      "mode": "llm_semantic",
+      "provider": "deepseek",
+      "called": true,
+      "fallback_used": true,
+      "fallback_reason": "unsupported_semantic_intent",
+      "token_usage": {
+        "prompt_tokens": 2151,
+        "completion_tokens": 267,
+        "total_tokens": 2418,
+        "prompt_cache_hit_tokens": 2048,
+        "prompt_cache_miss_tokens": 103,
+        "reasoning_tokens": 0
+      },
+      "semantic_intent_query_type": "group_detail_report"
+    }
+  },
+  "semantic_intent": null,
+  "answerable_intents": [
+    {
+      "intent": "verified_rules",
+      "answerable": true
+    }
+  ],
+  "unanswerable_intents": [],
+  "verified_query_plan": {},
+  "capability_graph_summary": {}
 }
 ```
 ### answer
@@ -26142,18 +27590,9 @@ candidate_id 确认状态：
 ### result_sections
 ```json
 {
-  "reach": {
-    "label": "冲",
-    "items": []
-  },
-  "match": {
-    "label": "稳",
-    "items": []
-  },
-  "safety": {
-    "label": "保",
-    "items": []
-  }
+  "reach": [],
+  "match": [],
+  "safety": []
 }
 ```
 ### executed_filters
@@ -26168,12 +27607,14 @@ candidate_id 确认状态：
 ```json
 [
   {
-    "id": "planned_not_exec_1",
-    "preference": "不想去国外",
-    "display": "不想去国外未执行：当前 domain pack 未启用境外办学字段，不能执行该排除条件。",
-    "reason": "当前 domain pack 未启用境外办学字段，不能执行该排除条件。",
-    "missing_field": "school_country_or_region",
-    "source_span": "不想去国外"
+    "source_text": "不想去国外",
+    "field_id": "school_country_or_region",
+    "semantic": "school_country_or_region",
+    "candidate_semantic": "school_country_or_region",
+    "requirement_type": "unsupported",
+    "match_type": "evidence_requirement_gate",
+    "executable": false,
+    "reason": "schema 中 school_country_or_region 字段标记为 unsupported，缺少已审查数据，无法执行排除条件。"
   }
 ]
 ```
@@ -26199,115 +27640,223 @@ candidate_id 确认状态：
 ```json
 {
   "user_request": "我今年高考分数 630，想读人工智能、计算机，不想去国外，想留在广东省",
+  "status": "needs_confirmation",
   "query_type": "recommendation",
+  "warnings": [
+    {
+      "code": "score_without_rank",
+      "severity": "error",
+      "message": "只给高考分数时不执行推荐 SQL；请补充广东省排位/位次。"
+    },
+    {
+      "code": "preference_not_executed",
+      "severity": "warning",
+      "field_id": "school_country_or_region",
+      "message": "schema 中 school_country_or_region 字段标记为 unsupported，缺少已审查数据，无法执行排除条件。",
+      "source_text": "不想去国外"
+    }
+  ],
+  "planner": {
+    "mode": "llm_semantic",
+    "provider": "deepseek",
+    "called": true,
+    "fallback_used": false,
+    "fallback_reason": null,
+    "token_usage": {
+      "prompt_tokens": 2153,
+      "completion_tokens": 250,
+      "total_tokens": 2403,
+      "prompt_cache_hit_tokens": 2048,
+      "prompt_cache_miss_tokens": 105,
+      "reasoning_tokens": 0
+    },
+    "semantic_intent_query_type": "semantic_recommendation",
+    "evidence_requirements": {
+      "status": "classified",
+      "provider": "deepseek",
+      "called": true,
+      "fallback_used": false,
+      "token_usage": {
+        "prompt_tokens": 2146,
+        "completion_tokens": 211,
+        "total_tokens": 2357,
+        "prompt_cache_hit_tokens": 2048,
+        "prompt_cache_miss_tokens": 98,
+        "reasoning_tokens": 0
+      },
+      "requirements": [
+        {
+          "source_text": "想读人工智能、计算机",
+          "requirement_type": "table_field",
+          "candidate_semantic": "major_name",
+          "rationale": "用户指定专业名称，schema 中有 major_name 字段，支持 contains_any 操作。"
+        },
+        {
+          "source_text": "不想去国外",
+          "requirement_type": "unsupported",
+          "candidate_semantic": "school_country_or_region",
+          "rationale": "schema 中 school_country_or_region 字段标记为 unsupported，缺少已审查数据，无法执行排除条件。"
+        },
+        {
+          "source_text": "想留在广东省",
+          "requirement_type": "table_field",
+          "candidate_semantic": "school_province",
+          "rationale": "用户指定省份，schema 中有 school_province 字段，支持 in 操作。"
+        }
+      ],
+      "excluded_preferences": [
+        {
+          "source_text": "不想去国外",
+          "field_id": "school_country_or_region",
+          "semantic": "school_country_or_region",
+          "candidate_semantic": "school_country_or_region",
+          "requirement_type": "unsupported",
+          "match_type": "evidence_requirement_gate",
+          "executable": false,
+          "reason": "schema 中 school_country_or_region 字段标记为 unsupported，缺少已审查数据，无法执行排除条件。"
+        }
+      ],
+      "rejected_requirements": []
+    },
+    "ranking_plan": {
+      "status": "generation_failed",
+      "provider": "deepseek",
+      "called": true,
+      "fallback_used": true,
+      "fallback_reason": "ranking_plan_generation_failed",
+      "error_type": "ValidationError"
+    }
+  },
+  "semantic_intent": {
+    "query_type": "semantic_recommendation",
+    "user_context": {
+      "user_rank": null,
+      "user_score": 630,
+      "source_province": null,
+      "subject_type": null,
+      "reselected_subjects": []
+    },
+    "preferences": [
+      {
+        "source_text": "想读人工智能、计算机",
+        "semantic": "major_name",
+        "op": "contains_any",
+        "value": [
+          "人工智能",
+          "计算机"
+        ],
+        "confidence": 1.0,
+        "reason": null
+      },
+      {
+        "source_text": "想留在广东省",
+        "semantic": "school_province",
+        "op": "in",
+        "value": [
+          "广东"
+        ],
+        "confidence": 1.0,
+        "reason": null
+      }
+    ],
+    "requested_output": [],
+    "source_language": "zh-CN"
+  },
   "executed_rules": [],
   "candidate_confirmations": [],
   "not_executed_preferences": [
     {
       "source_text": "不想去国外",
       "field_id": "school_country_or_region",
-      "field": "无可执行字段",
-      "match_type": "no_schema_field",
+      "semantic": "school_country_or_region",
+      "candidate_semantic": "school_country_or_region",
+      "requirement_type": "unsupported",
+      "match_type": "evidence_requirement_gate",
       "executable": false,
-      "reason": "当前 domain pack 未启用境外办学字段，不能执行该排除条件。"
+      "reason": "schema 中 school_country_or_region 字段标记为 unsupported，缺少已审查数据，无法执行排除条件。"
     }
   ],
   "result_count": 0,
   "top_k_results": [],
   "result_sections": {
-    "reach": {
-      "label": "冲",
-      "items": []
-    },
-    "match": {
-      "label": "稳",
-      "items": []
-    },
-    "safety": {
-      "label": "保",
-      "items": []
-    }
+    "reach": [],
+    "match": [],
+    "safety": []
   },
   "trace_summary": {
-    "executed_rule_ids": [],
-    "top_k": 5,
+    "mode": "semantic_capability",
     "query_type": "recommendation",
     "result_count": 0,
-    "traced_result_count": 0
+    "top_k": 5
   },
-  "extracted_preferences": [
-    {
-      "id": "pref_major",
-      "slot": "专业名称",
-      "value": [
-        "计算机",
-        "人工智能"
-      ],
-      "status": "已对齐字段"
-    },
-    {
-      "id": "pref_score",
-      "slot": "分数",
-      "value": 630,
-      "status": "等待补充位次，未用于执行"
-    },
-    {
-      "id": "pref_school_province",
-      "slot": "院校所在地省份",
-      "value": [
-        "广东"
-      ],
-      "status": "已对齐字段"
-    }
-  ],
-  "attribute_grounding_summary": {},
-  "proposed_rule_audit": [],
   "execution_summary": {
     "executor": null,
-    "query_type": "recommendation",
-    "sql": "",
+    "query_type": "semantic_recommendation",
+    "public_query_type": "recommendation",
     "params": [],
     "input_row_count": 0,
     "filtered_row_count": 0,
-    "nested_result_count": 0,
-    "group_by": [],
-    "metric": null,
-    "sort": [],
-    "top_k": 0,
-    "hard_rule_ids": [],
-    "skipped_soft_rule_ids": [],
-    "warnings": [
+    "rank": null,
+    "basis": "major_min_rank",
+    "verified_query_plan": null,
+    "not_executed_preferences": [
       {
-        "code": "score_without_rank",
-        "severity": "error",
-        "message": "只提供分数没有位次；请补充广东省排位，系统不会仅凭分数执行推荐。"
+        "source_text": "不想去国外",
+        "field_id": "school_country_or_region",
+        "semantic": "school_country_or_region",
+        "candidate_semantic": "school_country_or_region",
+        "requirement_type": "unsupported",
+        "match_type": "evidence_requirement_gate",
+        "executable": false,
+        "reason": "schema 中 school_country_or_region 字段标记为 unsupported，缺少已审查数据，无法执行排除条件。"
       }
     ]
   },
-  "attribute_explanations": [],
+  "selection_evidence": [],
+  "ranking": {
+    "status": "not_applicable",
+    "verified_ranking_plan": null,
+    "excluded_criteria": [],
+    "criterion_evidence": []
+  },
+  "answerable_intents": [],
+  "unanswerable_intents": [
+    {
+      "field_id": "user_rank",
+      "answerable": false,
+      "reason": "score_without_rank",
+      "message": "只给高考分数时不执行推荐 SQL；请补充广东省排位/位次。"
+    },
+    {
+      "field_id": "school_country_or_region",
+      "intent": "school_country_or_region",
+      "source_text": "不想去国外",
+      "answerable": false,
+      "reason": "schema 中 school_country_or_region 字段标记为 unsupported，缺少已审查数据，无法执行排除条件。",
+      "requirement_type": "unsupported"
+    }
+  ],
+  "verified_query_plan": null,
+  "capability_graph_summary": {
+    "domain": "admissions",
+    "table_name": "admissions",
+    "input_row_count": 0,
+    "missing_context_fields": [
+      "user_rank",
+      "school_country_or_region"
+    ],
+    "warehouse": {}
+  },
+  "attribute_grounding_summary": {},
+  "proposed_rule_audit": [],
   "confirmed_rules": [],
   "confirmation_source": [],
   "executed_after_confirmation": [],
   "unconfirmed_candidates": [],
-  "no_schema_field_preferences": [
-    {
-      "source_text": "不想去国外",
-      "field_id": "school_country_or_region",
-      "field": "无可执行字段",
-      "match_type": "no_schema_field",
-      "executable": false,
-      "reason": "当前 domain pack 未启用境外办学字段，不能执行该排除条件。"
-    }
-  ],
-  "rejected_confirmations": [],
-  "policy_references": []
+  "no_schema_field_preferences": [],
+  "rejected_confirmations": []
 }
 ```
 ### answer
 
-请先补充广东省排位/位次。当前只收到分数，系统不会仅凭分数执行推荐 SQL，也不会把分数 margin 当作可执行录取判断。
-
-字段值审计解释：
-- [未执行] 不想去国外 -> 无可执行字段：no_schema_field
-
-已执行规则：
+只给分数时不执行推荐 SQL；请补充广东省排位/位次。

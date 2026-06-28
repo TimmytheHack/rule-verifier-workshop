@@ -260,7 +260,7 @@ CASES = [
         "housing_05",
         "housing",
         "Seattle under 1500.",
-        "needs_confirmation",
+        "ok",
         hard_filters={
             "city": ["Seattle"],
             "rent_cap": 1500,
