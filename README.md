@@ -49,16 +49,30 @@ make serve-user
 
 macOS 也可以直接双击仓库根目录的 `start_local_user_web.command`。
 
-如果想生成真正的 macOS `.app` 包：
+如果想生成可双击的 macOS `.app` 包：
 
 ```bash
 make macos-app
 open outputs/local_user_app/本地表格工作台.app
 ```
 
-该 app 包内只放上传数据流所需的后端源码快照、tool contract 和前端构建产物；构建时会把可运行的 Python runtime 安装到 `~/Library/Application Support/SZU Local Workbench/runtime/workbench/`，双击后不需要再打开 Terminal。上传数据、LLM key、查询规则和日志也写入 `~/Library/Application Support/SZU Local Workbench/`；不会写回 app 包，也不会复制仓库里的 `.env`、上传数据、outputs 产物、内置 admissions/housing/products domain pack 或质量/pilot 诊断工具。更新代码或依赖后，重新运行 `make macos-app` 生成新快照并刷新本机 runtime。
+该 app 包内只放上传数据流所需的后端源码快照、tool contract 和前端构建产物；构建时可以把可运行的 Python runtime 安装到 `~/Library/Application Support/SZU Local Workbench/runtime/workbench/`，双击后不需要再打开 Terminal。上传数据、LLM key、查询规则和日志也写入 `~/Library/Application Support/SZU Local Workbench/`；不会写回 app 包，也不会复制仓库里的 `.env`、上传数据、outputs 产物、内置 admissions/housing/products domain pack 或质量/pilot 诊断工具。更新代码或依赖后，重新运行 `make macos-app` 生成新快照并刷新本机 runtime。
 
-这个 `.app` 是同一台机器上的本地启动包，不是跨机器分发包；如果移动到另一台电脑，需要在目标机器上从项目重新运行 `make macos-app`。
+发给 macOS 内测用户时，使用 DMG 包：
+
+```bash
+make macos-dmg
+```
+
+生成物默认在 `outputs/local_user_app/`：
+
+```text
+本地表格工作台-0.2.0-macos-internal.dmg
+本地表格工作台-0.2.0-macos-internal.README.md
+本地表格工作台-0.2.0-macos-internal.sha256
+```
+
+当前内测 DMG 未签名、未 notarize；第一次打开可能需要在 Finder 里右键选择“打开”。目标机器首次启动需要可用的 Python 3.11+ 来初始化运行时。正式公开分发前还需要完成签名、notarize 和更完整的 runtime 打包/升级策略。
 
 打开：
 
@@ -251,6 +265,7 @@ evidence.get
 | `make serve` | 启动 FastAPI 后端。 |
 | `make serve-user` | 构建并启动同端口本地用户 Web。 |
 | `make macos-app` | 生成可双击的 macOS 本地用户 Web app。 |
+| `make macos-dmg` | 生成 macOS 内测 DMG、中文说明和 SHA256。 |
 | `make frontend-user-build` | 构建本地用户 Web 静态产物。 |
 | `./start_local_user_web.command` | macOS 双击/命令行启动本地用户 Web。 |
 | `cd frontend-user && npm run dev` | 启动本地用户 Web 开发模式。 |
@@ -303,6 +318,7 @@ make pilot
 make operator-trial
 make agent-acceptance
 make quality
+make macos-dmg
 make clean-artifacts
 make release-check
 ```
