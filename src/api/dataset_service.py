@@ -627,7 +627,7 @@ class DatasetService:
         soft_preferences: dict[str, Any] | None = None,
         extractor: str = "regex",
         generator: str = "template_evidence",
-        model: str = "deepseek-v4-flash",
+        model: str = "",
         planner_mode: str = "auto",
         confirmed_candidates: list[str] | None = None,
         domain_name: str | None = None,
@@ -665,7 +665,7 @@ class DatasetService:
         user_input: str,
         hard_filters: dict[str, Any] | None = None,
         soft_preferences: dict[str, Any] | None = None,
-        model: str = "deepseek-v4-flash",
+        model: str = "",
         planner_mode: str = "llm_semantic",
         domain_name: str | None = None,
     ) -> dict[str, Any]:

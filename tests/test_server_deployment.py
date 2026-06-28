@@ -6,6 +6,7 @@ import stat
 import subprocess
 import unittest
 import warnings
+from inspect import signature
 from pathlib import Path
 from tempfile import TemporaryDirectory
 from unittest.mock import patch
@@ -20,6 +21,7 @@ from fastapi.testclient import TestClient
 from jsonschema import Draft202012Validator
 
 from scripts.export_tool_manifest import MANIFEST_SCHEMA
+from src.api.dataset_service import DatasetService
 from src.extractors.deepseek_extractor import env_value
 from src.api.server import app
 
@@ -58,6 +60,15 @@ class ServerDeploymentTest(unittest.TestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json()["distribution_mode"], "user_upload_only")
+
+    def test_uploaded_dataset_llm_model_defaults_to_local_settings(self) -> None:
+        query_default = signature(DatasetService.query).parameters["model"].default
+        preflight_default = signature(DatasetService.preflight).parameters[
+            "model"
+        ].default
+
+        self.assertEqual(query_default, "")
+        self.assertEqual(preflight_default, "")
 
     def test_user_upload_only_requires_dataset_for_workbench_query(self) -> None:
         token_map = {
