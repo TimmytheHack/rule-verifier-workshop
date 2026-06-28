@@ -74,6 +74,29 @@ make macos-dmg
 
 当前内测 DMG 未签名、未 notarize；第一次打开可能需要在 Finder 里右键选择“打开”。目标机器首次启动需要可用的 Python 3.11+ 来初始化运行时。正式公开分发前还需要完成签名、notarize 和更完整的 runtime 打包/升级策略。
 
+### 内测数据怎么处理
+
+内测包不附带招生大表、用户上传表格或任何真实业务数据。内测用户需要自己上传 Excel/CSV；上传后的原表、字段能力、规则、warehouse、LLM 设置和日志都只保存在当前 Mac 的：
+
+```text
+~/Library/Application Support/SZU Local Workbench/
+```
+
+内测反馈时不要直接回传原始 Excel/CSV、`.duckdb`、`local_settings/llm.json` 或完整 `uploaded_datasets/` 目录。建议只反馈：
+
+- 页面截图，注意遮挡个人信息和 API key；
+- 数据源行列数、字段名摘要和错误码；
+- `EvidencePack` 中已执行、待确认、未执行偏好的摘要；
+- 可复现的 query 文本和不含敏感值的最小样例表。
+
+如果测试结束后要清空本机内测数据，退出 app 后删除：
+
+```bash
+rm -rf "$HOME/Library/Application Support/SZU Local Workbench/uploaded_datasets"
+rm -rf "$HOME/Library/Application Support/SZU Local Workbench/outputs"
+rm -rf "$HOME/Library/Application Support/SZU Local Workbench/local_settings"
+```
+
 打开：
 
 ```text

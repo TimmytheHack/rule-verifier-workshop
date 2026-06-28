@@ -200,6 +200,13 @@ shasum -a 256 "{dmg_name}"
 - API key 存在本机设置文件中，页面和 API 不回显明文。
 - 启用 LLM 后，用户 query 和必要 schema/候选上下文会发送给所选 provider；系统不把整张表默认上传给 provider。
 
+## 内测数据
+
+- 内测包不附带招生大表、用户上传表格或任何真实业务数据。
+- 内测用户需要自己上传 Excel/CSV；上传后的原表、字段能力、规则、warehouse、LLM 设置和日志都只保存在当前 Mac。
+- 反馈问题时不要直接回传原始 Excel/CSV、`.duckdb`、`local_settings/llm.json` 或完整 `uploaded_datasets/` 目录。
+- 建议只反馈页面截图、行列数、字段名摘要、错误码、`EvidencePack` 摘要和不含敏感值的最小样例表。
+
 ## 内测限制
 
 - 当前包要求 macOS 12+，并且首次启动时本机需要可用的 Python 3.11+ 来初始化运行时。
