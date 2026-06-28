@@ -434,7 +434,7 @@ def preflight_workbench(
     request: WorkbenchPreflightRequest,
     http_request: Request,
 ) -> dict[str, object]:
-    """uploaded admissions 查询前检查，不执行 SQL。"""
+    """uploaded dataset 查询前检查，不执行 SQL。"""
 
     try:
         _ensure_scope(_actor_context_from_request(http_request), "query")

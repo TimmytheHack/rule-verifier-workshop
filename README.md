@@ -1,6 +1,6 @@
-# 招生筛选助手
+# 本地表格筛选助手
 
-这是一个本地运行的招生数据筛选工作台。你可以使用内置招生数据，也可以上传自己的 Excel/CSV，填写生源地、科类、省排位、意向专业、城市、排位范围和排序方式，然后查看哪些专业组通过了数据筛选。
+这是一个本地运行的结构化表格筛选工作台。普通用户入口只读取自己上传的 Excel/CSV，并根据上传表格在本机生成已审核的字段能力和查询规则；研发和演示模式仍保留广东招生数据链路，用于验证志愿填报场景。
 
 它的核心原则很简单：
 
@@ -18,8 +18,9 @@
 ## 适合做什么
 
 - 用广东招生 Excel 快速筛出符合条件的院校专业组。
+- 把一份新的结构化表格变成本机可查询数据源，下次打开不用重新上传。
 - 对比“冲一冲”“稳一点”“保底”等明确排位范围下的结果。
-- 上传一份新表格，检查它能不能安全地变成可查询数据。
+- 检查一份新表格的字段、类型、可筛操作和未执行偏好。
 - 给 operator、老师或评审展示：筛选条件从哪里来，哪些偏好没有被执行。
 - 给 LLM/agent 提供安全 tool 接口，让它只能查询和解释，不能绕过审核直接改规则。
 
@@ -121,18 +122,20 @@ python scripts/build_data_warehouse.py
 2. 打开页面上的“导入数据”。
 3. 上传 Excel 或 CSV。
 4. 点击“一键导入”。
-5. 导入成功后，系统会自动回到“查询”，并选中上传数据源。
-6. 如果字段模板不匹配或导入失败，再进入“字段审查”查看 sheet、表头、字段类型、缺失字段、风险字段和可筛操作。
+5. 导入成功后，系统会回到数据源列表；点开可查询数据源进入查询页。
+6. 如果导入失败或能力不足，再进入审查信息查看 sheet、表头、字段类型、风险字段和可筛操作。
 
 上传流程会把数据状态从 `uploaded` 推到 `queryable`。未审核、缺少必填字段、warehouse 过期或 `dataset_id` 不合法时，系统会返回 blocked/error，不会执行 SQL。
 
-uploaded admissions 数据源在正式查询前会先运行查询前检查。前端只展示后端返回的可执行事实、需要确认的边界、缺失信息和未执行偏好；用户确认后才会提交后端生成的 `preflight_id` 与确认项。
+上传数据源在正式查询前会先运行查询前检查。通用表格的预检只确认数据源已经完成审查，不调用 LLM、不生成 SQL；招生语义链路会额外展示可执行事实、需要确认的边界、缺失信息和未执行偏好。用户确认后才会提交后端生成的 `preflight_id` 与确认项。
 
 ### 语义能力查询
 
-上传招生 Excel/CSV 后，系统会基于表格字段生成 `capability_graph` 和 `semantic_query_options`，用来描述当前数据集实际支持哪些字段、值、操作和查询类型。自然语言只会提出候选 `SemanticIntent` / `QueryAST`；只有经过已审查字段、已允许操作和值解析校验后，才会进入参数化 SQL。
+上传 Excel/CSV 后，系统会基于表格字段生成 `capability_graph` 和 `semantic_query_options`，用来描述当前数据集实际支持哪些字段、值、操作和查询类型。新本地用户入口不复用内置 `admissions_schema_v1` 模板，也不会把上传表格切回内置 admissions 数据；domain 名称会按上传数据生成，例如 `uploaded_ds_xxx`。
 
-例如一张新的 admissions 分数/位次表只包含 `专业`、`所属专业组`、`最低位次`、`最低分数`、`学校所在` 等字段时，`admissions_schema_v1` 会按已审查列名别名映射到 canonical 字段。系统可以生成按专业最低位次计算的 `冲`、`稳`、`保` 结果；也可以回答专业组明细查询，但如果源表没有独立的专业组最低分字段，专业组排序会明确记录为按组内专业最低分最高值计算。缺失字段不能从自然语言里补出来，也不能被回答层暗示为已经筛选。
+通用表格查询页只渲染后端返回的字段控件。自然语言可以补充偏好，但只有已审查字段和已允许操作会进入参数化 SQL；缺失字段不能从自然语言里补出来，也不能被回答层暗示为已经筛选。
+
+研发或 operator 显式选择招生模板时，上传 admissions 分数/位次表仍可走 reviewed admissions semantic 链路。例如源表只包含 `专业`、`所属专业组`、`最低位次`、`最低分数`、`学校所在` 等字段时，`admissions_schema_v1` 会按已审查列名别名映射到 canonical 字段。该模板不在 `user_upload_only` 普通用户模式中启用。
 
 uploaded admissions 推荐现在走 reviewed semantic 链路：DeepSeek 先提出候选 `SemanticIntent`，系统随后运行 `EvidenceRequirementClassifier`，把每个 LLM 抽取出的 preference 先分成 `table_field`、`knowledge_base_or_reviewed_field`、`reviewed_ranking_policy`、`user_boundary` 或 `unsupported`。只有 `table_field` preference 会继续进入 `PreferenceGrounder`、`SemanticQueryVerifier` 和 verified `QueryAST`；需要 reviewed KB、reviewed ranking policy、用户边界或 unsupported 的偏好会进入 `not_executed_preferences` / `unanswerable_intents`，不会进入 SQL filter、候选 `RankingPlan` prompt 或答案结论。
 
@@ -151,18 +154,11 @@ ENABLE_LLM=true .venv/bin/python scripts/run_semantic_capability_probe.py path/t
 
 ## 怎么填写查询
 
-主查询页默认只需要填这些：
+主查询页先选择一个本机数据源，再进入查询页。页面上的必填项、筛选字段和排序字段都来自后端生成的 `semantic_query_options`，不会固定显示招生字段。
 
-- 生源地：例如“广东”。
-- 科类：物理或历史。
-- 省排位：建议必填；只给分数时，系统会要求补充广东省排位，不执行推荐 SQL。
-- 选考科目：从化学、生物、政治、地理里选择。
-- 意向专业和城市：例如“计算机”“广州、深圳”。
-- 排位范围：只能选择后端白名单里的“冲一冲”“稳一点”或“保底”。
-- 排序方式：必须选择后端白名单里的排序方式。
-- 补充偏好：例如“学校稳一点，不想去太贵的中外合作”。
+通用表格通常只需要填写一句话需求，并在页面展示的字段控件里输入筛选值。招生模板或内置 admissions 链路才会出现生源地、科类、省排位、选科、排位范围等志愿填报字段；只给分数没有位次时，系统会要求补充广东省排位，不执行推荐 SQL。
 
-填好后点击“查看可筛结果”。
+填好后点击“查询前检查”，确认没有阻断项后再点击“执行查询”。
 
 ## 排位范围怎么理解
 

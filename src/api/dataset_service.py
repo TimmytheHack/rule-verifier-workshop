@@ -617,7 +617,7 @@ class DatasetService:
         planner_mode: str = "llm_semantic",
         domain_name: str | None = None,
     ) -> dict[str, Any]:
-        """对 uploaded admissions 主查询做查询前检查。"""
+        """对 uploaded dataset 主查询做查询前检查。"""
 
         metadata = self._load_metadata(dataset_id)
         domain_name = domain_name or metadata.get("domain_name")

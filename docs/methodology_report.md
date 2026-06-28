@@ -66,11 +66,12 @@ workflow 并写审计记录；`build-warehouse` 仍复用 DuckDB ingestion 和 f
 warehouse 都必须返回 `blocked`，不能执行 SQL。Excel ingestion 现在会显式返回 sheet
 list、detected header row、重复列安全映射、空行空列清理、合并单元格/隐藏行列/公式单元格
 warning，以及行列规模 warning/error。前端 C-lite 普通路径把上传拆成“导入数据”：只展示上传、
-一键导入和步骤状态；字段模板不匹配或导入失败时，再进入“字段审查”查看 profile、review
+一键导入和步骤状态；导入失败或字段能力不足时，再进入审查信息查看 profile、review
 summary、required/missing/risky fields、approve/block 操作和原始 JSON。“证据调试”展示
 `items`、`top_results`、`result_sections`、`EvidencePack`、warnings 和 trace，但不生成推荐规则。
-一键导入成功并进入 `queryable` 后，主查询页会把该 `dataset_id` 作为 admissions 数据源，并在正式
-`/workbench/query` 前先运行 `/workbench/preflight`；这只是后端数据源选择和查询前检查门禁，
+一键导入成功并进入 `queryable` 后，主查询页会把该 `dataset_id` 作为 uploaded 数据源，并在正式
+`/workbench/query` 前先运行 `/workbench/preflight`；通用 uploaded domain 的 preflight 只确认
+已审查数据源状态，不调用 LLM、不生成 SQL；显式 admissions 模板路径才运行招生语义预检。这只是后端数据源选择和查询前检查门禁，
 不改变规则抽取、schema grounding、RuleVerifier 或 EvidencePack 边界。主查询结果把
 `items` 与 `result_sections` 放在主展示层，把 `top_results` 保留为兼容 JSON；
 `needs_confirmation` 带 `candidate_id` 时只允许选择上一轮系统返回的 `candidate_id` 重跑；缺少位次等必要信息时必须补充输入；`blocked`、
@@ -110,8 +111,9 @@ legacy admissions Workbench 现在在 `AttributeGrounder` 之后运行 reviewed 
 
 这个能力依赖运行时 `outputs/data/schema_value_index.json` 的 reviewed lookup，而不是代码里的学校名单。发布检查要求该 artifact 至少包含 active `university_name`、`city`、`major_name` 和 `group_code` 字段，并要求 `university_name` 精确 lookup 能命中“深圳大学”、`city` lookup 能命中“深圳”。如果 artifact 只剩少量字段或缺少这些 lookup，测试里的临时仓库可能仍通过，但真实 API 会退化成城市子串匹配；因此 release 前必须重建 warehouse/value index，并运行 `scripts/validate_release_package.py`。
 
-当上传 admissions 分数/位次表只包含 `专业`、`所属专业组`、`最低位次`、`最低分数`、`学校所在` 等字段时，
+在研发或 operator 显式选择 admissions 模板时，如果上传 admissions 分数/位次表只包含 `专业`、`所属专业组`、`最低位次`、`最低分数`、`学校所在` 等字段，
 `admissions_schema_v1` 会先用已审查列名别名把这些源列映射到 admissions canonical 字段。
+`user_upload_only` 普通用户模式不复用该模板，也不回退到内置 admissions/housing/products。
 系统可以在 `capability_graph` 和 `semantic_query_options` 支持下生成专业最低位次的
 `冲`、`稳`、`保` 结果。对“录取最高专业组”这类明细查询，如果源表没有独立专业组最低分字段，
 planner 会用 `group_metric_from_major_score_column` warning 说明专业组排序按组内专业最低分最高值计算。

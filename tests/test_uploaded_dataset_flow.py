@@ -122,6 +122,47 @@ class UploadedDatasetFlowTest(unittest.TestCase):
         self.assertEqual(response["result_count"], 1)
         self.assertTrue(response["items"])
 
+    def test_generic_domain_preflight_is_ready_without_admissions_rank(self) -> None:
+        with TemporaryDirectory() as directory:
+            service, dataset_id = _generated_generic_dataset(Path(directory))
+            _approve_generic_dataset(service, dataset_id)
+            service.build_warehouse(dataset_id)
+            metadata = _dataset_metadata(service, dataset_id)
+
+            response = service.preflight(
+                dataset_id,
+                user_input="Austin under 1900",
+                hard_filters={"city": {"op": "in", "value": ["Austin"]}},
+                domain_name=str(metadata["domain_name"]),
+            )
+
+        self.assertEqual(response["schema_version"], "workbench_preflight.v1")
+        self.assertEqual(response["status"], "ready")
+        self.assertEqual(response["dataset_id"], dataset_id)
+        self.assertEqual(response["domain_name"], "uploaded_ds_generic")
+        self.assertEqual(response["missing_requirements"], [])
+        self.assertEqual(response["planner"]["status"], "not_applicable")
+
+    def test_generic_domain_accepts_frontend_filter_payload(self) -> None:
+        with TemporaryDirectory() as directory:
+            service, dataset_id = _generated_generic_dataset(Path(directory))
+            _approve_generic_dataset(service, dataset_id)
+            service.build_warehouse(dataset_id)
+
+            response = service.query(
+                dataset_id,
+                user_input="Austin under 1900",
+                hard_filters={
+                    "city": {"op": "in", "value": ["Austin"]},
+                    "rent_usd": {"op": "<=", "value": 1900},
+                },
+            )
+
+        assert_workbench_contract(self, response)
+        self.assertEqual(response["status"], "ok")
+        self.assertEqual(response["result_count"], 1)
+        self.assertEqual(response["top_results"][0]["city"], "Austin")
+
     def test_generic_domain_forbidden_soft_preference_does_not_leak(self) -> None:
         with TemporaryDirectory() as directory:
             service, dataset_id = _generated_generic_dataset(Path(directory))

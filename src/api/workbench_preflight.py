@@ -1,4 +1,4 @@
-"""uploaded admissions 查询前检查 contract。"""
+"""uploaded dataset 查询前检查 contract。"""
 
 from __future__ import annotations
 
@@ -38,16 +38,20 @@ def run_workbench_preflight(
 
     if not config.dataset_id:
         return _blocked_response(config, reason="查询前检查只支持上传表格数据源。")
-    if config.domain_name != "admissions" or domain_config.domain_id != "admissions":
-        return _blocked_response(
-            config,
-            reason="查询前检查第一版只支持 uploaded admissions。",
-        )
     if domain_config.pack_status != "approved":
         return _blocked_response(
             config,
             reason="上传表格尚未完成字段审查和批准。",
         )
+    if not _uses_admissions_preflight(config, domain_config):
+        response = _base_response(config)
+        response["recognized_facts"] = _generic_recognized_facts_from_inputs(config)
+        response["planner"] = {
+            "status": "not_applicable",
+            "semantic_intent": {},
+            "evidence_requirements": {"status": "not_applicable"},
+        }
+        return response
 
     response = _base_response(config)
     response["recognized_facts"] = _recognized_facts_from_inputs(config)
@@ -231,6 +235,42 @@ def _recognized_facts_from_inputs(
             }
         )
     return facts
+
+
+def _generic_recognized_facts_from_inputs(
+    config: WorkbenchPreflightConfig,
+) -> list[dict[str, Any]]:
+    facts: list[dict[str, Any]] = []
+    hard_filters = workbench_module._execution_safe_structured_preferences(
+        config.hard_filters or {}
+    )
+    for field, raw_value in hard_filters.items():
+        value = _schema_filter_value(raw_value)
+        if value in (None, "", []):
+            continue
+        facts.append(
+            {
+                "fact_id": confirmation_id(preflight_id(config), field, "fact"),
+                "label": field,
+                "value": value,
+                "source": f"hard_filters.{field}",
+                "executable": True,
+            }
+        )
+    return facts
+
+
+def _schema_filter_value(value: Any) -> Any:
+    if isinstance(value, dict) and "value" in value:
+        return value.get("value")
+    return value
+
+
+def _uses_admissions_preflight(
+    config: WorkbenchPreflightConfig,
+    domain_config: DomainConfig,
+) -> bool:
+    return config.domain_name == "admissions" and domain_config.domain_id == "admissions"
 
 
 def _hard_filter_fact_value(field: str, value: Any) -> Any:

@@ -3,6 +3,7 @@ import test from 'node:test';
 
 import {
   approveDomain,
+  generateDomainPack,
   runDatasetQuery,
   uploadDataset,
 } from './datasets.js';
@@ -68,6 +69,29 @@ test('runDatasetQuery maps preflight confirmation fields exactly', async () => {
     assert.deepEqual(body.disabled_boundaries, [
       { confirmation_id: 'pfc_2', option_id: 'do_not_use' },
     ]);
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
+test('generateDomainPack defaults to a generic uploaded domain payload', async () => {
+  const originalFetch = globalThis.fetch;
+  let body = null;
+  globalThis.fetch = async (_url, options) => {
+    body = JSON.parse(options.body);
+    return {
+      ok: true,
+      async json() {
+        return { status: 'needs_review' };
+      },
+    };
+  };
+  try {
+    await generateDomainPack('ds_generic', { llm: 'off' });
+
+    assert.equal(body.llm, 'off');
+    assert.equal(Object.hasOwn(body, 'template_id'), false);
+    assert.equal(Object.hasOwn(body, 'base_domain'), false);
   } finally {
     globalThis.fetch = originalFetch;
   }

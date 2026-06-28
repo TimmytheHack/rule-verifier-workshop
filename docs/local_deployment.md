@@ -55,7 +55,7 @@ DeepSeek slot adapter 默认不启用。需要验证真实 API 时，确认 `.en
 
 该脚本只输出 fallback/adapter/token 使用摘要，不输出密钥或完整 prompt。
 
-对 uploaded admissions 查询，`planner_mode=auto` 会在 `ENABLE_LLM=true` 且 DeepSeek 可用时先尝试
+对显式启用招生模板的 uploaded admissions 查询，`planner_mode=auto` 会在 `ENABLE_LLM=true` 且 DeepSeek 可用时先尝试
 `DeepSeekSemanticIntentExtractor`；不可用时会降级到 legacy verified planner，并在
 `EvidencePack.planner` 记录降级原因。需要强制跳过 LLM planner 时，API 或 probe 可传
 `planner_mode=legacy`。
@@ -123,11 +123,12 @@ export AUTH_TOKENS_JSON='{"operator-token":{"actor_id":"operator","permission_sc
 
 请求通过 `Authorization: Bearer <token>` 或 `X-Actor-Token: <token>` 传递 token。服务端不信任浏览器或请求体传来的 `permission_scopes`、`actor_id`、`audit_path` 或 `dataset_root`。
 
-普通用户在“导入数据”上传招生 Excel/CSV 并点击一键导入；`approve` 和 `build` 是后端流水线内部步骤，
-不要求用户手动进入字段审查。导入成功后，前端会把最近可查询的 uploaded admissions `dataset_id`
-保存在浏览器本地状态，并在主查询页作为数据源使用。清理 `DATA_ROOT`、更换本地数据目录或重启到空目录后，
-需要在“导入数据”重新上传并一键导入；`user_upload_only` 模式不会回退到内置 admissions。只有字段模板不匹配或导入失败时，
-才进入“字段审查”处理高级审查信息。
+普通用户在“导入数据”上传 Excel/CSV 并点击一键导入；`generate-domain-pack`、`approve` 和 `build`
+是后端流水线内部步骤，不要求用户手动进入字段审查。导入成功后，前端会把可查询的 uploaded
+`dataset_id` 保存在页面状态中，用户先选择数据源，再进入查询页。清理 `DATA_ROOT`、更换本地数据目录或
+重启到空目录后，需要在“导入数据”重新上传并一键导入；`user_upload_only` 模式不会复用
+`admissions_schema_v1`，也不会回退到内置 admissions/housing/products。只有导入失败或字段能力不足时，
+才进入审查信息处理高级审查问题。
 
 `POST /tools/{tool_name}/invoke` 请求体：
 

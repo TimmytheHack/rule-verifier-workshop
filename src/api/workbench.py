@@ -3425,7 +3425,7 @@ def _generic_domain_slots(config: WorkbenchConfig) -> dict[str, Any]:
     """把非招生 toy domain 的结构化输入作为 slots 进入同一验证管线。"""
 
     preferences = {
-        key: value
+        key: _schema_filter_value(value)
         for key, value in _execution_safe_structured_preferences(
             {
                 **config.hard_filters,
@@ -3451,6 +3451,12 @@ def _generic_domain_slots(config: WorkbenchConfig) -> dict[str, Any]:
             if value not in (None, "", [])
         ],
     }
+
+
+def _schema_filter_value(value: Any) -> Any:
+    if isinstance(value, dict) and "value" in value:
+        return value.get("value")
+    return value
 
 
 def _execution_safe_structured_preferences(
