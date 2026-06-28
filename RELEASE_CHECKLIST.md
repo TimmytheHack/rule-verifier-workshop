@@ -21,6 +21,9 @@ sample_outputs/operator_trial_summary.md
 - [ ] `make operator-trial` 通过：`20260615_071741` fixture 覆盖 sheet/header/profile/review/approve/build/query 卡点。
 - [ ] `make agent-acceptance` 通过：fake agent 调用 `dataset.approve_op` 被 `tool_not_allowed` 拒绝。
 - [ ] `make quality` 通过：11 pass、0 fail、1 warning；唯一 warning 是既有前端 build warning。
+- [ ] `make frontend-user-build` 通过，本地用户 Web 静态产物已更新。
+- [ ] `make macos-app` 通过，重新生成本机 `.app` 和 Library runtime 快照。
+- [ ] DeepSeek live flow smoke 通过：slot adapter 有真实 token usage，uploaded admissions `llm_semantic` preflight/query 记录 `provider=deepseek`、`fallback_used=false`，且缺 schema 的偏好保持未执行。
 - [ ] `make clean-artifacts` 后没有临时 quality/operator/agent/audit/warehouse/upload 产物留在工作区。
 - [ ] 内置 admissions 覆盖：`make demo` admissions 19/19 pass。
 - [ ] uploaded admissions 覆盖：`make demo` uploaded 2/2 pass，`make pilot` real-like admissions fixture pass。
@@ -37,7 +40,8 @@ sample_outputs/operator_trial_summary.md
 - [ ] `ENABLE_LLM=false` 为默认值。
 - [ ] 生产环境已配置 `AUTH_TOKENS_JSON`，且不会信任浏览器传来的 `permission_scopes`。
 - [ ] `DATA_ROOT`、`OUTPUT_ROOT`、`TOOL_AUDIT_LOG_PATH` 和 audit 轮转参数已指向持久化目录。
-- [ ] 已确认不会接入 Qwen、BGE、向量库或外部 LLM API。
+- [ ] 生产默认 `ENABLE_LLM=false`；如启用 LLM，只使用已配置的 OpenAI-compatible provider 模板和本机密钥，不提交密钥。
+- [ ] 已确认不接入 BGE 或向量库；结构化 Excel/CSV 仍走 DuckDB warehouse、schema/value index 和 reviewed semantic verifier。
 
 ## 2. 静态发布包
 
@@ -52,6 +56,7 @@ make release-check
 - [ ] `sample_outputs/` 只包含稳定示例，不包含真实大表或本机绝对路径。
 - [ ] `Dockerfile`、`docker-compose.yml`、`docs/production_deployment.md`、`docs/security_model.md` 和 `docs/backup_restore.md` 已更新。
 - [ ] `CHANGELOG.md`、`RELEASE_CHECKLIST.md` 和 `docs/demo_script.md` 已更新。
+- [ ] 多 provider LLM 模板、DeepSeek live smoke、本地用户 Web 和 macOS `.app` 口径已同步到 release docs。
 
 ## 3. Functional Tool Server
 
@@ -75,6 +80,8 @@ curl http://127.0.0.1:8001/version
 ```bash
 make demo
 make agent-acceptance
+make frontend-user-build
+make macos-app
 ```
 
 必须确认：
@@ -83,6 +90,8 @@ make agent-acceptance
 - [ ] uploaded dataset acceptance 两条 admissions 目标查询通过。
 - [ ] fake agent 只能 list/profile/review/query/confirm/evidence。
 - [ ] fake agent 调用 admin tools 被权限拒绝。
+- [ ] 本地用户 Web 不展示旧 mock/demo 数据源；设置页支持 DeepSeek、通义千问 / DashScope、Kimi / Moonshot、智谱 GLM、百度千帆和腾讯混元 provider 模板。
+- [ ] `.app` 包不复制仓库 `.env`、上传原件、outputs 临时产物、内置 demo domain pack 或质量/pilot 诊断工具。
 
 ## 5. 真实数据试运行
 
@@ -100,6 +109,12 @@ make operator-trial
 .venv/bin/python scripts/run_real_dataset_pilot.py path/to/admissions.xlsx
 ```
 
+使用真实 DeepSeek：
+
+```bash
+ENABLE_LLM=true .venv/bin/python scripts/run_deepseek_slot_probe.py
+```
+
 必须确认：
 
 - [ ] sheet list、detected header row、重复列、空行空列、合并单元格、隐藏行列、公式单元格 warning 已审查。
@@ -109,6 +124,7 @@ make operator-trial
 - [ ] `group_detail_report` 写入 query_type、SQL、params、metric、group_by、sort 和 nested_result_count。
 - [ ] recommendation 只有分数没有位次时保留 warning，不声称录取概率。
 - [ ] `不想去国外`、中外合作、国际班、境外培养、校企合作等偏好只有 approved schema 字段存在时才执行。
+- [ ] DeepSeek 只提出 slots、`SemanticIntent`、evidence requirement 分类或候选 `RankingPlan`；不能生成 SQL、hard rules、approved ops 或最终推荐结论。
 
 ## 6. Quality Gate
 
@@ -121,7 +137,7 @@ make quality
 - [ ] Python 语法检查通过。
 - [ ] unit tests 通过。
 - [ ] regex evaluator 为 `320/320`。
-- [ ] unit tests 摘要为 `198 tests`，API contract tests 摘要为 `10 tests`。
+- [ ] unit tests 和 API contract tests 摘要以本轮 `outputs/quality_gate/tmp/latest/report.json` 为准，且均为 pass。
 - [ ] demo acceptance 全部 pass。
 - [ ] domain pack validate 和 review workflow smoke 通过。
 - [ ] warehouse fingerprint guard smoke 通过。

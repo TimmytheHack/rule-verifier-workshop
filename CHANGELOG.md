@@ -1,9 +1,12 @@
 # 变更日志
 
-## 未发布（2026-06-21）
+## 未发布（2026-06-28）
 
 ### 新增
 
+- 新增独立本地用户 Web：普通用户先上传本机 Excel/CSV，再基于本机生成的 queryable 数据源进入查询页，不加载旧 mock/demo 数据源。
+- 新增 macOS 本机 `.app` 构建入口，`make macos-app` 会打包本地用户 Web 静态产物、必要后端源码快照和 Library runtime。
+- 新增 OpenAI-compatible LLM provider 模板：`deepseek`、`qwen`、`kimi`、`zhipu`、`qianfan` 和 `hunyuan`；本地设置页可选择 provider 并保存本机密钥。
 - Admissions recommendation 增加 career guidance 证据层：保留家庭资源、就业目标、考公/稳定就业等偏好，但在缺少 reviewed schema 字段时只进入 `EvidencePack` 和前端提示，不生成 hard rule。
 - 新增 `career_decision_policy.json`、`career_guidance` reporting 和相关前端展示，支持解释资源行业、资源城市、就业目标等待补充信息。
 - `/api/workbench/options` 增加受控 `rank_windows` 和 `sort_modes`；前端必须从后端白名单选择排位窗口和排序方式后才能提交 admissions 查询。
@@ -12,6 +15,8 @@
 
 ### 变更
 
+- DeepSeek runtime hardcode 改为通用 OpenAI-compatible client；旧 `DEEPSEEK_*` 环境变量继续兼容，新的 `LLM_PROVIDER`、`LLM_API_KEY`、`LLM_MODEL` 和 `LLM_API_URL` 为通用配置入口。
+- Uploaded dataset 的 LLM planner 默认模型改为走本机 LLM 设置，不再在 service 层固定旧 DeepSeek model alias。
 - Admissions recommendation 严格执行“有分数但无位次时先追问省排位”，不再用分数单独估计录取风险。
 - 前端显式提交的 `rank_window_*` 改为只使用上界执行；例如排位 `1000` 且 `rank_window_upper_percent=15` 生成 `专业组最低位次1 <= 1150`，`rank_window_lower_percent` 仅作为 UI 档位提示。
 - 旧兼容字段 `safety_margin_percent` 继续表示对称窗口；新受控 `rank_window_*` 必须匹配后端 `rank_windows` 白名单，上界不在白名单或小数百分比会返回 Workbench `error` contract。
@@ -20,6 +25,7 @@
 
 ### 修复
 
+- 修复本地用户数据源列表重复展示同一上传文件的问题，按文件 fingerprint 折叠并保留最新可查询版本。
 - 修复高排位考生在“稳一点”等窗口下因百分比下界过窄导致结果被错误筛空的问题。
 - 修复 `school_rank_asc` 在 recommendation 路径中已暴露但未执行的问题；缺少 reviewed `school_rank` 时保持安全回退。
 - 修复 career guidance 中否定表达、模糊就业偏好和 DeepSeek slot 的边界，避免把“不要求好就业”等文本误提为可执行偏好。
@@ -28,6 +34,8 @@
 
 ### 验证
 
+- 已跑通真实 DeepSeek 全流程：slot adapter 有真实 token usage；上传 96335 行、17 列 admissions Excel 后，`llm_semantic` preflight 为 `ready`，query 为 `ok`，planner 记录 `provider=deepseek`、`fallback_used=false`，缺 schema 的“不想去国外”保持未执行。
+- 已运行 `make release-check`，release package 静态校验通过。
 - 新增和更新 `tests/test_admissions_query_types.py`、`tests/test_workbench_api_contract.py`、`tests/test_rule_verifier.py`、`tests/test_duckdb_executor.py`、`tests/test_api_workbench.py`、`tests/test_career_guidance.py` 等回归覆盖。
 - 合并到 `master` 后已运行 `.venv/bin/python -m unittest discover -s tests`，结果为 `280 tests OK (expected failures=1)`。
 - 合并到 `master` 后已运行 `frontend npm run build`，构建通过；仅保留既有 Vite/Rollup warning。

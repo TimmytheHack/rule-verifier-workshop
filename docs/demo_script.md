@@ -11,8 +11,8 @@ make release-check
 
 确认：
 
-- `ENABLE_LLM=false`；
-- 不配置 DeepSeek、Qwen、BGE 或向量库；
+- 默认 `ENABLE_LLM=false`；如演示 LLM，只使用本机配置的 OpenAI-compatible provider key；
+- 不配置 BGE 或向量库；
 - `release_manifest.json`、`sample_data/`、`sample_outputs/` 校验通过；
 - 当前工作区没有临时 report 或密钥文件。
 

@@ -1,6 +1,6 @@
 {
   "release_candidate": "v0.1.0-rc1",
-  "captured_at": "2026-06-15T15:18:15+08:00",
+  "captured_at": "2026-06-28T21:45:00+08:00",
   "positioning": "LLM-safe structured data query tool server for Excel/CSV",
   "command_evidence": [
     {
@@ -115,6 +115,41 @@
       "evidence": "最终干净工作区运行结果为 11 pass、0 fail、1 warning；见 sample_outputs/quality_gate_summary.json。"
     },
     {
+      "command": "make frontend-user-build",
+      "status": "pending_current_run",
+      "evidence": "本轮 release refresh 将重新构建独立本地用户 Web 静态产物。"
+    },
+    {
+      "command": "make macos-app",
+      "status": "pending_current_run",
+      "evidence": "本轮 release refresh 将重新生成 macOS 本机 .app 和 Library runtime 快照。"
+    },
+    {
+      "command": "DeepSeek live flow smoke",
+      "status": "pass",
+      "evidence": {
+        "slot_probe": {
+          "provider": "deepseek",
+          "status": "needs_confirmation",
+          "token_usage_total": 4087,
+          "llm_slot_adapter_validated": true
+        },
+        "uploaded_admissions_llm_semantic": {
+          "source_rows": 96335,
+          "source_columns": 17,
+          "preflight_status": "ready",
+          "query_status": "ok",
+          "query_type": "recommendation",
+          "result_count": 23,
+          "planner_mode": "llm_semantic",
+          "planner_provider": "deepseek",
+          "planner_fallback_used": false,
+          "token_usage_total": 7512,
+          "not_executed_preference": "不想去国外：缺少已审查 school_country_or_region 字段，未进入 SQL。"
+        }
+      }
+    },
+    {
       "command": "make clean-artifacts",
       "status": "pass",
       "evidence": "临时 quality gate、operator trial、agent acceptance、tool audit、warehouse 和 upload artifact 可清理。"
@@ -155,6 +190,21 @@
       "requirement": "agent cannot call admin tools",
       "status": "covered",
       "evidence": "make agent-acceptance 的 admin_permission_denied case。"
+    },
+    {
+      "requirement": "local user web",
+      "status": "covered",
+      "evidence": "frontend-user 独立于旧 mock/demo 前端；本地用户先选上传数据源，再进入查询页。"
+    },
+    {
+      "requirement": "OpenAI-compatible provider templates",
+      "status": "covered",
+      "evidence": "支持 deepseek、qwen、kimi、zhipu、qianfan、hunyuan 模板；DeepSeek live smoke 已通过，其他 provider 需在对应 key 可用时逐个 live smoke。"
+    },
+    {
+      "requirement": "DeepSeek live semantic flow",
+      "status": "covered",
+      "evidence": "上传 96335 行 admissions Excel 后，llm_semantic preflight/query 通过，planner 记录 provider=deepseek 且 fallback_used=false。"
     }
   ],
   "tracked_candidate_artifacts": [
@@ -171,6 +221,7 @@
     "outputs/operator_trial/",
     "outputs/agent_tool_acceptance/",
     "outputs/tool_audit/",
+    "outputs/local_user_app/",
     "outputs/uploaded_datasets/tmp_*"
   ]
 }

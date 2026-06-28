@@ -9,7 +9,7 @@
   "positioning": "LLM-safe structured data query tool server for Excel/CSV",
   "release_evidence": {
     "candidate_tag": "v0.1.0-rc1",
-    "last_readiness_date": "2026-06-15",
+    "last_readiness_date": "2026-06-28",
     "summary_path": "sample_outputs/release_candidate_evidence.json",
     "commands_verified": [
       "make bootstrap",
@@ -19,6 +19,9 @@
       "make operator-trial",
       "make agent-acceptance",
       "make quality",
+      "make frontend-user-build",
+      "make macos-app",
+      "DeepSeek live flow smoke",
       "make clean-artifacts"
     ],
     "coverage": [
@@ -28,7 +31,10 @@
       "draft_blocked",
       "stale_fingerprint_blocked",
       "no_schema_field_not_executed",
-      "agent_admin_denied"
+      "agent_admin_denied",
+      "local_user_web",
+      "openai_compatible_provider_templates",
+      "deepseek_live_semantic_flow"
     ]
   },
   "commands": [
@@ -71,6 +77,16 @@
       "name": "frontend",
       "command": "make frontend",
       "purpose": "构建前端；Vite/Rollup warning 由 Quality Gate 记录为 warning。"
+    },
+    {
+      "name": "frontend-user-build",
+      "command": "make frontend-user-build",
+      "purpose": "构建独立本地用户 Web 静态产物。"
+    },
+    {
+      "name": "macos-app",
+      "command": "make macos-app",
+      "purpose": "生成可双击的 macOS 本地用户 Web app，并刷新 Library runtime 快照。"
     },
     {
       "name": "clean-artifacts",
@@ -181,6 +197,7 @@
     "confirmed_candidate_ids 只能引用上一轮系统生成的 candidate_id。",
     "no_schema_field_preferences 永远不能执行。",
     "SQL 必须参数化，LLM 不能生成 SQL 或 executable hard rules。",
+    "LLM provider 只能通过 OpenAI-compatible provider 模板和本机密钥配置；页面和 API 不回显密钥。",
     "dataset.upload tool 只接受 content_base64，服务端 source_path 读取默认禁用。",
     "API/tool output 不暴露 stack trace、secret、环境变量或危险绝对路径。",
     "tool audit 使用固定路径、文件锁、大小上限和轮转。",
