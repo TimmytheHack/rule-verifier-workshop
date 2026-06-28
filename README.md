@@ -1,6 +1,6 @@
 # 本地表格筛选助手
 
-这是一个本地运行的结构化表格筛选工作台。普通用户入口只读取自己上传的 Excel/CSV，并根据上传表格在本机生成已审核的字段能力和查询规则；研发和演示模式仍保留广东招生数据链路，用于验证志愿填报场景。
+这是一个本地运行的结构化表格筛选工作台。普通用户入口只读取自己上传的 Excel/CSV，并根据上传表格在本机生成已审核的字段能力和查询规则。
 
 它的核心原则很简单：
 
@@ -17,7 +17,7 @@
 
 ## 适合做什么
 
-- 用广东招生 Excel 快速筛出符合条件的院校专业组。
+- 用自己上传的招生 Excel/CSV 快速筛出符合条件的院校专业组。
 - 把一份新的结构化表格变成本机可查询数据源，下次打开不用重新上传。
 - 对比“冲一冲”“稳一点”“保底”等明确排位范围下的结果。
 - 检查一份新表格的字段、类型、可筛操作和未执行偏好。
@@ -56,7 +56,7 @@ make macos-app
 open outputs/local_user_app/本地表格工作台.app
 ```
 
-该 app 包内只放上传数据流所需的后端源码快照、tool contract 和前端构建产物；构建时可以把可运行的 Python runtime 安装到 `~/Library/Application Support/SZU Local Workbench/runtime/workbench/`，双击后不需要再打开 Terminal。上传数据、LLM key、查询规则和日志也写入 `~/Library/Application Support/SZU Local Workbench/`；不会写回 app 包，也不会复制仓库里的 `.env`、上传数据、outputs 产物、内置 admissions/housing/products domain pack 或质量/pilot 诊断工具。更新代码或依赖后，重新运行 `make macos-app` 生成新快照并刷新本机 runtime。
+该 app 包内只放上传数据流所需的后端源码快照、tool contract 和前端构建产物；构建时可以把可运行的 Python runtime 安装到 `~/Library/Application Support/SZU Local Workbench/runtime/workbench/`，双击后不需要再打开 Terminal。上传数据、LLM key、查询规则和日志也写入 `~/Library/Application Support/SZU Local Workbench/`；不会写回 app 包，也不会复制仓库里的 `.env`、上传数据、outputs 产物、内部演示数据包或质量/pilot 诊断工具。更新代码或依赖后，重新运行 `make macos-app` 生成新快照并刷新本机 runtime。
 
 发给 macOS 内测用户时，使用 DMG 包：
 
@@ -127,31 +127,7 @@ http://127.0.0.1:5173
 APP_DISTRIBUTION_MODE=user_upload_only
 ```
 
-该模式表示页面只面向用户上传表格和本机配置，不依赖内部 admissions Excel、内部 warehouse 或旧 mock 结果。
-
-## 使用内置招生数据
-
-内置 admissions API 模式会读取仓库根目录下的招生 Excel：
-
-```text
-广东省2025年志愿填报大数据（24-25）0523.xlsx
-```
-
-如果这个文件不存在，前端 demo 仍可查看，但内置 admissions 的 API 查询和旧 MVP demo 不能正常执行。
-该真实数据文件属于本地数据资产，已被 `.gitignore` 排除；不要提交到版本库。
-
-首次使用内置招生数据前，先构建本地结构化数据仓库：
-
-```bash
-source .venv/bin/activate
-python scripts/build_data_warehouse.py
-```
-
-生成物默认写入 `outputs/data/`，包括 DuckDB warehouse、schema/value index 和 ingestion summary。DuckDB 和上传原件属于本地数据产物，默认不提交；内置 admissions 运行时需要的 `outputs/data/schema_value_index.json` 与 `outputs/data/ingestion_summary.json` 是经过 release check 约束的稳定证据产物，必须包含 `university_name`、`city`、`major_name`、`group_code` 等已审核字段，其中 `university_name` lookup 至少能精确命中“深圳大学”，`city` lookup 至少能命中“深圳”。如果这些产物落后，先重新运行 `python scripts/build_data_warehouse.py`，再运行 `python scripts/validate_release_package.py --json-only`。
-
-内置 admissions Workbench 会使用 reviewed value entity linker 处理已审查 value index 中的显式实体。比如“我想进深圳大学”会优先识别为 `院校名称 = 深圳大学`，并抑制其中的 `深圳` 城市子串；“我想去深圳的大学”仍可识别为 `城市 in_contains 深圳`。如果用户说“深圳大学附近”或使用否定、距离、身份边界等表达，相关实体会写入 `EvidencePack.entity_linking.not_executed_links`，不会变成 SQL filter。这个 linker 只读取 schema/value index，不读原始 Excel，不调用 LLM，也不能绕过 `RuleVerifier`。
-
-如果用户明确填写或表达了当前专业名称 value index 未命中的专业，例如“天体物理”，Workbench 会把原词保留到 `not_executed_preferences` / `unanswerable_intents`，并说明未进入 hard filter；不会静默忽略，也不会把它当作已执行的专业筛选。`就业好`、`宿舍好`、`学校氛围好一点` 这类外部质量偏好在没有已审查结构化字段时同样只作为不可回答/未执行证据保留，不会被误当作“相关专业”候选。
+该模式表示页面只面向用户上传表格和本机配置，不依赖预置数据、内部 warehouse 或旧 mock 结果。
 
 ## 上传自己的表格
 
@@ -172,11 +148,11 @@ python scripts/build_data_warehouse.py
 
 ### 语义能力查询
 
-上传 Excel/CSV 后，系统会基于表格字段生成 `capability_graph` 和 `semantic_query_options`，用来描述当前数据集实际支持哪些字段、值、操作和查询类型。新本地用户入口不复用内置 `admissions_schema_v1` 模板，也不会把上传表格切回内置 admissions 数据；domain 名称会按上传数据生成，例如 `uploaded_ds_xxx`。
+上传 Excel/CSV 后，系统会基于表格字段生成 `capability_graph` 和 `semantic_query_options`，用来描述当前数据集实际支持哪些字段、值、操作和查询类型。新本地用户入口不复用预置模板，也不会把上传表格切回任何预置数据；domain 名称会按上传数据生成，例如 `uploaded_ds_xxx`。
 
 通用表格查询页只渲染后端返回的字段控件。自然语言可以补充偏好，但只有已审查字段和已允许操作会进入参数化 SQL；缺失字段不能从自然语言里补出来，也不能被回答层暗示为已经筛选。
 
-研发或 operator 显式选择招生模板时，上传 admissions 分数/位次表仍可走 reviewed admissions semantic 链路。例如源表只包含 `专业`、`所属专业组`、`最低位次`、`最低分数`、`学校所在` 等字段时，`admissions_schema_v1` 会按已审查列名别名映射到 canonical 字段。该模板不在 `user_upload_only` 普通用户模式中启用。
+研发或 operator 显式选择已审查招生模板时，上传分数/位次表仍可走 reviewed admissions semantic 链路。例如源表只包含 `专业`、`所属专业组`、`最低位次`、`最低分数`、`学校所在` 等字段时，系统会按已审查列名别名映射到 canonical 字段。该模板不在 `user_upload_only` 普通用户模式中启用。
 
 uploaded admissions 推荐现在走 reviewed semantic 链路：已配置的 OpenAI-compatible LLM 先提出候选 `SemanticIntent`，系统随后运行 `EvidenceRequirementClassifier`，把每个 LLM 抽取出的 preference 先分成 `table_field`、`knowledge_base_or_reviewed_field`、`reviewed_ranking_policy`、`user_boundary` 或 `unsupported`。只有 `table_field` preference 会继续进入 `PreferenceGrounder`、`SemanticQueryVerifier` 和 verified `QueryAST`；需要 reviewed KB、reviewed ranking policy、用户边界或 unsupported 的偏好会进入 `not_executed_preferences` / `unanswerable_intents`，不会进入 SQL filter、候选 `RankingPlan` prompt 或答案结论。
 
@@ -197,7 +173,7 @@ ENABLE_LLM=true .venv/bin/python scripts/run_semantic_capability_probe.py path/t
 
 主查询页先选择一个本机数据源，再进入查询页。页面上的必填项、筛选字段和排序字段都来自后端生成的 `semantic_query_options`，不会固定显示招生字段。
 
-通用表格通常只需要填写一句话需求，并在页面展示的字段控件里输入筛选值。招生模板或内置 admissions 链路才会出现生源地、科类、省排位、选科、排位范围等志愿填报字段；只给分数没有位次时，系统会要求补充广东省排位，不执行推荐 SQL。
+通用表格通常只需要填写一句话需求，并在页面展示的字段控件里输入筛选值。只有上传数据被审查为招生语义链路时，才会出现生源地、科类、省排位、选科、排位范围等志愿填报字段；只给分数没有位次时，系统会要求补充广东省排位，不执行推荐 SQL。
 
 填好后点击“查询前检查”，确认没有阻断项后再点击“执行查询”。
 
