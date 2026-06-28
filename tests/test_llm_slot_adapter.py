@@ -86,6 +86,9 @@ class LlmSlotAdapterTest(unittest.TestCase):
         with patch.dict(os.environ, {}, clear=True), patch(
             "src.extractors.deepseek_extractor._dotenv_paths",
             return_value=[],
+        ), patch(
+            "src.api.local_settings.local_setting_value",
+            return_value=None,
         ):
             self.assertFalse(llm_runtime_enabled())
             self.assertFalse(deepseek_slot_adapter_enabled())

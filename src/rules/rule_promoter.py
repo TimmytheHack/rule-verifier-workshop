@@ -32,6 +32,7 @@ class RulePromoter:
                 {
                     "rule_id": rule["rule_id"].replace("d_", "e_", 1),
                     "derived_from": rule["rule_id"],
+                    "field_id": rule.get("field_id"),
                     "field": rule["field"],
                     "operator": rule["operator"],
                     "value": rule["value"],

@@ -4939,7 +4939,7 @@ def _top_result(
             if result[key] == "" and row.get("rank_margin") not in (None, ""):
                 result[key] = row.get("rank_margin")
         elif item.get("field_id"):
-            result[key] = row.get(domain_config.source_column(item["field_id"]))
+            result[key] = _row_field_value(row, domain_config, item["field_id"])
         else:
             result[key] = _first_row_value(
                 row,
@@ -5068,9 +5068,9 @@ def _first_row_value(
     field_ids: list[str],
 ) -> Any:
     for field_id in field_ids:
-        source_column = domain_config.source_column_or_none(field_id)
-        if source_column and row.get(source_column) not in (None, ""):
-            return row.get(source_column)
+        value = _row_field_value(row, domain_config, field_id)
+        if value not in (None, ""):
+            return value
     return None
 
 
@@ -5357,7 +5357,20 @@ def _answer_row_value(
     field_id = spec.get("field_id")
     if not field_id:
         return None
-    return row.get(domain_config.source_column(field_id))
+    return _row_field_value(row, domain_config, field_id)
+
+
+def _row_field_value(
+    row: dict[str, Any],
+    domain_config: DomainConfig,
+    field_id: str | None,
+) -> Any:
+    if not field_id:
+        return None
+    source_column = domain_config.source_column_or_none(field_id)
+    if source_column and row.get(source_column) not in (None, ""):
+        return row.get(source_column)
+    return row.get(field_id)
 
 
 def _present(value: Any) -> bool:

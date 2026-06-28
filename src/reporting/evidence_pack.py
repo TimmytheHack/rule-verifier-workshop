@@ -666,7 +666,7 @@ def _compact_result(
         if spec.get("key"):
             value = row.get(spec["key"])
         else:
-            value = row.get(domain_config.source_column(spec["field_id"]))
+            value = _row_field_value(row, domain_config, spec.get("field_id"))
         if spec.get("optional") and value in (None, ""):
             continue
         compact[str(key)] = value
@@ -674,6 +674,19 @@ def _compact_result(
         compact["safety_margin"] = _format_percent(row.get("safety_margin_pct"))
     compact["trace"] = row.get("trace", [])
     return compact
+
+
+def _row_field_value(
+    row: dict[str, Any],
+    domain_config: DomainConfig,
+    field_id: str | None,
+) -> Any:
+    if not field_id:
+        return None
+    source_column = domain_config.source_column_or_none(field_id)
+    if source_column and row.get(source_column) not in (None, ""):
+        return row.get(source_column)
+    return row.get(field_id)
 
 
 def _trace_summary(

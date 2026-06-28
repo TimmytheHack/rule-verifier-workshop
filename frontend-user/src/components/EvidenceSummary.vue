@@ -10,6 +10,10 @@ const props = defineProps({
     type: Object,
     default: () => ({}),
   },
+  fieldLabels: {
+    type: Object,
+    default: () => ({}),
+  },
 });
 const emit = defineEmits(['select-boundary']);
 
@@ -17,7 +21,7 @@ const recognizedFacts = computed(() => {
   const facts = safeList(props.result?.recognized_facts);
   if (facts.length) return facts;
   return safeList(props.result?.executed_filters).map((item) => ({
-    label: item.label || item.field || item.id || '已执行规则',
+    label: displayFieldLabel(item.label || item.field || item.field_id || item.id),
     value: item.value ?? item.operator ?? item.id,
     executable: true,
   }));
@@ -56,6 +60,31 @@ function itemText(item) {
     || item.label
     || item.id
     || '未执行偏好';
+}
+
+function displayFieldLabel(value) {
+  const key = value == null ? '' : String(value);
+  return props.fieldLabels[key] || key || '字段';
+}
+
+function recognizedFactLabel(fact) {
+  return displayFieldLabel(fact.field_id || fact.label || fact.field || fact.source);
+}
+
+function notExecutedLabel(item) {
+  if (item.source_text || item.preference) return item.source_text || item.preference;
+  if (item.field_id) return displayFieldLabel(item.field_id);
+  return '偏好';
+}
+
+function resultEntries(item) {
+  return Object.entries(item)
+    .filter(([key]) => !['id', 'row_id', 'title', 'trace'].includes(key))
+    .map(([key, value]) => ({
+      key,
+      label: displayFieldLabel(key),
+      value,
+    }));
 }
 
 function dedupeEvidenceItems(items) {
@@ -121,7 +150,7 @@ function resultTitle(item) {
           v-for="(fact, index) in recognizedFacts"
           :key="fact.fact_id || fact.id || `${fact.label}-${fact.source}-${index}`"
         >
-          <span>{{ fact.label || fact.field || fact.source }}</span>
+          <span>{{ recognizedFactLabel(fact) }}</span>
           <strong>{{ valueText(fact.value) }}</strong>
         </li>
       </ul>
@@ -181,7 +210,7 @@ function resultTitle(item) {
           v-for="(item, index) in notExecuted"
           :key="`${item.source_text || item.preference || item.field_id}-${item.reason}-${index}`"
         >
-          <span>{{ item.source_text || item.preference || item.field_id || '偏好' }}</span>
+          <span>{{ notExecutedLabel(item) }}</span>
           <strong>{{ itemText(item) }}</strong>
         </li>
       </ul>
@@ -198,9 +227,9 @@ function resultTitle(item) {
         >
           <h4>{{ resultTitle(item) }}</h4>
           <dl>
-            <template v-for="(value, key) in item" :key="key">
-              <dt>{{ key }}</dt>
-              <dd>{{ valueText(value) }}</dd>
+            <template v-for="entry in resultEntries(item)" :key="entry.key">
+              <dt>{{ entry.label }}</dt>
+              <dd>{{ valueText(entry.value) }}</dd>
             </template>
           </dl>
         </article>

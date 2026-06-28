@@ -708,7 +708,10 @@ def _sync_runtime_config(
     state.top_result_mapping = [
         {"key": "title", "field_id": title_field},
         *[
-            {"key": field_id, "field_id": field_id}
+            {
+                "key": _field_output_key(state.schema["fields"], field_id),
+                "field_id": field_id,
+            }
             for field_id in primary_fields
         ],
     ]
@@ -732,15 +735,28 @@ def _sync_runtime_config(
             "rank_field_id": None,
             "money_field_ids": [],
             "result_line_fields": [
-                {"field_id": field_id, "label": field_id, "evidence_key": field_id}
+                {
+                    "field_id": field_id,
+                    "label": _field_output_key(state.schema["fields"], field_id),
+                    "evidence_key": field_id,
+                }
                 for field_id in output_fields
             ],
             "result_text_fields": [
-                {"field_id": field_id, "label": field_id, "evidence_key": field_id}
+                {
+                    "field_id": field_id,
+                    "label": _field_output_key(state.schema["fields"], field_id),
+                    "evidence_key": field_id,
+                }
                 for field_id in output_fields
             ],
         }
     )
+
+
+def _field_output_key(fields: dict[str, dict[str, Any]], field_id: str) -> str:
+    spec = fields.get(field_id) or {}
+    return str(spec.get("label") or spec.get("source_column") or field_id)
 
 
 def _approve_domain_failures(

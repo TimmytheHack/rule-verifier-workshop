@@ -38,6 +38,7 @@ from src.adapters.data_warehouse import (
 from src.api.workbench import WorkbenchConfig, run_workbench
 from src.api.workbench_preflight import WorkbenchPreflightConfig, run_workbench_preflight
 from src.domains import DomainConfig
+from src.schema.schema_registry import SchemaRegistry
 from src.semantic.capability_graph import DatasetCapabilityGraph
 from src.semantic.query_options import SemanticQueryOptionsBuilder
 from src.semantic.reviewed_mapping import ReviewedMappingRegistry
@@ -99,7 +100,7 @@ WARNING_COLUMN_LIMIT = 200
 ERROR_COLUMN_LIMIT = 500
 
 
-@dataclass(frozen=True)
+@dataclass
 class DatasetServiceError(ValueError):
     """面向 API 的结构化错误。"""
 
@@ -273,11 +274,18 @@ class DatasetService:
                 Path(metadata["domain_dir"]),
                 metadata["domain_name"],
             )
+            schema_registry = SchemaRegistry.from_domain(
+                domain_config,
+                list(dataset.dataframe.columns),
+            )
             registry = ReviewedMappingRegistry.from_domain(
                 domain_config,
                 capability_graph_object,
             )
-            semantic_query_options = SemanticQueryOptionsBuilder(registry).build()
+            semantic_query_options = SemanticQueryOptionsBuilder(
+                registry,
+                schema_registry=schema_registry,
+            ).build()
             semantic_mapping_candidates = {
                 "rule_based": [
                     {**candidate, "status": "candidate_only"}
@@ -489,6 +497,15 @@ class DatasetService:
                 note=note,
             )
         else:
+            if default_safe_sort and (not title_field or not primary_fields):
+                defaults = self._auto_review_generic_domain(
+                    domain_dir=domain_dir,
+                    reviewed_by=reviewed_by,
+                    note=note,
+                )
+                title_field = title_field or defaults.get("title_field")
+                primary_fields = primary_fields or defaults.get("primary_fields")
+                sort_field = sort_field or defaults.get("sort_field")
             result = _review_result_payload(
                 dataset_id,
                 approve_domain(
@@ -516,6 +533,41 @@ class DatasetService:
         )
         self._save_metadata(metadata)
         return result
+
+    def _auto_review_generic_domain(
+        self,
+        *,
+        domain_dir: Path,
+        reviewed_by: str,
+        note: str | None = None,
+    ) -> dict[str, Any]:
+        summary = summarize_domain_pack(domain_dir)
+        for field in summary.get("fields", []):
+            field_id = field.get("field_id")
+            if not field_id or field.get("reviewed"):
+                continue
+            approve_field(
+                domain_dir,
+                str(field_id),
+                reviewed_by=reviewed_by,
+                note=note or "一键导入自动审查：仅批准后端判定安全的字段和操作。",
+                write=True,
+            )
+
+        refreshed = summarize_domain_pack(domain_dir)
+        approved_fields = [
+            field
+            for field in refreshed.get("fields", [])
+            if field.get("reviewed") and field.get("approved_ops")
+        ]
+        title_field = _auto_title_field(approved_fields)
+        primary_fields = _auto_primary_fields(approved_fields, title_field)
+        sort_field = _auto_sort_field(approved_fields)
+        return {
+            "title_field": title_field,
+            "primary_fields": primary_fields,
+            "sort_field": sort_field,
+        }
 
     def build_warehouse(self, dataset_id: str) -> dict[str, Any]:
         """基于 approved domain pack 构建 DuckDB 和 schema/value index。"""
@@ -1098,6 +1150,118 @@ def _dataset_list_item(metadata: dict[str, Any]) -> dict[str, Any]:
         "error_codes": error_summary["codes"],
     }
     return {key: value for key, value in item.items() if value is not None}
+
+
+def _auto_title_field(fields: list[dict[str, Any]]) -> str | None:
+    if not fields:
+        return None
+    return _best_field(
+        fields,
+        [
+            _field_name_contains("name", "名称", "学校", "院校", "title", "标题"),
+            _field_name_contains("code", "代码", "编号", "id"),
+            _field_role_is("identifier"),
+            _field_type_is("enum"),
+        ],
+    )
+
+
+def _auto_primary_fields(
+    fields: list[dict[str, Any]],
+    title_field: str | None,
+) -> list[str]:
+    candidates = [field for field in fields if field.get("field_id") != title_field]
+    ordered_ids = [
+        field_id
+        for field_id in [
+            _matching_field(candidates, [_field_type_is("enum")]),
+            _matching_field(candidates, [_field_role_is("metric")]),
+            _matching_field(candidates, [_field_role_is("identifier")]),
+        ]
+        if field_id
+    ]
+    ordered_ids = _unique_strings(ordered_ids)
+    for field in candidates:
+        field_id = str(field.get("field_id") or "")
+        if field_id and field_id not in ordered_ids:
+            ordered_ids.append(field_id)
+        if len(ordered_ids) >= 3:
+            break
+    if not ordered_ids and title_field:
+        return [title_field]
+    return ordered_ids[:3]
+
+
+def _matching_field(
+    fields: list[dict[str, Any]],
+    predicates: list[Any],
+) -> str | None:
+    for predicate in predicates:
+        for field in fields:
+            if predicate(field):
+                return str(field.get("field_id"))
+    return None
+
+
+def _unique_strings(values: list[str]) -> list[str]:
+    seen: set[str] = set()
+    result: list[str] = []
+    for value in values:
+        if value in seen:
+            continue
+        seen.add(value)
+        result.append(value)
+    return result
+
+
+def _auto_sort_field(fields: list[dict[str, Any]]) -> str | None:
+    sortable = [
+        field
+        for field in fields
+        if "sort" in (field.get("approved_ops") or [])
+    ]
+    return _best_field(
+        sortable,
+        [
+            _field_name_contains("rank", "位次", "排名"),
+            _field_name_contains("score", "分数"),
+            _field_role_is("metric"),
+        ],
+    )
+
+
+def _best_field(
+    fields: list[dict[str, Any]],
+    predicates: list[Any],
+) -> str | None:
+    for predicate in predicates:
+        for field in fields:
+            if predicate(field):
+                return str(field.get("field_id"))
+    if fields:
+        return str(fields[0].get("field_id"))
+    return None
+
+
+def _field_name_contains(*needles: str) -> Any:
+    lowered_needles = [needle.lower() for needle in needles]
+
+    def predicate(field: dict[str, Any]) -> bool:
+        text = " ".join(
+            str(field.get(key) or "")
+            for key in ["field_id", "source_column"]
+        ).lower()
+        return any(needle in text for needle in lowered_needles)
+
+    return predicate
+
+
+def _field_role_is(role: str) -> Any:
+    return lambda field: field.get("role") == role
+
+
+def _field_type_is(field_type: str) -> Any:
+    return lambda field: field.get("type") == field_type
 
 
 def _safe_issue_summary(entries: Any) -> dict[str, Any]:

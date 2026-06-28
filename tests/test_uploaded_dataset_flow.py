@@ -121,6 +121,16 @@ class UploadedDatasetFlowTest(unittest.TestCase):
         self.assertEqual(response["domain_pack_status"], "needs_review")
         self.assertEqual(response["debug_trace"]["execution"]["sql"], "")
 
+    def test_build_warehouse_reports_unapproved_domain_as_service_error(self) -> None:
+        with TemporaryDirectory() as directory:
+            service, dataset_id = _generated_generic_dataset(Path(directory))
+
+            with self.assertRaises(DatasetServiceError) as raised:
+                service.build_warehouse(dataset_id)
+
+        self.assertEqual(raised.exception.code, "domain_not_approved")
+        self.assertEqual(raised.exception.status_code, 409)
+
     def test_approve_then_build_warehouse_and_query(self) -> None:
         with TemporaryDirectory() as directory:
             service, dataset_id = _generated_generic_dataset(Path(directory))
@@ -138,6 +148,86 @@ class UploadedDatasetFlowTest(unittest.TestCase):
         self.assertEqual(response["status"], "ok")
         self.assertEqual(response["result_count"], 1)
         self.assertTrue(response["items"])
+
+    def test_default_safe_sort_auto_approves_generic_domain(self) -> None:
+        with TemporaryDirectory() as directory:
+            service, dataset_id = _generated_generic_dataset(Path(directory))
+
+            approved = service.approve_domain(
+                dataset_id,
+                default_safe_sort=True,
+                reviewed_by="local_user_web",
+            )
+            built = service.build_warehouse(dataset_id)
+            response = service.query(
+                dataset_id,
+                user_input="Austin under 1900",
+                hard_filters={"city": ["Austin"], "rent_usd": 1900},
+            )
+
+        self.assertTrue(approved["ok"], json.dumps(approved, ensure_ascii=False))
+        self.assertEqual(built["status"], "queryable")
+        self.assertEqual(response["status"], "ok")
+        self.assertEqual(response["result_count"], 1)
+
+    def test_generic_domain_results_use_field_id_output_values(self) -> None:
+        with TemporaryDirectory() as directory:
+            root = Path(directory)
+            source = root / "scores.csv"
+            pd.DataFrame(
+                [
+                    {"科类": "物理类", "最低位次": 12000, "是否985": "是"},
+                    {"科类": "历史类", "最低位次": 30000, "是否985": "否"},
+                ]
+            ).to_csv(source, index=False)
+            service = DatasetService(root / "managed")
+            service.upload(
+                filename=source.name,
+                content=source.read_bytes(),
+                dataset_id="ds_scores",
+            )
+            service.generate_domain_pack("ds_scores")
+            service.approve_domain("ds_scores", default_safe_sort=True)
+            service.build_warehouse("ds_scores")
+            metadata = _dataset_metadata(service, "ds_scores")
+            schema = json.loads(
+                (Path(metadata["domain_dir"]) / "schema_registry.json").read_text(
+                    encoding="utf-8"
+                )
+            )
+            top_mapping = yaml.safe_load(
+                (Path(metadata["domain_dir"]) / "top_result_mapping.yaml").read_text(
+                    encoding="utf-8"
+                )
+            )
+            fields_by_source = {
+                spec["source_column"]: field_id
+                for field_id, spec in schema["fields"].items()
+            }
+
+            response = service.query(
+                "ds_scores",
+                user_input="物理类，最低位次两万以内，985",
+                hard_filters={
+                    fields_by_source["科类"]: ["物理类"],
+                    fields_by_source["最低位次"]: 20000,
+                    fields_by_source["是否985"]: ["是"],
+                },
+            )
+
+        assert_workbench_contract(self, response)
+        self.assertEqual(response["status"], "ok")
+        self.assertEqual(response["result_count"], 1)
+        top_keys = [item["key"] for item in top_mapping]
+        self.assertEqual(len(top_keys), len(set(top_keys)))
+        serialized_top = json.dumps(response["top_results"], ensure_ascii=False)
+        serialized_items = json.dumps(response["items"], ensure_ascii=False)
+        self.assertIn("物理类", serialized_top)
+        self.assertIn("12000", serialized_top)
+        self.assertIn("科类", serialized_top)
+        self.assertNotIn("field_", serialized_top)
+        self.assertIn("12000", serialized_items)
+        self.assertNotIn("None 不高于 20000", serialized_items)
 
     def test_generic_domain_preflight_is_ready_without_admissions_rank(self) -> None:
         with TemporaryDirectory() as directory:

@@ -4,6 +4,7 @@ import unittest
 
 from src.semantic.query_options import SemanticQueryOptionsBuilder
 from src.semantic.reviewed_mapping import ReviewedFieldMapping, ReviewedMappingRegistry
+from src.schema.schema_registry import SchemaRegistry
 
 
 class SemanticQueryOptionsBuilderTest(unittest.TestCase):
@@ -51,6 +52,41 @@ class SemanticQueryOptionsBuilderTest(unittest.TestCase):
             options["unsupported_fields"]["school_country_or_region"],
             "当前数据缺少境外办学字段，不能执行该排除条件。",
         )
+
+    def test_falls_back_to_active_schema_fields_for_generic_domains(self) -> None:
+        registry = ReviewedMappingRegistry(active_fields={}, unsupported_fields={})
+        schema_registry = SchemaRegistry(
+            active_fields={
+                "city": {
+                    "source_column": "城市",
+                    "type": "enum",
+                    "allowed_ops": ["in"],
+                },
+                "rent": {
+                    "source_column": "租金",
+                    "type": "number",
+                    "allowed_ops": ["<=", "sort"],
+                },
+                "note": {
+                    "source_column": "备注",
+                    "type": "string",
+                    "allowed_ops": [],
+                },
+            },
+            configured_fields={},
+        )
+
+        options = SemanticQueryOptionsBuilder(
+            registry,
+            schema_registry=schema_registry,
+        ).build()
+
+        self.assertEqual(options["query_types"], [])
+        self.assertEqual(options["required_user_context"], [])
+        self.assertEqual(options["filters"]["city"]["source_column"], "城市")
+        self.assertEqual(options["filters"]["rent"]["allowed_ops"], ["<=", "sort"])
+        self.assertEqual(options["sort_fields"]["rent"]["source_column"], "租金")
+        self.assertNotIn("note", options["filters"])
 
 
 if __name__ == "__main__":

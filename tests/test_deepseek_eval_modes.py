@@ -182,6 +182,9 @@ class DeepSeekEvalModesTest(unittest.TestCase):
             with patch.dict(os.environ, {}, clear=True), patch(
                 "src.extractors.deepseek_extractor._dotenv_paths",
                 return_value=[dotenv_path],
+            ), patch(
+                "src.api.local_settings.local_setting_value",
+                return_value=None,
             ):
                 client = DeepSeekClient()
 

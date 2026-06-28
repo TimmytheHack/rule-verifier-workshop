@@ -35,6 +35,7 @@ const boundaryConfirmations = computed(() =>
 );
 const profileTitle = computed(() => profile.value?.original_filename || props.datasetId);
 const profileStatusLabel = computed(() => statusLabel(profile.value?.status));
+const fieldLabels = computed(() => buildFieldLabels(profile.value));
 const handledBoundaryCount = computed(() =>
   boundaryConfirmations.value.filter((item) => boundarySelections.value[item.confirmation_id]).length,
 );
@@ -183,6 +184,21 @@ function statusLabel(status) {
   if (status === 'blocked') return '已阻断';
   return status || '未知状态';
 }
+
+function buildFieldLabels(profilePayload) {
+  const options = profilePayload?.semantic_query_options || {};
+  const labels = {};
+  for (const collection of [options.filters, options.sort_fields]) {
+    for (const [fieldId, spec] of Object.entries(collection || {})) {
+      labels[fieldId] = spec.label || spec.source_column || fieldId;
+    }
+  }
+  for (const field of profilePayload?.fields || []) {
+    if (!field?.field_id) continue;
+    labels[field.field_id] = labels[field.field_id] || field.label || field.source_column || field.field_id;
+  }
+  return labels;
+}
 </script>
 
 <template>
@@ -218,6 +234,7 @@ function statusLabel(status) {
       </div>
       <EvidenceSummary
         :result="result"
+        :field-labels="fieldLabels"
         :boundary-selections="boundarySelections"
         @select-boundary="selectBoundary"
       />

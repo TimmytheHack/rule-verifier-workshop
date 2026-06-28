@@ -46,6 +46,8 @@ def _rule_reason(row: dict[str, Any], rule: dict[str, Any]) -> str:
     operator = rule.get("operator")
     value = rule.get("value")
     actual = row.get(str(field))
+    if actual is None and rule.get("field_id"):
+        actual = row.get(str(rule.get("field_id")))
     if operator == "eq":
         return f"{field} 等于 {_format_value(value)}"
     if operator == "neq":
