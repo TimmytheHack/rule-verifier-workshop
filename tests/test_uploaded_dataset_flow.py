@@ -42,6 +42,23 @@ class UploadedDatasetFlowTest(unittest.TestCase):
         self.assertEqual(result["column_count"], 4)
         self.assertEqual(len(result["source_fingerprint"]), 64)
 
+    def test_list_datasets_exposes_fingerprint_for_duplicate_grouping(self) -> None:
+        with TemporaryDirectory() as directory:
+            source = _write_generic_csv(Path(directory))
+            service = DatasetService(Path(directory) / "managed")
+            uploaded = service.upload(
+                filename="housing.csv",
+                content=source.read_bytes(),
+            )
+
+            payload = service.list_datasets()
+
+        self.assertEqual(len(payload["datasets"]), 1)
+        item = payload["datasets"][0]
+        self.assertEqual(item["dataset_id"], uploaded["dataset_id"])
+        self.assertEqual(item["source_fingerprint"], uploaded["source_fingerprint"])
+        self.assertNotIn("source_path", item)
+
     def test_upload_excel_generates_dataset_id(self) -> None:
         with TemporaryDirectory() as directory:
             source = _write_generic_excel(Path(directory))

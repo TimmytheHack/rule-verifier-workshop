@@ -1083,6 +1083,7 @@ def _dataset_list_item(metadata: dict[str, Any]) -> dict[str, Any]:
         or _default_capability_level(metadata),
         "recommendation_readiness": metadata.get("recommendation_readiness")
         or _default_recommendation_readiness(metadata),
+        "source_fingerprint": metadata.get("source_fingerprint"),
         "original_filename": _safe_original_filename(
             metadata.get("original_filename")
         ),

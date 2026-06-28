@@ -127,6 +127,8 @@ python scripts/build_data_warehouse.py
 
 上传流程会把数据状态从 `uploaded` 推到 `queryable`。未审核、缺少必填字段、warehouse 过期或 `dataset_id` 不合法时，系统会返回 blocked/error，不会执行 SQL。
 
+如果同一份源文件被重复导入多次，本地用户列表会按文件 fingerprint 折叠展示，优先保留最新可查询版本；底层历史 dataset 不会被页面静默删除。
+
 上传数据源在正式查询前会先运行查询前检查。通用表格的预检只确认数据源已经完成审查，不调用 LLM、不生成 SQL；招生语义链路会额外展示可执行事实、需要确认的边界、缺失信息和未执行偏好。用户确认后才会提交后端生成的 `preflight_id` 与确认项。
 
 ### 语义能力查询

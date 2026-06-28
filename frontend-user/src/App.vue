@@ -3,6 +3,7 @@ import { computed, onMounted, ref } from 'vue';
 import { listDatasets } from './api/datasets.js';
 import { getLlmSettings } from './api/settings.js';
 import ImportPanel from './components/ImportPanel.vue';
+import { collapseDuplicateDatasets } from './domain/datasetList.js';
 import DatasetLibrary from './pages/DatasetLibrary.vue';
 import DatasetDetail from './pages/DatasetDetail.vue';
 import SettingsPage from './pages/SettingsPage.vue';
@@ -17,6 +18,7 @@ const selectedDatasetId = ref('');
 const selectedDataset = computed(() =>
   datasets.value.find((dataset) => dataset.dataset_id === selectedDatasetId.value),
 );
+const datasetListView = computed(() => collapseDuplicateDatasets(datasets.value));
 
 onMounted(refresh);
 
@@ -77,7 +79,8 @@ async function handleImportDone(payload) {
 
     <DatasetLibrary
       v-if="view === 'library'"
-      :datasets="datasets"
+      :datasets="datasetListView.datasets"
+      :hidden-duplicate-count="datasetListView.hiddenCount"
       :loading="loading"
       :error="error"
       @open-dataset="openDataset"
