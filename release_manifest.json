@@ -22,6 +22,7 @@
       "make frontend-user-build",
       "make macos-app",
       "make macos-dmg",
+      "make windows-zip",
       "DeepSeek live flow smoke",
       "make clean-artifacts"
     ],
@@ -93,6 +94,11 @@
       "name": "macos-dmg",
       "command": "make macos-dmg",
       "purpose": "生成 macOS 内测 DMG、中文说明和 SHA256 sidecar。"
+    },
+    {
+      "name": "windows-zip",
+      "command": "make windows-zip",
+      "purpose": "生成 Windows portable zip、中文说明和 SHA256 sidecar。"
     },
     {
       "name": "clean-artifacts",

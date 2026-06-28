@@ -1,6 +1,6 @@
 {
   "release_candidate": "v0.1.0-rc1",
-  "captured_at": "2026-06-28T23:57:59+08:00",
+  "captured_at": "2026-06-29T00:13:14+08:00",
   "positioning": "LLM-safe structured data query tool server for Excel/CSV",
   "command_evidence": [
     {
@@ -166,6 +166,22 @@
       }
     },
     {
+      "command": "make windows-zip",
+      "status": "pass",
+      "evidence": {
+        "zip_path": "outputs/local_user_app/本地表格工作台-0.2.0-windows-internal.zip",
+        "readme_path": "outputs/local_user_app/本地表格工作台-0.2.0-windows-internal.README.md",
+        "checksum_path": "outputs/local_user_app/本地表格工作台-0.2.0-windows-internal.sha256",
+        "sha256": "36d5c383bec1f93ff2a73a3265f10e858deda3713e5ea876d29a35c676096068",
+        "package_contents_checked": [
+          "start_local_user_web.bat",
+          "内测说明-Windows.md",
+          "workbench_source/launch_app.py"
+        ],
+        "forbidden_content_scan": "pass"
+      }
+    },
+    {
       "command": "DeepSeek live flow smoke",
       "status": "pass",
       "evidence": {
@@ -235,7 +251,7 @@
     {
       "requirement": "local user web",
       "status": "covered",
-      "evidence": "frontend-user 独立于旧 mock/demo 前端；本地用户先选上传数据源，再进入查询页。"
+      "evidence": "frontend-user 独立于旧 mock/demo 前端；本地用户先选上传数据源，再进入查询页；macOS DMG 和 Windows portable zip 均可生成。"
     },
     {
       "requirement": "OpenAI-compatible provider templates",

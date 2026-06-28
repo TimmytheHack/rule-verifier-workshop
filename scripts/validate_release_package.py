@@ -38,6 +38,7 @@ REQUIRED_MAKE_TARGETS = {
     "frontend-user-build",
     "macos-app",
     "macos-dmg",
+    "windows-zip",
     "clean-artifacts",
     "release-check",
 }

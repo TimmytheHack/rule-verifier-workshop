@@ -74,6 +74,22 @@ make macos-dmg
 
 当前内测 DMG 未签名、未 notarize；第一次打开可能需要在 Finder 里右键选择“打开”。目标机器首次启动需要可用的 Python 3.11+ 来初始化运行时。正式公开分发前还需要完成签名、notarize 和更完整的 runtime 打包/升级策略。
 
+发给 Windows 内测用户时，使用 portable zip 包：
+
+```bash
+make windows-zip
+```
+
+生成物默认在 `outputs/local_user_app/`：
+
+```text
+本地表格工作台-0.2.0-windows-internal.zip
+本地表格工作台-0.2.0-windows-internal.README.md
+本地表格工作台-0.2.0-windows-internal.sha256
+```
+
+Windows 用户解压后双击 `start_local_user_web.bat`；首次启动需要可用的 Python 3.11+ 来初始化运行时，上传数据、LLM key、查询规则和日志写入 `%LOCALAPPDATA%\SZU Local Workbench\`。当前 zip 不是正式安装器，正式公开分发前还需要 Windows 签名、安装器和自动升级策略。
+
 打开：
 
 ```text
@@ -242,6 +258,7 @@ evidence.get
 | `make serve-user` | 构建并启动同端口本地用户 Web。 |
 | `make macos-app` | 生成可双击的 macOS 本地用户 Web app。 |
 | `make macos-dmg` | 生成 macOS 内测 DMG、中文说明和 SHA256。 |
+| `make windows-zip` | 生成 Windows portable zip、中文说明和 SHA256。 |
 | `make frontend-user-build` | 构建本地用户 Web 静态产物。 |
 | `./start_local_user_web.command` | macOS 双击/命令行启动本地用户 Web。 |
 | `cd frontend-user && npm run dev` | 启动本地用户 Web 开发模式。 |
@@ -295,6 +312,7 @@ make operator-trial
 make agent-acceptance
 make quality
 make macos-dmg
+make windows-zip
 make clean-artifacts
 make release-check
 ```
