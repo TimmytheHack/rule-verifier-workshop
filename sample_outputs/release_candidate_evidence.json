@@ -1,6 +1,6 @@
 {
   "release_candidate": "v0.1.0-rc1",
-  "captured_at": "2026-06-28T23:41:43+08:00",
+  "captured_at": "2026-06-28T23:57:59+08:00",
   "positioning": "LLM-safe structured data query tool server for Excel/CSV",
   "command_evidence": [
     {
@@ -155,7 +155,7 @@
         "dmg_path": "outputs/local_user_app/本地表格工作台-0.2.0-macos-internal.dmg",
         "readme_path": "outputs/local_user_app/本地表格工作台-0.2.0-macos-internal.README.md",
         "checksum_path": "outputs/local_user_app/本地表格工作台-0.2.0-macos-internal.sha256",
-        "sha256": "d0380bbdc5f4b2d93e1d0a27cabce50f4c25d18082dee28b8ac6f1fc35c1f9eb",
+        "sha256": "e678b17b5ae697a71b4a3f78040c59e0780dc5729f5ca47cfd97c1b77653a1b2",
         "dmg_format": "UDIF read-only compressed (zlib)",
         "mounted_contents_checked": [
           "本地表格工作台.app",
