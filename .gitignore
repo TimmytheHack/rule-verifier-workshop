@@ -24,6 +24,7 @@ tmp/
 outputs/eval/deepseek_fuzzy_cache.json
 outputs/eval/fuzzy_quick_*.json
 outputs/eval/fuzzy_deepseek_extractor_results.json
+outputs/eval/token_usage_trial*.json
 outputs/data/*.duckdb
 outputs/data/*.duckdb.wal
 outputs/answer_demo/
