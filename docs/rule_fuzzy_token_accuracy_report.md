@@ -2,13 +2,15 @@
 
 ## 1. 报告目的
 
-本报告总结当前应用在开发收束阶段形成的方法：如何让自然语言里的模糊偏好参与系统，但不让它们越过规则验证边界；如何通过结构化数据、字段审查和紧凑证据包减少 token 消耗，同时提高回答和执行结果的正确率。
+本报告总结当前应用在开发收束阶段形成的方法：如何让自然语言里的模糊偏好参与系统，但不让它们越过规则验证边界；如何通过结构化数据、字段审查和紧凑证据包减少 token 消耗，并降低错误执行和 unsupported claims 的风险。
 
-本文不是最终志愿填报质量评估，也不声称系统能替代人工志愿顾问。它讨论的是一个更窄的问题：
+本文不是最终志愿填报质量评估，也不声称系统能替代人工志愿顾问。当前 app 还没有完成最终端到端测试，因此本文不能把阶段性评估数字写成最终产品效果结论。它讨论的是一个更窄的问题：
 
 ```text
 用户偏好怎样从自然语言进入可验证规则，并在不能验证时被安全保留。
 ```
+
+本文使用的评估数字来自已有方法论和阶段性实验报告，适合支撑设计选择和风险分析，不足以单独证明最终 app 的真实使用正确率。
 
 项目核心不变量是：
 
@@ -154,7 +156,7 @@ LLM 可以提出候选 `RankingPlan`，但 `RankingVerifier` 必须验证：
 - `ranking` 状态；
 - planner trace 和 token usage。
 
-这让回答的正确率不只依赖语言模型是否“说得像”，而依赖它是否被证据包约束。
+这让回答的风险控制不只依赖语言模型是否“说得像”，而依赖它是否被证据包约束。
 
 ## 5. 省 token 的做法
 
@@ -229,11 +231,11 @@ evidence.get
 
 `workbench.query` 不接受 `sql`、`raw_sql`、`hard_rules`、`executable_rules` 或 `domain_pack_status` 等可绕过 verifier 的字段。工具 contract 让 LLM 只能提出查询请求和读取证据，不能直接改执行规则。
 
-## 6. 提高正确率的做法
+## 6. 降低错误风险的做法
 
-### 6.1 正确率定义不是“回答流畅”
+### 6.1 当前阶段的“正确”不是最终推荐质量
 
-项目评估的核心不是语言是否顺畅，而是：
+当前阶段评估的核心不是语言是否顺畅，也不是最终志愿推荐质量，而是：
 
 - deterministic rules 是否抽取正确；
 - candidate rules 是否被保留而不是越权执行；
@@ -242,7 +244,7 @@ evidence.get
 - trace 是否完整；
 - answer 是否只引用 verified evidence。
 
-这比普通 LLM 推荐评估更窄，但更符合本项目目标。
+这比普通 LLM 推荐评估更窄，只能说明 rule safety、traceability 和 evidence alignment 的阶段性表现，不能说明最终 app 在真实用户场景中的完整正确率。
 
 ### 6.2 主安全指标是 over-promotion
 
@@ -259,7 +261,7 @@ evidence.get
 
 ### 6.3 schema-aware prompt 不能替代 verifier
 
-已有正式评估报告记录，在 40 条模糊输入集合中：
+已有阶段性评估报告记录，在 40 条模糊输入集合中：
 
 | 方法 | 得分 | 成功率 | Total tokens | Over-promotion rate |
 |---|---:|---:|---:|---:|
@@ -278,7 +280,7 @@ evidence.get
 我是广东物理类，排位32000，想学计算机，最好在广州深圳，学校稳一点，不想去太贵的中外合作。
 ```
 
-正式评估报告记录：
+阶段性评估报告记录：
 
 | 方法 | 结果行数 | 任务成功 | Total tokens | Over-promotion |
 |---|---:|---:|---:|---|
@@ -299,9 +301,9 @@ evidence.get
 | `pipeline_template` | `5/5` | 完全由 `EvidencePack` 驱动 |
 | `pipeline_deepseek_evidence` | `5/5` | LLM 文案被证据覆盖清单兜底 |
 
-这说明正确率不仅取决于执行前 verifier，也取决于回答层是否只能看到 verified evidence。
+这说明回答风险不仅取决于执行前 verifier，也取决于回答层是否只能看到 verified evidence。
 
-## 7. 为什么这种方法同时省 token 又提高正确率
+## 7. 为什么这种方法预期能省 token 并降低错误
 
 可以把当前方法概括为一句话：
 
@@ -309,11 +311,11 @@ evidence.get
 把 LLM 从“读全表并直接决策”降级为“读小摘要并提出候选”，把执行权交给 schema、verifier 和 DuckDB。
 ```
 
-这同时带来两类收益。
+这在工程上预期带来两类收益，但最终幅度仍需要最后端到端测试确认。
 
 第一，token 降低。LLM 不再读取全量 Excel，也不再持有全部候选行。它只读取字段摘要、已审查能力和必要上下文。真正的大数据操作由本地 DuckDB 完成。
 
-第二，正确率提高。系统不要求 LLM 自己判断什么可执行，而是由 deterministic verifier 检查字段、op、值、确认状态和证据来源。LLM 语言能力用于覆盖自然语言表达的多样性，执行安全由规则系统保证。
+第二，错误风险降低。系统不要求 LLM 自己判断什么可执行，而是由 deterministic verifier 检查字段、op、值、确认状态和证据来源。LLM 语言能力用于覆盖自然语言表达的多样性，执行安全由规则系统约束。最终是否提高真实使用正确率，还需要完整 app 测试和更大样本验证。
 
 更具体地说：
 
@@ -332,12 +334,13 @@ evidence.get
 
 第二段，方法。系统把自然语言理解和规则执行拆开。LLM 只提出候选 intent、slot 或 ranking plan；字段是否存在、操作是否允许、值是否可解析、是否需要确认、是否能生成 SQL，都由 deterministic verifier 决定。大表进入 DuckDB，字段和值进入 schema/value index，答案层只读取 EvidencePack。
 
-第三段，结果。正式评估中，verifier-based 方法在 40 条模糊输入上达到 `320/320`，over-promotion 为 `0.000`；LLM-only baseline 即使看到 schema，仍有 `0.275` over-promotion rate。token 预算上，完整 Excel 直接 prompt 约 `2304 万` tokens，而 DeepSeek extractor + symbolic verifier 的代表输入只用 `834` tokens 并得到同样 `93` 条 verified result。
+第三段，证据边界。阶段性评估中，verifier-based 方法在 40 条模糊输入上达到 `320/320`，over-promotion 为 `0.000`；LLM-only baseline 即使看到 schema，仍有 `0.275` over-promotion rate。token 预算上，完整 Excel 直接 prompt 约 `2304 万` tokens，而 DeepSeek extractor + symbolic verifier 的代表输入只用 `834` tokens 并得到同样 `93` 条 verified result。但这些数字只能说明当前方法在小规模基准和代表输入上的安全性优势，最终 app 还需要端到端测试后才能报告真实效果。
 
 ## 9. 限制和下一步
 
 当前结论仍有明确限制：
 
+- 最终 app 尚未完成完整端到端测试，不能把本文写成最终效果证明。
 - 评估集规模仍然较小，40 条模糊输入不能代表真实用户全部表达。
 - regex baseline 是人工整理的 conservative benchmark，不是最终抽取策略。
 - 当前指标主要评估 rule safety、traceability 和 evidence alignment，不评估最终志愿填报质量。
