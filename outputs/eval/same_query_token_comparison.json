@@ -1,0 +1,136 @@
+{
+  "schema_version": "same_query_token_comparison.v1",
+  "generated_at": "2026-06-29T07:40:53.632416+00:00",
+  "query_id": "E2E01",
+  "query": "我是广东物理类，排位32000，想学计算机，最好在广州深圳，学校稳一点，不想去太贵的中外合作。",
+  "measurement_mode": "live_llm_no_cache_for_api_methods",
+  "source_artifact": "outputs/eval/fuzzy_quick_same_query_live.json",
+  "comparison_goal": "同一条 query 下，对比使用项目验证管线与不使用项目 verifier 的 LLM-only token 消耗和安全结果。",
+  "methods": {
+    "rule_regex_extractor_symbolic_verifier": {
+      "task_success_score": 8,
+      "max_score": 8,
+      "total_tokens": 0,
+      "task_success_per_total_token": null,
+      "cache_hit": null,
+      "score_parts": {
+        "source_province": true,
+        "subject_type": true,
+        "user_rank": true,
+        "major_keyword": true,
+        "preferred_cities": true,
+        "candidate_terms_held": true,
+        "non_executable_terms_preserved": true,
+        "no_ungrounded_attribute_execution": true
+      },
+      "unsafe_flags": null
+    },
+    "deepseek_extractor_symbolic_verifier": {
+      "task_success_score": 8,
+      "max_score": 8,
+      "total_tokens": 2323,
+      "task_success_per_total_token": 0.0034438226431338786,
+      "cache_hit": false,
+      "score_parts": {
+        "source_province": true,
+        "subject_type": true,
+        "user_rank": true,
+        "major_keyword": true,
+        "preferred_cities": true,
+        "candidate_terms_held": true,
+        "non_executable_terms_preserved": true,
+        "no_ungrounded_attribute_execution": true
+      },
+      "unsafe_flags": null
+    },
+    "llm_only_baseline": {
+      "task_success_score": 1,
+      "max_score": 5,
+      "total_tokens": 625,
+      "task_success_per_total_token": 0.0016,
+      "cache_hit": false,
+      "score_parts": {
+        "mentions_expected_facts": true,
+        "candidate_terms_not_promoted": false,
+        "non_executable_terms_not_promoted": false,
+        "no_schema_hallucination": false,
+        "has_trace": false
+      },
+      "unsafe_flags": {
+        "proposes_cooperation_execution": true,
+        "promotes_safety_without_symbolic_verifier": false,
+        "promotes_tuition_without_symbolic_verifier": true
+      }
+    },
+    "schema_aware_llm_only_baseline": {
+      "task_success_score": 3,
+      "max_score": 5,
+      "total_tokens": 1964,
+      "task_success_per_total_token": 0.0015274949083503055,
+      "cache_hit": false,
+      "score_parts": {
+        "mentions_expected_facts": false,
+        "candidate_terms_not_promoted": false,
+        "non_executable_terms_not_promoted": true,
+        "no_schema_hallucination": true,
+        "has_trace": true
+      },
+      "unsafe_flags": {
+        "proposes_cooperation_execution": false,
+        "promotes_safety_without_symbolic_verifier": false,
+        "promotes_tuition_without_symbolic_verifier": false
+      }
+    }
+  },
+  "aggregate": {
+    "rule_regex_extractor_symbolic_verifier": {
+      "score": 8,
+      "max": 8,
+      "tokens": 0,
+      "cases": 1,
+      "over_promotion_events": 0,
+      "success_rate": 1.0,
+      "task_success_per_total_token": null,
+      "deterministic_over_promotion_rate": 0.0
+    },
+    "deepseek_extractor_symbolic_verifier": {
+      "score": 8,
+      "max": 8,
+      "tokens": 2323,
+      "cases": 1,
+      "skipped": 0,
+      "over_promotion_events": 0,
+      "success_rate": 1.0,
+      "task_success_per_total_token": 0.0034438226431338786,
+      "deterministic_over_promotion_rate": 0.0
+    },
+    "llm_only_baseline": {
+      "score": 1,
+      "max": 5,
+      "tokens": 625,
+      "cases": 1,
+      "skipped": 0,
+      "over_promotion_events": 1,
+      "success_rate": 0.2,
+      "task_success_per_total_token": 0.0016,
+      "deterministic_over_promotion_rate": 1.0
+    },
+    "schema_aware_llm_only_baseline": {
+      "score": 3,
+      "max": 5,
+      "tokens": 1964,
+      "cases": 1,
+      "skipped": 0,
+      "over_promotion_events": 0,
+      "success_rate": 0.6,
+      "task_success_per_total_token": 0.0015274949083503055,
+      "deterministic_over_promotion_rate": 0.0
+    }
+  },
+  "direct_excel_prompt_estimate": {
+    "full_excel_estimated_input_tokens": 23040521,
+    "required_columns_estimated_input_tokens": 483920,
+    "note": "直接把完整 Excel 或必需列发给 LLM 只做估算，本次没有实际调用。"
+  },
+  "blocked_full_eval_note": "scripts/eval_modes.py 需要 ignored 的本地招生大表；当前工作区没有该 root-level xlsx，所以本次 live token 对比使用 eval_fuzzy_inputs.py 的同 query case。"
+}

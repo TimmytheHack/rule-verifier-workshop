@@ -518,3 +518,6 @@
 {"mode": "fuzzy_schema_aware_llm_only_baseline", "prompt_tokens": 515, "completion_tokens": 746, "total_tokens": 1261}
 {"mode": "fuzzy_llm_only_baseline", "prompt_tokens": 133, "completion_tokens": 647, "total_tokens": 780}
 {"mode": "fuzzy_schema_aware_llm_only_baseline", "prompt_tokens": 514, "completion_tokens": 660, "total_tokens": 1174}
+{"mode": "fuzzy_deepseek_extractor_symbolic_verifier", "prompt_tokens": 768, "completion_tokens": 1555, "total_tokens": 2323}
+{"mode": "fuzzy_llm_only_baseline", "prompt_tokens": 147, "completion_tokens": 478, "total_tokens": 625}
+{"mode": "fuzzy_schema_aware_llm_only_baseline", "prompt_tokens": 1445, "completion_tokens": 519, "total_tokens": 1964}
