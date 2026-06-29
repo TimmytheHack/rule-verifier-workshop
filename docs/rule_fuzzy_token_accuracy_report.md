@@ -295,7 +295,20 @@ evidence.get
 
 关键不是 DeepSeek 比 LLM-only 用更少 token，而是它的输出被 verifier 接管后，能同时保留“稳一点”“太贵”“中外合作”这类模糊或缺字段偏好的边界。
 
-### 6.5 答案层也要评估
+### 6.5 多类型 query token trial
+
+为避免只用单条 query 支撑 token 讨论，新增一次 10 条分层 live token trial。样本覆盖清晰约束、模糊费用、模糊风险、模糊地理、缺字段、外部就业信息、混合表达、对抗表达、矛盾偏好和明确数值约束。该 trial 禁用 cache，LLM API 路径均为本轮实跑；完整明细见 `outputs/eval/diverse_query_token_comparison.json`。
+
+| 方法 | Query 数 | 得分 | Total tokens | Over-promotion rate |
+|---|---:|---:|---:|---:|
+| `rule_regex_extractor_symbolic_verifier` | `10` | `80/80` | `0` | `0.000` |
+| `deepseek_extractor_symbolic_verifier` | `10` | `80/80` | `16664` | `0.000` |
+| `llm_only_baseline` | `10` | `28/50` | `5784` | `0.700` |
+| `schema_aware_llm_only_baseline` | `10` | `42/50` | `18487` | `0.200` |
+
+这组小样本说明：plain LLM-only 的 token 最少，但在多类模糊或缺字段 query 上更容易过度提升；schema-aware LLM-only 会显著增加 prompt token，并降低但没有消除过度提升；项目管线消耗更多 LLM token 做结构抽取，但执行安全由 verifier 接管，当前 10 条没有 over-promotion。该结果仍然只是小样本 live trial，不代表最终 app 真实使用正确率。
+
+### 6.6 答案层也要评估
 
 答案层评估显示：
 
@@ -366,6 +379,8 @@ evidence.get
 - `README.md`
 - `docs/methodology_report.md`
 - `docs/evaluation_report.md`
+- `outputs/eval/diverse_query_token_comparison.json`
+- `outputs/eval/same_query_token_comparison.json`
 - `sample_outputs/release_candidate_evidence.json`
 - `release_manifest.json`
 - `docs/api_contract.md`

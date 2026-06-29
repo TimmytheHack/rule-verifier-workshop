@@ -1,0 +1,897 @@
+{
+  "schema_version": "diverse_query_token_comparison.v1",
+  "generated_at": "2026-06-29T08:23:47.311936+00:00",
+  "measurement_mode": "live_llm_no_cache_for_api_methods",
+  "source_artifact": "outputs/eval/fuzzy_quick_diverse_queries_live.json",
+  "comparison_goal": "多类 query 下，对比使用项目验证管线与不使用项目 verifier 的 LLM-only token 消耗和安全结果。",
+  "case_selection": {
+    "count": 10,
+    "case_ids": [
+      "C01",
+      "V03",
+      "V05",
+      "V09",
+      "U01",
+      "U02",
+      "M02",
+      "A01",
+      "X02",
+      "E2E07"
+    ],
+    "categories": [
+      "adversarial",
+      "clear",
+      "contradictory",
+      "end_to_end_demo",
+      "mixed",
+      "unsupported",
+      "vague_cost",
+      "vague_geo",
+      "vague_risk"
+    ],
+    "selection_reason": "覆盖清晰约束、模糊费用、模糊风险、模糊地理、缺字段、外部就业信息、混合表达、对抗表达、矛盾偏好和明确数值约束。"
+  },
+  "aggregate": {
+    "rule_regex_extractor_symbolic_verifier": {
+      "score": 80,
+      "max": 80,
+      "tokens": 0,
+      "cases": 10,
+      "over_promotion_events": 0,
+      "success_rate": 1.0,
+      "task_success_per_total_token": null,
+      "deterministic_over_promotion_rate": 0.0
+    },
+    "deepseek_extractor_symbolic_verifier": {
+      "score": 80,
+      "max": 80,
+      "tokens": 16664,
+      "cases": 10,
+      "skipped": 0,
+      "over_promotion_events": 0,
+      "success_rate": 1.0,
+      "task_success_per_total_token": 0.004800768122899664,
+      "deterministic_over_promotion_rate": 0.0
+    },
+    "llm_only_baseline": {
+      "score": 28,
+      "max": 50,
+      "tokens": 5784,
+      "cases": 10,
+      "skipped": 0,
+      "over_promotion_events": 7,
+      "success_rate": 0.56,
+      "task_success_per_total_token": 0.004840940525587829,
+      "deterministic_over_promotion_rate": 0.7
+    },
+    "schema_aware_llm_only_baseline": {
+      "score": 42,
+      "max": 50,
+      "tokens": 18487,
+      "cases": 10,
+      "skipped": 0,
+      "over_promotion_events": 2,
+      "success_rate": 0.84,
+      "task_success_per_total_token": 0.002271866717152594,
+      "deterministic_over_promotion_rate": 0.2
+    }
+  },
+  "cases": [
+    {
+      "id": "C01",
+      "category": "clear",
+      "input": "广东物理，排位50000，只看广州，计算机。",
+      "must_hold_candidate": [],
+      "must_reject": [],
+      "methods": {
+        "rule_regex_extractor_symbolic_verifier": {
+          "task_success_score": 8,
+          "max_score": 8,
+          "total_tokens": 0,
+          "cache_hit": null,
+          "unsafe_flags": null,
+          "score_parts": {
+            "source_province": true,
+            "subject_type": true,
+            "user_rank": true,
+            "major_keyword": true,
+            "preferred_cities": true,
+            "candidate_terms_held": true,
+            "non_executable_terms_preserved": true,
+            "no_ungrounded_attribute_execution": true
+          }
+        },
+        "deepseek_extractor_symbolic_verifier": {
+          "task_success_score": 8,
+          "max_score": 8,
+          "total_tokens": 1602,
+          "cache_hit": false,
+          "unsafe_flags": null,
+          "score_parts": {
+            "source_province": true,
+            "subject_type": true,
+            "user_rank": true,
+            "major_keyword": true,
+            "preferred_cities": true,
+            "candidate_terms_held": true,
+            "non_executable_terms_preserved": true,
+            "no_ungrounded_attribute_execution": true
+          }
+        },
+        "llm_only_baseline": {
+          "task_success_score": 3,
+          "max_score": 5,
+          "total_tokens": 538,
+          "cache_hit": false,
+          "unsafe_flags": {
+            "proposes_cooperation_execution": false,
+            "promotes_safety_without_symbolic_verifier": false,
+            "promotes_tuition_without_symbolic_verifier": false
+          },
+          "score_parts": {
+            "mentions_expected_facts": false,
+            "candidate_terms_not_promoted": true,
+            "non_executable_terms_not_promoted": true,
+            "no_schema_hallucination": true,
+            "has_trace": false
+          }
+        },
+        "schema_aware_llm_only_baseline": {
+          "task_success_score": 4,
+          "max_score": 5,
+          "total_tokens": 1842,
+          "cache_hit": false,
+          "unsafe_flags": {
+            "proposes_cooperation_execution": false,
+            "promotes_safety_without_symbolic_verifier": false,
+            "promotes_tuition_without_symbolic_verifier": false
+          },
+          "score_parts": {
+            "mentions_expected_facts": false,
+            "candidate_terms_not_promoted": true,
+            "non_executable_terms_not_promoted": true,
+            "no_schema_hallucination": true,
+            "has_trace": true
+          }
+        }
+      }
+    },
+    {
+      "id": "V03",
+      "category": "vague_cost",
+      "input": "广东物理，排位60000，不想太贵。",
+      "must_hold_candidate": [
+        "太贵"
+      ],
+      "must_reject": [],
+      "methods": {
+        "rule_regex_extractor_symbolic_verifier": {
+          "task_success_score": 8,
+          "max_score": 8,
+          "total_tokens": 0,
+          "cache_hit": null,
+          "unsafe_flags": null,
+          "score_parts": {
+            "source_province": true,
+            "subject_type": true,
+            "user_rank": true,
+            "major_keyword": true,
+            "preferred_cities": true,
+            "candidate_terms_held": true,
+            "non_executable_terms_preserved": true,
+            "no_ungrounded_attribute_execution": true
+          }
+        },
+        "deepseek_extractor_symbolic_verifier": {
+          "task_success_score": 8,
+          "max_score": 8,
+          "total_tokens": 1359,
+          "cache_hit": false,
+          "unsafe_flags": null,
+          "score_parts": {
+            "source_province": true,
+            "subject_type": true,
+            "user_rank": true,
+            "major_keyword": true,
+            "preferred_cities": true,
+            "candidate_terms_held": true,
+            "non_executable_terms_preserved": true,
+            "no_ungrounded_attribute_execution": true
+          }
+        },
+        "llm_only_baseline": {
+          "task_success_score": 3,
+          "max_score": 5,
+          "total_tokens": 512,
+          "cache_hit": false,
+          "unsafe_flags": {
+            "proposes_cooperation_execution": false,
+            "promotes_safety_without_symbolic_verifier": false,
+            "promotes_tuition_without_symbolic_verifier": true
+          },
+          "score_parts": {
+            "mentions_expected_facts": true,
+            "candidate_terms_not_promoted": false,
+            "non_executable_terms_not_promoted": true,
+            "no_schema_hallucination": true,
+            "has_trace": false
+          }
+        },
+        "schema_aware_llm_only_baseline": {
+          "task_success_score": 4,
+          "max_score": 5,
+          "total_tokens": 1699,
+          "cache_hit": false,
+          "unsafe_flags": {
+            "proposes_cooperation_execution": false,
+            "promotes_safety_without_symbolic_verifier": false,
+            "promotes_tuition_without_symbolic_verifier": false
+          },
+          "score_parts": {
+            "mentions_expected_facts": true,
+            "candidate_terms_not_promoted": false,
+            "non_executable_terms_not_promoted": true,
+            "no_schema_hallucination": true,
+            "has_trace": true
+          }
+        }
+      }
+    },
+    {
+      "id": "V05",
+      "category": "vague_risk",
+      "input": "广东物理，排位32000，想学计算机，稳妥一点。",
+      "must_hold_candidate": [
+        "稳妥一点"
+      ],
+      "must_reject": [],
+      "methods": {
+        "rule_regex_extractor_symbolic_verifier": {
+          "task_success_score": 8,
+          "max_score": 8,
+          "total_tokens": 0,
+          "cache_hit": null,
+          "unsafe_flags": null,
+          "score_parts": {
+            "source_province": true,
+            "subject_type": true,
+            "user_rank": true,
+            "major_keyword": true,
+            "preferred_cities": true,
+            "candidate_terms_held": true,
+            "non_executable_terms_preserved": true,
+            "no_ungrounded_attribute_execution": true
+          }
+        },
+        "deepseek_extractor_symbolic_verifier": {
+          "task_success_score": 8,
+          "max_score": 8,
+          "total_tokens": 1840,
+          "cache_hit": false,
+          "unsafe_flags": null,
+          "score_parts": {
+            "source_province": true,
+            "subject_type": true,
+            "user_rank": true,
+            "major_keyword": true,
+            "preferred_cities": true,
+            "candidate_terms_held": true,
+            "non_executable_terms_preserved": true,
+            "no_ungrounded_attribute_execution": true
+          }
+        },
+        "llm_only_baseline": {
+          "task_success_score": 2,
+          "max_score": 5,
+          "total_tokens": 621,
+          "cache_hit": false,
+          "unsafe_flags": {
+            "proposes_cooperation_execution": false,
+            "promotes_safety_without_symbolic_verifier": true,
+            "promotes_tuition_without_symbolic_verifier": false
+          },
+          "score_parts": {
+            "mentions_expected_facts": true,
+            "candidate_terms_not_promoted": false,
+            "non_executable_terms_not_promoted": true,
+            "no_schema_hallucination": false,
+            "has_trace": false
+          }
+        },
+        "schema_aware_llm_only_baseline": {
+          "task_success_score": 4,
+          "max_score": 5,
+          "total_tokens": 1796,
+          "cache_hit": false,
+          "unsafe_flags": {
+            "proposes_cooperation_execution": false,
+            "promotes_safety_without_symbolic_verifier": false,
+            "promotes_tuition_without_symbolic_verifier": false
+          },
+          "score_parts": {
+            "mentions_expected_facts": true,
+            "candidate_terms_not_promoted": false,
+            "non_executable_terms_not_promoted": true,
+            "no_schema_hallucination": true,
+            "has_trace": true
+          }
+        }
+      }
+    },
+    {
+      "id": "V09",
+      "category": "vague_geo",
+      "input": "广东物理，排位32000，想去一线城市，费用别太高。",
+      "must_hold_candidate": [
+        "费用别太高",
+        "一线城市"
+      ],
+      "must_reject": [],
+      "methods": {
+        "rule_regex_extractor_symbolic_verifier": {
+          "task_success_score": 8,
+          "max_score": 8,
+          "total_tokens": 0,
+          "cache_hit": null,
+          "unsafe_flags": null,
+          "score_parts": {
+            "source_province": true,
+            "subject_type": true,
+            "user_rank": true,
+            "major_keyword": true,
+            "preferred_cities": true,
+            "candidate_terms_held": true,
+            "non_executable_terms_preserved": true,
+            "no_ungrounded_attribute_execution": true
+          }
+        },
+        "deepseek_extractor_symbolic_verifier": {
+          "task_success_score": 8,
+          "max_score": 8,
+          "total_tokens": 1601,
+          "cache_hit": false,
+          "unsafe_flags": null,
+          "score_parts": {
+            "source_province": true,
+            "subject_type": true,
+            "user_rank": true,
+            "major_keyword": true,
+            "preferred_cities": true,
+            "candidate_terms_held": true,
+            "non_executable_terms_preserved": true,
+            "no_ungrounded_attribute_execution": true
+          }
+        },
+        "llm_only_baseline": {
+          "task_success_score": 3,
+          "max_score": 5,
+          "total_tokens": 610,
+          "cache_hit": false,
+          "unsafe_flags": {
+            "proposes_cooperation_execution": false,
+            "promotes_safety_without_symbolic_verifier": false,
+            "promotes_tuition_without_symbolic_verifier": true
+          },
+          "score_parts": {
+            "mentions_expected_facts": true,
+            "candidate_terms_not_promoted": false,
+            "non_executable_terms_not_promoted": true,
+            "no_schema_hallucination": true,
+            "has_trace": false
+          }
+        },
+        "schema_aware_llm_only_baseline": {
+          "task_success_score": 4,
+          "max_score": 5,
+          "total_tokens": 1955,
+          "cache_hit": false,
+          "unsafe_flags": {
+            "proposes_cooperation_execution": false,
+            "promotes_safety_without_symbolic_verifier": false,
+            "promotes_tuition_without_symbolic_verifier": true
+          },
+          "score_parts": {
+            "mentions_expected_facts": true,
+            "candidate_terms_not_promoted": false,
+            "non_executable_terms_not_promoted": true,
+            "no_schema_hallucination": true,
+            "has_trace": true
+          }
+        }
+      }
+    },
+    {
+      "id": "U01",
+      "category": "unsupported",
+      "input": "广东物理，排位32000，不要中外合作。",
+      "must_hold_candidate": [],
+      "must_reject": [
+        "中外合作"
+      ],
+      "methods": {
+        "rule_regex_extractor_symbolic_verifier": {
+          "task_success_score": 8,
+          "max_score": 8,
+          "total_tokens": 0,
+          "cache_hit": null,
+          "unsafe_flags": null,
+          "score_parts": {
+            "source_province": true,
+            "subject_type": true,
+            "user_rank": true,
+            "major_keyword": true,
+            "preferred_cities": true,
+            "candidate_terms_held": true,
+            "non_executable_terms_preserved": true,
+            "no_ungrounded_attribute_execution": true
+          }
+        },
+        "deepseek_extractor_symbolic_verifier": {
+          "task_success_score": 8,
+          "max_score": 8,
+          "total_tokens": 1366,
+          "cache_hit": false,
+          "unsafe_flags": null,
+          "score_parts": {
+            "source_province": true,
+            "subject_type": true,
+            "user_rank": true,
+            "major_keyword": true,
+            "preferred_cities": true,
+            "candidate_terms_held": true,
+            "non_executable_terms_preserved": true,
+            "no_ungrounded_attribute_execution": true
+          }
+        },
+        "llm_only_baseline": {
+          "task_success_score": 3,
+          "max_score": 5,
+          "total_tokens": 492,
+          "cache_hit": false,
+          "unsafe_flags": {
+            "proposes_cooperation_execution": true,
+            "promotes_safety_without_symbolic_verifier": false,
+            "promotes_tuition_without_symbolic_verifier": false
+          },
+          "score_parts": {
+            "mentions_expected_facts": true,
+            "candidate_terms_not_promoted": true,
+            "non_executable_terms_not_promoted": false,
+            "no_schema_hallucination": true,
+            "has_trace": false
+          }
+        },
+        "schema_aware_llm_only_baseline": {
+          "task_success_score": 5,
+          "max_score": 5,
+          "total_tokens": 1712,
+          "cache_hit": false,
+          "unsafe_flags": {
+            "proposes_cooperation_execution": false,
+            "promotes_safety_without_symbolic_verifier": false,
+            "promotes_tuition_without_symbolic_verifier": false
+          },
+          "score_parts": {
+            "mentions_expected_facts": true,
+            "candidate_terms_not_promoted": true,
+            "non_executable_terms_not_promoted": true,
+            "no_schema_hallucination": true,
+            "has_trace": true
+          }
+        }
+      }
+    },
+    {
+      "id": "U02",
+      "category": "unsupported",
+      "input": "广东物理，排位40000，想要就业前景好。",
+      "must_hold_candidate": [],
+      "must_reject": [
+        "就业前景好"
+      ],
+      "methods": {
+        "rule_regex_extractor_symbolic_verifier": {
+          "task_success_score": 8,
+          "max_score": 8,
+          "total_tokens": 0,
+          "cache_hit": null,
+          "unsafe_flags": null,
+          "score_parts": {
+            "source_province": true,
+            "subject_type": true,
+            "user_rank": true,
+            "major_keyword": true,
+            "preferred_cities": true,
+            "candidate_terms_held": true,
+            "non_executable_terms_preserved": true,
+            "no_ungrounded_attribute_execution": true
+          }
+        },
+        "deepseek_extractor_symbolic_verifier": {
+          "task_success_score": 8,
+          "max_score": 8,
+          "total_tokens": 1383,
+          "cache_hit": false,
+          "unsafe_flags": null,
+          "score_parts": {
+            "source_province": true,
+            "subject_type": true,
+            "user_rank": true,
+            "major_keyword": true,
+            "preferred_cities": true,
+            "candidate_terms_held": true,
+            "non_executable_terms_preserved": true,
+            "no_ungrounded_attribute_execution": true
+          }
+        },
+        "llm_only_baseline": {
+          "task_success_score": 4,
+          "max_score": 5,
+          "total_tokens": 514,
+          "cache_hit": false,
+          "unsafe_flags": {
+            "proposes_cooperation_execution": false,
+            "promotes_safety_without_symbolic_verifier": false,
+            "promotes_tuition_without_symbolic_verifier": false
+          },
+          "score_parts": {
+            "mentions_expected_facts": true,
+            "candidate_terms_not_promoted": true,
+            "non_executable_terms_not_promoted": true,
+            "no_schema_hallucination": true,
+            "has_trace": false
+          }
+        },
+        "schema_aware_llm_only_baseline": {
+          "task_success_score": 5,
+          "max_score": 5,
+          "total_tokens": 1805,
+          "cache_hit": false,
+          "unsafe_flags": {
+            "proposes_cooperation_execution": false,
+            "promotes_safety_without_symbolic_verifier": false,
+            "promotes_tuition_without_symbolic_verifier": false
+          },
+          "score_parts": {
+            "mentions_expected_facts": true,
+            "candidate_terms_not_promoted": true,
+            "non_executable_terms_not_promoted": true,
+            "no_schema_hallucination": true,
+            "has_trace": true
+          }
+        }
+      }
+    },
+    {
+      "id": "M02",
+      "category": "mixed",
+      "input": "广东物理，排位45000，软件工程相关都可以，深圳优先，不想太贵。",
+      "must_hold_candidate": [
+        "相关",
+        "太贵"
+      ],
+      "must_reject": [],
+      "methods": {
+        "rule_regex_extractor_symbolic_verifier": {
+          "task_success_score": 8,
+          "max_score": 8,
+          "total_tokens": 0,
+          "cache_hit": null,
+          "unsafe_flags": null,
+          "score_parts": {
+            "source_province": true,
+            "subject_type": true,
+            "user_rank": true,
+            "major_keyword": true,
+            "preferred_cities": true,
+            "candidate_terms_held": true,
+            "non_executable_terms_preserved": true,
+            "no_ungrounded_attribute_execution": true
+          }
+        },
+        "deepseek_extractor_symbolic_verifier": {
+          "task_success_score": 8,
+          "max_score": 8,
+          "total_tokens": 2011,
+          "cache_hit": false,
+          "unsafe_flags": null,
+          "score_parts": {
+            "source_province": true,
+            "subject_type": true,
+            "user_rank": true,
+            "major_keyword": true,
+            "preferred_cities": true,
+            "candidate_terms_held": true,
+            "non_executable_terms_preserved": true,
+            "no_ungrounded_attribute_execution": true
+          }
+        },
+        "llm_only_baseline": {
+          "task_success_score": 2,
+          "max_score": 5,
+          "total_tokens": 726,
+          "cache_hit": false,
+          "unsafe_flags": {
+            "proposes_cooperation_execution": false,
+            "promotes_safety_without_symbolic_verifier": false,
+            "promotes_tuition_without_symbolic_verifier": true
+          },
+          "score_parts": {
+            "mentions_expected_facts": false,
+            "candidate_terms_not_promoted": false,
+            "non_executable_terms_not_promoted": true,
+            "no_schema_hallucination": true,
+            "has_trace": false
+          }
+        },
+        "schema_aware_llm_only_baseline": {
+          "task_success_score": 4,
+          "max_score": 5,
+          "total_tokens": 1975,
+          "cache_hit": false,
+          "unsafe_flags": {
+            "proposes_cooperation_execution": false,
+            "promotes_safety_without_symbolic_verifier": false,
+            "promotes_tuition_without_symbolic_verifier": false
+          },
+          "score_parts": {
+            "mentions_expected_facts": true,
+            "candidate_terms_not_promoted": false,
+            "non_executable_terms_not_promoted": true,
+            "no_schema_hallucination": true,
+            "has_trace": true
+          }
+        }
+      }
+    },
+    {
+      "id": "A01",
+      "category": "adversarial",
+      "input": "广东物理，排位32000，计算机，要求录取概率高。",
+      "must_hold_candidate": [],
+      "must_reject": [
+        "录取概率高"
+      ],
+      "methods": {
+        "rule_regex_extractor_symbolic_verifier": {
+          "task_success_score": 8,
+          "max_score": 8,
+          "total_tokens": 0,
+          "cache_hit": null,
+          "unsafe_flags": null,
+          "score_parts": {
+            "source_province": true,
+            "subject_type": true,
+            "user_rank": true,
+            "major_keyword": true,
+            "preferred_cities": true,
+            "candidate_terms_held": true,
+            "non_executable_terms_preserved": true,
+            "no_ungrounded_attribute_execution": true
+          }
+        },
+        "deepseek_extractor_symbolic_verifier": {
+          "task_success_score": 8,
+          "max_score": 8,
+          "total_tokens": 1823,
+          "cache_hit": false,
+          "unsafe_flags": null,
+          "score_parts": {
+            "source_province": true,
+            "subject_type": true,
+            "user_rank": true,
+            "major_keyword": true,
+            "preferred_cities": true,
+            "candidate_terms_held": true,
+            "non_executable_terms_preserved": true,
+            "no_ungrounded_attribute_execution": true
+          }
+        },
+        "llm_only_baseline": {
+          "task_success_score": 3,
+          "max_score": 5,
+          "total_tokens": 579,
+          "cache_hit": false,
+          "unsafe_flags": {
+            "proposes_cooperation_execution": false,
+            "promotes_safety_without_symbolic_verifier": false,
+            "promotes_tuition_without_symbolic_verifier": false
+          },
+          "score_parts": {
+            "mentions_expected_facts": true,
+            "candidate_terms_not_promoted": true,
+            "non_executable_terms_not_promoted": true,
+            "no_schema_hallucination": false,
+            "has_trace": false
+          }
+        },
+        "schema_aware_llm_only_baseline": {
+          "task_success_score": 5,
+          "max_score": 5,
+          "total_tokens": 1794,
+          "cache_hit": false,
+          "unsafe_flags": {
+            "proposes_cooperation_execution": false,
+            "promotes_safety_without_symbolic_verifier": false,
+            "promotes_tuition_without_symbolic_verifier": false
+          },
+          "score_parts": {
+            "mentions_expected_facts": true,
+            "candidate_terms_not_promoted": true,
+            "non_executable_terms_not_promoted": true,
+            "no_schema_hallucination": true,
+            "has_trace": true
+          }
+        }
+      }
+    },
+    {
+      "id": "X02",
+      "category": "contradictory",
+      "input": "广东物理，排位48000，想冲一冲，但也要稳一点，计算机。",
+      "must_hold_candidate": [
+        "冲一冲",
+        "稳一点"
+      ],
+      "must_reject": [],
+      "methods": {
+        "rule_regex_extractor_symbolic_verifier": {
+          "task_success_score": 8,
+          "max_score": 8,
+          "total_tokens": 0,
+          "cache_hit": null,
+          "unsafe_flags": null,
+          "score_parts": {
+            "source_province": true,
+            "subject_type": true,
+            "user_rank": true,
+            "major_keyword": true,
+            "preferred_cities": true,
+            "candidate_terms_held": true,
+            "non_executable_terms_preserved": true,
+            "no_ungrounded_attribute_execution": true
+          }
+        },
+        "deepseek_extractor_symbolic_verifier": {
+          "task_success_score": 8,
+          "max_score": 8,
+          "total_tokens": 1871,
+          "cache_hit": false,
+          "unsafe_flags": null,
+          "score_parts": {
+            "source_province": true,
+            "subject_type": true,
+            "user_rank": true,
+            "major_keyword": true,
+            "preferred_cities": true,
+            "candidate_terms_held": true,
+            "non_executable_terms_preserved": true,
+            "no_ungrounded_attribute_execution": true
+          }
+        },
+        "llm_only_baseline": {
+          "task_success_score": 3,
+          "max_score": 5,
+          "total_tokens": 659,
+          "cache_hit": false,
+          "unsafe_flags": {
+            "proposes_cooperation_execution": false,
+            "promotes_safety_without_symbolic_verifier": true,
+            "promotes_tuition_without_symbolic_verifier": false
+          },
+          "score_parts": {
+            "mentions_expected_facts": true,
+            "candidate_terms_not_promoted": false,
+            "non_executable_terms_not_promoted": true,
+            "no_schema_hallucination": true,
+            "has_trace": false
+          }
+        },
+        "schema_aware_llm_only_baseline": {
+          "task_success_score": 4,
+          "max_score": 5,
+          "total_tokens": 1929,
+          "cache_hit": false,
+          "unsafe_flags": {
+            "proposes_cooperation_execution": false,
+            "promotes_safety_without_symbolic_verifier": false,
+            "promotes_tuition_without_symbolic_verifier": false
+          },
+          "score_parts": {
+            "mentions_expected_facts": true,
+            "candidate_terms_not_promoted": false,
+            "non_executable_terms_not_promoted": true,
+            "no_schema_hallucination": true,
+            "has_trace": true
+          }
+        }
+      }
+    },
+    {
+      "id": "E2E07",
+      "category": "end_to_end_demo",
+      "input": "我是广东物理类，排位40000，想看深圳、广州、佛山的学校，学费两万以内，优先公办。",
+      "must_hold_candidate": [],
+      "must_reject": [
+        "优先公办"
+      ],
+      "methods": {
+        "rule_regex_extractor_symbolic_verifier": {
+          "task_success_score": 8,
+          "max_score": 8,
+          "total_tokens": 0,
+          "cache_hit": null,
+          "unsafe_flags": null,
+          "score_parts": {
+            "source_province": true,
+            "subject_type": true,
+            "user_rank": true,
+            "major_keyword": true,
+            "preferred_cities": true,
+            "candidate_terms_held": true,
+            "non_executable_terms_preserved": true,
+            "no_ungrounded_attribute_execution": true
+          }
+        },
+        "deepseek_extractor_symbolic_verifier": {
+          "task_success_score": 8,
+          "max_score": 8,
+          "total_tokens": 1808,
+          "cache_hit": false,
+          "unsafe_flags": null,
+          "score_parts": {
+            "source_province": true,
+            "subject_type": true,
+            "user_rank": true,
+            "major_keyword": true,
+            "preferred_cities": true,
+            "candidate_terms_held": true,
+            "non_executable_terms_preserved": true,
+            "no_ungrounded_attribute_execution": true
+          }
+        },
+        "llm_only_baseline": {
+          "task_success_score": 2,
+          "max_score": 5,
+          "total_tokens": 533,
+          "cache_hit": false,
+          "unsafe_flags": {
+            "proposes_cooperation_execution": false,
+            "promotes_safety_without_symbolic_verifier": false,
+            "promotes_tuition_without_symbolic_verifier": true
+          },
+          "score_parts": {
+            "mentions_expected_facts": false,
+            "candidate_terms_not_promoted": false,
+            "non_executable_terms_not_promoted": true,
+            "no_schema_hallucination": true,
+            "has_trace": false
+          }
+        },
+        "schema_aware_llm_only_baseline": {
+          "task_success_score": 3,
+          "max_score": 5,
+          "total_tokens": 1980,
+          "cache_hit": false,
+          "unsafe_flags": {
+            "proposes_cooperation_execution": false,
+            "promotes_safety_without_symbolic_verifier": false,
+            "promotes_tuition_without_symbolic_verifier": true
+          },
+          "score_parts": {
+            "mentions_expected_facts": false,
+            "candidate_terms_not_promoted": false,
+            "non_executable_terms_not_promoted": true,
+            "no_schema_hallucination": true,
+            "has_trace": true
+          }
+        }
+      }
+    }
+  ],
+  "direct_excel_prompt_estimate": {
+    "full_excel_estimated_input_tokens": 23040521,
+    "required_columns_estimated_input_tokens": 483920,
+    "note": "直接把完整 Excel 或必需列发给 LLM 只做估算，本次没有实际调用。"
+  }
+}
