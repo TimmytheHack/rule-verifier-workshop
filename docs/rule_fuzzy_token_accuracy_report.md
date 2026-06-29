@@ -164,6 +164,8 @@ LLM 可以提出候选 `RankingPlan`，但 `RankingVerifier` 必须验证：
 
 ## 5. 省 token 的做法
 
+本节的“省 token”主要是相对“把完整 Excel、候选行或大量表格样本直接塞进 prompt”的做法，而不是说项目路径在所有对照里都比最短的 plain LLM-only prompt 更少。plain LLM-only 可以更短，但它缺少 verifier、confirmation protocol 和 evidence boundary；因此报告应同时看 token、over-promotion 和证据完整性。
+
 ### 5.1 不把完整 Excel 发给 LLM
 
 项目已有 token 预算评估显示，直接把完整 Excel 序列化后和用户问题一起发给 LLM，大约需要 `2304 万` input tokens，无法放入 `32k`、`128k` 或 `1M` 上下文。即使只保留 MVP 必需列，也大约需要 `48.4 万` input tokens，仍然不能放入 `32k` 或 `128k` 上下文。
@@ -293,7 +295,18 @@ evidence.get
 | `llm_only_baseline` | `n/a` | `1/5` | `818` | `unsafe` |
 | `schema_aware_llm_only_baseline` | `n/a` | `1/5` | `1282` | `unsafe` |
 
-关键不是 DeepSeek 比 LLM-only 用更少 token，而是它的输出被 verifier 接管后，能同时保留“稳一点”“太贵”“中外合作”这类模糊或缺字段偏好的边界。
+关键不是声称 DeepSeek 路径一定比 LLM-only 用更少 token，而是它的输出被 verifier 接管后，能同时保留“稳一点”“太贵”“中外合作”这类模糊或缺字段偏好的边界。
+
+需要注意，这张表来自 `docs/evaluation_report.md` 的既有正式评估口径，不等同于 2026-06-29 新跑的 live no-cache 对比。新对比使用同一条 query、禁用 cache，并记录在 `outputs/eval/same_query_token_comparison.json`：
+
+| 方法 | 是否使用项目 verifier | 得分 | Total tokens | 主要风险 |
+|---|---|---:|---:|---|
+| `rule_regex_extractor_symbolic_verifier` | 是 | `8/8` | `0` | 无 LLM token |
+| `deepseek_extractor_symbolic_verifier` | 是 | `8/8` | `2323` | 无 over-promotion |
+| `llm_only_baseline` | 否 | `1/5` | `625` | 执行了中外合作、学费等不安全提升 |
+| `schema_aware_llm_only_baseline` | 否 | `3/5` | `1964` | 比 plain LLM 稳，但仍未正确保留 candidate 边界 |
+
+因此，单条 live 结果不能写成“项目路径 token 更少”。更准确的表述是：项目路径在这条 query 上花更多 LLM token 做结构抽取，但换来 verifier 接管执行边界；plain LLM-only token 更少，却更容易过度提升模糊或缺字段偏好。
 
 ### 6.5 多类型 query token trial
 
@@ -330,7 +343,7 @@ evidence.get
 
 这在工程上预期带来两类收益。当前已有有限 smoke 支持“链路可跑通”和“边界没有被明显绕过”，但收益幅度仍需要更大样本和真实用户任务确认。
 
-第一，token 降低。LLM 不再读取全量 Excel，也不再持有全部候选行。它只读取字段摘要、已审查能力和必要上下文。真正的大数据操作由本地 DuckDB 完成。
+第一，相对全表 prompt 的 token 降低。LLM 不再读取全量 Excel，也不再持有全部候选行。它只读取字段摘要、已审查能力和必要上下文。真正的大数据操作由本地 DuckDB 完成。相对极简 plain LLM-only prompt，项目路径可能消耗更多 token，因为它要求 LLM 输出可审计结构；这部分成本换来的是后续 verifier 可以接管执行边界。
 
 第二，错误风险降低。系统不要求 LLM 自己判断什么可执行，而是由 deterministic verifier 检查字段、op、值、确认状态和证据来源。LLM 语言能力用于覆盖自然语言表达的多样性，执行安全由规则系统约束。当前 evidence 支持的是“降低错误执行、过度提升和 unsupported claims 风险”的设计判断；最终是否提高真实使用正确率，还需要跨平台实机、教授真实使用任务和更大样本验证。
 
@@ -387,6 +400,7 @@ evidence.get
 - `docs/tool_contract.md`
 - `docs/real_dataset_pilot.md`
 - `frontend-user/README.md`
+- `scripts/run_token_usage_trial.py`
 - `src/api/workbench.py`
 - `src/llm/openai_compatible.py`
 - `src/schema/attribute_grounder.py`
